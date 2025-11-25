@@ -5,8 +5,8 @@ import { services } from '@/data/services';
 
 export const metadata: Metadata = {
   title: '서비스 - Mate 외주개발팀',
-  description: '유니티 게임 개발, AR/VR, 외주 개발 서비스를 제공합니다. 2D/3D 게임, 클라이언트/서버 개발 전문.',
-  keywords: '외주개발, 유니티 개발, 게임 개발, AR/VR, Unity 외주, 게임 서버 개발',
+  description: '유니티 외주 개발과 개발 강의 서비스를 제공합니다. 실무 경험 기반 교육과 안정적인 외주 개발 전문.',
+  keywords: '외주개발, 유니티 개발, 개발 강의, Unity 외주, 유니티 강의, 게임 개발 교육',
 };
 
 export default function ServicesPage() {

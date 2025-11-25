@@ -1,12 +1,12 @@
 // 팀 전체 역량 데이터
 export const teamCapabilities = {
   title: 'Mate 팀의 역량',
-  description: '유니티 게임 개발과 외주 개발에 특화된 전문 팀입니다',
+  description: '유니티 외주 개발과 개발 강의에 특화된 전문 팀입니다',
   capabilities: [
     {
       id: 'unity',
-      title: '유니티 게임 개발',
-      description: '2D/3D 게임, AR/VR 콘텐츠 개발에 전문성을 가진 팀입니다',
+      title: '유니티 외주 개발',
+      description: '2D/3D 게임, AR/VR 콘텐츠 외주 개발에 전문성을 가진 팀입니다',
       icon: '🎮',
       skills: ['Unity', 'C#', '2D 게임', '3D 게임', 'AR/VR', '모바일 게임'],
       experience: '5년 이상',
@@ -38,6 +38,15 @@ export const teamCapabilities = {
       skills: ['프로젝트 관리', '품질 보증', '일정 관리', '커뮤니케이션'],
       experience: '5년 이상',
       projects: 30,
+    },
+    {
+      id: 'education',
+      title: '개발 강의',
+      description: '실무 경험을 바탕으로 한 체계적인 개발 교육 서비스',
+      icon: '📚',
+      skills: ['Unity 강의', 'C# 프로그래밍', '게임 개발 교육', '실무 프로젝트 지도'],
+      experience: '3년 이상',
+      projects: 15,
     },
   ],
   stats: {

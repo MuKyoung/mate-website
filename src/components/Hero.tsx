@@ -343,7 +343,7 @@ export default function Hero() {
             외주개발팀
           </p>
           <p className="text-xl md:text-2xl text-white/90 mb-8 max-w-2xl mx-auto">
-            유니티 게임 개발과 외주 개발에 특화된 전문 팀입니다
+            유니티 외주 개발과 개발 강의에 특화된 전문 팀입니다
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link

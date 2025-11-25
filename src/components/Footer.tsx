@@ -12,7 +12,7 @@ export default function Footer() {
           <div>
             <h3 className="text-2xl font-bold text-white mb-4">Mate</h3>
             <p className="text-sm">
-              유니티 게임 개발과 외주 개발에 특화된 전문 개발 팀입니다.
+              유니티 외주 개발과 개발 강의에 특화된 전문 개발 팀입니다.
             </p>
           </div>
 
@@ -47,8 +47,8 @@ export default function Footer() {
           <div>
             <h4 className="text-white font-semibold mb-4">서비스</h4>
             <ul className="space-y-2 text-sm">
-              <li>유니티 게임 개발</li>
-              <li>외주 개발</li>
+              <li>유니티 외주 개발</li>
+              <li>개발 강의</li>
               <li>AR/VR 개발</li>
               <li>게임 서버 개발</li>
             </ul>

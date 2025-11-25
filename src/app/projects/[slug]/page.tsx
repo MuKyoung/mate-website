@@ -27,8 +27,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
   return {
     title: `${project.title} - Mate 외주개발팀`,
-    description: `${project.description} | 유니티 게임 개발, 외주 개발 전문`,
-    keywords: `유니티, Unity, 게임 개발, ${project.techStack.join(', ')}, 외주개발`,
+    description: `${project.description} | 유니티 외주 개발, 개발 강의 전문`,
+    keywords: `유니티, Unity, 외주개발, 개발 강의, ${project.techStack.join(', ')}`,
   };
 }
 

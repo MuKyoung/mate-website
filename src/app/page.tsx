@@ -95,7 +95,7 @@ export default function Home() {
               Mate 팀의 역량
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              유니티 게임 개발과 외주 개발에 특화된 전문 팀입니다
+              유니티 외주 개발과 개발 강의에 특화된 전문 팀입니다
             </p>
           </motion.div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">

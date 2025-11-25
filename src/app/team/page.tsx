@@ -6,8 +6,8 @@ import { FiCheckCircle, FiUsers, FiBriefcase, FiAward } from 'react-icons/fi';
 
 export const metadata: Metadata = {
   title: '팀 역량 - Mate 외주개발팀',
-  description: '유니티 게임 개발, AR/VR, 외주 개발에 특화된 Mate 팀의 역량을 소개합니다. 5년 이상의 경험과 30개 이상의 완료 프로젝트를 보유하고 있습니다.',
-  keywords: '외주개발, 유니티 개발, 게임 개발 팀, AR/VR 개발, 게임 서버 개발, Unity 외주',
+  description: '유니티 외주 개발과 개발 강의에 특화된 Mate 팀의 역량을 소개합니다. 5년 이상의 경험과 30개 이상의 완료 프로젝트를 보유하고 있습니다.',
+  keywords: '외주개발, 유니티 개발, 개발 강의, Unity 외주, 게임 개발 교육, 유니티 강의',
 };
 
 export default function TeamPage() {
@@ -15,7 +15,7 @@ export default function TeamPage() {
     <div className="pt-20">
       <PageHeader
         title="Mate 팀의 역량"
-        description="유니티 게임 개발과 외주 개발에 특화된 전문 팀입니다"
+        description="유니티 외주 개발과 개발 강의에 특화된 전문 팀입니다"
       />
 
       {/* Stats Section */}
@@ -62,7 +62,7 @@ export default function TeamPage() {
               전문 역량
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              다양한 게임 개발 프로젝트를 성공적으로 완수한 경험과 전문성을 보유하고 있습니다
+              유니티 외주 개발과 개발 강의를 통해 다양한 프로젝트를 성공적으로 완수한 경험과 전문성을 보유하고 있습니다
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -86,7 +86,7 @@ export default function TeamPage() {
                 <div>
                   <h3 className="font-semibold text-gray-800 mb-2">검증된 경험</h3>
                   <p className="text-gray-600 text-sm">
-                    5년 이상의 유니티 게임 개발 경험과 30개 이상의 성공적인 프로젝트 완수
+                    5년 이상의 유니티 외주 개발 경험과 30개 이상의 성공적인 프로젝트 완수
                   </p>
                 </div>
               </div>
