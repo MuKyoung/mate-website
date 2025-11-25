@@ -1,0 +1,162 @@
+'use client';
+
+import { motion } from 'framer-motion';
+import Link from 'next/link';
+import Hero from '@/components/Hero';
+import ServiceCard from '@/components/ServiceCard';
+import ProjectCard from '@/components/ProjectCard';
+import { services } from '@/data/services';
+import { projects } from '@/data/projects';
+import { FiArrowRight } from 'react-icons/fi';
+
+export default function Home() {
+  const featuredProjects = projects.slice(0, 3);
+
+  return (
+    <>
+      <Hero />
+
+      {/* Services Section */}
+      <section className="py-20 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+              우리의 서비스
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              고객의 비즈니스 성장을 위한 전문적인 개발 서비스를 제공합니다
+            </p>
+          </motion.div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {services.map((service, index) => (
+              <ServiceCard key={service.id} service={service} index={index} />
+            ))}
+          </div>
+          <div className="text-center mt-12">
+            <Link
+              href="/services"
+              className="inline-flex items-center text-purple-600 hover:text-purple-700 font-semibold"
+            >
+              모든 서비스 보기
+              <FiArrowRight className="ml-2" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Projects Section */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+              주요 프로젝트
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              다양한 산업 분야에서 성공적으로 완료한 프로젝트들을 소개합니다
+            </p>
+          </motion.div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {featuredProjects.map((project, index) => (
+              <ProjectCard key={project.id} project={project} index={index} />
+            ))}
+          </div>
+          <div className="text-center mt-12">
+            <Link
+              href="/projects"
+              className="inline-flex items-center text-purple-600 hover:text-purple-700 font-semibold"
+            >
+              모든 프로젝트 보기
+              <FiArrowRight className="ml-2" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Team Section */}
+      <section className="py-20 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+              Mate 팀의 역량
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              유니티 게임 개발과 외주 개발에 특화된 전문 팀입니다
+            </p>
+          </motion.div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            <div className="text-center p-6 bg-white rounded-xl shadow-md">
+              <div className="text-4xl mb-3">🎯</div>
+              <div className="text-3xl font-bold text-purple-600 mb-2">30+</div>
+              <div className="text-gray-600">완료 프로젝트</div>
+            </div>
+            <div className="text-center p-6 bg-white rounded-xl shadow-md">
+              <div className="text-4xl mb-3">⏱️</div>
+              <div className="text-3xl font-bold text-purple-600 mb-2">5년</div>
+              <div className="text-gray-600">개발 경력</div>
+            </div>
+            <div className="text-center p-6 bg-white rounded-xl shadow-md">
+              <div className="text-4xl mb-3">👥</div>
+              <div className="text-3xl font-bold text-purple-600 mb-2">4명</div>
+              <div className="text-gray-600">전문 개발자</div>
+            </div>
+            <div className="text-center p-6 bg-white rounded-xl shadow-md">
+              <div className="text-4xl mb-3">✅</div>
+              <div className="text-3xl font-bold text-purple-600 mb-2">100%</div>
+              <div className="text-gray-600">성공률</div>
+            </div>
+          </div>
+          <div className="text-center">
+            <Link
+              href="/team"
+              className="inline-flex items-center text-purple-600 hover:text-purple-700 font-semibold"
+            >
+              팀 역량 자세히 보기
+              <FiArrowRight className="ml-2" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 gradient-bg">
+        <div className="container mx-auto px-4 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+              프로젝트를 시작할 준비가 되셨나요?
+            </h2>
+            <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
+              지금 바로 문의하시면 전문가가 상담해드립니다
+            </p>
+            <Link
+              href="/contact"
+              className="inline-flex items-center px-8 py-4 bg-white text-purple-600 rounded-lg font-semibold hover:bg-gray-100 transition-colors shadow-lg"
+            >
+              문의하기
+              <FiArrowRight className="ml-2" />
+            </Link>
+          </motion.div>
+        </div>
+      </section>
+    </>
+  );
+}
+

@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /team/[id]
+
+Sitemap: https://mate.dev/sitemap.xml
+

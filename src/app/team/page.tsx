@@ -1,0 +1,127 @@
+import { Metadata } from 'next';
+import PageHeader from '@/components/PageHeader';
+import TeamCapabilityCard from '@/components/TeamCapabilityCard';
+import { teamCapabilities } from '@/data/teamCapabilities';
+import { FiCheckCircle, FiUsers, FiBriefcase, FiAward } from 'react-icons/fi';
+
+export const metadata: Metadata = {
+  title: '팀 역량 - Mate 외주개발팀',
+  description: '유니티 게임 개발, AR/VR, 외주 개발에 특화된 Mate 팀의 역량을 소개합니다. 5년 이상의 경험과 30개 이상의 완료 프로젝트를 보유하고 있습니다.',
+  keywords: '외주개발, 유니티 개발, 게임 개발 팀, AR/VR 개발, 게임 서버 개발, Unity 외주',
+};
+
+export default function TeamPage() {
+  return (
+    <div className="pt-20">
+      <PageHeader
+        title="Mate 팀의 역량"
+        description="유니티 게임 개발과 외주 개발에 특화된 전문 팀입니다"
+      />
+
+      {/* Stats Section */}
+      <section className="py-16 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="text-center">
+              <div className="text-4xl mb-2">🎯</div>
+              <div className="text-3xl font-bold text-purple-600 mb-1">
+                {teamCapabilities.stats.totalProjects}+
+              </div>
+              <div className="text-gray-600 text-sm">완료 프로젝트</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl mb-2">⏱️</div>
+              <div className="text-3xl font-bold text-purple-600 mb-1">
+                {teamCapabilities.stats.yearsExperience}년
+              </div>
+              <div className="text-gray-600 text-sm">개발 경력</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl mb-2">👥</div>
+              <div className="text-3xl font-bold text-purple-600 mb-1">
+                {teamCapabilities.stats.teamMembers}명
+              </div>
+              <div className="text-gray-600 text-sm">전문 개발자</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl mb-2">✅</div>
+              <div className="text-3xl font-bold text-purple-600 mb-1">
+                {teamCapabilities.stats.successRate}%
+              </div>
+              <div className="text-gray-600 text-sm">프로젝트 성공률</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Capabilities Grid */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
+              전문 역량
+            </h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              다양한 게임 개발 프로젝트를 성공적으로 완수한 경험과 전문성을 보유하고 있습니다
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {teamCapabilities.capabilities.map((capability, index) => (
+              <TeamCapabilityCard key={capability.id} capability={capability} index={index} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Why Choose Us */}
+      <section className="py-20 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-8 text-center">
+              왜 Mate 팀을 선택해야 할까요?
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="flex items-start gap-4">
+                <FiCheckCircle className="text-green-500 text-2xl flex-shrink-0 mt-1" />
+                <div>
+                  <h3 className="font-semibold text-gray-800 mb-2">검증된 경험</h3>
+                  <p className="text-gray-600 text-sm">
+                    5년 이상의 유니티 게임 개발 경험과 30개 이상의 성공적인 프로젝트 완수
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-4">
+                <FiCheckCircle className="text-green-500 text-2xl flex-shrink-0 mt-1" />
+                <div>
+                  <h3 className="font-semibold text-gray-800 mb-2">전문 팀 구성</h3>
+                  <p className="text-gray-600 text-sm">
+                    클라이언트, 서버, UI/UX 등 각 분야의 전문가로 구성된 팀
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-4">
+                <FiCheckCircle className="text-green-500 text-2xl flex-shrink-0 mt-1" />
+                <div>
+                  <h3 className="font-semibold text-gray-800 mb-2">투명한 커뮤니케이션</h3>
+                  <p className="text-gray-600 text-sm">
+                    프로젝트 전 과정에서 지속적인 소통과 진행 상황 공유
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-4">
+                <FiCheckCircle className="text-green-500 text-2xl flex-shrink-0 mt-1" />
+                <div>
+                  <h3 className="font-semibold text-gray-800 mb-2">품질 보증</h3>
+                  <p className="text-gray-600 text-sm">
+                    철저한 테스트와 코드 리뷰를 통한 높은 품질의 결과물 제공
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+

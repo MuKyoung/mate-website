@@ -1,0 +1,53 @@
+import { TeamMember } from '@/types';
+
+export const teamMembers: TeamMember[] = [
+  {
+    id: '1',
+    name: '박무경',
+    role: '유니티 클라이언트 개발자',
+    bio: '5년 이상의 게임 개발 경험을 보유하고 있으며, 유니티와 C#을 활용한 게임 개발에 전문성을 가지고 있습니다.',
+    profileImage: '/images/team/박무경.jpg',
+    skills: ['AR/VR', '2D', '3D', 'Unity', 'Github'],
+    github: 'https://github.com/example1',
+    linkedin: 'https://linkedin.com/in/example1',
+    email: 'kim@digitalcircus.com',
+    projects: ['1', '2', '3'],
+  },
+  {
+    id: '2',
+    name: '정성권',
+    role: '유니티 클라이언트 개발자',
+    bio: '확장 가능한 백엔드 시스템 설계와 개발을 전문으로 하며, Node.js와 Python 기반의 마이크로서비스 아키텍처 구축 경험이 풍부합니다.',
+    profileImage: '/images/team/member2.jpg',
+    skills: ['Node.js', 'Python', 'PostgreSQL', 'Docker', 'AWS'],
+    github: 'https://github.com/example2',
+    linkedin: 'https://linkedin.com/in/example2',
+    email: 'lee@digitalcircus.com',
+    projects: ['1', '2', '4'],
+  },
+  {
+    id: '3',
+    name: '전승원',
+    role: 'UI/UX Designer',
+    bio: '사용자 중심의 디자인을 추구하며, 직관적이고 아름다운 인터페이스를 만드는 것을 즐깁니다. 다양한 브랜드의 디자인 시스템 구축 경험이 있습니다.',
+    profileImage: '/images/team/member3.jpg',
+    skills: ['Figma', 'Adobe XD', 'Sketch', 'Prototyping', 'Design Systems'],
+    github: 'https://github.com/example3',
+    linkedin: 'https://linkedin.com/in/example3',
+    email: 'park@digitalcircus.com',
+    projects: ['1', '3', '5'],
+  },
+  {
+    id: '4',
+    name: '박재웅',
+    role: '유니티 서버 개발자', 
+    bio: '3년 이상의 게임 개발 경험을 보유하고 있으며, 유니티와 C#을 활용한 게임 개발에 전문성을 가지고 있습니다.',
+    profileImage: '/images/team/member4.jpg',
+    skills: ['AR/VR', '2D', '3D', 'Unity', 'Github'],
+    github: 'https://github.com/example4',
+    linkedin: 'https://linkedin.com/in/example4',
+    email: 'choi@digitalcircus.com',
+    projects: ['2', '4', '5'],
+  },
+];
+
