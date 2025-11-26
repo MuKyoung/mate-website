@@ -58,8 +58,8 @@ export default function Footer() {
           <div>
             <h4 className="text-white font-semibold mb-4">연락처</h4>
             <div className="space-y-2 text-sm">
-              <p>이메일: contact@mate.dev</p>
-              <p>전화: 02-1234-5678</p>
+              <p>이메일: team-mate@naver.com</p>
+              <p>전화: 010-5457-9141</p>
               <div className="flex space-x-4 mt-4">
                 <a
                   href="https://github.com"

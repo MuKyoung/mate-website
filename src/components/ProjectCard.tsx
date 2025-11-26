@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { Project } from '@/types';
-import { FiExternalLink, FiGithub } from 'react-icons/fi';
+import { FiExternalLink, FiGithub, FiClock } from 'react-icons/fi';
 import SafeImage from '@/components/SafeImage';
 
 interface ProjectCardProps {
@@ -56,9 +56,15 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
             )}
           </div>
 
-          {/* Links */}
+          {/* Info & Links */}
           <div className="flex items-center justify-between">
-            <span className="text-xs text-gray-500">{project.category}</span>
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-gray-500">{project.category}</span>
+              <span className="flex items-center text-xs text-purple-600">
+                <FiClock className="mr-1" size={12} />
+                {project.durationMonths}개월
+              </span>
+            </div>
             <div className="flex space-x-2">
               {project.liveUrl && (
                 <a

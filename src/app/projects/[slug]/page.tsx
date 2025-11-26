@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { projects } from '@/data/projects';
 import { teamMembers } from '@/data/team';
-import { FiExternalLink, FiGithub, FiArrowLeft, FiCalendar, FiYoutube } from 'react-icons/fi';
+import { FiExternalLink, FiGithub, FiArrowLeft, FiClock, FiYoutube } from 'react-icons/fi';
 import SafeImage from '@/components/SafeImage';
 
 // 유튜브 URL에서 비디오 ID 추출
@@ -74,9 +74,8 @@ export default function ProjectDetailPage({ params }: PageProps) {
           <div className="flex flex-wrap gap-4 items-center">
             <span className="px-4 py-2 bg-white/20 rounded-full">{project.category}</span>
             <div className="flex items-center text-white/80">
-              <FiCalendar className="mr-2" />
-              {new Date(project.startDate).toLocaleDateString('ko-KR')}
-              {project.endDate && ` - ${new Date(project.endDate).toLocaleDateString('ko-KR')}`}
+              <FiClock className="mr-2" />
+              개발 기간: {project.durationMonths}개월
             </div>
             {project.liveUrl && (
               <a

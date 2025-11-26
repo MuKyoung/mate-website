@@ -42,11 +42,9 @@ export default function ProjectFilter({ projects }: ProjectFilterProps) {
       });
     }
 
-    // 날짜 순 정렬 (최신순)
-    return filtered.sort((a, b) => {
-      const dateA = new Date(a.startDate).getTime();
-      const dateB = new Date(b.startDate).getTime();
-      return dateB - dateA;
+    // id 순 정렬
+    return [...filtered].sort((a, b) => {
+      return parseInt(a.id) - parseInt(b.id);
     });
   }, [projects, selectedCategory]);
 
@@ -99,12 +97,11 @@ export default function ProjectFilter({ projects }: ProjectFilterProps) {
       </div>
 
       {/* 결과 정보 */}
-      <div className="mb-8 flex items-center justify-between">
+      <div className="mb-8">
         <p className="text-gray-600">
           {selectedCategory === 'all' ? '전체' : selectedCategory} 프로젝트{' '}
           <span className="font-semibold text-purple-600">{filteredProjects.length}</span>개
         </p>
-        <p className="text-sm text-gray-500">최신순 정렬</p>
       </div>
 
       {/* 프로젝트 그리드 */}
