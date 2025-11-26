@@ -336,26 +336,26 @@ export default function Hero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-          <h1 className="text-5xl md:text-7xl font-bold text-white mb-4">
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold text-white mb-4 drop-shadow-lg">
             Mate
           </h1>
-          <p className="text-lg md:text-xl text-white/80 mb-2">
+          <p className="text-base sm:text-lg md:text-xl text-white/90 mb-2 drop-shadow">
             외주개발팀
           </p>
-          <p className="text-xl md:text-2xl text-white/90 mb-8 max-w-2xl mx-auto">
+          <p className="text-lg sm:text-xl md:text-2xl text-white mb-8 max-w-2xl mx-auto drop-shadow">
             유니티 외주 개발과 개발 강의에 특화된 전문 팀입니다
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
             <Link
               href="/services"
-              className="inline-flex items-center justify-center px-8 py-4 bg-white text-purple-600 rounded-lg font-semibold hover:bg-gray-100 transition-colors shadow-lg"
+              className="inline-flex items-center justify-center px-6 sm:px-8 py-3 sm:py-4 bg-white text-purple-700 rounded-lg font-semibold hover:bg-gray-100 transition-colors shadow-lg text-sm sm:text-base"
             >
               우리의 서비스
               <FiArrowRight className="ml-2" />
             </Link>
             <Link
               href="/contact"
-              className="inline-flex items-center justify-center px-8 py-4 bg-transparent border-2 border-white text-white rounded-lg font-semibold hover:bg-white/10 transition-colors"
+              className="inline-flex items-center justify-center px-6 sm:px-8 py-3 sm:py-4 bg-white/10 backdrop-blur-sm border-2 border-white text-white rounded-lg font-semibold hover:bg-white/20 transition-colors text-sm sm:text-base"
             >
               문의하기
             </Link>

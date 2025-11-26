@@ -61,19 +61,19 @@ export default function ProjectFilter({ projects }: ProjectFilterProps) {
   return (
     <>
       {/* 필터 버튼 */}
-      <div className="mb-10">
-        <div className="flex flex-wrap justify-center gap-3">
+      <div className="mb-8 sm:mb-10">
+        <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
           {CATEGORY_OPTIONS.map((option) => (
             <button
               key={option.value}
               onClick={() => setSelectedCategory(option.value)}
               className={`
-                px-5 py-3 rounded-full font-medium transition-all duration-300
-                flex items-center gap-2 text-sm md:text-base
+                px-3 sm:px-5 py-2 sm:py-3 rounded-full font-medium transition-all duration-300
+                flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm md:text-base
                 ${
                   selectedCategory === option.value
                     ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg scale-105'
-                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200 hover:border-purple-300'
+                    : 'bg-white text-gray-800 hover:bg-gray-100 border border-gray-200 hover:border-purple-300'
                 }
               `}
             >
@@ -81,11 +81,11 @@ export default function ProjectFilter({ projects }: ProjectFilterProps) {
               <span>{option.label}</span>
               <span
                 className={`
-                  px-2 py-0.5 rounded-full text-xs
+                  px-1.5 sm:px-2 py-0.5 rounded-full text-xs font-medium
                   ${
                     selectedCategory === option.value
-                      ? 'bg-white/20 text-white'
-                      : 'bg-gray-100 text-gray-500'
+                      ? 'bg-white/25 text-white'
+                      : 'bg-gray-200 text-gray-600'
                   }
                 `}
               >
@@ -97,15 +97,15 @@ export default function ProjectFilter({ projects }: ProjectFilterProps) {
       </div>
 
       {/* 결과 정보 */}
-      <div className="mb-8">
-        <p className="text-gray-600">
+      <div className="mb-6 sm:mb-8">
+        <p className="text-gray-700">
           {selectedCategory === 'all' ? '전체' : selectedCategory} 프로젝트{' '}
-          <span className="font-semibold text-purple-600">{filteredProjects.length}</span>개
+          <span className="font-bold text-purple-700">{filteredProjects.length}</span>개
         </p>
       </div>
 
       {/* 프로젝트 그리드 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
         <AnimatePresence mode="popLayout">
           {filteredProjects.map((project, index) => (
             <motion.div

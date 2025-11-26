@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import PageHeader from '@/components/PageHeader';
-import ProjectFilter from '@/components/ProjectFilter';
+import ProjectsClient from './ProjectsClient';
 import { projects } from '@/data/projects';
 
 export const metadata: Metadata = {
@@ -20,7 +20,7 @@ export default function ProjectsPage() {
       {/* Projects Section */}
       <section className="py-20">
         <div className="container mx-auto px-4">
-          <ProjectFilter projects={projects} />
+          <ProjectsClient projects={projects} />
         </div>
       </section>
     </div>

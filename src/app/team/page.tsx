@@ -106,46 +106,46 @@ export default function TeamPage() {
               .map((year) => (
                 <div key={year} className="mb-12 last:mb-0">
                   {/* 연도 헤더 */}
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="flex-shrink-0 w-20 h-20 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg">
-                      <span className="text-2xl font-bold text-purple-900">{year}</span>
+                  <div className="flex items-center gap-3 sm:gap-4 mb-6">
+                    <div className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg">
+                      <span className="text-xl sm:text-2xl font-bold text-purple-900">{year}</span>
                     </div>
                     <div className="h-0.5 flex-grow bg-gradient-to-r from-yellow-400/50 to-transparent" />
                   </div>
 
                   {/* 해당 연도 수상 목록 */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ml-6 md:ml-24">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ml-0 sm:ml-6 md:ml-24">
                     {awards
                       .filter(a => a.year === year)
                       .map((award) => (
                         <div
                           key={award.id}
-                          className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20 hover:bg-white/15 transition-all duration-300 hover:scale-[1.02]"
+                          className="bg-white/10 backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-white/20 hover:bg-white/15 transition-all duration-300 hover:scale-[1.02]"
                         >
-                          <div className="flex items-start gap-4">
+                          <div className="flex items-start gap-3 sm:gap-4">
                             {/* 아이콘 - 전시회 또는 수상에 따라 다르게 표시 */}
                             <div className="flex-shrink-0">
-                              <span className="text-4xl">
+                              <span className="text-3xl sm:text-4xl">
                                 {award.type === 'exhibition' ? '🎪' : getAwardIcon(award.rank)}
                               </span>
                             </div>
-                            <div className="flex-grow">
-                              <div className="flex items-center gap-2 mb-1">
+                            <div className="flex-grow min-w-0">
+                              <div className="flex flex-wrap items-center gap-1 sm:gap-2 mb-1">
                                 <span className={`px-2 py-0.5 text-xs font-semibold rounded ${
                                   award.type === 'exhibition' 
-                                    ? 'bg-blue-400/20 text-blue-300' 
-                                    : 'bg-yellow-400/20 text-yellow-300'
+                                    ? 'bg-blue-500/30 text-blue-200' 
+                                    : 'bg-yellow-500/30 text-yellow-200'
                                 }`}>
                                   {award.type === 'exhibition' ? '전시회' : '수상'}
                                 </span>
                                 {award.rank && (
-                                  <span className="px-2 py-0.5 bg-white/10 text-white/80 text-xs rounded">
+                                  <span className="px-2 py-0.5 bg-white/20 text-white text-xs rounded">
                                     {award.rank}
                                   </span>
                                 )}
                               </div>
-                              <h3 className="font-bold text-lg mb-1">{award.title}</h3>
-                              <p className="text-purple-200 text-sm">{award.organization}</p>
+                              <h3 className="font-bold text-base sm:text-lg mb-1 text-white break-words">{award.title}</h3>
+                              <p className="text-purple-100 text-sm">{award.organization}</p>
                             </div>
                           </div>
                         </div>

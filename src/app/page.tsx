@@ -58,10 +58,10 @@ export default function Home() {
             viewport={{ once: true }}
             className="text-center mb-12"
           >
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
               주요 프로젝트
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="text-xl text-white/60 max-w-2xl mx-auto">
               다양한 산업 분야에서 성공적으로 완료한 프로젝트들을 소개합니다
             </p>
           </motion.div>

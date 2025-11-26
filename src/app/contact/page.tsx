@@ -140,13 +140,13 @@ export default function ContactPage() {
       </section>
 
       {/* Contact Section */}
-      <section className="py-20">
+      <section className="py-12 sm:py-16 lg:py-20">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
             {/* Contact Form */}
             <div className="lg:col-span-2">
-              <div className="bg-white rounded-xl shadow-lg p-8">
-                <h2 className="text-2xl font-bold text-gray-800 mb-6">문의 양식</h2>
+              <div className="bg-white rounded-xl shadow-lg p-5 sm:p-6 lg:p-8">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-5 sm:mb-6">문의 양식</h2>
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div>
                     <label htmlFor="name" className="block text-sm font-semibold text-gray-700 mb-2">
@@ -247,26 +247,26 @@ export default function ContactPage() {
                 animate={{ opacity: 1, y: 0 }}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className="block bg-[#FEE500] rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 group"
+                className="block bg-[#FEE500] rounded-xl shadow-lg p-5 sm:p-6 hover:shadow-xl transition-all duration-300 group"
               >
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="w-14 h-14 bg-[#3C1E1E] rounded-2xl flex items-center justify-center">
-                    <RiKakaoTalkFill className="text-[#FEE500] text-3xl" />
+                <div className="flex items-center gap-3 sm:gap-4 mb-4">
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 bg-[#3C1E1E] rounded-xl sm:rounded-2xl flex items-center justify-center">
+                    <RiKakaoTalkFill className="text-[#FEE500] text-2xl sm:text-3xl" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-[#3C1E1E]">카카오톡 문의</h3>
-                    <p className="text-sm text-[#3C1E1E]/70">1:1 오픈채팅</p>
+                    <h3 className="text-base sm:text-lg font-bold text-[#3C1E1E]">카카오톡 문의</h3>
+                    <p className="text-xs sm:text-sm text-[#3C1E1E]/80">1:1 오픈채팅</p>
                   </div>
                 </div>
-                <div className="bg-[#3C1E1E]/10 rounded-lg p-4 mb-4">
-                  <p className="text-[#3C1E1E] text-sm leading-relaxed">
+                <div className="bg-[#3C1E1E]/15 rounded-lg p-3 sm:p-4 mb-4">
+                  <p className="text-[#3C1E1E] text-xs sm:text-sm leading-relaxed">
                     빠른 상담을 원하시면 카카오톡 오픈채팅으로 문의해주세요. 
                     <br />
-                    <span className="font-semibold">평일 10:00 - 18:00</span> 실시간 응대
+                    <span className="font-bold">평일 10:00 - 18:00</span> 실시간 응대
                   </p>
                 </div>
-                <div className="flex items-center justify-center gap-2 bg-[#3C1E1E] text-[#FEE500] py-3 px-6 rounded-lg font-semibold group-hover:bg-[#2D1616] transition-colors">
-                  <FiMessageCircle className="text-lg" />
+                <div className="flex items-center justify-center gap-2 bg-[#3C1E1E] text-[#FEE500] py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg font-semibold group-hover:bg-[#2D1616] transition-colors text-sm sm:text-base">
+                  <FiMessageCircle className="text-base sm:text-lg" />
                   <span>채팅 시작하기</span>
                   <motion.span
                     animate={{ x: [0, 4, 0] }}
@@ -278,28 +278,28 @@ export default function ContactPage() {
               </motion.a>
 
               {/* 연락처 정보 */}
-              <div className="bg-white rounded-xl shadow-lg p-8 sticky top-24">
-                <h2 className="text-2xl font-bold text-gray-800 mb-6">연락처 정보</h2>
-                <div className="space-y-6">
+              <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8 sticky top-24">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-5 sm:mb-6">연락처 정보</h2>
+                <div className="space-y-5 sm:space-y-6">
                   <div className="flex items-start">
-                    <FiMail className="text-purple-600 mr-4 mt-1 flex-shrink-0" size={24} />
+                    <FiMail className="text-purple-600 mr-3 sm:mr-4 mt-1 flex-shrink-0" size={22} />
                     <div>
-                      <p className="font-semibold text-gray-800 mb-1">이메일</p>
+                      <p className="font-semibold text-gray-900 mb-1">이메일</p>
                       <a
                         href="mailto:team-mate@naver.com"
-                        className="text-gray-600 hover:text-purple-600 transition-colors"
+                        className="text-gray-700 hover:text-purple-600 transition-colors text-sm sm:text-base break-all"
                       >
                         team-mate@naver.com
                       </a>
                     </div>
                   </div>
                   <div className="flex items-start">
-                    <FiPhone className="text-purple-600 mr-4 mt-1 flex-shrink-0" size={24} />
+                    <FiPhone className="text-purple-600 mr-3 sm:mr-4 mt-1 flex-shrink-0" size={22} />
                     <div>
-                      <p className="font-semibold text-gray-800 mb-1">전화</p>
+                      <p className="font-semibold text-gray-900 mb-1">전화</p>
                       <a
                         href="tel:010-5457-9141"
-                        className="text-gray-600 hover:text-purple-600 transition-colors"
+                        className="text-gray-700 hover:text-purple-600 transition-colors text-sm sm:text-base"
                       >
                         010-5457-9141
                       </a>
@@ -308,12 +308,12 @@ export default function ContactPage() {
                 </div>
 
                 {/* 구분선 */}
-                <div className="border-t border-gray-200 my-6" />
+                <div className="border-t border-gray-200 my-5 sm:my-6" />
 
                 {/* 빠른 문의 안내 */}
-                <div className="bg-purple-50 rounded-lg p-4">
-                  <p className="text-sm text-purple-700">
-                    💡 <span className="font-semibold">빠른 답변</span>을 원하시면 카카오톡 오픈채팅을 이용해주세요!
+                <div className="bg-purple-100 rounded-lg p-3 sm:p-4">
+                  <p className="text-xs sm:text-sm text-purple-800">
+                    💡 <span className="font-bold">빠른 답변</span>을 원하시면 카카오톡 오픈채팅을 이용해주세요!
                   </p>
                 </div>
               </div>

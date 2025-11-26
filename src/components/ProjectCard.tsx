@@ -40,39 +40,39 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
           <p className="text-gray-600 text-sm mb-4 line-clamp-2">{project.description}</p>
           
           {/* Tech Stack */}
-          <div className="flex flex-wrap gap-2 mb-4">
+          <div className="flex flex-wrap gap-1.5 mb-4">
             {project.techStack.slice(0, 4).map((tech) => (
               <span
                 key={tech}
-                className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full"
+                className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full"
               >
                 {tech}
               </span>
             ))}
             {project.techStack.length > 4 && (
-              <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+              <span className="px-2 py-1 bg-gray-200 text-gray-700 text-xs font-medium rounded-full">
                 +{project.techStack.length - 4}
               </span>
             )}
           </div>
 
           {/* Info & Links */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-gray-500">{project.category}</span>
-              <span className="flex items-center text-xs text-purple-600">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-gray-600 font-medium">{project.category}</span>
+              <span className="flex items-center text-xs text-purple-700 font-medium">
                 <FiClock className="mr-1" size={12} />
                 {project.durationMonths}개월
               </span>
             </div>
-            <div className="flex space-x-2">
+            <div className="flex space-x-3">
               {project.liveUrl && (
                 <a
                   href={project.liveUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={(e) => e.stopPropagation()}
-                  className="text-gray-600 hover:text-blue-600 transition-colors"
+                  className="text-gray-500 hover:text-blue-600 transition-colors"
                   aria-label="Live Demo"
                 >
                   <FiExternalLink size={18} />
@@ -84,7 +84,7 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={(e) => e.stopPropagation()}
-                  className="text-gray-600 hover:text-gray-900 transition-colors"
+                  className="text-gray-500 hover:text-gray-900 transition-colors"
                   aria-label="GitHub"
                 >
                   <FiGithub size={18} />

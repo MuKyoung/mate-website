@@ -5,13 +5,13 @@ export default function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-gray-900 text-gray-300">
+    <footer className="bg-gray-900 text-gray-400">
       <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
           {/* Company Info */}
-          <div>
+          <div className="sm:col-span-2 md:col-span-1">
             <h3 className="text-2xl font-bold text-white mb-4">Mate</h3>
-            <p className="text-sm">
+            <p className="text-sm text-gray-300 leading-relaxed">
               유니티 외주 개발과 개발 강의에 특화된 전문 개발 팀입니다.
             </p>
           </div>
@@ -21,22 +21,22 @@ export default function Footer() {
             <h4 className="text-white font-semibold mb-4">빠른 링크</h4>
             <ul className="space-y-2">
               <li>
-                <Link href="/" className="hover:text-white transition-colors">
+                <Link href="/" className="text-gray-300 hover:text-white transition-colors">
                   홈
                 </Link>
               </li>
               <li>
-                <Link href="/services" className="hover:text-white transition-colors">
+                <Link href="/services" className="text-gray-300 hover:text-white transition-colors">
                   서비스
                 </Link>
               </li>
               <li>
-                <Link href="/team" className="hover:text-white transition-colors">
+                <Link href="/team" className="text-gray-300 hover:text-white transition-colors">
                   팀
                 </Link>
               </li>
               <li>
-                <Link href="/projects" className="hover:text-white transition-colors">
+                <Link href="/projects" className="text-gray-300 hover:text-white transition-colors">
                   프로젝트
                 </Link>
               </li>
@@ -46,7 +46,7 @@ export default function Footer() {
           {/* Services */}
           <div>
             <h4 className="text-white font-semibold mb-4">서비스</h4>
-            <ul className="space-y-2 text-sm">
+            <ul className="space-y-2 text-sm text-gray-300">
               <li>유니티 외주 개발</li>
               <li>개발 강의</li>
               <li>AR/VR 개발</li>
@@ -57,7 +57,7 @@ export default function Footer() {
           {/* Contact & Social */}
           <div>
             <h4 className="text-white font-semibold mb-4">연락처</h4>
-            <div className="space-y-2 text-sm">
+            <div className="space-y-2 text-sm text-gray-300">
               <p>이메일: team-mate@naver.com</p>
               <p>전화: 010-5457-9141</p>
               <div className="flex space-x-4 mt-4">
@@ -65,7 +65,7 @@ export default function Footer() {
                   href="https://github.com"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:text-white transition-colors"
+                  className="text-gray-400 hover:text-white transition-colors"
                   aria-label="GitHub"
                 >
                   <FiGithub size={20} />
@@ -74,7 +74,7 @@ export default function Footer() {
                   href="https://linkedin.com"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:text-white transition-colors"
+                  className="text-gray-400 hover:text-white transition-colors"
                   aria-label="LinkedIn"
                 >
                   <FiLinkedin size={20} />
@@ -83,14 +83,14 @@ export default function Footer() {
                   href="https://twitter.com"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:text-white transition-colors"
+                  className="text-gray-400 hover:text-white transition-colors"
                   aria-label="Twitter"
                 >
                   <FiTwitter size={20} />
                 </a>
                 <a
-                  href="mailto:contact@mate.dev"
-                  className="hover:text-white transition-colors"
+                  href="mailto:team-mate@naver.com"
+                  className="text-gray-400 hover:text-white transition-colors"
                   aria-label="Email"
                 >
                   <FiMail size={20} />
@@ -100,7 +100,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm">
+        <div className="border-t border-gray-700 mt-8 pt-8 text-center text-sm text-gray-400">
           <p>&copy; {currentYear} Mate. All rights reserved.</p>
         </div>
       </div>
