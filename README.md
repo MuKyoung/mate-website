@@ -99,6 +99,39 @@ npx serve@latest out
 
 각 페이지의 `metadata` export를 수정하여 SEO 정보를 업데이트할 수 있습니다.
 
+### 연락처 폼 - Google Sheets 연동
+
+1. Google 스프레드시트 생성 후 **Apps Script** 실행
+2. 아래 스크립트를 추가하고 웹 앱으로 배포 (ANYONE 액세스)
+
+```javascript
+function doPost(e) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Responses');
+  const params = JSON.parse(e.postData.contents);
+  sheet.appendRow([
+    new Date(),
+    params.name,
+    params.email,
+    params.subject,
+    params.message,
+    params.submittedAt,
+  ]);
+  return ContentService.createTextOutput(
+    JSON.stringify({ result: 'success' })
+  )
+    .setMimeType(ContentService.MimeType.JSON)
+    .setHeader('Access-Control-Allow-Origin', '*');
+}
+```
+
+3. 발급된 웹 앱 URL을 `.env.local` 파일에 추가
+
+```
+NEXT_PUBLIC_GOOGLE_SCRIPT_URL=https://script.google.com/macros/s/....../exec
+```
+
+4. 빌드 후 배포하면 폼 제출 내용이 스프레드시트에 저장됩니다.
+
 ## 📝 배포
 
 ### Vercel (추천)

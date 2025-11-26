@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
-import ProjectCard from '@/components/ProjectCard';
 import PageHeader from '@/components/PageHeader';
+import ProjectFilter from '@/components/ProjectFilter';
 import { projects } from '@/data/projects';
 
 export const metadata: Metadata = {
@@ -10,8 +10,6 @@ export const metadata: Metadata = {
 };
 
 export default function ProjectsPage() {
-  const categories = Array.from(new Set(projects.map((p) => p.category)));
-
   return (
     <div className="pt-20">
       <PageHeader
@@ -19,22 +17,12 @@ export default function ProjectsPage() {
         description="다양한 산업 분야에서 성공적으로 완료한 프로젝트들을 소개합니다"
       />
 
-      {/* Projects Grid */}
+      {/* Projects Section */}
       <section className="py-20">
         <div className="container mx-auto px-4">
-          <div className="mb-8">
-            <p className="text-gray-600">
-              총 <span className="font-semibold text-purple-600">{projects.length}</span>개의 프로젝트
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {projects.map((project, index) => (
-              <ProjectCard key={project.id} project={project} index={index} />
-            ))}
-          </div>
+          <ProjectFilter projects={projects} />
         </div>
       </section>
     </div>
   );
 }
-

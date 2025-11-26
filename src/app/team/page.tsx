@@ -1,8 +1,8 @@
 import { Metadata } from 'next';
 import PageHeader from '@/components/PageHeader';
 import TeamCapabilityCard from '@/components/TeamCapabilityCard';
-import { teamCapabilities } from '@/data/teamCapabilities';
-import { FiCheckCircle, FiUsers, FiBriefcase, FiAward } from 'react-icons/fi';
+import { teamCapabilities, awards } from '@/data/teamCapabilities';
+import { FiCheckCircle, FiAward } from 'react-icons/fi';
 
 export const metadata: Metadata = {
   title: '팀 역량 - Mate 외주개발팀',
@@ -54,21 +54,76 @@ export default function TeamPage() {
         </div>
       </section>
 
-      {/* Capabilities Grid */}
-      <section className="py-20">
+      
+      {/* Awards Section */}
+      <section className="py-20 bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 text-white">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
-              전문 역량
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-yellow-400 rounded-full mb-4">
+              <FiAward className="text-3xl text-purple-900" />
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              수상 경력
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              유니티 외주 개발과 개발 강의를 통해 다양한 프로젝트를 성공적으로 완수한 경험과 전문성을 보유하고 있습니다
+            <p className="text-lg text-purple-200 max-w-2xl mx-auto">
+              Mate 팀의 전문성을 인정받은 수상 이력입니다
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {teamCapabilities.capabilities.map((capability, index) => (
-              <TeamCapabilityCard key={capability.id} capability={capability} index={index} />
-            ))}
+
+          {/* Timeline */}
+          <div className="max-w-4xl mx-auto">
+            {/* 연도별 그룹화 */}
+            {Array.from(new Set(awards.map(a => a.year)))
+              .sort((a, b) => b - a)
+              .map((year) => (
+                <div key={year} className="mb-12 last:mb-0">
+                  {/* 연도 헤더 */}
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="flex-shrink-0 w-20 h-20 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg">
+                      <span className="text-2xl font-bold text-purple-900">{year}</span>
+                    </div>
+                    <div className="h-0.5 flex-grow bg-gradient-to-r from-yellow-400/50 to-transparent" />
+                  </div>
+
+                  {/* 해당 연도 수상 목록 */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ml-6 md:ml-24">
+                    {awards
+                      .filter(a => a.year === year)
+                      .map((award) => (
+                        <div
+                          key={award.id}
+                          className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20 hover:bg-white/15 transition-all duration-300 hover:scale-[1.02]"
+                        >
+                          <div className="flex items-start gap-4">
+                            {/* 메달 아이콘 */}
+                            <div className="flex-shrink-0">
+                              {award.rank === '대상' && <span className="text-4xl">🏆</span>}
+                              {award.rank === '금상' && <span className="text-4xl">🥇</span>}
+                              {award.rank === '은상' && <span className="text-4xl">🥈</span>}
+                              {award.rank === '동상' && <span className="text-4xl">🥉</span>}
+                              {(award.rank === '우수상' || award.rank === '장려상') && (
+                                <span className="text-4xl">🏅</span>
+                              )}
+                              {!award.rank && <span className="text-4xl">🎖️</span>}
+                            </div>
+                            <div className="flex-grow">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="px-2 py-0.5 bg-yellow-400/20 text-yellow-300 text-xs font-semibold rounded">
+                                  {award.rank}
+                                </span>
+                              </div>
+                              <h3 className="font-bold text-lg mb-1">{award.title}</h3>
+                              <p className="text-purple-200 text-sm mb-2">{award.organization}</p>
+                              {award.description && (
+                                <p className="text-purple-300 text-sm">{award.description}</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              ))}
           </div>
         </div>
       </section>
@@ -118,6 +173,25 @@ export default function TeamPage() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Capabilities Grid */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
+              전문 역량
+            </h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              유니티 외주 개발과 개발 강의를 통해 다양한 프로젝트를 성공적으로 완수한 경험과 전문성을 보유하고 있습니다
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {teamCapabilities.capabilities.map((capability, index) => (
+              <TeamCapabilityCard key={capability.id} capability={capability} index={index} />
+            ))}
           </div>
         </div>
       </section>

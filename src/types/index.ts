@@ -21,6 +21,7 @@ export interface Project {
   techStack: string[];
   liveUrl?: string;
   githubUrl?: string;
+  youtubeUrl?: string; // 유튜브 영상 URL (선택사항) - 있으면 썸네일 대신 영상 표시
   teamMembers: string[]; // member IDs
   startDate: string;
   endDate?: string;

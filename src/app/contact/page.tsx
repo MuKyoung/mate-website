@@ -4,6 +4,10 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { FiMail, FiPhone, FiMapPin, FiSend } from 'react-icons/fi';
 
+const GOOGLE_SCRIPT_URL =
+  process.env.NEXT_PUBLIC_GOOGLE_SCRIPT_URL ||
+  process.env.NEXT_PUBLIC_GAS_WEB_APP_URL;
+
 export default function ContactPage() {
   const [formData, setFormData] = useState({
     name: '',
@@ -13,6 +17,7 @@ export default function ContactPage() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({
@@ -25,14 +30,86 @@ export default function ContactPage() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // 정적 사이트이므로 실제 폼 제출은 외부 서비스(Formspree, EmailJS 등)를 사용해야 합니다
-    // 여기서는 시뮬레이션만 합니다
-    setTimeout(() => {
+    if (!GOOGLE_SCRIPT_URL) {
+      setSubmitStatus('error');
+      setErrorMessage('연동 URL이 설정되어 있지 않습니다. NEXT_PUBLIC_GOOGLE_SCRIPT_URL 환경 변수를 확인해주세요.');
       setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      // URL 파라미터로 데이터 전송 (CORS 우회)
+      const params = new URLSearchParams({
+        name: formData.name,
+        email: formData.email,
+        subject: formData.subject,
+        message: formData.message,
+        submittedAt: new Date().toISOString(),
+      });
+
+      // iframe을 사용한 폼 제출 방식으로 CORS 우회
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.name = 'hidden_iframe';
+      document.body.appendChild(iframe);
+
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = GOOGLE_SCRIPT_URL;
+      form.target = 'hidden_iframe';
+
+      // 폼 데이터 추가
+      Object.entries({
+        name: formData.name,
+        email: formData.email,
+        subject: formData.subject,
+        message: formData.message,
+        submittedAt: new Date().toISOString(),
+      }).forEach(([key, value]) => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = value;
+        form.appendChild(input);
+      });
+
+      document.body.appendChild(form);
+      
+      // 타임아웃으로 성공/실패 판단
+      const submitPromise = new Promise<void>((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('요청 시간 초과'));
+        }, 10000);
+
+        iframe.onload = () => {
+          clearTimeout(timeout);
+          resolve();
+        };
+
+        iframe.onerror = () => {
+          clearTimeout(timeout);
+          reject(new Error('전송 실패'));
+        };
+      });
+
+      form.submit();
+      await submitPromise;
+
+      // 정리
+      document.body.removeChild(form);
+      document.body.removeChild(iframe);
+
       setSubmitStatus('success');
+      setErrorMessage(null);
       setFormData({ name: '', email: '', subject: '', message: '' });
-      setTimeout(() => setSubmitStatus('idle'), 3000);
-    }, 1000);
+      setTimeout(() => setSubmitStatus('idle'), 5000);
+    } catch (err) {
+      console.error(err);
+      setSubmitStatus('error');
+      setErrorMessage('전송 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -45,7 +122,7 @@ export default function ContactPage() {
             animate={{ opacity: 1, y: 0 }}
             className="text-4xl md:text-6xl font-bold mb-4"
           >
-            연락처
+            문의
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 30 }}
@@ -53,7 +130,7 @@ export default function ContactPage() {
             transition={{ delay: 0.1 }}
             className="text-xl md:text-2xl max-w-3xl mx-auto"
           >
-            프로젝트에 대해 궁금한 점이 있으시면 언제든지 문의해주세요
+            협업, 외주, 프로젝트에 대해 궁금한 점이 있으시면 언제든지 문의해주세요
           </motion.p>
         </div>
       </section>
@@ -134,7 +211,7 @@ export default function ContactPage() {
                   )}
                   {submitStatus === 'error' && (
                     <div className="p-4 bg-red-100 text-red-700 rounded-lg">
-                      오류가 발생했습니다. 다시 시도해주세요.
+                      {errorMessage || '오류가 발생했습니다. 다시 시도해주세요.'}
                     </div>
                   )}
                   <button
@@ -165,10 +242,10 @@ export default function ContactPage() {
                     <div>
                       <p className="font-semibold text-gray-800 mb-1">이메일</p>
                       <a
-                        href="mailto:contact@digitalcircus.com"
+                        href="mailto:team-mate@naver.com"
                         className="text-gray-600 hover:text-purple-600 transition-colors"
                       >
-                        contact@digitalcircus.com
+                        team-mate@naver.com
                       </a>
                     </div>
                   </div>
@@ -177,22 +254,11 @@ export default function ContactPage() {
                     <div>
                       <p className="font-semibold text-gray-800 mb-1">전화</p>
                       <a
-                        href="tel:02-1234-5678"
+                        href="tel:010-5457-9141"
                         className="text-gray-600 hover:text-purple-600 transition-colors"
                       >
-                        02-1234-5678
+                        010-5457-9141
                       </a>
-                    </div>
-                  </div>
-                  <div className="flex items-start">
-                    <FiMapPin className="text-purple-600 mr-4 mt-1 flex-shrink-0" size={24} />
-                    <div>
-                      <p className="font-semibold text-gray-800 mb-1">주소</p>
-                      <p className="text-gray-600">
-                        서울특별시 강남구
-                        <br />
-                        테헤란로 123
-                      </p>
                     </div>
                   </div>
                 </div>

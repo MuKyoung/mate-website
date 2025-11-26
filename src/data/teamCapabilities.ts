@@ -1,3 +1,57 @@
+// 수상 경력 타입
+export interface Award {
+  id: string;
+  year: number;
+  title: string;
+  organization: string;
+  description?: string;
+  rank?: string; // 대상, 금상, 은상 등
+}
+
+// 연도별 수상 경력
+export const awards: Award[] = [
+  {
+    id: 'award-1',
+    year: 2024,
+    title: '유니티 게임 개발 공모전',
+    organization: '한국게임학회',
+    description: 'VR 키오스크 시뮬레이션 프로젝트',
+    rank: '대상',
+  },
+  {
+    id: 'award-2',
+    year: 2024,
+    title: '메타버스 콘텐츠 경진대회',
+    organization: '과학기술정보통신부',
+    description: '몰입형 교육 콘텐츠 개발',
+    rank: '우수상',
+  },
+  {
+    id: 'award-3',
+    year: 2023,
+    title: '인디게임 개발 챌린지',
+    organization: '게임산업협회',
+    description: '영창하세요 마법사님',
+    rank: '금상',
+  },
+  {
+    id: 'award-4',
+    year: 2023,
+    title: '에듀테크 혁신 어워드',
+    organization: '교육부',
+    description: '게임 기반 교육 솔루션',
+    rank: '장려상',
+  },
+  {
+    id: 'award-5',
+    year: 2022,
+    title: 'XR 콘텐츠 공모전',
+    organization: '한국콘텐츠진흥원',
+    description: 'AR 인터랙티브 체험 콘텐츠',
+    rank: '은상',
+  },
+];
+
 // 팀 전체 역량 데이터
 export const teamCapabilities = {
   title: 'Mate 팀의 역량',

@@ -3,8 +3,22 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { projects } from '@/data/projects';
 import { teamMembers } from '@/data/team';
-import { FiExternalLink, FiGithub, FiArrowLeft, FiCalendar } from 'react-icons/fi';
+import { FiExternalLink, FiGithub, FiArrowLeft, FiCalendar, FiYoutube } from 'react-icons/fi';
 import SafeImage from '@/components/SafeImage';
+
+// 유튜브 URL에서 비디오 ID 추출
+function getYouTubeVideoId(url: string): string | null {
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+    /youtube\.com\/shorts\/([^&\n?#]+)/,
+  ];
+  
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) return match[1];
+  }
+  return null;
+}
 
 interface PageProps {
   params: {
@@ -86,6 +100,17 @@ export default function ProjectDetailPage({ params }: PageProps) {
                 GitHub
               </a>
             )}
+            {project.youtubeUrl && (
+              <a
+                href={project.youtubeUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                <FiYoutube className="mr-2" />
+                YouTube
+              </a>
+            )}
           </div>
         </div>
       </section>
@@ -96,20 +121,34 @@ export default function ProjectDetailPage({ params }: PageProps) {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
             {/* Main Content */}
             <div className="lg:col-span-2">
-              {/* Project Image */}
-              <div className="relative bg-gradient-to-br from-blue-400 to-purple-500 rounded-xl h-96 mb-8 overflow-hidden">
-                <SafeImage
-                  src={project.thumbnail}
-                  alt={project.title}
-                  fill
-                  className="rounded-xl"
-                  placeholder={
-                    <div className="absolute inset-0 flex items-center justify-center text-8xl text-white/30">
-                      🚀
-                    </div>
-                  }
-                />
-              </div>
+              {/* Project Video or Image */}
+              {project.youtubeUrl ? (
+                // 유튜브 영상 임베드
+                <div className="relative rounded-xl mb-8 overflow-hidden aspect-video bg-black">
+                  <iframe
+                    src={`https://www.youtube.com/embed/${getYouTubeVideoId(project.youtubeUrl)}?rel=0`}
+                    title={project.title}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    className="absolute inset-0 w-full h-full"
+                  />
+                </div>
+              ) : (
+                // 썸네일 이미지
+                <div className="relative bg-gradient-to-br from-blue-400 to-purple-500 rounded-xl h-96 mb-8 overflow-hidden">
+                  <SafeImage
+                    src={project.thumbnail}
+                    alt={project.title}
+                    fill
+                    className="rounded-xl"
+                    placeholder={
+                      <div className="absolute inset-0 flex items-center justify-center text-8xl text-white/30">
+                        🚀
+                      </div>
+                    }
+                  />
+                </div>
+              )}
 
               {/* Description */}
               <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
