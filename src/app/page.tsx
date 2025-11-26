@@ -106,8 +106,8 @@ export default function Home() {
             </div>
             <div className="text-center p-6 bg-white rounded-xl shadow-md">
               <div className="text-4xl mb-3">⏱️</div>
-              <div className="text-3xl font-bold text-purple-600 mb-2">5년</div>
-              <div className="text-gray-600">개발 경력</div>
+              <div className="text-3xl font-bold text-purple-600 mb-2">4년</div>
+              <div className="text-gray-600">외주 개발 경력</div>
             </div>
             <div className="text-center p-6 bg-white rounded-xl shadow-md">
               <div className="text-4xl mb-3">👥</div>

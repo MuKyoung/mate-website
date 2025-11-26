@@ -11,7 +11,7 @@ const navItems = [
   { href: '/services', label: '서비스' },
   { href: '/team', label: '팀' },
   { href: '/projects', label: '프로젝트' },
-  { href: '/contact', label: '연락처' },
+  { href: '/contact', label: '문의' },
 ];
 
 export default function Header() {

@@ -34,7 +34,7 @@ export default function TeamPage() {
               <div className="text-3xl font-bold text-purple-600 mb-1">
                 {teamCapabilities.stats.yearsExperience}년
               </div>
-              <div className="text-gray-600 text-sm">개발 경력</div>
+              <div className="text-gray-600 text-sm">외주 개발 경력</div>
             </div>
             <div className="text-center">
               <div className="text-4xl mb-2">👥</div>
@@ -141,7 +141,7 @@ export default function TeamPage() {
                 <div>
                   <h3 className="font-semibold text-gray-800 mb-2">검증된 경험</h3>
                   <p className="text-gray-600 text-sm">
-                    5년 이상의 유니티 외주 개발 경험과 30개 이상의 성공적인 프로젝트 완수
+                    4년 이상의 유니티 외주 개발 경험과 30개 이상의 성공적인 프로젝트 완수
                   </p>
                 </div>
               </div>

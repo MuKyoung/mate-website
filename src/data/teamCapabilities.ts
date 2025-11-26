@@ -105,7 +105,7 @@ export const teamCapabilities = {
   ],
   stats: {
     totalProjects: 30,
-    yearsExperience: 5,
+    yearsExperience: 4,
     teamMembers: 4,
     successRate: 100,
   },

@@ -2,7 +2,11 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { FiMail, FiPhone, FiMapPin, FiSend } from 'react-icons/fi';
+import { FiMail, FiPhone, FiSend, FiMessageCircle } from 'react-icons/fi';
+import { RiKakaoTalkFill } from 'react-icons/ri';
+
+// 카카오톡 오픈채팅 URL (실제 URL로 교체해주세요)
+const KAKAO_OPEN_CHAT_URL = 'https://open.kakao.com/o/scVFEK3h';
 
 const GOOGLE_SCRIPT_URL =
   process.env.NEXT_PUBLIC_GOOGLE_SCRIPT_URL ||
@@ -233,7 +237,47 @@ export default function ContactPage() {
             </div>
 
             {/* Contact Info */}
-            <div className="lg:col-span-1">
+            <div className="lg:col-span-1 space-y-6">
+              {/* 카카오톡 오픈채팅 */}
+              <motion.a
+                href={KAKAO_OPEN_CHAT_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="block bg-[#FEE500] rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 group"
+              >
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-14 h-14 bg-[#3C1E1E] rounded-2xl flex items-center justify-center">
+                    <RiKakaoTalkFill className="text-[#FEE500] text-3xl" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-[#3C1E1E]">카카오톡 문의</h3>
+                    <p className="text-sm text-[#3C1E1E]/70">1:1 오픈채팅</p>
+                  </div>
+                </div>
+                <div className="bg-[#3C1E1E]/10 rounded-lg p-4 mb-4">
+                  <p className="text-[#3C1E1E] text-sm leading-relaxed">
+                    빠른 상담을 원하시면 카카오톡 오픈채팅으로 문의해주세요. 
+                    <br />
+                    <span className="font-semibold">평일 10:00 - 18:00</span> 실시간 응대
+                  </p>
+                </div>
+                <div className="flex items-center justify-center gap-2 bg-[#3C1E1E] text-[#FEE500] py-3 px-6 rounded-lg font-semibold group-hover:bg-[#2D1616] transition-colors">
+                  <FiMessageCircle className="text-lg" />
+                  <span>채팅 시작하기</span>
+                  <motion.span
+                    animate={{ x: [0, 4, 0] }}
+                    transition={{ repeat: Infinity, duration: 1.5 }}
+                  >
+                    →
+                  </motion.span>
+                </div>
+              </motion.a>
+
+              {/* 연락처 정보 */}
               <div className="bg-white rounded-xl shadow-lg p-8 sticky top-24">
                 <h2 className="text-2xl font-bold text-gray-800 mb-6">연락처 정보</h2>
                 <div className="space-y-6">
@@ -261,6 +305,16 @@ export default function ContactPage() {
                       </a>
                     </div>
                   </div>
+                </div>
+
+                {/* 구분선 */}
+                <div className="border-t border-gray-200 my-6" />
+
+                {/* 빠른 문의 안내 */}
+                <div className="bg-purple-50 rounded-lg p-4">
+                  <p className="text-sm text-purple-700">
+                    💡 <span className="font-semibold">빠른 답변</span>을 원하시면 카카오톡 오픈채팅을 이용해주세요!
+                  </p>
                 </div>
               </div>
             </div>
