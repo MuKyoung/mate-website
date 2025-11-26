@@ -27,7 +27,7 @@ export const projects: Project[] = [
     techStack: ['Unity', 'C#', 'OculusQuest2', 'Github'],
     // youtubeUrl: 'https://www.youtube.com/watch?v=VIDEO_ID', // 유튜브 링크 (선택사항)
     teamMembers: ['1', '2', '3', '5'],
-    durationMonths: 6,
+    durationMonths: 3,
     category: 'VR Application',
   },
   {
@@ -46,12 +46,12 @@ export const projects: Project[] = [
   },
   {
     id: '4',
-    title: '큐어팜',
-    description: '치유농업 웹/앱 개발 프로젝트',
-    longDescription: '치유농업 웹/앱 개발 프로젝트',
-    thumbnail: '/images/projects/큐어팜.png',
+    title: '논디',
+    description: 'RAG 기반 논술 첨삭 웹/앱 개발 프로젝트',
+    longDescription: 'RAG 기반 논술 첨삭 웹/앱 개발 프로젝트', 
+    thumbnail: '/images/projects/논디.png',
     images: [
-      '/images/projects/큐어팜.png',
+      '/images/projects/논디.png',
     ],
     techStack: ['HTML', 'CSS', 'JavaScript', 'React', 'Next.js', 'Flutter', 'Python', 'AWS', 'Github'],
     teamMembers: ['4'],
@@ -69,7 +69,7 @@ export const projects: Project[] = [
     ],
     techStack: ['HTML', 'CSS', 'JavaScript', 'React', 'Next.js', 'Flutter', 'Python', 'AWS', 'Github'],
     teamMembers: ['4'],
-    durationMonths: 3,
+    durationMonths: 1,
     category: 'Web Application',
   },
   {
@@ -83,7 +83,7 @@ export const projects: Project[] = [
     ],
     techStack: ['Unity', 'C#', 'Spine', 'Github'],
     teamMembers: ['1', '3', '5', '6'],
-    durationMonths: 4,
+    durationMonths: 10,
     category: 'Game Application',
   },
   {
@@ -97,7 +97,7 @@ export const projects: Project[] = [
     ],
     techStack: ['Unity', 'C#', 'Spine', 'Github'],
     teamMembers: ['1', '3', '5', '6'],
-    durationMonths: 4,
+    durationMonths: 1,
     category: 'Game Application',
   },
   {
@@ -116,12 +116,12 @@ export const projects: Project[] = [
   },
   {
     id: '9',
-    title: '논디',
-    description: '논디 웹/앱 개발 프로젝트',
-    longDescription: '논디 웹/앱 개발 프로젝트', 
-    thumbnail: '/images/projects/논디.png',
+    title: '큐어팜',
+    description: '치유농업 웹/앱 개발 프로젝트',
+    longDescription: '치유농업 웹/앱 개발 프로젝트',
+    thumbnail: '/images/projects/큐어팜.png',
     images: [
-      '/images/projects/논디.png',
+      '/images/projects/큐어팜.png',
     ],
     techStack: ['HTML', 'CSS', 'JavaScript', 'React', 'Next.js', 'Flutter', 'Python', 'AWS', 'Github'],
     teamMembers: ['4'],

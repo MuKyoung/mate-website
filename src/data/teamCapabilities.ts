@@ -1,54 +1,192 @@
-// 수상 경력 타입
+// 수상/전시 경력 타입
+export type AwardType = 'award' | 'exhibition'; // 수상 또는 전시회
+
 export interface Award {
   id: string;
   year: number;
   title: string;
   organization: string;
   description?: string;
-  rank?: string; // 대상, 금상, 은상 등
+  rank?: string; // 대상, 금상, 은상, 인증서 등
+  type: AwardType; // 수상 또는 전시회 구분
 }
 
-// 연도별 수상 경력
+// 연도별 수상/전시 경력
 export const awards: Award[] = [
+  // ===== 2025년 =====
   {
-    id: 'award-1',
-    year: 2024,
-    title: '유니티 게임 개발 공모전',
-    organization: '한국게임학회',
-    description: 'VR 키오스크 시뮬레이션 프로젝트',
-    rank: '대상',
+    id: 'award-2025-1',
+    year: 2025,
+    title: 'G-STAR',
+    organization: '한국게임산업협회',
+    rank: '전시 참가',
+    type: 'exhibition',
   },
   {
-    id: 'award-2',
-    year: 2024,
-    title: '메타버스 콘텐츠 경진대회',
-    organization: '과학기술정보통신부',
-    description: '몰입형 교육 콘텐츠 개발',
-    rank: '우수상',
-  },
-  {
-    id: 'award-3',
-    year: 2023,
-    title: '인디게임 개발 챌린지',
-    organization: '게임산업협회',
-    description: '영창하세요 마법사님',
-    rank: '금상',
-  },
-  {
-    id: 'award-4',
-    year: 2023,
-    title: '에듀테크 혁신 어워드',
+    id: 'award-2025-2',
+    year: 2025,
+    title: '학생창업유망팀300',
     organization: '교육부',
-    description: '게임 기반 교육 솔루션',
-    rank: '장려상',
+    rank: '교육부장관 인증서',
+    type: 'award',
   },
   {
-    id: 'award-5',
-    year: 2022,
-    title: 'XR 콘텐츠 공모전',
-    organization: '한국콘텐츠진흥원',
-    description: 'AR 인터랙티브 체험 콘텐츠',
+    id: 'award-2025-3',
+    year: 2025,
+    title: '게임잼(Game Jam)',
+    organization: '명지전문대',
     rank: '은상',
+    type: 'award',
+  },
+
+  // ===== 2024년 =====
+  {
+    id: 'award-2024-1',
+    year: 2024,
+    title: '글로벌게임챌린지(GGC) 2024',
+    organization: '한국게임학회',
+    rank: '우수논문상',
+    type: 'award',
+  },
+  {
+    id: 'award-2024-2',
+    year: 2024,
+    title: '학생창업유망팀300 제품박람회',
+    organization: '교육부',
+    rank: '교육부장관 인증서',
+    type: 'award',
+  },
+  {
+    id: 'award-2024-3',
+    year: 2024,
+    title: '농림축산식품부 공공데이터 창업경진대회',
+    organization: '농림축산식품부',
+    rank: '우수상',
+    type: 'award',
+  },
+  {
+    id: 'award-2024-4',
+    year: 2024,
+    title: 'SDGs 소셜벤처 챔피언십',
+    organization: 'SDGs',
+    rank: '은상',
+    type: 'award',
+  },
+  {
+    id: 'award-2024-5',
+    year: 2024,
+    title: '국방 AI 컨퍼런스',
+    organization: '국방부',
+    rank: '최우수상',
+    type: 'award',
+  },
+  {
+    id: 'award-2024-6',
+    year: 2024,
+    title: '산학협력 EXPO',
+    organization: '과학기술정보통신부',
+    rank: '전시 참가',
+    type: 'exhibition',
+  },
+
+  // ===== 2023년 =====
+  {
+    id: 'award-2023-1',
+    year: 2023,
+    title: '글로벌게임챌린지(GGC) 2023',
+    organization: '한국게임학회',
+    rank: '전시 참가',
+    type: 'exhibition',
+  },
+  {
+    id: 'award-2023-2',
+    year: 2023,
+    title: '디자인씽킹',
+    organization: '영남이공대학교 공학기술교육혁신센터',
+    rank: '대상',
+    type: 'award',
+  },
+  {
+    id: 'award-2023-3',
+    year: 2023,
+    title: 'MJC 메타버스 포럼 성과 발표',
+    organization: '명지전문대',
+    rank: '발표 참가',
+    type: 'exhibition',
+  },
+  {
+    id: 'award-2023-4',
+    year: 2023,
+    title: '게임기획 창업 지원사업',
+    organization: '한국콘텐츠진흥원',
+    rank: '사업 선정',
+    type: 'award',
+  },
+  {
+    id: 'award-2023-5',
+    year: 2023,
+    title: 'G-STAR BTC',
+    organization: '한국게임산업협회',
+    rank: '전시 참가',
+    type: 'exhibition',
+  },
+  {
+    id: 'award-2023-6',
+    year: 2023,
+    title: '게임 레벨업 쇼케이스(GLS)',
+    organization: '한국콘텐츠진흥원',
+    rank: '전시 참가',
+    type: 'exhibition',
+  },
+  {
+    id: 'award-2023-7',
+    year: 2023,
+    title: '산학협력 EXPO',
+    organization: '과학기술정보통신부',
+    rank: '전시 참가',
+    type: 'exhibition',
+  },
+  {
+    id: 'award-2023-8',
+    year: 2023,
+    title: '꼬꼬지생 DDP 쇼케이스',
+    organization: '한국콘텐츠진흥원',
+    rank: '전시 참가',
+    type: 'exhibition',
+  },
+  {
+    id: 'award-2023-9',
+    year: 2023,
+    title: '메타버스 보드게임 프로젝트',
+    organization: 'DiveXR (코엑스)',
+    rank: '전시 참가',
+    type: 'exhibition',
+  },
+
+  // ===== 2021년 =====
+  {
+    id: 'award-2021-1',
+    year: 2021,
+    title: '공학페스티벌 창의적 종합설계 경진대회',
+    organization: '산업통상자원부, KIAT',
+    rank: '한국산업진흥원장상',
+    type: 'award',
+  },
+  {
+    id: 'award-2021-2',
+    year: 2021,
+    title: '공학페스티벌 창의적 종합설계 경진대회',
+    organization: '영남이공대학교 공학기술교육혁신센터',
+    rank: '금상',
+    type: 'award',
+  },
+  {
+    id: 'award-2021-3',
+    year: 2021,
+    title: '캡스톤디자인 경진대회',
+    organization: '명지전문대',
+    rank: '은상',
+    type: 'award',
   },
 ];
 
