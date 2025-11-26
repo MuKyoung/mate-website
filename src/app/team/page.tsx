@@ -4,6 +4,22 @@ import TeamCapabilityCard from '@/components/TeamCapabilityCard';
 import { teamCapabilities, awards } from '@/data/teamCapabilities';
 import { FiCheckCircle, FiAward } from 'react-icons/fi';
 
+// 수상 등급에 따른 아이콘 반환 함수
+function getAwardIcon(rank?: string): string {
+  if (!rank) return '🏆';
+  
+  if (rank === '대상') return '🏆';
+  if (rank === '금상') return '🥇';
+  if (rank === '은상') return '🥈';
+  if (rank === '동상') return '🥉';
+  if (rank === '최우수상' || rank === '우수상' || rank === '장려상' || rank === '우수논문상') return '🏅';
+  if (rank.includes('인증서')) return '📜';
+  if (rank.includes('장상') || rank.includes('원장상')) return '🏅';
+  
+  // 위 조건에 해당하지 않으면 기본 트로피 아이콘
+  return '🏆';
+}
+
 export const metadata: Metadata = {
   title: '팀 역량 - Mate 외주개발팀',
   description: '유니티 외주 개발과 개발 강의에 특화된 Mate 팀의 역량을 소개합니다. 5년 이상의 경험과 30개 이상의 완료 프로젝트를 보유하고 있습니다.',
@@ -109,23 +125,9 @@ export default function TeamPage() {
                           <div className="flex items-start gap-4">
                             {/* 아이콘 - 전시회 또는 수상에 따라 다르게 표시 */}
                             <div className="flex-shrink-0">
-                              {award.type === 'exhibition' ? (
-                                // 전시회 아이콘
-                                <span className="text-4xl">🎪</span>
-                              ) : (
-                                // 수상 아이콘 - 등급에 따라 다르게
-                                <>
-                                  {award.rank === '대상' && <span className="text-4xl">🏆</span>}
-                                  {award.rank === '금상' && <span className="text-4xl">🥇</span>}
-                                  {award.rank === '은상' && <span className="text-4xl">🥈</span>}
-                                  {award.rank === '동상' && <span className="text-4xl">🥉</span>}
-                                  {(award.rank === '우수상' || award.rank === '장려상' || award.rank === '우수논문상') && (
-                                    <span className="text-4xl">🏅</span>
-                                  )}
-                                  {award.rank?.includes('인증서') && <span className="text-4xl">📜</span>}
-                                  {!award.rank && <span className="text-4xl">🎖️</span>}
-                                </>
-                              )}
+                              <span className="text-4xl">
+                                {award.type === 'exhibition' ? '🎪' : getAwardIcon(award.rank)}
+                              </span>
                             </div>
                             <div className="flex-grow">
                               <div className="flex items-center gap-2 mb-1">
