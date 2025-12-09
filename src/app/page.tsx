@@ -5,8 +5,10 @@ import Link from 'next/link';
 import Hero from '@/components/Hero';
 import ServiceCard from '@/components/ServiceCard';
 import ProjectCard from '@/components/ProjectCard';
+import TestimonialCard from '@/components/TestimonialCard';
 import { services } from '@/data/services';
 import { projects } from '@/data/projects';
+import { testimonials } from '@/data/testimonials';
 import { FiArrowRight } from 'react-icons/fi';
 
 export default function Home() {
@@ -32,7 +34,7 @@ export default function Home() {
               고객의 비즈니스 성장을 위한 전문적인 개발 서비스를 제공합니다
             </p>
           </motion.div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
             {services.map((service, index) => (
               <ServiceCard key={service.id} service={service} index={index} />
             ))}
@@ -82,7 +84,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Team Section */}
+      {/* Testimonials Section */}
       <section className="py-20 bg-gray-50">
         <div className="container mx-auto px-4">
           <motion.div
@@ -92,38 +94,62 @@ export default function Home() {
             className="text-center mb-12"
           >
             <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
-              Mate 팀의 역량
+              고객 후기
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Mate 팀과 함께한 고객들의 생생한 후기입니다
+            </p>
+          </motion.div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+            {testimonials.map((testimonial, index) => (
+              <TestimonialCard key={testimonial.id} testimonial={testimonial} index={index} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Team Section */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+              Mate 팀의 역량
+            </h2>
+            <p className="text-xl text-white/80 max-w-2xl mx-auto">
               유니티 외주 개발과 개발 강의에 특화된 전문 팀입니다
             </p>
           </motion.div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            <div className="text-center p-6 bg-white rounded-xl shadow-md">
+            <div className="text-center p-6 bg-white/10 backdrop-blur-sm rounded-xl shadow-md border border-white/20">
               <div className="text-4xl mb-3">🎯</div>
-              <div className="text-3xl font-bold text-purple-600 mb-2">30+</div>
-              <div className="text-gray-600">완료 프로젝트</div>
+              <div className="text-3xl font-bold text-white mb-2">30+</div>
+              <div className="text-white/80">완료 프로젝트</div>
             </div>
-            <div className="text-center p-6 bg-white rounded-xl shadow-md">
+            <div className="text-center p-6 bg-white/10 backdrop-blur-sm rounded-xl shadow-md border border-white/20">
               <div className="text-4xl mb-3">⏱️</div>
-              <div className="text-3xl font-bold text-purple-600 mb-2">4년</div>
-              <div className="text-gray-600">외주 개발 경력</div>
+              <div className="text-3xl font-bold text-white mb-2">5년</div>
+              <div className="text-white/80">외주 개발 경력</div>
             </div>
-            <div className="text-center p-6 bg-white rounded-xl shadow-md">
+            <div className="text-center p-6 bg-white/10 backdrop-blur-sm rounded-xl shadow-md border border-white/20">
               <div className="text-4xl mb-3">👥</div>
-              <div className="text-3xl font-bold text-purple-600 mb-2">4명</div>
-              <div className="text-gray-600">전문 개발자</div>
+              <div className="text-3xl font-bold text-white mb-2">4명</div>
+              <div className="text-white/80">전문 개발자</div>
             </div>
-            <div className="text-center p-6 bg-white rounded-xl shadow-md">
+            <div className="text-center p-6 bg-white/10 backdrop-blur-sm rounded-xl shadow-md border border-white/20">
               <div className="text-4xl mb-3">✅</div>
-              <div className="text-3xl font-bold text-purple-600 mb-2">100%</div>
-              <div className="text-gray-600">성공률</div>
+              <div className="text-3xl font-bold text-white mb-2">100%</div>
+              <div className="text-white/80">성공률</div>
             </div>
           </div>
           <div className="text-center">
             <Link
               href="/team"
-              className="inline-flex items-center text-purple-600 hover:text-purple-700 font-semibold"
+              className="inline-flex items-center text-white hover:text-purple-200 font-semibold"
             >
               팀 역량 자세히 보기
               <FiArrowRight className="ml-2" />

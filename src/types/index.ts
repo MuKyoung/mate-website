@@ -35,3 +35,28 @@ export interface Service {
   features: string[];
 }
 
+export interface Testimonial {
+  id: string;
+  name: string;
+  role: string;
+  company?: string;
+  content: string;
+  rating: number; // 1-5
+  projectId?: string; // 관련 프로젝트 ID
+}
+
+export interface FAQ {
+  id: string;
+  question: string;
+  answer: string;
+  category?: string;
+}
+
+export interface ProcessStep {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  order: number;
+}
+

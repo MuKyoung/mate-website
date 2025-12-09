@@ -30,14 +30,6 @@ export const awards: Award[] = [
     rank: '교육부장관 인증서',
     type: 'award',
   },
-  {
-    id: 'award-2025-3',
-    year: 2025,
-    title: '게임잼(Game Jam)',
-    organization: '명지전문대',
-    rank: '은상',
-    type: 'award',
-  },
 
   // ===== 2024년 =====
   {
@@ -107,14 +99,6 @@ export const awards: Award[] = [
     type: 'award',
   },
   {
-    id: 'award-2023-3',
-    year: 2023,
-    title: 'MJC 메타버스 포럼 성과 발표',
-    organization: '명지전문대',
-    rank: '발표 참가',
-    type: 'exhibition',
-  },
-  {
     id: 'award-2023-4',
     year: 2023,
     title: '게임기획 창업 지원사업',
@@ -147,14 +131,6 @@ export const awards: Award[] = [
     type: 'exhibition',
   },
   {
-    id: 'award-2023-8',
-    year: 2023,
-    title: '꼬꼬지생 DDP 쇼케이스',
-    organization: '한국콘텐츠진흥원',
-    rank: '전시 참가',
-    type: 'exhibition',
-  },
-  {
     id: 'award-2023-9',
     year: 2023,
     title: '메타버스 보드게임 프로젝트',
@@ -162,7 +138,14 @@ export const awards: Award[] = [
     rank: '전시 참가',
     type: 'exhibition',
   },
-
+  {
+    id: 'award-2023-8',
+    year: 2022,
+    title: '인디게임지원사업',
+    organization: '한국콘텐츠진흥원',
+    rank: '전시 참가',
+    type: 'exhibition',
+  },
   // ===== 2021년 =====
   {
     id: 'award-2021-1',
@@ -178,14 +161,6 @@ export const awards: Award[] = [
     title: '공학페스티벌 창의적 종합설계 경진대회',
     organization: '영남이공대학교 공학기술교육혁신센터',
     rank: '금상',
-    type: 'award',
-  },
-  {
-    id: 'award-2021-3',
-    year: 2021,
-    title: '캡스톤디자인 경진대회',
-    organization: '명지전문대',
-    rank: '은상',
     type: 'award',
   },
 ];
@@ -205,45 +180,27 @@ export const teamCapabilities = {
       projects: 20,
     },
     {
-      id: 'client',
-      title: '클라이언트 개발',
-      description: '고성능 게임 클라이언트와 사용자 인터페이스 개발',
-      icon: '💻',
-      skills: ['Unity Client', 'UI/UX', '최적화', '크로스 플랫폼'],
-      experience: '5년 이상',
-      projects: 15,
-    },
-    {
-      id: 'server',
-      title: '서버 개발',
-      description: '확장 가능한 게임 서버 아키텍처 설계 및 개발',
-      icon: '🖥️',
-      skills: ['게임 서버', '네트워크', '데이터베이스', 'API 개발'],
-      experience: '3년 이상',
-      projects: 10,
-    },
-    {
       id: 'outsourcing',
-      title: '외주 개발',
+      title: '웹/앱 외주 개발',
       description: '다양한 규모의 프로젝트를 안정적으로 완수하는 경험',
-      icon: '🤝',
-      skills: ['프로젝트 관리', '품질 보증', '일정 관리', '커뮤니케이션'],
+      icon: '🌐',
+      skills: ['React', 'Next.js', 'Flutter', 'Python', 'AWS', 'Github'],
       experience: '5년 이상',
-      projects: 30,
+      projects: 10,
     },
     {
       id: 'education',
       title: '개발 강의',
       description: '실무 경험을 바탕으로 한 체계적인 개발 교육 서비스',
       icon: '📚',
-      skills: ['Unity 강의', 'C# 프로그래밍', '게임 개발 교육', '실무 프로젝트 지도'],
+      skills: ['Unity 개발', '웹/앱 개발', 'AI 활용', '프로그래밍', '실무 프로젝트 지도'],
       experience: '3년 이상',
       projects: 15,
     },
   ],
   stats: {
     totalProjects: 30,
-    yearsExperience: 4,
+    yearsExperience: 5,
     teamMembers: 4,
     successRate: 100,
   },

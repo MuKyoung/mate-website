@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { FiMail, FiPhone, FiSend, FiMessageCircle } from 'react-icons/fi';
 import { RiKakaoTalkFill } from 'react-icons/ri';
+import FAQAccordion from '@/components/FAQAccordion';
+import { faqs } from '@/data/faq';
 
 // 카카오톡 오픈채팅 URL (실제 URL로 교체해주세요)
 const KAKAO_OPEN_CHAT_URL = 'https://open.kakao.com/o/scVFEK3h';
@@ -318,6 +320,28 @@ export default function ContactPage() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="py-20 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-12 md:mb-16"
+          >
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+              자주 묻는 질문
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              궁금한 점이 있으시면 FAQ를 확인해보세요
+            </p>
+          </motion.div>
+          <div className="max-w-3xl mx-auto">
+            <FAQAccordion faqs={faqs} />
           </div>
         </div>
       </section>
