@@ -345,7 +345,7 @@ export default function Hero() {
           <p className="text-lg sm:text-xl md:text-2xl text-white mb-8 max-w-2xl mx-auto drop-shadow">
             유니티 외주 개발과 개발 강의에 특화된 전문 팀입니다
           </p>
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4 mb-16 sm:mb-20">
             <Link
               href="/services"
               className="inline-flex items-center justify-center px-6 sm:px-8 py-3 sm:py-4 bg-white text-purple-700 rounded-lg font-semibold hover:bg-gray-100 transition-colors shadow-lg text-sm sm:text-base"
@@ -354,21 +354,20 @@ export default function Hero() {
               <FiArrowRight className="ml-2" />
             </Link>
           </div>
-        </motion.div>
 
-        {/* Scroll Indicator */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1, duration: 0.5 }}
-          className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
-        >
+          {/* Scroll Indicator */}
           <motion.div
-            animate={{ y: [0, 10, 0] }}
-            transition={{ repeat: Infinity, duration: 2 }}
-            className="text-white"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1, duration: 0.5 }}
           >
-            <FiArrowDown size={24} />
+            <motion.div
+              animate={{ y: [0, 10, 0] }}
+              transition={{ repeat: Infinity, duration: 2 }}
+              className="text-white/70"
+            >
+              <FiArrowDown size={24} />
+            </motion.div>
           </motion.div>
         </motion.div>
       </div>
