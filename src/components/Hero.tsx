@@ -353,12 +353,6 @@ export default function Hero() {
               우리의 서비스
               <FiArrowRight className="ml-2" />
             </Link>
-            <Link
-              href="/contact"
-              className="inline-flex items-center justify-center px-6 sm:px-8 py-3 sm:py-4 bg-white/10 backdrop-blur-sm border-2 border-white text-white rounded-lg font-semibold hover:bg-white/20 transition-colors text-sm sm:text-base"
-            >
-              문의하기
-            </Link>
           </div>
         </motion.div>
 

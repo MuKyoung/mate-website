@@ -12,7 +12,7 @@ export default function ProjectsClient({ projects }: ProjectsClientProps) {
   return (
     <>
       <ProjectFilter projects={projects} />
-      <FloatingNotice message="수정 중인 페이지입니다" />
+      <FloatingNotice message="정보를 추가 중입니다" />
     </>
   );
 }

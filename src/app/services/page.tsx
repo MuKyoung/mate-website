@@ -31,9 +31,9 @@ export default function ServicesPage() {
       />
 
       {/* Services Grid */}
-      <section className="py-20">
+      <section className="py-16 md:py-20 bg-white">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 max-w-6xl mx-auto">
             {services.map((service, index) => (
               <ServiceCard key={service.id} service={service} index={index} />
             ))}
@@ -42,13 +42,13 @@ export default function ServicesPage() {
       </section>
 
       {/* Process Timeline */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-16 md:py-20 bg-gray-50">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+          <div className="text-center mb-12 md:mb-16">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-4">
               개발 프로세스
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
               체계적인 프로세스로 고품질의 결과물을 만들어갑니다
             </p>
           </div>

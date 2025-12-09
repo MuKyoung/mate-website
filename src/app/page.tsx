@@ -52,7 +52,7 @@ export default function Home() {
       </section>
 
       {/* Featured Projects Section */}
-      <section className="py-20">
+      <section className="py-20 bg-gradient-to-br from-slate-800 to-slate-900">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -63,11 +63,11 @@ export default function Home() {
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
               주요 프로젝트
             </h2>
-            <p className="text-xl text-white/60 max-w-2xl mx-auto">
+            <p className="text-xl text-gray-300 max-w-2xl mx-auto">
               다양한 산업 분야에서 성공적으로 완료한 프로젝트들을 소개합니다
             </p>
           </motion.div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {featuredProjects.map((project, index) => (
               <ProjectCard key={project.id} project={project} index={index} />
             ))}
@@ -75,7 +75,7 @@ export default function Home() {
           <div className="text-center mt-12">
             <Link
               href="/projects"
-              className="inline-flex items-center text-purple-600 hover:text-purple-700 font-semibold"
+              className="inline-flex items-center text-white hover:text-purple-300 font-semibold transition-colors"
             >
               모든 프로젝트 보기
               <FiArrowRight className="ml-2" />
@@ -109,7 +109,7 @@ export default function Home() {
       </section>
 
       {/* Team Section */}
-      <section className="py-20">
+      <section className="py-20 bg-gradient-to-br from-purple-700 to-indigo-800">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -120,36 +120,60 @@ export default function Home() {
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
               Mate 팀의 역량
             </h2>
-            <p className="text-xl text-white/80 max-w-2xl mx-auto">
+            <p className="text-xl text-purple-100 max-w-2xl mx-auto">
               유니티 외주 개발과 개발 강의에 특화된 전문 팀입니다
             </p>
           </motion.div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            <div className="text-center p-6 bg-white/10 backdrop-blur-sm rounded-xl shadow-md border border-white/20">
-              <div className="text-4xl mb-3">🎯</div>
-              <div className="text-3xl font-bold text-white mb-2">30+</div>
-              <div className="text-white/80">완료 프로젝트</div>
-            </div>
-            <div className="text-center p-6 bg-white/10 backdrop-blur-sm rounded-xl shadow-md border border-white/20">
-              <div className="text-4xl mb-3">⏱️</div>
-              <div className="text-3xl font-bold text-white mb-2">5년</div>
-              <div className="text-white/80">외주 개발 경력</div>
-            </div>
-            <div className="text-center p-6 bg-white/10 backdrop-blur-sm rounded-xl shadow-md border border-white/20">
-              <div className="text-4xl mb-3">👥</div>
-              <div className="text-3xl font-bold text-white mb-2">4명</div>
-              <div className="text-white/80">전문 개발자</div>
-            </div>
-            <div className="text-center p-6 bg-white/10 backdrop-blur-sm rounded-xl shadow-md border border-white/20">
-              <div className="text-4xl mb-3">✅</div>
-              <div className="text-3xl font-bold text-white mb-2">100%</div>
-              <div className="text-white/80">성공률</div>
-            </div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-12 max-w-5xl mx-auto">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+              className="text-center p-5 md:p-6 bg-white/10 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 hover:bg-white/15 transition-colors"
+            >
+              <div className="text-3xl md:text-4xl mb-3">🎯</div>
+              <div className="text-2xl md:text-3xl font-bold text-white mb-1">30+</div>
+              <div className="text-sm md:text-base text-purple-100">완료 프로젝트</div>
+            </motion.div>
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+              className="text-center p-5 md:p-6 bg-white/10 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 hover:bg-white/15 transition-colors"
+            >
+              <div className="text-3xl md:text-4xl mb-3">⏱️</div>
+              <div className="text-2xl md:text-3xl font-bold text-white mb-1">5년</div>
+              <div className="text-sm md:text-base text-purple-100">외주 개발 경력</div>
+            </motion.div>
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3 }}
+              className="text-center p-5 md:p-6 bg-white/10 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 hover:bg-white/15 transition-colors"
+            >
+              <div className="text-3xl md:text-4xl mb-3">👥</div>
+              <div className="text-2xl md:text-3xl font-bold text-white mb-1">4명</div>
+              <div className="text-sm md:text-base text-purple-100">전문 개발자</div>
+            </motion.div>
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.4 }}
+              className="text-center p-5 md:p-6 bg-white/10 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 hover:bg-white/15 transition-colors"
+            >
+              <div className="text-3xl md:text-4xl mb-3">✅</div>
+              <div className="text-2xl md:text-3xl font-bold text-white mb-1">100%</div>
+              <div className="text-sm md:text-base text-purple-100">성공률</div>
+            </motion.div>
           </div>
           <div className="text-center">
             <Link
               href="/team"
-              className="inline-flex items-center text-white hover:text-purple-200 font-semibold"
+              className="inline-flex items-center text-white hover:text-purple-200 font-semibold transition-colors"
             >
               팀 역량 자세히 보기
               <FiArrowRight className="ml-2" />

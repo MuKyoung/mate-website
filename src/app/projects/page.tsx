@@ -29,7 +29,7 @@ export default function ProjectsPage() {
       />
 
       {/* Projects Section */}
-      <section className="py-20">
+      <section className="py-16 md:py-20 bg-white">
         <div className="container mx-auto px-4">
           <ProjectsClient projects={projects} />
         </div>
