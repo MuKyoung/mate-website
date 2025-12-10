@@ -19,7 +19,7 @@ export default function Home() {
       <Hero />
 
       {/* Services Section */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-20 bg-gray-50 relative z-10">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -52,7 +52,7 @@ export default function Home() {
       </section>
 
       {/* Featured Projects Section */}
-      <section className="py-20 bg-gradient-to-br from-slate-800 to-slate-900">
+      <section className="py-20 bg-gradient-to-br from-slate-800 to-slate-900 relative z-10">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -85,7 +85,7 @@ export default function Home() {
       </section>
 
       {/* Testimonials Section */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-20 bg-gray-50 relative z-10">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -109,7 +109,7 @@ export default function Home() {
       </section>
 
       {/* Team Section */}
-      <section className="py-20 bg-gradient-to-br from-purple-700 to-indigo-800">
+      <section className="py-20 bg-gradient-to-br from-purple-700 to-indigo-800 relative z-10">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -183,7 +183,7 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 gradient-bg">
+      <section className="py-20 gradient-bg relative z-10">
         <div className="container mx-auto px-4 text-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}

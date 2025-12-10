@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { FiMail, FiPhone, FiSend, FiMessageCircle } from 'react-icons/fi';
 import { RiKakaoTalkFill } from 'react-icons/ri';
 import FAQAccordion from '@/components/FAQAccordion';
+import FloatingNotice from '@/components/FloatingNotice';
 import { faqs } from '@/data/faq';
 
 // 카카오톡 오픈채팅 URL (실제 URL로 교체해주세요)
@@ -120,6 +121,9 @@ export default function ContactPage() {
 
   return (
     <div className="pt-20">
+      {/* Server Error Notice */}
+      <FloatingNotice message="현재 '메시지 보내기' 기능의 서버 오류가 있습니다. 카카오톡 1대1 오픈채팅방을 이용해주시면 감사하겠습니다." />
+
       {/* Header */}
       <section className="py-16 bg-gradient-to-r from-purple-600 to-pink-600 text-white">
         <div className="container mx-auto px-4 text-center">

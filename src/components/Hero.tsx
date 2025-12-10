@@ -6,7 +6,7 @@ import { FiArrowDown, FiArrowRight } from 'react-icons/fi';
 
 export default function Hero() {
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden" style={{ isolation: 'isolate' }}>
       {/* Animated Gradient Background */}
       <div className="absolute inset-0 gradient-bg opacity-90"></div>
 
@@ -278,31 +278,41 @@ export default function Hero() {
         </motion.div>
       </div>
 
-      {/* Animated Lines */}
-      <div className="absolute inset-0" style={{ zIndex: 1 }}>
-        <svg className="w-full h-full opacity-10">
-          <motion.line
-            x1="0"
-            y1="0"
-            x2="100%"
-            y2="100%"
-            stroke="white"
-            strokeWidth="2"
-            initial={{ pathLength: 0, opacity: 0 }}
-            animate={{ pathLength: 1, opacity: 0.3 }}
-            transition={{ duration: 3, repeat: Infinity, repeatType: "reverse" }}
-          />
-          <motion.line
-            x1="100%"
-            y1="0"
-            x2="0"
-            y2="100%"
-            stroke="white"
-            strokeWidth="2"
-            initial={{ pathLength: 0, opacity: 0 }}
-            animate={{ pathLength: 1, opacity: 0.3 }}
-            transition={{ duration: 4, repeat: Infinity, repeatType: "reverse", delay: 1 }}
-          />
+      {/* Animated Lines - contained within Hero only */}
+      <div 
+        className="absolute inset-0 overflow-hidden pointer-events-none" 
+        style={{ zIndex: 1, contain: 'strict' }}
+      >
+        <svg className="w-full h-full opacity-10" style={{ maxHeight: '100%', maxWidth: '100%' }}>
+          <defs>
+            <clipPath id="heroClipPath">
+              <rect x="0" y="0" width="100%" height="100%" />
+            </clipPath>
+          </defs>
+          <g clipPath="url(#heroClipPath)">
+            <motion.line
+              x1="0"
+              y1="0"
+              x2="100%"
+              y2="100%"
+              stroke="white"
+              strokeWidth="2"
+              initial={{ pathLength: 0, opacity: 0 }}
+              animate={{ pathLength: 1, opacity: 0.3 }}
+              transition={{ duration: 3, repeat: Infinity, repeatType: "reverse" }}
+            />
+            <motion.line
+              x1="100%"
+              y1="0"
+              x2="0"
+              y2="100%"
+              stroke="white"
+              strokeWidth="2"
+              initial={{ pathLength: 0, opacity: 0 }}
+              animate={{ pathLength: 1, opacity: 0.3 }}
+              transition={{ duration: 4, repeat: Infinity, repeatType: "reverse", delay: 1 }}
+            />
+          </g>
         </svg>
       </div>
 
@@ -345,7 +355,7 @@ export default function Hero() {
           <p className="text-lg sm:text-xl md:text-2xl text-white mb-8 max-w-2xl mx-auto drop-shadow">
             유니티 외주 개발과 개발 강의에 특화된 전문 팀입니다
           </p>
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4 mb-16 sm:mb-20">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
             <Link
               href="/services"
               className="inline-flex items-center justify-center px-6 sm:px-8 py-3 sm:py-4 bg-white text-purple-700 rounded-lg font-semibold hover:bg-gray-100 transition-colors shadow-lg text-sm sm:text-base"
@@ -354,23 +364,24 @@ export default function Hero() {
               <FiArrowRight className="ml-2" />
             </Link>
           </div>
-
-          {/* Scroll Indicator */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1, duration: 0.5 }}
-          >
-            <motion.div
-              animate={{ y: [0, 10, 0] }}
-              transition={{ repeat: Infinity, duration: 2 }}
-              className="text-white/70"
-            >
-              <FiArrowDown size={24} />
-            </motion.div>
-          </motion.div>
         </motion.div>
       </div>
+
+      {/* Scroll Indicator - positioned at bottom, separate from content */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1, duration: 0.5 }}
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20"
+      >
+        <motion.div
+          animate={{ y: [0, 10, 0] }}
+          transition={{ repeat: Infinity, duration: 2 }}
+          className="text-white/50"
+        >
+          <FiArrowDown size={24} />
+        </motion.div>
+      </motion.div>
     </section>
   );
 }
