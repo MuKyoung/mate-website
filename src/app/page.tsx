@@ -19,30 +19,30 @@ export default function Home() {
       <Hero />
 
       {/* Services Section */}
-      <section className="py-20 bg-gray-50 relative z-10">
-        <div className="container mx-auto px-4">
+      <section className="py-14 sm:py-16 md:py-20 bg-gray-50 relative z-10">
+        <div className="container mx-auto px-4 sm:px-6">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-12"
+            className="text-center mb-8 sm:mb-10 md:mb-12"
           >
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-800 mb-3 sm:mb-4">
               우리의 서비스
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
               고객의 비즈니스 성장을 위한 전문적인 개발 서비스를 제공합니다
             </p>
           </motion.div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6 max-w-6xl mx-auto">
             {services.map((service, index) => (
               <ServiceCard key={service.id} service={service} index={index} />
             ))}
           </div>
-          <div className="text-center mt-12">
+          <div className="text-center mt-8 sm:mt-10 md:mt-12">
             <Link
               href="/services"
-              className="inline-flex items-center text-purple-600 hover:text-purple-700 font-semibold"
+              className="inline-flex items-center text-purple-600 hover:text-purple-700 font-semibold text-sm sm:text-base"
             >
               모든 서비스 보기
               <FiArrowRight className="ml-2" />
@@ -52,30 +52,30 @@ export default function Home() {
       </section>
 
       {/* Featured Projects Section */}
-      <section className="py-20 bg-gradient-to-br from-slate-800 to-slate-900 relative z-10">
-        <div className="container mx-auto px-4">
+      <section className="py-14 sm:py-16 md:py-20 bg-gradient-to-br from-slate-800 to-slate-900 relative z-10">
+        <div className="container mx-auto px-4 sm:px-6">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-12"
+            className="text-center mb-8 sm:mb-10 md:mb-12"
           >
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3 sm:mb-4">
               주요 프로젝트
             </h2>
-            <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl text-gray-300 max-w-2xl mx-auto">
               다양한 산업 분야에서 성공적으로 완료한 프로젝트들을 소개합니다
             </p>
           </motion.div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8 max-w-6xl mx-auto">
             {featuredProjects.map((project, index) => (
               <ProjectCard key={project.id} project={project} index={index} />
             ))}
           </div>
-          <div className="text-center mt-12">
+          <div className="text-center mt-8 sm:mt-10 md:mt-12">
             <Link
               href="/projects"
-              className="inline-flex items-center text-white hover:text-purple-300 font-semibold transition-colors"
+              className="inline-flex items-center text-white hover:text-purple-300 font-semibold transition-colors text-sm sm:text-base"
             >
               모든 프로젝트 보기
               <FiArrowRight className="ml-2" />
@@ -85,22 +85,22 @@ export default function Home() {
       </section>
 
       {/* Testimonials Section */}
-      <section className="py-20 bg-gray-50 relative z-10">
-        <div className="container mx-auto px-4">
+      <section className="py-14 sm:py-16 md:py-20 bg-gray-50 relative z-10">
+        <div className="container mx-auto px-4 sm:px-6">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-12"
+            className="text-center mb-8 sm:mb-10 md:mb-12"
           >
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-800 mb-3 sm:mb-4">
               고객 후기
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
               Mate 팀과 함께한 고객들의 생생한 후기입니다
             </p>
           </motion.div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 md:gap-6 max-w-7xl mx-auto">
             {testimonials.map((testimonial, index) => (
               <TestimonialCard key={testimonial.id} testimonial={testimonial} index={index} />
             ))}
@@ -109,71 +109,71 @@ export default function Home() {
       </section>
 
       {/* Team Section */}
-      <section className="py-20 bg-gradient-to-br from-purple-700 to-indigo-800 relative z-10">
-        <div className="container mx-auto px-4">
+      <section className="py-14 sm:py-16 md:py-20 bg-gradient-to-br from-purple-700 to-indigo-800 relative z-10">
+        <div className="container mx-auto px-4 sm:px-6">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-12"
+            className="text-center mb-8 sm:mb-10 md:mb-12"
           >
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3 sm:mb-4">
               Mate 팀의 역량
             </h2>
-            <p className="text-xl text-purple-100 max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl text-purple-100 max-w-2xl mx-auto">
               유니티 외주 개발과 개발 강의에 특화된 전문 팀입니다
             </p>
           </motion.div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-12 max-w-5xl mx-auto">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-8 sm:mb-10 md:mb-12 max-w-5xl mx-auto">
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.1 }}
-              className="text-center p-5 md:p-6 bg-white/10 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 hover:bg-white/15 transition-colors"
+              className="text-center p-4 sm:p-5 md:p-6 bg-white/10 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 hover:bg-white/15 transition-colors"
             >
-              <div className="text-3xl md:text-4xl mb-3">🎯</div>
-              <div className="text-2xl md:text-3xl font-bold text-white mb-1">30+</div>
-              <div className="text-sm md:text-base text-purple-100">완료 프로젝트</div>
+              <div className="text-2xl sm:text-3xl md:text-4xl mb-2 sm:mb-3">🎯</div>
+              <div className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-0.5 sm:mb-1">30+</div>
+              <div className="text-xs sm:text-sm md:text-base text-purple-100">완료 프로젝트</div>
             </motion.div>
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.2 }}
-              className="text-center p-5 md:p-6 bg-white/10 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 hover:bg-white/15 transition-colors"
+              className="text-center p-4 sm:p-5 md:p-6 bg-white/10 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 hover:bg-white/15 transition-colors"
             >
-              <div className="text-3xl md:text-4xl mb-3">⏱️</div>
-              <div className="text-2xl md:text-3xl font-bold text-white mb-1">5년</div>
-              <div className="text-sm md:text-base text-purple-100">외주 개발 경력</div>
+              <div className="text-2xl sm:text-3xl md:text-4xl mb-2 sm:mb-3">⏱️</div>
+              <div className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-0.5 sm:mb-1">5년</div>
+              <div className="text-xs sm:text-sm md:text-base text-purple-100">외주 개발 경력</div>
             </motion.div>
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.3 }}
-              className="text-center p-5 md:p-6 bg-white/10 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 hover:bg-white/15 transition-colors"
+              className="text-center p-4 sm:p-5 md:p-6 bg-white/10 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 hover:bg-white/15 transition-colors"
             >
-              <div className="text-3xl md:text-4xl mb-3">👥</div>
-              <div className="text-2xl md:text-3xl font-bold text-white mb-1">4명</div>
-              <div className="text-sm md:text-base text-purple-100">전문 개발자</div>
+              <div className="text-2xl sm:text-3xl md:text-4xl mb-2 sm:mb-3">👥</div>
+              <div className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-0.5 sm:mb-1">4명</div>
+              <div className="text-xs sm:text-sm md:text-base text-purple-100">전문 개발자</div>
             </motion.div>
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.4 }}
-              className="text-center p-5 md:p-6 bg-white/10 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 hover:bg-white/15 transition-colors"
+              className="text-center p-4 sm:p-5 md:p-6 bg-white/10 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 hover:bg-white/15 transition-colors"
             >
-              <div className="text-3xl md:text-4xl mb-3">✅</div>
-              <div className="text-2xl md:text-3xl font-bold text-white mb-1">100%</div>
-              <div className="text-sm md:text-base text-purple-100">성공률</div>
+              <div className="text-2xl sm:text-3xl md:text-4xl mb-2 sm:mb-3">✅</div>
+              <div className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-0.5 sm:mb-1">100%</div>
+              <div className="text-xs sm:text-sm md:text-base text-purple-100">성공률</div>
             </motion.div>
           </div>
           <div className="text-center">
             <Link
               href="/team"
-              className="inline-flex items-center text-white hover:text-purple-200 font-semibold transition-colors"
+              className="inline-flex items-center text-white hover:text-purple-200 font-semibold transition-colors text-sm sm:text-base"
             >
               팀 역량 자세히 보기
               <FiArrowRight className="ml-2" />
@@ -183,22 +183,22 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 gradient-bg relative z-10">
-        <div className="container mx-auto px-4 text-center">
+      <section className="py-14 sm:py-16 md:py-20 gradient-bg relative z-10">
+        <div className="container mx-auto px-4 sm:px-6 text-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 sm:mb-6">
               프로젝트를 시작할 준비가 되셨나요?
             </h2>
-            <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl text-white/90 mb-6 sm:mb-8 max-w-2xl mx-auto">
               지금 바로 문의하시면 전문가가 상담해드립니다
             </p>
             <Link
               href="/contact"
-              className="inline-flex items-center px-8 py-4 bg-white text-purple-600 rounded-lg font-semibold hover:bg-gray-100 transition-colors shadow-lg"
+              className="inline-flex items-center px-6 sm:px-8 py-3 sm:py-4 bg-white text-purple-600 rounded-lg font-semibold hover:bg-gray-100 transition-colors shadow-lg text-sm sm:text-base"
             >
               문의하기
               <FiArrowRight className="ml-2" />

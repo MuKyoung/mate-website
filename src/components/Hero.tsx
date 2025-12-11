@@ -12,10 +12,10 @@ export default function Hero() {
 
       {/* Geometric Shapes - Floating Circles */}
       <motion.div
-        className="absolute top-20 left-10 w-72 h-72 bg-white/10 rounded-full blur-3xl"
+        className="absolute top-20 left-10 w-40 h-40 sm:w-56 sm:h-56 md:w-72 md:h-72 bg-white/10 rounded-full blur-3xl"
         animate={{
-          x: [0, 100, 0],
-          y: [0, 50, 0],
+          x: [0, 50, 0],
+          y: [0, 30, 0],
           scale: [1, 1.2, 1],
         }}
         transition={{
@@ -25,10 +25,10 @@ export default function Hero() {
         }}
       />
       <motion.div
-        className="absolute bottom-20 right-10 w-96 h-96 bg-pink-500/20 rounded-full blur-3xl"
+        className="absolute bottom-20 right-10 w-48 h-48 sm:w-72 sm:h-72 md:w-96 md:h-96 bg-pink-500/20 rounded-full blur-3xl"
         animate={{
-          x: [0, -80, 0],
-          y: [0, -60, 0],
+          x: [0, -40, 0],
+          y: [0, -30, 0],
           scale: [1, 0.8, 1],
         }}
         transition={{
@@ -38,10 +38,10 @@ export default function Hero() {
         }}
       />
       <motion.div
-        className="absolute top-1/2 right-1/4 w-64 h-64 bg-purple-500/15 rounded-full blur-3xl"
+        className="absolute top-1/2 right-1/4 w-32 h-32 sm:w-48 sm:h-48 md:w-64 md:h-64 bg-purple-500/15 rounded-full blur-3xl"
         animate={{
-          x: [0, 60, 0],
-          y: [0, -80, 0],
+          x: [0, 30, 0],
+          y: [0, -40, 0],
           scale: [1, 1.3, 1],
         }}
         transition={{
@@ -51,8 +51,8 @@ export default function Hero() {
         }}
       />
 
-      {/* Geometric Shapes - 3D Rotating Triangle */}
-      <div className="absolute top-1/4 left-1/4" style={{ perspective: '1000px' }}>
+      {/* Geometric Shapes - 3D Rotating Triangle (hidden on mobile) */}
+      <div className="absolute top-1/4 left-1/4 hidden md:block" style={{ perspective: '1000px' }}>
         <motion.div
           style={{
             transformStyle: 'preserve-3d',
@@ -113,7 +113,7 @@ export default function Hero() {
         </motion.div>
       </div>
       <motion.div
-        className="absolute bottom-1/4 right-1/3 w-0 h-0"
+        className="absolute bottom-1/4 right-1/3 w-0 h-0 hidden sm:block"
         style={{
           borderLeft: '80px solid transparent',
           borderRight: '80px solid transparent',
@@ -130,8 +130,8 @@ export default function Hero() {
         }}
       />
 
-      {/* Geometric Shapes - 3D Rotating Cube */}
-      <div className="absolute top-1/3 right-1/5" style={{ perspective: '1000px' }}>
+      {/* Geometric Shapes - 3D Rotating Cube (hidden on mobile) */}
+      <div className="absolute top-1/3 right-1/5 hidden lg:block" style={{ perspective: '1000px' }}>
         <motion.div
           style={{
             transformStyle: 'preserve-3d',
@@ -202,7 +202,7 @@ export default function Hero() {
         </motion.div>
       </div>
       <motion.div
-        className="absolute bottom-1/3 left-1/5 w-24 h-24 border-2 border-white/15 rotate-45"
+        className="absolute bottom-1/3 left-1/5 w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 border-2 border-white/15 rotate-45 hidden sm:block"
         animate={{
           rotate: [45, -315],
           scale: [1, 0.7, 1],
@@ -215,8 +215,8 @@ export default function Hero() {
         }}
       />
 
-      {/* 3D Rotating Hexagon */}
-      <div className="absolute top-1/2 left-1/2" style={{ perspective: '1000px', marginLeft: '-100px', marginTop: '-100px' }}>
+      {/* 3D Rotating Hexagon (hidden on mobile/tablet) */}
+      <div className="absolute top-1/2 left-1/2 hidden lg:block" style={{ perspective: '1000px', marginLeft: '-100px', marginTop: '-100px' }}>
         <motion.div
           style={{
             transformStyle: 'preserve-3d',
@@ -316,17 +316,17 @@ export default function Hero() {
         </svg>
       </div>
 
-      {/* Floating Particles */}
+      {/* Floating Particles - reduced on mobile */}
       {[...Array(6)].map((_, i) => (
         <motion.div
           key={i}
-          className="absolute w-2 h-2 bg-white/30 rounded-full"
+          className={`absolute w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white/30 rounded-full ${i > 3 ? 'hidden sm:block' : ''}`}
           style={{
             left: `${20 + i * 15}%`,
             top: `${30 + (i % 3) * 20}%`,
           }}
           animate={{
-            y: [0, -30, 0],
+            y: [0, -20, 0],
             opacity: [0.3, 0.6, 0.3],
             scale: [1, 1.5, 1],
           }}
