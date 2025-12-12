@@ -102,6 +102,9 @@ export default function Footer() {
 
         <div className="border-t border-gray-700 mt-8 pt-6 sm:pt-8 text-center text-xs sm:text-sm text-gray-400">
           <p>&copy; {currentYear} Mate. All rights reserved.</p>
+          <p className="mt-1 text-[10px] sm:text-xs text-gray-600/50 font-mono">
+            v0.1.0
+          </p>
         </div>
       </div>
     </footer>
