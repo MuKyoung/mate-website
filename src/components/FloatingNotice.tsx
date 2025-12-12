@@ -20,7 +20,7 @@ export default function FloatingNotice({ message }: FloatingNoticeProps) {
           initial={{ opacity: 0, y: 50, scale: 0.9 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 50, scale: 0.9 }}
-          className="fixed bottom-4 left-0 right-0 z-50 px-2 sm:px-4 md:px-6"
+          className="fixed bottom-16 sm:bottom-4 left-0 right-0 z-50 px-2 sm:px-4 md:px-6"
         >
           <div className="mx-auto max-w-xl">
             <div className="bg-amber-500 text-white rounded-lg sm:rounded-xl shadow-2xl px-3 py-2.5 sm:px-4 sm:py-3 md:px-5 md:py-4 flex items-start sm:items-center gap-2 sm:gap-3 min-w-0">
