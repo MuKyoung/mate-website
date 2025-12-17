@@ -1,113 +1,165 @@
+'use client';
+
 import Link from 'next/link';
-import { FiGithub, FiLinkedin, FiMail, FiTwitter } from 'react-icons/fi';
+import { motion } from 'framer-motion';
+import { FiGithub, FiLinkedin, FiMail, FiTwitter, FiArrowUpRight } from 'react-icons/fi';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
 
+  const footerLinks = {
+    navigation: [
+      { href: '/', label: '홈' },
+      { href: '/services', label: '서비스' },
+      { href: '/team', label: '팀' },
+      { href: '/projects', label: '프로젝트' },
+      { href: '/contact', label: '문의' },
+    ],
+    services: [
+      '유니티 외주 개발',
+      '개발 강의',
+      'AR/VR 개발',
+      '게임 서버 개발',
+    ],
+  };
+
+  const socialLinks = [
+    { icon: FiGithub, href: 'https://github.com', label: 'GitHub' },
+    { icon: FiLinkedin, href: 'https://linkedin.com', label: 'LinkedIn' },
+    { icon: FiTwitter, href: 'https://twitter.com', label: 'Twitter' },
+    { icon: FiMail, href: 'mailto:team-mate@naver.com', label: 'Email' },
+  ];
+
   return (
-    <footer className="bg-gray-900 text-gray-400">
-      <div className="container mx-auto px-4 sm:px-6 py-10 sm:py-12">
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8">
-          {/* Company Info */}
-          <div className="col-span-2 sm:col-span-2 md:col-span-1 mb-2 sm:mb-0">
-            <h3 className="text-xl sm:text-2xl font-bold text-white mb-3 sm:mb-4">Mate</h3>
-            <p className="text-sm text-gray-300 leading-relaxed">
+    <footer className="relative bg-[#0a0a1a] border-t border-white/5 overflow-hidden">
+      {/* Background Elements */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div 
+          className="absolute bottom-0 left-1/4 w-[500px] h-[500px] rounded-full"
+          style={{
+            background: 'radial-gradient(circle, rgba(124, 58, 237, 0.05) 0%, transparent 70%)',
+            filter: 'blur(80px)',
+          }}
+        />
+      </div>
+
+      <div className="container mx-auto px-4 sm:px-6 py-12 sm:py-16 relative z-10">
+        {/* Main Footer Content */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 sm:gap-12 mb-12 sm:mb-16">
+          {/* Brand */}
+          <div className="col-span-2 md:col-span-1">
+            <Link href="/" className="inline-block mb-4 sm:mb-6">
+              <span className="text-3xl sm:text-4xl font-bold gradient-text">MATE</span>
+            </Link>
+            <p className="text-sm sm:text-base text-white/50 leading-relaxed mb-6">
               유니티 외주 개발과 개발 강의에 특화된 전문 개발 팀입니다.
             </p>
+            {/* Social Links */}
+            <div className="flex gap-3">
+              {socialLinks.map((social) => (
+                <motion.a
+                  key={social.label}
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 hover:border-purple-500/30 transition-all duration-300"
+                  whileHover={{ scale: 1.1, y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                  aria-label={social.label}
+                >
+                  <social.icon size={18} />
+                </motion.a>
+              ))}
+            </div>
           </div>
 
-          {/* Quick Links */}
+          {/* Navigation */}
           <div>
-            <h4 className="text-white font-semibold mb-3 sm:mb-4 text-sm sm:text-base">빠른 링크</h4>
-            <ul className="space-y-1.5 sm:space-y-2">
-              <li>
-                <Link href="/" className="text-gray-300 hover:text-white transition-colors text-sm">
-                  홈
-                </Link>
-              </li>
-              <li>
-                <Link href="/services" className="text-gray-300 hover:text-white transition-colors text-sm">
-                  서비스
-                </Link>
-              </li>
-              <li>
-                <Link href="/team" className="text-gray-300 hover:text-white transition-colors text-sm">
-                  팀
-                </Link>
-              </li>
-              <li>
-                <Link href="/projects" className="text-gray-300 hover:text-white transition-colors text-sm">
-                  프로젝트
-                </Link>
-              </li>
+            <h4 className="text-white font-semibold mb-4 sm:mb-6 text-sm uppercase tracking-wider">
+              Navigation
+            </h4>
+            <ul className="space-y-3">
+              {footerLinks.navigation.map((link) => (
+                <li key={link.href}>
+                  <Link 
+                    href={link.href}
+                    className="group inline-flex items-center gap-1 text-white/50 hover:text-white transition-colors text-sm sm:text-base"
+                  >
+                    {link.label}
+                    <FiArrowUpRight 
+                      size={12} 
+                      className="opacity-0 group-hover:opacity-100 transition-opacity" 
+                    />
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
           {/* Services */}
           <div>
-            <h4 className="text-white font-semibold mb-3 sm:mb-4 text-sm sm:text-base">서비스</h4>
-            <ul className="space-y-1.5 sm:space-y-2 text-sm text-gray-300">
-              <li>유니티 외주 개발</li>
-              <li>개발 강의</li>
-              <li>AR/VR 개발</li>
-              <li>게임 서버 개발</li>
+            <h4 className="text-white font-semibold mb-4 sm:mb-6 text-sm uppercase tracking-wider">
+              Services
+            </h4>
+            <ul className="space-y-3">
+              {footerLinks.services.map((service) => (
+                <li key={service} className="text-white/50 text-sm sm:text-base">
+                  {service}
+                </li>
+              ))}
             </ul>
           </div>
 
-          {/* Contact & Social */}
-          <div className="col-span-2 sm:col-span-1">
-            <h4 className="text-white font-semibold mb-3 sm:mb-4 text-sm sm:text-base">연락처</h4>
-            <div className="space-y-1.5 sm:space-y-2 text-sm text-gray-300">
-              <p className="break-all">이메일: team-mate@naver.com</p>
-              <p>전화: 010-5457-9141</p>
-              <div className="flex space-x-5 sm:space-x-4 mt-4 sm:mt-4">
-                <a
-                  href="https://github.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-gray-400 hover:text-white transition-colors p-1"
-                  aria-label="GitHub"
-                >
-                  <FiGithub size={22} />
-                </a>
-                <a
-                  href="https://linkedin.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-gray-400 hover:text-white transition-colors p-1"
-                  aria-label="LinkedIn"
-                >
-                  <FiLinkedin size={22} />
-                </a>
-                <a
-                  href="https://twitter.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-gray-400 hover:text-white transition-colors p-1"
-                  aria-label="Twitter"
-                >
-                  <FiTwitter size={22} />
-                </a>
-                <a
+          {/* Contact */}
+          <div className="col-span-2 md:col-span-1">
+            <h4 className="text-white font-semibold mb-4 sm:mb-6 text-sm uppercase tracking-wider">
+              Contact
+            </h4>
+            <div className="space-y-4">
+              <div>
+                <p className="text-xs text-white/30 uppercase tracking-wider mb-1">Email</p>
+                <a 
                   href="mailto:team-mate@naver.com"
-                  className="text-gray-400 hover:text-white transition-colors p-1"
-                  aria-label="Email"
+                  className="text-white/70 hover:text-white transition-colors text-sm sm:text-base break-all"
                 >
-                  <FiMail size={22} />
+                  team-mate@naver.com
                 </a>
               </div>
+              <div>
+                <p className="text-xs text-white/30 uppercase tracking-wider mb-1">Phone</p>
+                <a 
+                  href="tel:010-5457-9141"
+                  className="text-white/70 hover:text-white transition-colors text-sm sm:text-base"
+                >
+                  010-5457-9141
+                </a>
+              </div>
+              
+              {/* CTA Button */}
+              <Link
+                href="/contact"
+                className="inline-flex items-center gap-2 mt-4 px-5 py-2.5 rounded-full text-sm font-medium text-white bg-gradient-to-r from-purple-600/80 to-pink-600/80 hover:from-purple-600 hover:to-pink-600 transition-all duration-300"
+              >
+                프로젝트 문의
+                <FiArrowUpRight size={14} />
+              </Link>
             </div>
           </div>
         </div>
 
-        <div className="border-t border-gray-700 mt-8 pt-6 sm:pt-8 text-center text-xs sm:text-sm text-gray-400">
-          <p>&copy; {currentYear} Mate. All rights reserved.</p>
-          <p className="mt-1 text-[10px] sm:text-xs text-gray-600/50 font-mono">
-            v0.1.0
-          </p>
+        {/* Bottom Bar */}
+        <div className="pt-8 border-t border-white/5">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-xs sm:text-sm text-white/30">
+              © {currentYear} Mate. All rights reserved.
+            </p>
+            <div className="flex items-center gap-6">
+              <span className="text-xs text-white/20 font-mono">v0.1.0</span>
+              <span className="text-xs text-white/30">Made with 💜 in Korea</span>
+            </div>
+          </div>
         </div>
       </div>
     </footer>
   );
 }
-

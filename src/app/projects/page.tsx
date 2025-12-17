@@ -1,6 +1,5 @@
 import { Metadata } from 'next';
-import PageHeader from '@/components/PageHeader';
-import ProjectsClient from './ProjectsClient';
+import ProjectsPageClient from './ProjectsPageClient';
 import { projects } from '@/data/projects';
 
 const siteUrl = 'https://devteammate.co.kr';
@@ -21,19 +20,5 @@ export const metadata: Metadata = {
 };
 
 export default function ProjectsPage() {
-  return (
-    <div className="pt-20">
-      <PageHeader
-        title="프로젝트 포트폴리오"
-        description="다양한 산업 분야에서 성공적으로 완료한 프로젝트들을 소개합니다"
-      />
-
-      {/* Projects Section */}
-      <section className="py-16 md:py-20 bg-white">
-        <div className="container mx-auto px-4">
-          <ProjectsClient projects={projects} />
-        </div>
-      </section>
-    </div>
-  );
+  return <ProjectsPageClient projects={projects} />;
 }
