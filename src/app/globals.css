@@ -338,3 +338,264 @@ html {
 .desktop-only {
   @apply hidden lg:block;
 }
+
+/* ===== EDGY DESIGN SYSTEM ===== */
+
+/* Clip reveal from bottom */
+@keyframes clip-up {
+  from { clip-path: inset(0 0 100% 0); }
+  to { clip-path: inset(0 0 0% 0); }
+}
+
+/* Clip reveal from right */
+@keyframes clip-right {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0% 0 0); }
+}
+
+/* Subtle glitch on hover */
+@keyframes glitch-shift {
+  0%, 100% { transform: translate(0); }
+  15% { transform: translate(-2px, 1px); }
+  30% { transform: translate(2px, -1px); }
+  45% { transform: translate(-1px, 2px); }
+  60% { transform: translate(1px, -1px); }
+  75% { transform: translate(0); }
+}
+
+/* Draw line left to right */
+@keyframes line-draw {
+  from { transform: scaleX(0); transform-origin: left center; }
+  to { transform: scaleX(1); transform-origin: left center; }
+}
+
+/* Count up animation helper */
+@keyframes count-up {
+  from { transform: translateY(60%); opacity: 0; }
+  to { transform: translateY(0%); opacity: 1; }
+}
+
+/* Neon glow pulse */
+@keyframes neon-pulse {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(124, 58, 237, 0.3), 0 0 30px rgba(124, 58, 237, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(124, 58, 237, 0.6), 0 0 60px rgba(124, 58, 237, 0.2);
+  }
+}
+
+/* Scan line sweep */
+@keyframes scan-sweep {
+  0% { transform: translateX(-100%); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateX(100%); opacity: 0; }
+}
+
+/* Border chase animation */
+@keyframes border-flow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ===== ANIMATION UTILITIES ===== */
+
+.animate-clip-up {
+  animation: clip-up 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+.animate-clip-right {
+  animation: clip-right 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+.animate-neon-pulse {
+  animation: neon-pulse 2.5s ease-in-out infinite;
+}
+
+/* ===== HOVER EFFECTS ===== */
+
+/* Underline draw effect */
+.hover-underline {
+  position: relative;
+  display: inline-block;
+}
+.hover-underline::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1.5px;
+  background: linear-gradient(90deg, #7c3aed, #ec4899);
+  transition: width 0.35s cubic-bezier(0.23, 1, 0.32, 1);
+}
+.hover-underline:hover::after {
+  width: 100%;
+}
+
+/* Active nav underline */
+.nav-line-active {
+  position: relative;
+}
+.nav-line-active::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 100%;
+  height: 1.5px;
+  background: linear-gradient(90deg, #7c3aed, #ec4899);
+  animation: line-draw 0.3s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+/* ===== EDGY CARD STYLES ===== */
+
+/* Angular cut corners */
+.card-edge {
+  clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px));
+}
+
+.card-edge-sm {
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+}
+
+/* Button with clip corners */
+.btn-clip {
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+}
+
+.btn-clip-sm {
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+}
+
+/* Top-right corner cut accent */
+.corner-cut-tr {
+  position: relative;
+  overflow: hidden;
+}
+.corner-cut-tr::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 28px 28px 0;
+  border-color: transparent rgba(124, 58, 237, 0.4) transparent transparent;
+  transition: border-color 0.3s ease;
+}
+.corner-cut-tr:hover::before {
+  border-color: transparent rgba(236, 72, 153, 0.6) transparent transparent;
+}
+
+/* Drawing border on hover */
+.draw-border {
+  position: relative;
+}
+.draw-border::before,
+.draw-border::after {
+  content: '';
+  position: absolute;
+  background: linear-gradient(90deg, #7c3aed, #ec4899);
+  transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+}
+.draw-border::before {
+  top: 0; left: 0;
+  width: 100%; height: 1px;
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+.draw-border::after {
+  bottom: 0; right: 0;
+  width: 100%; height: 1px;
+  transform: scaleX(0);
+  transform-origin: right center;
+}
+.draw-border:hover::before,
+.draw-border:hover::after {
+  transform: scaleX(1);
+}
+
+/* Left accent border (testimonials etc.) */
+.accent-border-left {
+  position: relative;
+}
+.accent-border-left::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 0;
+  background: linear-gradient(180deg, #7c3aed, #ec4899);
+  transition: height 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+}
+.accent-border-left.in-view::before,
+.accent-border-left:hover::before {
+  height: 100%;
+}
+
+/* ===== NOISE TEXTURE ===== */
+.noise {
+  position: relative;
+}
+.noise::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.025;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ===== TYPOGRAPHY EXTRAS ===== */
+.font-mono-stat {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+  font-feature-settings: 'tnum' on;
+}
+
+/* Glitch text hover */
+.glitch-hover:hover {
+  animation: glitch-shift 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Scan line effect on section */
+.scan-line-effect {
+  position: relative;
+  overflow: hidden;
+}
+.scan-line-effect::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 60%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(124, 58, 237, 0.5), transparent);
+  animation: scan-sweep 6s linear infinite;
+  pointer-events: none;
+}
+
+/* ===== ANIMATED GRADIENT BORDER ===== */
+.gradient-border-animated {
+  position: relative;
+  background: linear-gradient(var(--angle, 0deg), #7c3aed, #ec4899, #06b6d4, #7c3aed);
+  background-size: 300% 300%;
+  animation: border-flow 4s ease infinite;
+}
+
+/* Section accent line */
+.section-line {
+  width: 40px;
+  height: 2px;
+  background: linear-gradient(90deg, #7c3aed, #ec4899);
+  margin: 0 auto;
+}
+.section-line-left {
+  width: 40px;
+  height: 2px;
+  background: linear-gradient(90deg, #7c3aed, #ec4899);
+}

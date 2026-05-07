@@ -14,96 +14,108 @@ interface ProjectCardProps {
 export default function ProjectCard({ project, index }: ProjectCardProps) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 50 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-50px" }}
-      transition={{ delay: index * 0.1, duration: 0.6 }}
+      initial={{ opacity: 0, y: 40, clipPath: 'inset(0 0 100% 0)' }}
+      whileInView={{ opacity: 1, y: 0, clipPath: 'inset(0 0 0% 0)' }}
+      viewport={{ once: true, margin: '-40px' }}
+      transition={{ delay: index * 0.1, duration: 0.7, ease: [0.23, 1, 0.32, 1] }}
       className="group relative h-full"
     >
       <Link href={`/projects/${project.id}`}>
         <motion.div
-          whileHover={{ y: -10 }}
-          transition={{ type: "spring", stiffness: 300, damping: 20 }}
-          className="relative h-full rounded-3xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-white/10 backdrop-blur-sm overflow-hidden"
+          whileHover={{ y: -8 }}
+          transition={{ type: 'spring', stiffness: 320, damping: 24 }}
+          className="relative h-full bg-gradient-to-br from-white/[0.07] to-white/[0.02] border border-white/[0.08] overflow-hidden"
         >
-          {/* Image Container */}
-          <div className="relative h-48 sm:h-56 overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 to-pink-600/20" />
+          {/* 상단 라인 드로우 */}
+          <span className="absolute top-0 left-0 z-10 h-[1.5px] w-0 group-hover:w-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]" />
+
+          {/* 이미지 영역 */}
+          <div className="relative h-48 sm:h-52 overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-600/15 to-pink-600/15" />
             <SafeImage
               src={project.thumbnail}
               alt={project.title}
               fill
-              className="absolute inset-0 group-hover:scale-110 transition-transform duration-700"
+              className="absolute inset-0 group-hover:scale-110 transition-transform duration-700 ease-[cubic-bezier(0.23,1,0.32,1)]"
               placeholder={
-                <div className="absolute inset-0 flex items-center justify-center text-6xl text-white/20">
+                <div className="absolute inset-0 flex items-center justify-center text-5xl text-white/15">
                   🎮
                 </div>
               }
             />
-            {/* Overlay Gradient */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
-            
-            {/* Category Badge */}
-            <div className="absolute top-4 left-4">
-              <span className="px-3 py-1.5 rounded-full text-xs font-medium bg-white/10 backdrop-blur-md text-white border border-white/20">
+            {/* 오버레이 */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-transparent opacity-55 group-hover:opacity-75 transition-opacity duration-400" />
+
+            {/* 카테고리 배지 */}
+            <div className="absolute top-3 left-3">
+              <motion.span
+                className="px-2.5 py-1 text-[10px] font-medium text-white/80 bg-black/40 border border-white/15 tracking-wider uppercase"
+                style={{ clipPath: 'polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px))' }}
+              >
                 {project.category}
-              </span>
+              </motion.span>
             </div>
 
-            {/* View Project Button */}
+            {/* 뷰 버튼 — 호버시 등장 */}
             <motion.div
-              className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+              className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
               whileHover={{ scale: 1.1 }}
             >
-              <span className="flex items-center justify-center w-10 h-10 rounded-full bg-white/20 backdrop-blur-md text-white border border-white/20">
-                <FiArrowUpRight size={18} />
+              <span className="flex items-center justify-center w-8 h-8 bg-white/15 border border-white/20 text-white"
+                style={{ clipPath: 'polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px))' }}>
+                <FiArrowUpRight size={14} />
               </span>
             </motion.div>
 
-            {/* Duration */}
-            <div className="absolute bottom-4 left-4 flex items-center gap-1.5 text-white/90">
-              <FiClock size={14} />
-              <span className="text-sm font-medium">{project.durationMonths}개월</span>
+            {/* 기간 */}
+            <div className="absolute bottom-3 left-3 flex items-center gap-1.5 text-white/80">
+              <FiClock size={12} />
+              <span className="text-xs font-medium tracking-wide">{project.durationMonths}개월</span>
             </div>
           </div>
 
-          {/* Content */}
+          {/* 콘텐츠 */}
           <div className="p-5 sm:p-6">
-            <h3 className="text-lg sm:text-xl font-bold text-white mb-2 group-hover:gradient-text transition-all duration-300">
-              {project.title}
-            </h3>
-            <p className="text-sm text-white/60 mb-4 line-clamp-2 leading-relaxed">
+            {/* 타이틀 — 아래에서 클립 */}
+            <div style={{ overflow: 'hidden' }}>
+              <h3 className="text-base sm:text-lg font-bold text-white mb-2 group-hover:gradient-text transition-all duration-300">
+                {project.title}
+              </h3>
+            </div>
+
+            <p className="text-xs sm:text-sm text-white/45 mb-4 line-clamp-2 leading-relaxed">
               {project.description}
             </p>
 
-            {/* Tech Stack */}
-            <div className="flex flex-wrap gap-2 mb-4">
+            {/* 기술 스택 */}
+            <div className="flex flex-wrap gap-1.5 mb-4">
               {project.techStack.slice(0, 3).map((tech) => (
                 <span
                   key={tech}
-                  className="px-2.5 py-1 bg-purple-500/20 text-purple-300 text-xs font-medium rounded-lg border border-purple-500/20"
+                  className="px-2 py-0.5 bg-purple-500/15 text-purple-300/80 text-[10px] font-medium border border-purple-500/15 tracking-wide"
+                  style={{ clipPath: 'polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px))' }}
                 >
                   {tech}
                 </span>
               ))}
               {project.techStack.length > 3 && (
-                <span className="px-2.5 py-1 bg-white/10 text-white/50 text-xs font-medium rounded-lg">
+                <span className="px-2 py-0.5 bg-white/[0.06] text-white/35 text-[10px] font-medium">
                   +{project.techStack.length - 3}
                 </span>
               )}
             </div>
 
-            {/* Links */}
-            <div className="flex items-center gap-3 pt-4 border-t border-white/10">
+            {/* 링크 */}
+            <div className="flex items-center gap-4 pt-3.5 border-t border-white/[0.07]">
               {project.liveUrl && (
                 <a
                   href={project.liveUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={(e) => e.stopPropagation()}
-                  className="flex items-center gap-1.5 text-sm text-white/60 hover:text-purple-400 transition-colors"
+                  className="flex items-center gap-1.5 text-xs text-white/40 hover:text-purple-400 transition-colors"
                 >
-                  <FiExternalLink size={14} />
+                  <FiExternalLink size={12} />
                   <span>Live</span>
                 </a>
               )}
@@ -113,22 +125,14 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={(e) => e.stopPropagation()}
-                  className="flex items-center gap-1.5 text-sm text-white/60 hover:text-white transition-colors"
+                  className="flex items-center gap-1.5 text-xs text-white/40 hover:text-white transition-colors"
                 >
-                  <FiGithub size={14} />
+                  <FiGithub size={12} />
                   <span>GitHub</span>
                 </a>
               )}
             </div>
           </div>
-
-          {/* Hover Glow Effect */}
-          <motion.div
-            className="absolute -inset-1 rounded-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-500 blur-xl -z-10"
-            style={{
-              background: 'linear-gradient(135deg, #7c3aed, #ec4899)',
-            }}
-          />
         </motion.div>
       </Link>
     </motion.div>
