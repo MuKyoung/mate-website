@@ -2,24 +2,23 @@
 
 import { motion, useScroll, useTransform, useInView, animate } from 'framer-motion';
 import Link from 'next/link';
-import { FiArrowRight } from 'react-icons/fi';
+import { FiArrowRight, FiArrowDown } from 'react-icons/fi';
 import { useRef, useEffect } from 'react';
 
-// ── 카운터 숫자 애니메이션 컴포넌트 ────────────────────────
 function CounterStat({ to, suffix = '' }: { to: number; suffix?: string }) {
   const ref = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true, margin: '-60px' });
 
   useEffect(() => {
     if (!inView) return;
-    const controls = animate(0, to, {
-      duration: 1.8,
+    const ctrl = animate(0, to, {
+      duration: 1.6,
       ease: [0.16, 1, 0.3, 1],
       onUpdate(v) {
         if (ref.current) ref.current.textContent = Math.round(v) + suffix;
       },
     });
-    return () => controls.stop();
+    return () => ctrl.stop();
   }, [inView, to, suffix]);
 
   return <span ref={ref}>0{suffix}</span>;
@@ -31,177 +30,142 @@ export default function Hero() {
     target: containerRef,
     offset: ['start start', 'end start'],
   });
-
-  const y = useTransform(scrollYProgress, [0, 1], [0, 160]);
-  const opacity = useTransform(scrollYProgress, [0, 0.55], [1, 0]);
-  const scale = useTransform(scrollYProgress, [0, 0.55], [1, 0.94]);
+  const y       = useTransform(scrollYProgress, [0, 1], [0, 130]);
+  const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
 
   const stats = [
     { value: 30, suffix: '+', label: '완료 프로젝트' },
-    { value: 5, suffix: '년', label: '개발 경력' },
+    { value: 5,  suffix: '년', label: '개발 경력' },
     { value: 100, suffix: '%', label: '성공률' },
-    { value: 4, suffix: '명', label: '전문 개발자' },
+    { value: 4,  suffix: '명', label: '전문 개발자' },
   ];
 
   return (
     <section
       ref={containerRef}
-      className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#080812] noise scan-line-effect"
-      style={{ isolation: 'isolate' }}
+      className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden noise"
+      style={{ background: 'var(--background)' }}
     >
-      {/* ── 배경 그라디언트 오브 ── */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(124,58,237,0.18),transparent)]" />
-
-        <motion.div
-          className="absolute top-[15%] left-[20%] w-[600px] h-[600px] rounded-full"
-          style={{
-            background: 'radial-gradient(circle, rgba(124,58,237,0.2) 0%, transparent 65%)',
-            filter: 'blur(90px)',
-          }}
-          animate={{ x: [0, 50, 0], y: [0, -30, 0] }}
-          transition={{ duration: 28, repeat: Infinity, ease: 'easeInOut' }}
-        />
-        <motion.div
-          className="absolute bottom-[15%] right-[20%] w-[500px] h-[500px] rounded-full"
-          style={{
-            background: 'radial-gradient(circle, rgba(236,72,153,0.15) 0%, transparent 65%)',
-            filter: 'blur(90px)',
-          }}
-          animate={{ x: [0, -40, 0], y: [0, 35, 0] }}
-          transition={{ duration: 32, repeat: Infinity, ease: 'easeInOut', delay: 6 }}
-        />
-      </div>
-
-      {/* ── 도트 그리드 패턴 ── */}
+      {/* ── 서브틀 그리드 라인 ── */}
       <div
-        className="absolute inset-0 opacity-[0.035] pointer-events-none"
+        className="absolute inset-0 pointer-events-none"
         style={{
-          backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.7) 1px, transparent 0)',
-          backgroundSize: '44px 44px',
+          backgroundImage: `
+            linear-gradient(rgba(255,255,255,0.028) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.028) 1px, transparent 1px)
+          `,
+          backgroundSize: '72px 72px',
         }}
       />
 
-      {/* ── 수평 글로우 라인 ── */}
-      <motion.div
-        className="absolute left-0 right-0 h-px"
-        style={{ top: '46%', background: 'linear-gradient(90deg, transparent 0%, rgba(124,58,237,0.25) 30%, rgba(236,72,153,0.25) 70%, transparent 100%)' }}
-        initial={{ scaleX: 0, opacity: 0 }}
-        animate={{ scaleX: 1, opacity: 1 }}
-        transition={{ duration: 2.2, delay: 0.4, ease: [0.23, 1, 0.32, 1] }}
+      {/* ── 중앙 미묘한 glow ── */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: 'radial-gradient(ellipse 70% 55% at 50% 48%, rgba(59,130,246,0.06) 0%, transparent 70%)',
+        }}
       />
 
-      {/* ── 메인 콘텐츠 ── */}
+      {/* ── 콘텐츠 ── */}
       <motion.div
-        style={{ y, opacity, scale }}
-        className="relative z-20 container mx-auto px-4 sm:px-6"
+        style={{ y, opacity }}
+        className="relative z-10 w-full container mx-auto px-4 sm:px-6 pt-28 pb-16"
       >
-        <div className="max-w-5xl mx-auto text-center">
+        <div className="max-w-4xl mx-auto text-center">
 
-          {/* 배지 */}
+          {/* 상태 배지 */}
           <motion.div
-            initial={{ opacity: 0, y: -16 }}
+            initial={{ opacity: 0, y: -12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1, ease: [0.23, 1, 0.32, 1] }}
-            className="mb-8 sm:mb-10"
+            transition={{ duration: 0.45, ease: [0.23, 1, 0.32, 1] }}
+            className="mb-8"
           >
-            <span className="inline-flex items-center gap-2.5 px-4 py-2 text-[11px] tracking-[0.2em] uppercase font-medium text-white/50 border border-white/[0.08]">
-              <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
+            <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border border-white/[0.09] text-white/45 bg-white/[0.03] tracking-wide">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse-subtle" />
               외주 프로젝트 상담 가능
             </span>
           </motion.div>
 
-          {/* MATE 타이틀 — clip 리빌 */}
+          {/* MATE 타이틀 */}
           <div style={{ overflow: 'hidden' }}>
-            <motion.div
-              className="heading-xl gradient-text leading-none mb-3 sm:mb-4"
-              initial={{ y: '105%', opacity: 0 }}
-              animate={{ y: '0%', opacity: 1 }}
-              transition={{ duration: 0.75, delay: 0.3, ease: [0.23, 1, 0.32, 1] }}
+            <motion.h1
+              className="heading-xl gradient-text leading-none tracking-tight mb-3"
+              initial={{ y: '105%' }}
+              animate={{ y: '0%' }}
+              transition={{ duration: 0.7, delay: 0.15, ease: [0.23, 1, 0.32, 1] }}
             >
               MATE
-            </motion.div>
+            </motion.h1>
           </div>
 
-          {/* 외주개발팀 — clip 리빌 (딜레이) */}
+          {/* 외주개발팀 서브타이틀 */}
           <div style={{ overflow: 'hidden' }}>
-            <motion.div
-              className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-medium text-white/60 mb-6 sm:mb-8"
-              initial={{ y: '105%', opacity: 0 }}
-              animate={{ y: '0%', opacity: 1 }}
-              transition={{ duration: 0.7, delay: 0.52, ease: [0.23, 1, 0.32, 1] }}
+            <motion.p
+              className="text-xl sm:text-2xl md:text-3xl font-medium text-white/40 mb-7"
+              initial={{ y: '105%' }}
+              animate={{ y: '0%' }}
+              transition={{ duration: 0.65, delay: 0.3, ease: [0.23, 1, 0.32, 1] }}
             >
-              외주개발팀
-            </motion.div>
+              유니티 외주개발팀
+            </motion.p>
           </div>
 
-          {/* 설명 — blur fade */}
+          {/* 설명 */}
           <motion.p
-            initial={{ opacity: 0, y: 24, filter: 'blur(10px)' }}
+            className="text-white/45 text-base sm:text-lg leading-relaxed max-w-2xl mx-auto mb-9"
+            initial={{ opacity: 0, y: 18, filter: 'blur(6px)' }}
             animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-            transition={{ duration: 0.8, delay: 0.85, ease: [0.23, 1, 0.32, 1] }}
-            className="body-lg text-white/45 mb-9 sm:mb-11 max-w-2xl mx-auto"
+            transition={{ duration: 0.65, delay: 0.5, ease: [0.23, 1, 0.32, 1] }}
           >
-            유니티 외주 개발과 개발 강의에 특화된 전문 팀.
+            5년 이상의 실무 경력과 30개 이상의 프로젝트를 완료한
             <br className="hidden sm:block" />
-            <span className="text-white/80 font-medium">5년 이상의 경력</span>과{' '}
-            <span className="text-white/80 font-medium">30+ 프로젝트</span>를 성공적으로 완료했습니다.
+            <span className="text-white/75 font-medium"> Unity · AR/VR · 게임 서버</span> 전문 개발팀입니다.
           </motion.p>
 
           {/* CTA 버튼 */}
           <motion.div
-            initial={{ opacity: 0, y: 28 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 1.05, ease: [0.23, 1, 0.32, 1] }}
-            className="flex flex-col sm:flex-row gap-4 justify-center items-center"
+            transition={{ duration: 0.55, delay: 0.65, ease: [0.23, 1, 0.32, 1] }}
+            className="flex flex-col sm:flex-row gap-3 justify-center items-center"
           >
-            {/* Primary — clip corner */}
             <Link
               href="/contact"
-              className="group relative inline-flex items-center justify-center gap-2 px-8 py-4 sm:px-10 sm:py-5 font-semibold text-white text-sm sm:text-base overflow-hidden transition-transform duration-200 hover:scale-105 active:scale-95 w-full sm:w-auto btn-clip"
-              style={{ background: 'linear-gradient(135deg, #7c3aed, #ec4899)' }}
+              className="group inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold text-white text-sm bg-[#3b82f6] hover:bg-[#2563eb] transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 w-full sm:w-auto"
             >
-              <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-r from-pink-500 to-purple-600" />
-              <span className="relative flex items-center gap-2">
-                프로젝트 문의하기
-                <FiArrowRight className="group-hover:translate-x-1 transition-transform" />
-              </span>
+              프로젝트 문의하기
+              <FiArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
             </Link>
-
-            {/* Secondary — clip corner outline */}
             <Link
               href="/projects"
-              className="group inline-flex items-center justify-center gap-2 px-8 py-4 sm:px-10 sm:py-5 font-semibold text-white/60 text-sm sm:text-base border border-white/12 hover:text-white hover:border-white/25 hover:bg-white/[0.04] transition-all duration-300 hover:scale-105 active:scale-95 w-full sm:w-auto btn-clip"
+              className="group inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium text-white/55 text-sm border border-white/[0.1] hover:border-white/[0.2] hover:text-white/80 hover:bg-white/[0.04] transition-all duration-200 hover:-translate-y-0.5 w-full sm:w-auto"
             >
               포트폴리오 보기
-              <FiArrowRight className="group-hover:translate-x-1 transition-transform" />
+              <FiArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
             </Link>
           </motion.div>
 
-          {/* 스탯 카드 — 카운터 + clip corner */}
-          <div className="mt-14 sm:mt-16 grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 max-w-3xl mx-auto">
+          {/* 통계 */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, delay: 0.85, ease: [0.23, 1, 0.32, 1] }}
+            className="mt-14 grid grid-cols-2 sm:grid-cols-4 gap-px bg-white/[0.06] border border-white/[0.06] rounded-xl overflow-hidden max-w-2xl mx-auto"
+          >
             {stats.map((stat, i) => (
-              <motion.div
+              <div
                 key={i}
-                initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{
-                  delay: 1.3 + i * 0.07,
-                  duration: 0.5,
-                  ease: [0.23, 1, 0.32, 1],
-                }}
-                whileHover={{ y: -4, borderColor: 'rgba(124,58,237,0.35)' }}
-                className="text-center py-5 px-3 border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04] transition-all duration-300 card-edge-sm"
+                className="bg-[#09090b] py-5 px-4 text-center hover:bg-[#0d0d10] transition-colors duration-200"
               >
-                <div className="text-2xl sm:text-3xl font-bold gradient-text font-mono-stat">
+                <div className="text-2xl sm:text-3xl font-bold text-white mb-1 font-mono-stat">
                   <CounterStat to={stat.value} suffix={stat.suffix} />
                 </div>
-                <div className="text-[11px] sm:text-xs text-white/35 mt-1 tracking-wider uppercase">
+                <div className="text-[11px] text-white/30 tracking-wider uppercase">
                   {stat.label}
                 </div>
-              </motion.div>
+              </div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </motion.div>
 
@@ -209,19 +173,21 @@ export default function Hero() {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 2, duration: 0.6 }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2"
+        transition={{ delay: 1.6, duration: 0.5 }}
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-1.5"
       >
-        <span className="text-[9px] uppercase tracking-[0.35em] text-white/25 font-mono">Scroll</span>
         <motion.div
-          className="w-px h-10 bg-gradient-to-b from-white/25 to-transparent"
-          animate={{ scaleY: [1, 0.4, 1], opacity: [0.6, 1, 0.6] }}
-          transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
-        />
+          animate={{ y: [0, 5, 0] }}
+          transition={{ repeat: Infinity, duration: 2.2, ease: 'easeInOut' }}
+          className="text-white/20"
+        >
+          <FiArrowDown size={16} />
+        </motion.div>
       </motion.div>
 
       {/* 하단 페이드 */}
-      <div className="absolute bottom-0 left-0 right-0 h-36 bg-gradient-to-t from-[#0f0f23] to-transparent pointer-events-none" />
+      <div className="absolute bottom-0 left-0 right-0 h-28 pointer-events-none"
+        style={{ background: 'linear-gradient(to top, var(--background), transparent)' }} />
     </section>
   );
 }
