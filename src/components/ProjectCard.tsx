@@ -45,7 +45,7 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
                 </div>
               }
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
 
             {/* 카테고리 */}
             <div className="absolute top-3 left-3">

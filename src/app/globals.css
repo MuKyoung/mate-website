@@ -54,12 +54,13 @@ body {
 
 /* ── 그라디언트 유틸리티 ─────────────────────────── */
 
-/* 브랜드 하이라이트 - 흰색→라이트블루 (정제된 그라디언트) */
+/* 브랜드 하이라이트 — solid accent */
 .gradient-text {
-  background: linear-gradient(135deg, #ffffff 10%, #93c5fd 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #60a5fa;
+  -webkit-text-fill-color: #60a5fa;
+  background: none;
+  -webkit-background-clip: unset;
+  background-clip: unset;
 }
 
 /* 버튼/배경용 solid blue */

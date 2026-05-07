@@ -21,7 +21,7 @@ export default function TestimonialCard({ testimonial, index }: TestimonialCardP
     >
       <div className="relative h-full p-6 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col overflow-hidden">
         {/* 왼쪽 상단 accent line */}
-        <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-[#3b82f6] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="absolute top-0 left-0 w-0 group-hover:w-full h-[1.5px] bg-[#3b82f6] transition-all duration-400 ease-[cubic-bezier(0.23,1,0.32,1)]" />
 
         {/* 별점 */}
         <div className="flex gap-0.5 mb-4">
@@ -47,7 +47,7 @@ export default function TestimonialCard({ testimonial, index }: TestimonialCardP
         {/* 작성자 */}
         <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-            style={{ background: 'linear-gradient(135deg, #3b82f6, #60a5fa)' }}>
+            style={{ background: '#3b82f6' }}>
             {testimonial.name.charAt(0)}
           </div>
           <div>

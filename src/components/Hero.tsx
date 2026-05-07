@@ -46,25 +46,6 @@ export default function Hero() {
       className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden noise"
       style={{ background: 'var(--background)' }}
     >
-      {/* ── 서브틀 그리드 라인 ── */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          backgroundImage: `
-            linear-gradient(rgba(255,255,255,0.028) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,0.028) 1px, transparent 1px)
-          `,
-          backgroundSize: '72px 72px',
-        }}
-      />
-
-      {/* ── 중앙 미묘한 glow ── */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background: 'radial-gradient(ellipse 70% 55% at 50% 48%, rgba(59,130,246,0.06) 0%, transparent 70%)',
-        }}
-      />
 
       {/* ── 콘텐츠 ── */}
       <motion.div
@@ -89,7 +70,7 @@ export default function Hero() {
           {/* MATE 타이틀 */}
           <div style={{ overflow: 'hidden' }}>
             <motion.h1
-              className="heading-xl gradient-text leading-none tracking-tight mb-3"
+              className="heading-xl text-white leading-none tracking-tight mb-3"
               initial={{ y: '105%' }}
               animate={{ y: '0%' }}
               transition={{ duration: 0.7, delay: 0.15, ease: [0.23, 1, 0.32, 1] }}
@@ -185,9 +166,6 @@ export default function Hero() {
         </motion.div>
       </motion.div>
 
-      {/* 하단 페이드 */}
-      <div className="absolute bottom-0 left-0 right-0 h-28 pointer-events-none"
-        style={{ background: 'linear-gradient(to top, var(--background), transparent)' }} />
     </section>
   );
 }

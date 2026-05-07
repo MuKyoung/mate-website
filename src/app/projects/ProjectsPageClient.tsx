@@ -6,7 +6,6 @@ import ProjectCard from '@/components/ProjectCard';
 import FloatingNotice from '@/components/FloatingNotice';
 import { Project } from '@/types';
 
-// 카테고리 매핑
 const CATEGORY_MAP: Record<string, string> = {
   'Game Application': '유니티',
   'VR Application': '유니티',
@@ -16,7 +15,6 @@ const CATEGORY_MAP: Record<string, string> = {
   'Education Content': '강의',
 };
 
-// 카테고리 옵션
 const CATEGORY_OPTIONS = [
   { value: 'all', label: '전체', icon: '📁' },
   { value: '유니티', label: '유니티', icon: '🎮' },
@@ -31,21 +29,17 @@ interface ProjectsPageClientProps {
 export default function ProjectsPageClient({ projects }: ProjectsPageClientProps) {
   const [selectedCategory, setSelectedCategory] = useState('all');
 
-  // 프로젝트 필터링 및 정렬
   const filteredProjects = useMemo(() => {
     let filtered = projects;
-
     if (selectedCategory !== 'all') {
       filtered = projects.filter((project) => {
         const mappedCategory = CATEGORY_MAP[project.category] || project.category;
         return mappedCategory === selectedCategory;
       });
     }
-
     return [...filtered].sort((a, b) => parseInt(a.id) - parseInt(b.id));
   }, [projects, selectedCategory]);
 
-  // 각 카테고리별 프로젝트 수 계산
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = { all: projects.length };
     projects.forEach((project) => {
@@ -56,91 +50,52 @@ export default function ProjectsPageClient({ projects }: ProjectsPageClientProps
   }, [projects]);
 
   return (
-    <div className="bg-[#0f0f23] min-h-screen">
-      {/* Hero Section */}
+    <div className="min-h-screen" style={{ background: 'var(--background)' }}>
+      {/* Hero */}
       <section className="relative pt-32 pb-16 sm:pt-40 sm:pb-20 overflow-hidden">
-        {/* Background */}
-        <div className="absolute inset-0">
-          <motion.div
-            className="absolute top-1/3 left-1/4 w-[500px] h-[500px] rounded-full"
-            style={{
-              background: 'radial-gradient(circle, rgba(236, 72, 153, 0.15) 0%, transparent 70%)',
-              filter: 'blur(80px)',
-            }}
-            animate={{
-              scale: [1, 1.2, 1],
-              opacity: [0.3, 0.5, 0.3],
-            }}
-            transition={{
-              duration: 10,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          />
-        </div>
-
         <div className="container mx-auto px-4 sm:px-6 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 0.7, ease: [0.23, 1, 0.32, 1] }}
             className="text-center max-w-4xl mx-auto"
           >
-            <motion.span 
-              className="inline-block text-pink-400 text-sm sm:text-base font-medium tracking-widest uppercase mb-4"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              Portfolio
-            </motion.span>
-            <h1 className="heading-lg text-white mb-6">
-              프로젝트 <span className="gradient-text">포트폴리오</span>
-            </h1>
-            <p className="body-lg text-white/60 max-w-2xl mx-auto">
+            <span className="section-label justify-center mb-4">Portfolio</span>
+            <h1 className="heading-lg text-white mb-5">프로젝트 포트폴리오</h1>
+            <p className="body-lg text-white/40 max-w-2xl mx-auto">
               다양한 산업 분야에서 성공적으로 완료한 프로젝트들을 소개합니다
             </p>
           </motion.div>
         </div>
       </section>
 
-      {/* Projects Section */}
+      {/* Projects */}
       <section className="py-8 sm:py-12 pb-20 sm:pb-28">
         <div className="container mx-auto px-4 sm:px-6">
-          {/* Filter Buttons */}
-          <motion.div 
+          {/* Filter */}
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
             className="mb-8 sm:mb-12"
           >
-            <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
+            <div className="flex flex-wrap justify-center gap-2">
               {CATEGORY_OPTIONS.map((option) => (
                 <button
                   key={option.value}
                   onClick={() => setSelectedCategory(option.value)}
-                  className={`
-                    px-4 sm:px-6 py-2.5 sm:py-3 rounded-full font-medium transition-all duration-300
-                    flex items-center gap-2 text-sm sm:text-base
-                    ${
-                      selectedCategory === option.value
-                        ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/25 scale-105'
-                        : 'bg-white/5 text-white/70 hover:bg-white/10 hover:text-white border border-white/10'
-                    }
-                  `}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-1.5 ${
+                    selectedCategory === option.value
+                      ? 'bg-[#3b82f6] text-white shadow-md shadow-blue-500/15'
+                      : 'text-white/50 border border-white/[0.08] hover:border-white/[0.15] hover:text-white/80'
+                  }`}
+                  style={selectedCategory !== option.value ? { background: 'var(--surface)' } : {}}
                 >
                   <span>{option.icon}</span>
                   <span>{option.label}</span>
-                  <span
-                    className={`
-                      px-2 py-0.5 rounded-full text-xs font-medium
-                      ${
-                        selectedCategory === option.value
-                          ? 'bg-white/20 text-white'
-                          : 'bg-white/10 text-white/50'
-                      }
-                    `}
-                  >
+                  <span className={`text-xs px-1.5 py-0.5 rounded ${
+                    selectedCategory === option.value ? 'bg-white/20' : 'bg-white/[0.08]'
+                  }`}>
                     {categoryCounts[option.value] || 0}
                   </span>
                 </button>
@@ -148,57 +103,43 @@ export default function ProjectsPageClient({ projects }: ProjectsPageClientProps
             </div>
           </motion.div>
 
-          {/* Results Info */}
-          <motion.div 
+          {/* Results count */}
+          <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 }}
-            className="mb-6 sm:mb-8"
+            className="text-white/35 text-sm mb-6 sm:mb-8"
           >
-            <p className="text-white/50 text-sm sm:text-base">
-              {selectedCategory === 'all' ? '전체' : selectedCategory} 프로젝트{' '}
-              <span className="font-bold text-purple-400">{filteredProjects.length}</span>개
-            </p>
-          </motion.div>
+            {selectedCategory === 'all' ? '전체' : selectedCategory} 프로젝트{' '}
+            <span className="text-[#60a5fa] font-medium">{filteredProjects.length}</span>개
+          </motion.p>
 
-          {/* Projects Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+          {/* Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             <AnimatePresence mode="popLayout">
               {filteredProjects.map((project, index) => (
-                <motion.div
-                  key={project.id}
-                  layout
-                  initial={{ opacity: 0, scale: 0.9 }}
+                <motion.div key={project.id} layout
+                  initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ duration: 0.3, delay: index * 0.05 }}
-                >
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.25, delay: index * 0.04 }}>
                   <ProjectCard project={project} index={index} />
                 </motion.div>
               ))}
             </AnimatePresence>
           </div>
 
-          {/* No Results */}
           {filteredProjects.length === 0 && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-center py-20"
-            >
-              <div className="text-6xl mb-4">🔍</div>
-              <h3 className="text-xl font-semibold text-white mb-2">
-                해당 카테고리의 프로젝트가 없습니다
-              </h3>
-              <p className="text-white/50">다른 카테고리를 선택해 보세요</p>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-20">
+              <div className="text-5xl mb-4">🔍</div>
+              <h3 className="text-lg font-semibold text-white mb-2">해당 카테고리의 프로젝트가 없습니다</h3>
+              <p className="text-white/35 text-sm">다른 카테고리를 선택해 보세요</p>
             </motion.div>
           )}
         </div>
       </section>
 
-      {/* Floating Notice */}
       <FloatingNotice message="정보를 추가 중입니다" />
     </div>
   );
 }
-

@@ -94,7 +94,7 @@ export default function Home() {
         <div className="container mx-auto px-4 sm:px-6">
           <SectionHeader
             label="Services"
-            title={<>전문적인 <span className="gradient-text">개발 서비스</span></>}
+            title="전문적인 개발 서비스"
             desc="유니티 개발부터 교육까지, 고객의 니즈에 맞는 맞춤형 솔루션을 제공합니다"
           />
 
@@ -123,7 +123,7 @@ export default function Home() {
         <div className="container mx-auto px-4 sm:px-6">
           <SectionHeader dark={false}
             label="Why Choose Us"
-            title={<>왜 <span className="gradient-text">MATE</span>여야 할까요?</>}
+            title="왜 MATE여야 할까요?"
             desc="5년 이상의 실무 경험과 30개 이상의 성공적인 프로젝트로 검증된 전문성"
           />
 
@@ -157,7 +157,7 @@ export default function Home() {
         <div className="container mx-auto px-4 sm:px-6">
           <SectionHeader
             label="Featured Projects"
-            title={<>최근 <span className="gradient-text">프로젝트</span></>}
+            title="최근 프로젝트"
             desc="다양한 산업 분야에서 성공적으로 완료한 프로젝트들을 소개합니다"
           />
 
@@ -183,7 +183,7 @@ export default function Home() {
         <div className="container mx-auto px-4 sm:px-6">
           <SectionHeader dark={false}
             label="Testimonials"
-            title={<>고객 <span className="gradient-text">후기</span></>}
+            title="고객 후기"
             desc="MATE 팀과 함께한 고객들의 생생한 경험담"
           />
 
@@ -203,7 +203,7 @@ export default function Home() {
         <div className="container mx-auto px-4 sm:px-6">
           <SectionHeader
             label="About Team"
-            title={<><span className="gradient-text">MATE</span> 팀 소개</>}
+            title="MATE 팀 소개"
             desc="유니티 외주 개발과 개발 강의에 특화된 전문 팀입니다"
           />
 
@@ -241,9 +241,6 @@ export default function Home() {
       <section className="relative py-20 sm:py-28 md:py-32 overflow-hidden noise"
         style={{ background: '#0d1117' }}>
         <div className="absolute top-0 left-0 right-0 h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
-        {/* 미묘한 blue glow */}
-        <div className="absolute inset-0 pointer-events-none"
-          style={{ background: 'radial-gradient(ellipse 60% 50% at 50% 50%, rgba(59,130,246,0.06) 0%, transparent 70%)' }} />
 
         <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center">
           <motion.div

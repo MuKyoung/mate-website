@@ -72,8 +72,8 @@ export default function ProjectFilter({ projects }: ProjectFilterProps) {
                 flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm md:text-base
                 ${
                   selectedCategory === option.value
-                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg scale-105'
-                    : 'bg-white text-gray-800 hover:bg-gray-100 border border-gray-200 hover:border-purple-300'
+                    ? 'bg-[#3b82f6] text-white shadow-md shadow-blue-500/15'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200 hover:border-blue-200'
                 }
               `}
             >
@@ -100,7 +100,7 @@ export default function ProjectFilter({ projects }: ProjectFilterProps) {
       <div className="mb-6 sm:mb-8">
         <p className="text-gray-700">
           {selectedCategory === 'all' ? '전체' : selectedCategory} 프로젝트{' '}
-          <span className="font-bold text-purple-700">{filteredProjects.length}</span>개
+          <span className="font-medium text-[#3b82f6]">{filteredProjects.length}</span>개
         </p>
       </div>
 

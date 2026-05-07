@@ -108,51 +108,22 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="bg-[#0f0f23] min-h-screen">
+    <div className="min-h-screen" style={{ background: 'var(--background)' }}>
       {/* Server Error Notice */}
       <FloatingNotice message="현재 '메시지 보내기' 기능의 서버 오류가 있습니다. 카카오톡 1대1 오픈채팅방을 이용해주시면 감사하겠습니다." />
 
       {/* Hero Section */}
       <section className="relative pt-32 pb-16 sm:pt-40 sm:pb-20 overflow-hidden">
-        {/* Background */}
-        <div className="absolute inset-0">
-          <motion.div
-            className="absolute top-1/4 left-1/3 w-[500px] h-[500px] rounded-full"
-            style={{
-              background: 'radial-gradient(circle, rgba(124, 58, 237, 0.2) 0%, transparent 70%)',
-              filter: 'blur(80px)',
-            }}
-            animate={{
-              scale: [1, 1.2, 1],
-              opacity: [0.3, 0.5, 0.3],
-            }}
-            transition={{
-              duration: 10,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          />
-        </div>
-
         <div className="container mx-auto px-4 sm:px-6 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 0.7, ease: [0.23, 1, 0.32, 1] }}
             className="text-center max-w-4xl mx-auto"
           >
-            <motion.span 
-              className="inline-block text-purple-400 text-sm sm:text-base font-medium tracking-widest uppercase mb-4"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              Contact Us
-            </motion.span>
-            <h1 className="heading-lg text-white mb-6">
-              프로젝트 <span className="gradient-text">문의</span>
-            </h1>
-            <p className="body-lg text-white/60 max-w-2xl mx-auto">
+            <span className="section-label justify-center mb-4">Contact Us</span>
+            <h1 className="heading-lg text-white mb-5">프로젝트 문의</h1>
+            <p className="body-lg text-white/40 max-w-2xl mx-auto">
               협업, 외주, 프로젝트에 대해 궁금한 점이 있으시면 언제든지 문의해주세요
             </p>
           </motion.div>
@@ -170,8 +141,8 @@ export default function ContactPage() {
               transition={{ delay: 0.3 }}
               className="lg:col-span-2"
             >
-              <div className="p-6 sm:p-8 rounded-3xl bg-white/5 border border-white/10">
-                <h2 className="text-xl sm:text-2xl font-bold text-white mb-6">문의 양식</h2>
+              <div className="p-6 sm:p-8 rounded-xl border" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+                <h2 className="text-lg sm:text-xl font-semibold text-white mb-6">문의 양식</h2>
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div>
                     <label htmlFor="name" className="block text-sm font-semibold text-white/80 mb-2">
@@ -184,7 +155,7 @@ export default function ContactPage() {
                       value={formData.name}
                       onChange={handleChange}
                       required
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all text-white placeholder:text-white/30"
+                      className="w-full px-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500/50 outline-none transition-all text-white placeholder:text-white/25 text-sm"
                       placeholder="이름을 입력하세요"
                     />
                   </div>
@@ -199,7 +170,7 @@ export default function ContactPage() {
                       value={formData.email}
                       onChange={handleChange}
                       required
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all text-white placeholder:text-white/30"
+                      className="w-full px-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500/50 outline-none transition-all text-white placeholder:text-white/25 text-sm"
                       placeholder="이메일을 입력하세요"
                     />
                   </div>
@@ -214,7 +185,7 @@ export default function ContactPage() {
                       value={formData.subject}
                       onChange={handleChange}
                       required
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all text-white placeholder:text-white/30"
+                      className="w-full px-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500/50 outline-none transition-all text-white placeholder:text-white/25 text-sm"
                       placeholder="문의 제목을 입력하세요"
                     />
                   </div>
@@ -229,7 +200,7 @@ export default function ContactPage() {
                       onChange={handleChange}
                       required
                       rows={6}
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all resize-none text-white placeholder:text-white/30"
+                      className="w-full px-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500/50 outline-none transition-all resize-none text-white placeholder:text-white/25 text-sm"
                       placeholder="문의 내용을 입력하세요"
                     />
                   </div>
@@ -246,7 +217,7 @@ export default function ContactPage() {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full px-6 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-semibold hover:from-purple-500 hover:to-pink-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-lg shadow-purple-500/25"
+                    className="w-full px-6 py-3.5 bg-[#3b82f6] text-white rounded-lg font-semibold hover:bg-[#2563eb] transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-md shadow-blue-500/15 text-sm"
                   >
                     {isSubmitting ? (
                       '전송 중...'
@@ -299,27 +270,27 @@ export default function ContactPage() {
               </a>
 
               {/* 연락처 정보 */}
-              <div className="p-6 rounded-3xl bg-white/5 border border-white/10">
-                <h2 className="text-xl font-bold text-white mb-6">연락처 정보</h2>
+              <div className="p-6 rounded-xl border" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+                <h2 className="text-base font-semibold text-white mb-5">연락처 정보</h2>
                 <div className="space-y-5">
                   <a href="mailto:team-mate@naver.com" className="flex items-start group">
-                    <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center mr-4 flex-shrink-0">
-                      <FiMail className="text-purple-400" size={18} />
+                    <div className="w-9 h-9 rounded-lg bg-blue-500/[0.1] flex items-center justify-center mr-3.5 flex-shrink-0">
+                      <FiMail className="text-[#60a5fa]" size={16} />
                     </div>
                     <div>
                       <p className="font-semibold text-white mb-1">이메일</p>
-                      <p className="text-white/60 group-hover:text-purple-400 transition-colors text-sm break-all">
+                      <p className="text-white/40 group-hover:text-[#60a5fa] transition-colors text-sm break-all">
                         team-mate@naver.com
                       </p>
                     </div>
                   </a>
                   <a href="tel:010-5457-9141" className="flex items-start group">
-                    <div className="w-10 h-10 rounded-xl bg-pink-500/20 flex items-center justify-center mr-4 flex-shrink-0">
-                      <FiPhone className="text-pink-400" size={18} />
+                    <div className="w-9 h-9 rounded-lg bg-blue-500/[0.1] flex items-center justify-center mr-3.5 flex-shrink-0">
+                      <FiPhone className="text-[#60a5fa]" size={16} />
                     </div>
                     <div>
                       <p className="font-semibold text-white mb-1">전화</p>
-                      <p className="text-white/60 group-hover:text-pink-400 transition-colors text-sm">
+                      <p className="text-white/40 group-hover:text-[#60a5fa] transition-colors text-sm">
                         010-5457-9141
                       </p>
                     </div>
@@ -328,9 +299,9 @@ export default function ContactPage() {
 
                 <div className="border-t border-white/10 my-6" />
 
-                <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/20">
-                  <p className="text-sm text-purple-300">
-                    💡 <span className="font-bold">빠른 답변</span>을 원하시면 카카오톡 오픈채팅을 이용해주세요!
+                <div className="p-3.5 rounded-lg bg-blue-500/[0.07] border border-blue-500/[0.12]">
+                  <p className="text-xs text-blue-300/80">
+                    <span className="font-semibold">빠른 답변</span>을 원하시면 카카오톡 오픈채팅을 이용해주세요!
                   </p>
                 </div>
               </div>
@@ -340,20 +311,17 @@ export default function ContactPage() {
       </section>
 
       {/* FAQ Section */}
-      <section className="py-16 sm:py-20 bg-white">
+      <section className="py-16 sm:py-20 bg-[#f8f9fa]">
         <div className="container mx-auto px-4 sm:px-6">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
             className="text-center mb-12 sm:mb-16"
           >
-            <span className="inline-block text-purple-600 text-sm font-medium tracking-widest uppercase mb-4">
-              FAQ
-            </span>
-            <h2 className="heading-md text-gray-900 mb-4">
-              자주 묻는 <span className="gradient-text">질문</span>
-            </h2>
+            <span className="section-label justify-center mb-4">FAQ</span>
+            <h2 className="heading-md text-gray-900 mb-4">자주 묻는 질문</h2>
             <p className="body-lg text-gray-600 max-w-2xl mx-auto">
               궁금한 점이 있으시면 FAQ를 확인해보세요
             </p>
@@ -365,7 +333,7 @@ export default function ContactPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 sm:py-20 bg-[#0f0f23]">
+      <section className="py-16 sm:py-20" style={{ background: 'var(--surface)' }}>
         <div className="container mx-auto px-4 sm:px-6 text-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
