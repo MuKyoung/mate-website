@@ -6,7 +6,7 @@ import { FiGithub, FiLinkedin, FiMail, FiTwitter, FiArrowUpRight } from 'react-i
 
 const fadeUp = {
   initial: { opacity: 0, y: 16 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.23, 1, 0.32, 1] as number[] } },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.23, 1, 0.32, 1] as [number, number, number, number] } },
 };
 const stagger = {
   initial: {},

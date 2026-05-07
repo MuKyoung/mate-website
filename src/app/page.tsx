@@ -2,7 +2,7 @@
 
 import { motion, useInView, animate } from 'framer-motion';
 import Link from 'next/link';
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, type ReactNode } from 'react';
 import Hero from '@/components/Hero';
 import ServiceCard from '@/components/ServiceCard';
 import ProjectCard from '@/components/ProjectCard';
@@ -15,7 +15,7 @@ import { FiArrowRight, FiCode, FiBookOpen, FiAward, FiUsers } from 'react-icons/
 // ── 공통 섹션 헤더 ─────────────────────────────────────
 function SectionHeader({
   label, title, desc, dark = true,
-}: { label: string; title: React.ReactNode; desc: string; dark?: boolean }) {
+}: { label: string; title: ReactNode; desc: string; dark?: boolean }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 30 }}
