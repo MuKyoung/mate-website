@@ -46,7 +46,7 @@ export default function Header() {
         {/* 로고 */}
         <Link href="/" className="inline-flex items-center hover:opacity-80 transition-opacity">
           <Image
-            src="/images/메이트 로고.png"
+            src="/images/logo.png"
             alt="MATE"
             width={88}
             height={28}

@@ -2,6 +2,7 @@
 
 import { motion, useScroll, useTransform, useInView, animate } from 'framer-motion';
 import Link from 'next/link';
+import Image from 'next/image';
 import { FiArrowRight, FiArrowDown } from 'react-icons/fi';
 import { useRef, useEffect } from 'react';
 
@@ -67,16 +68,24 @@ export default function Hero() {
             </span>
           </motion.div>
 
-          {/* MATE 타이틀 */}
+          {/* MATE 로고 */}
           <div style={{ overflow: 'hidden' }}>
-            <motion.h1
-              className="heading-xl text-white leading-none tracking-tight mb-3"
+            <motion.div
               initial={{ y: '105%' }}
               animate={{ y: '0%' }}
               transition={{ duration: 0.7, delay: 0.15, ease: [0.23, 1, 0.32, 1] }}
+              className="inline-block mb-3"
             >
-              MATE
-            </motion.h1>
+              <Image
+                src="/images/logo.png"
+                alt="MATE"
+                width={360}
+                height={90}
+                className="h-16 sm:h-20 md:h-24 lg:h-28 w-auto"
+                style={{ mixBlendMode: 'screen' }}
+                priority
+              />
+            </motion.div>
           </div>
 
           {/* 외주개발팀 서브타이틀 */}

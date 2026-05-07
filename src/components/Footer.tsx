@@ -47,7 +47,7 @@ export default function Footer() {
           <motion.div variants={fadeUp} className="col-span-2 md:col-span-1">
             <Link href="/" className="inline-block mb-4 hover:opacity-75 transition-opacity">
               <Image
-                src="/images/메이트 로고.png"
+                src="/images/logo.png"
                 alt="MATE"
                 width={80}
                 height={26}

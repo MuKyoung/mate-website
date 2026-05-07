@@ -16,124 +16,99 @@ const CATEGORY_MAP: Record<string, string> = {
 };
 
 const CATEGORY_OPTIONS = [
-  { value: 'all', label: '전체', icon: '📁' },
-  { value: '유니티', label: '유니티', icon: '🎮' },
-  { value: '웹/앱', label: '웹/앱', icon: '🌐' },
-  { value: '강의', label: '강의', icon: '📚' },
+  { value: 'all',   label: '전체' },
+  { value: '유니티', label: '유니티' },
+  { value: '웹/앱',  label: '웹 / 앱' },
+  { value: '강의',   label: '강의' },
 ];
 
-interface ProjectsPageClientProps {
-  projects: Project[];
-}
+interface ProjectsPageClientProps { projects: Project[] }
 
 export default function ProjectsPageClient({ projects }: ProjectsPageClientProps) {
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selected, setSelected] = useState('all');
 
-  const filteredProjects = useMemo(() => {
-    let filtered = projects;
-    if (selectedCategory !== 'all') {
-      filtered = projects.filter((project) => {
-        const mappedCategory = CATEGORY_MAP[project.category] || project.category;
-        return mappedCategory === selectedCategory;
-      });
-    }
-    return [...filtered].sort((a, b) => parseInt(a.id) - parseInt(b.id));
-  }, [projects, selectedCategory]);
+  const filtered = useMemo(() => {
+    const base = selected === 'all'
+      ? projects
+      : projects.filter(p => (CATEGORY_MAP[p.category] || p.category) === selected);
+    return [...base].sort((a, b) => parseInt(a.id) - parseInt(b.id));
+  }, [projects, selected]);
 
-  const categoryCounts = useMemo(() => {
-    const counts: Record<string, number> = { all: projects.length };
-    projects.forEach((project) => {
-      const mappedCategory = CATEGORY_MAP[project.category] || project.category;
-      counts[mappedCategory] = (counts[mappedCategory] || 0) + 1;
+  const counts = useMemo(() => {
+    const c: Record<string, number> = { all: projects.length };
+    projects.forEach(p => {
+      const cat = CATEGORY_MAP[p.category] || p.category;
+      c[cat] = (c[cat] || 0) + 1;
     });
-    return counts;
+    return c;
   }, [projects]);
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--background)' }}>
-      {/* Hero */}
-      <section className="relative pt-32 pb-16 sm:pt-40 sm:pb-20 overflow-hidden">
-        <div className="container mx-auto px-4 sm:px-6 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, ease: [0.23, 1, 0.32, 1] }}
-            className="text-center max-w-4xl mx-auto"
-          >
-            <span className="section-label justify-center mb-4">Portfolio</span>
-            <h1 className="heading-lg text-white mb-5">프로젝트 포트폴리오</h1>
-            <p className="body-lg text-white/40 max-w-2xl mx-auto">
-              다양한 산업 분야에서 성공적으로 완료한 프로젝트들을 소개합니다
+
+      {/* ── 페이지 헤더 ── */}
+      <section className="pt-28 pb-10 sm:pt-32 sm:pb-12 border-b" style={{ borderColor: 'var(--border)' }}>
+        <div className="container mx-auto px-4 sm:px-6">
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, ease: [0.23, 1, 0.32, 1] }}>
+            <span className="section-label mb-3">Portfolio</span>
+            <h1 className="heading-lg text-white mb-3">프로젝트 포트폴리오</h1>
+            <p className="text-white/40 text-sm sm:text-base max-w-lg leading-relaxed">
+              다양한 산업 분야에서 성공적으로 완료한 프로젝트들을 소개합니다.
             </p>
           </motion.div>
         </div>
       </section>
 
-      {/* Projects */}
-      <section className="py-8 sm:py-12 pb-20 sm:pb-28">
+      {/* ── 프로젝트 목록 ── */}
+      <section className="py-10 pb-20" style={{ background: 'var(--surface)' }}>
         <div className="container mx-auto px-4 sm:px-6">
-          {/* Filter */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="mb-8 sm:mb-12"
-          >
-            <div className="flex flex-wrap justify-center gap-2">
-              {CATEGORY_OPTIONS.map((option) => (
-                <button
-                  key={option.value}
-                  onClick={() => setSelectedCategory(option.value)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-1.5 ${
-                    selectedCategory === option.value
-                      ? 'bg-[#3b82f6] text-white shadow-md shadow-blue-500/15'
-                      : 'text-white/50 border border-white/[0.08] hover:border-white/[0.15] hover:text-white/80'
-                  }`}
-                  style={selectedCategory !== option.value ? { background: 'var(--surface)' } : {}}
-                >
-                  <span>{option.icon}</span>
-                  <span>{option.label}</span>
-                  <span className={`text-xs px-1.5 py-0.5 rounded ${
-                    selectedCategory === option.value ? 'bg-white/20' : 'bg-white/[0.08]'
-                  }`}>
-                    {categoryCounts[option.value] || 0}
-                  </span>
-                </button>
-              ))}
-            </div>
+
+          {/* 필터 탭 */}
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.45 }}
+            className="flex items-center gap-0 border-b mb-8"
+            style={{ borderColor: 'var(--border)' }}>
+            {CATEGORY_OPTIONS.map(opt => (
+              <button key={opt.value} onClick={() => setSelected(opt.value)}
+                className={`relative px-4 py-2.5 text-sm font-medium transition-colors duration-150 ${
+                  selected === opt.value
+                    ? 'text-white'
+                    : 'text-white/35 hover:text-white/65'
+                }`}>
+                {opt.label}
+                <span className={`ml-1.5 text-xs tabular-nums ${
+                  selected === opt.value ? 'text-[#60a5fa]' : 'text-white/20'
+                }`}>
+                  {counts[opt.value] || 0}
+                </span>
+                {selected === opt.value && (
+                  <motion.span layoutId="tab-indicator"
+                    className="absolute bottom-[-1px] left-0 right-0 h-[1.5px] bg-[#3b82f6]"
+                    transition={{ type: 'spring', stiffness: 500, damping: 40 }} />
+                )}
+              </button>
+            ))}
           </motion.div>
 
-          {/* Results count */}
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            className="text-white/35 text-sm mb-6 sm:mb-8"
-          >
-            {selectedCategory === 'all' ? '전체' : selectedCategory} 프로젝트{' '}
-            <span className="text-[#60a5fa] font-medium">{filteredProjects.length}</span>개
-          </motion.p>
-
-          {/* Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          {/* 그리드 */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <AnimatePresence mode="popLayout">
-              {filteredProjects.map((project, index) => (
+              {filtered.map((project, index) => (
                 <motion.div key={project.id} layout
-                  initial={{ opacity: 0, scale: 0.95 }}
+                  initial={{ opacity: 0, scale: 0.96 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.25, delay: index * 0.04 }}>
+                  exit={{ opacity: 0, scale: 0.96 }}
+                  transition={{ duration: 0.2, delay: index * 0.03 }}>
                   <ProjectCard project={project} index={index} />
                 </motion.div>
               ))}
             </AnimatePresence>
           </div>
 
-          {filteredProjects.length === 0 && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-20">
-              <div className="text-5xl mb-4">🔍</div>
-              <h3 className="text-lg font-semibold text-white mb-2">해당 카테고리의 프로젝트가 없습니다</h3>
-              <p className="text-white/35 text-sm">다른 카테고리를 선택해 보세요</p>
+          {filtered.length === 0 && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-20 text-center">
+              <p className="text-sm text-white/30">해당 카테고리의 프로젝트가 없습니다.</p>
             </motion.div>
           )}
         </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { FiArrowLeft, FiHome } from 'react-icons/fi';
 
@@ -11,9 +12,27 @@ export default function NotFound() {
 
       <div className="text-center px-4 relative z-10">
         <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mb-8"
+        >
+          <Link href="/" className="inline-block hover:opacity-70 transition-opacity">
+            <Image
+              src="/images/logo.png"
+              alt="MATE"
+              width={120}
+              height={38}
+              className="h-8 w-auto"
+              style={{ mixBlendMode: 'screen' }}
+            />
+          </Link>
+        </motion.div>
+
+        <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
         >
           <h1 className="text-8xl sm:text-9xl font-bold text-white mb-4 tracking-tight">404</h1>
         </motion.div>

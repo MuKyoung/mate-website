@@ -109,31 +109,26 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--background)' }}>
-      {/* Server Error Notice */}
       <FloatingNotice message="현재 '메시지 보내기' 기능의 서버 오류가 있습니다. 카카오톡 1대1 오픈채팅방을 이용해주시면 감사하겠습니다." />
 
-      {/* Hero Section */}
-      <section className="relative pt-32 pb-16 sm:pt-40 sm:pb-20 overflow-hidden">
-        <div className="container mx-auto px-4 sm:px-6 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, ease: [0.23, 1, 0.32, 1] }}
-            className="text-center max-w-4xl mx-auto"
-          >
-            <span className="section-label justify-center mb-4">Contact Us</span>
-            <h1 className="heading-lg text-white mb-5">프로젝트 문의</h1>
-            <p className="body-lg text-white/40 max-w-2xl mx-auto">
-              협업, 외주, 프로젝트에 대해 궁금한 점이 있으시면 언제든지 문의해주세요
+      {/* 페이지 헤더 */}
+      <section className="pt-28 pb-10 sm:pt-32 sm:pb-12 border-b" style={{ borderColor: 'var(--border)' }}>
+        <div className="container mx-auto px-4 sm:px-6">
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, ease: [0.23, 1, 0.32, 1] }}>
+            <span className="section-label mb-3">Contact Us</span>
+            <h1 className="heading-lg text-white mb-3">프로젝트 문의</h1>
+            <p className="text-white/40 text-sm sm:text-base max-w-lg leading-relaxed">
+              협업, 외주, 프로젝트에 대해 궁금한 점이 있으시면 언제든지 문의해주세요.
             </p>
           </motion.div>
         </div>
       </section>
 
-      {/* Contact Section */}
-      <section className="py-12 sm:py-16">
+      {/* 문의 영역 */}
+      <section className="py-12 sm:py-14" style={{ background: 'var(--surface)' }}>
         <div className="container mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-6xl">
             {/* Contact Form */}
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
@@ -244,7 +239,7 @@ export default function ContactPage() {
                 href={KAKAO_OPEN_CHAT_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block p-6 rounded-3xl bg-[#FEE500] hover:bg-[#FDD835] transition-all duration-300 group"
+                className="block p-5 rounded-xl bg-[#FEE500] hover:bg-[#FDD835] transition-colors duration-200 group"
               >
                 <div className="flex items-center gap-4 mb-4">
                   <div className="w-12 h-12 bg-[#3C1E1E] rounded-xl flex items-center justify-center">
@@ -255,14 +250,10 @@ export default function ContactPage() {
                     <p className="text-sm text-[#3C1E1E]/70">1:1 오픈채팅</p>
                   </div>
                 </div>
-                <div className="bg-[#3C1E1E]/10 rounded-xl p-4 mb-4">
-                  <p className="text-[#3C1E1E] text-sm leading-relaxed">
-                    빠른 상담을 원하시면 카카오톡 오픈채팅으로 문의해주세요.
-                    <br />
-                    <span className="font-bold">평일 10:00 - 18:00</span> 실시간 응대
-                  </p>
-                </div>
-                <div className="flex items-center justify-center gap-2 bg-[#3C1E1E] text-[#FEE500] py-3 px-6 rounded-xl font-semibold group-hover:bg-[#2D1616] transition-colors">
+                <p className="text-[#3C1E1E]/70 text-xs mb-3 leading-relaxed">
+                  빠른 상담 — <span className="font-semibold text-[#3C1E1E]">평일 10:00–18:00</span> 실시간 응대
+                </p>
+                <div className="flex items-center gap-2 bg-[#3C1E1E] text-[#FEE500] py-2.5 px-4 rounded-lg text-sm font-semibold group-hover:bg-[#2D1616] transition-colors">
                   <FiMessageCircle />
                   <span>채팅 시작하기</span>
                   <FiArrowRight className="group-hover:translate-x-1 transition-transform" />
@@ -310,50 +301,21 @@ export default function ContactPage() {
         </div>
       </section>
 
-      {/* FAQ Section */}
-      <section className="py-16 sm:py-20 bg-[#f8f9fa]">
+      {/* FAQ */}
+      <section className="py-14 sm:py-18 bg-[#f8f9fa]">
         <div className="container mx-auto px-4 sm:px-6">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-12 sm:mb-16"
+            initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }} transition={{ duration: 0.5 }}
+            className="mb-10"
           >
-            <span className="section-label justify-center mb-4">FAQ</span>
-            <h2 className="heading-md text-gray-900 mb-4">자주 묻는 질문</h2>
-            <p className="body-lg text-gray-600 max-w-2xl mx-auto">
-              궁금한 점이 있으시면 FAQ를 확인해보세요
-            </p>
+            <span className="section-label mb-3" style={{ color: '#3b82f6' }}>FAQ</span>
+            <h2 className="heading-md text-gray-900 mb-2">자주 묻는 질문</h2>
+            <p className="text-gray-500 text-sm">궁금한 점이 있으시면 FAQ를 확인해보세요.</p>
           </motion.div>
-          <div className="max-w-3xl mx-auto">
+          <div className="max-w-2xl">
             <FAQAccordion faqs={faqs} />
           </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-16 sm:py-20" style={{ background: 'var(--surface)' }}>
-        <div className="container mx-auto px-4 sm:px-6 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
-              아직 궁금한 점이 있으신가요?
-            </h2>
-            <p className="text-white/60 mb-8">
-              언제든지 연락주시면 친절하게 답변드리겠습니다.
-            </p>
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 px-6 py-3 text-white/70 hover:text-white transition-colors"
-            >
-              <FiArrowRight className="rotate-180" />
-              홈으로 돌아가기
-            </Link>
-          </motion.div>
         </div>
       </section>
     </div>
