@@ -45,7 +45,7 @@ export default function TeamPageClient() {
             <span className="section-label mb-3">About Team</span>
             <h1 className="heading-lg text-white mb-3">MATE 팀 소개</h1>
             <p className="text-white/40 text-sm sm:text-base max-w-lg leading-relaxed">
-              유니티 외주 개발과 개발 강의에 특화된 전문 팀입니다.
+              Unity 게임 · AR/VR · 웹/앱 개발 및 개발 강의에 특화된 전문 외주개발팀입니다.
             </p>
           </motion.div>
         </div>
@@ -81,6 +81,7 @@ export default function TeamPageClient() {
           <motion.div {...fadeUp} transition={{ duration: 0.55 }} className="mb-10">
             <span className="section-label mb-3" style={{ color: '#3b82f6' }}>Why Choose Us</span>
             <h2 className="heading-md text-gray-900 mb-2">왜 MATE 팀인가요?</h2>
+            <p className="text-gray-500 text-sm mt-1 max-w-sm">Unity · 웹 · 앱까지 한 팀에서 해결합니다.</p>
           </motion.div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-3xl">

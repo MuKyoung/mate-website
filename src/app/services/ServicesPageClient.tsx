@@ -25,9 +25,10 @@ export default function ServicesPageClient() {
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, ease: [0.23, 1, 0.32, 1] }}>
             <span className="section-label mb-3">Our Services</span>
-            <h1 className="heading-lg text-white mb-3">전문적인 개발 서비스</h1>
+            <h1 className="heading-lg text-white mb-3">개발 서비스</h1>
             <p className="text-white/40 text-sm sm:text-base max-w-lg leading-relaxed">
-              고객의 비즈니스 성장을 위한 검증된 개발 서비스를 제공합니다.
+              Unity 게임 · AR/VR부터 웹/앱 개발, 개발 강의까지.
+              고객의 니즈에 맞는 검증된 서비스를 제공합니다.
             </p>
           </motion.div>
         </div>
@@ -92,7 +93,7 @@ export default function ServicesPageClient() {
             className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
             <div>
               <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">프로젝트를 시작할 준비가 되셨나요?</h2>
-              <p className="text-white/40 text-sm">무료 상담을 통해 프로젝트에 대해 이야기해 보세요.</p>
+              <p className="text-white/40 text-sm">게임 · 웹 · 앱 · AR/VR — 무료 상담을 통해 이야기해 보세요.</p>
             </div>
             <Link href="/contact"
               className="group flex-shrink-0 inline-flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-semibold text-white bg-[#3b82f6] hover:bg-[#2563eb] transition-colors duration-200">

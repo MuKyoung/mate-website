@@ -44,7 +44,7 @@ export default function Home() {
             <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }} transition={{ duration: 0.55, ease }}>
               <span className="section-label mb-2">Services</span>
-              <h2 className="heading-md text-white">전문 개발 서비스</h2>
+              <h2 className="heading-md text-white">게임 · 웹 · 앱 개발 서비스</h2>
             </motion.div>
             <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }}
               viewport={{ once: true }} transition={{ duration: 0.4, delay: 0.2 }}>
@@ -99,8 +99,8 @@ export default function Home() {
               <span className="section-label mb-3" style={{ color: '#3b82f6' }}>Why Choose Us</span>
               <h2 className="heading-md text-gray-900 mb-5">왜 MATE인가요?</h2>
               <p className="text-gray-500 text-sm leading-relaxed mb-8 max-w-sm">
-                5년간 쌓아온 실전 경험과 30개 이상의 완료 프로젝트로 검증된 팀입니다.
-                아이디어 기획부터 배포까지 전 과정을 함께합니다.
+                Unity 게임 · AR/VR · 웹 · 앱까지, 5년간 30개 이상의 프로젝트로
+                검증된 풀스택 외주개발팀입니다. 기획부터 배포까지 함께합니다.
               </p>
               <Link href="/team"
                 className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold text-white bg-gray-900 hover:bg-gray-800 transition-colors">
@@ -112,10 +112,10 @@ export default function Home() {
             {/* 오른쪽 — 지표 목록 */}
             <div className="divide-y" style={{ borderColor: '#e5e7eb' }}>
               {[
-                { metric: '30+', label: '완료 프로젝트', desc: 'Game · AR/VR · Web · Simulation' },
-                { metric: '5년', label: '외주 개발 경력', desc: 'Unity 전문 팀으로 시작부터 검증까지' },
+                { metric: '30+', label: '완료 프로젝트', desc: 'Game · AR/VR · Web · App · Simulation' },
+                { metric: '5년', label: '외주 개발 경력', desc: 'Unity · 웹/앱 전문 팀으로 시작부터 검증까지' },
                 { metric: '100%', label: '프로젝트 성공률', desc: '납기 준수와 품질 보증을 최우선' },
-                { metric: '4명', label: '전문 개발자', desc: '클라이언트 · 서버 · UI/UX 각 분야 전문가' },
+                { metric: '4명', label: '전문 개발자', desc: 'Unity · 웹/앱 · 서버 · UI/UX 각 분야 전문가' },
               ].map((item, i) => (
                 <motion.div key={i}
                   initial={{ opacity: 0, x: 20 }}
@@ -162,7 +162,7 @@ export default function Home() {
               <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2 tracking-tight">
                 프로젝트를 시작해볼까요?
               </h2>
-              <p className="text-white/35 text-sm">무료 상담으로 가능성을 확인하세요.</p>
+              <p className="text-white/35 text-sm">게임 · 웹 · 앱 · AR/VR — 무료 상담으로 가능성을 확인하세요.</p>
             </motion.div>
             <motion.div initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }} transition={{ duration: 0.55, delay: 0.15, ease }}

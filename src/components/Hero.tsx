@@ -40,7 +40,13 @@ export default function Hero() {
     { to: 4,   suffix: '명', label: '전문 개발자' },
   ];
 
-  const tags = ['Unity', 'AR / VR', 'Game Server', 'Simulation', 'Mobile'];
+  const tags = [
+    'Unity 게임 개발',
+    'AR / VR 콘텐츠',
+    '웹 개발 (React · Next.js)',
+    '앱 개발 (Flutter · Android)',
+    '개발 강의',
+  ];
 
   return (
     <section ref={containerRef}
@@ -84,23 +90,23 @@ export default function Hero() {
                 <motion.h1
                   className="font-bold tracking-tight text-white leading-[0.92]"
                   style={{ fontSize: 'clamp(3rem, 8vw, 6.5rem)' }}
-                  initial={{ y: '105%' }}
-                  animate={{ y: '0%' }}
-                  transition={{ duration: 0.75, delay: 0.15, ease: [0.23, 1, 0.32, 1] }}
-                >
-                  게임·AR·VR
-                </motion.h1>
-              </div>
-              <div className="overflow-hidden mb-8">
-                <motion.h1
-                  className="font-bold tracking-tight leading-[0.92]"
-                  style={{ fontSize: 'clamp(3rem, 8vw, 6.5rem)', color: 'rgba(255,255,255,0.22)' }}
-                  initial={{ y: '105%' }}
-                  animate={{ y: '0%' }}
-                  transition={{ duration: 0.75, delay: 0.28, ease: [0.23, 1, 0.32, 1] }}
-                >
-                  외주개발 파트너
-                </motion.h1>
+              initial={{ y: '105%' }}
+              animate={{ y: '0%' }}
+              transition={{ duration: 0.75, delay: 0.15, ease: [0.23, 1, 0.32, 1] }}
+            >
+              게임 · 웹 · 앱
+            </motion.h1>
+          </div>
+          <div className="overflow-hidden mb-8">
+            <motion.h1
+              className="font-bold tracking-tight leading-[0.92]"
+              style={{ fontSize: 'clamp(3rem, 8vw, 6.5rem)', color: 'rgba(255,255,255,0.22)' }}
+              initial={{ y: '105%' }}
+              animate={{ y: '0%' }}
+              transition={{ duration: 0.75, delay: 0.28, ease: [0.23, 1, 0.32, 1] }}
+            >
+              외주개발 전문팀
+            </motion.h1>
               </div>
 
               {/* 설명 */}
@@ -110,8 +116,8 @@ export default function Hero() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.5, ease: [0.23, 1, 0.32, 1] }}
               >
-                5년 이상의 실무 경력과 30개 이상의 완료 프로젝트.
-                아이디어를 완성도 높은 결과물로 만들어 드립니다.
+                Unity 게임 · AR/VR부터 웹/앱까지.<br />
+                5년 경력, 30개 이상의 프로젝트로 검증된 외주개발팀입니다.
               </motion.p>
 
               {/* CTA */}
