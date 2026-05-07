@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { FiGithub, FiLinkedin, FiMail, FiTwitter, FiArrowUpRight } from 'react-icons/fi';
 
@@ -44,8 +45,15 @@ export default function Footer() {
         >
           {/* 브랜드 */}
           <motion.div variants={fadeUp} className="col-span-2 md:col-span-1">
-            <Link href="/" className="inline-block mb-4">
-              <span className="text-2xl font-bold text-white tracking-tight">MATE</span>
+            <Link href="/" className="inline-block mb-4 hover:opacity-75 transition-opacity">
+              <Image
+                src="/images/메이트 로고.png"
+                alt="MATE"
+                width={80}
+                height={26}
+                className="h-6 w-auto"
+                style={{ mixBlendMode: 'screen' }}
+              />
             </Link>
             <p className="text-sm text-white/30 leading-relaxed mb-5">
               유니티 외주 개발과 개발 강의에 특화된 전문 개발 팀.

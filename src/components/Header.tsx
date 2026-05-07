@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiMenu, FiX } from 'react-icons/fi';
@@ -43,11 +44,16 @@ export default function Header() {
       <nav className="container mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
 
         {/* 로고 */}
-        <Link
-          href="/"
-          className="text-xl font-bold text-white tracking-tight hover:text-white/80 transition-colors"
-        >
-          MATE
+        <Link href="/" className="inline-flex items-center hover:opacity-80 transition-opacity">
+          <Image
+            src="/images/메이트 로고.png"
+            alt="MATE"
+            width={88}
+            height={28}
+            className="h-7 w-auto"
+            style={{ mixBlendMode: 'screen' }}
+            priority
+          />
         </Link>
 
         {/* 데스크톱 네비 */}
