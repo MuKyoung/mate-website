@@ -122,18 +122,18 @@ export default function Hero() {
 
               {/* CTA */}
               <motion.div
-                className="flex gap-3"
+                className="flex flex-wrap gap-3"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.55, delay: 0.65, ease: [0.23, 1, 0.32, 1] }}
               >
                 <Link href="/contact"
-                  className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-white text-sm bg-[#3b82f6] hover:bg-[#2563eb] transition-colors duration-200">
+                  className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-white text-sm bg-[#3b82f6] hover:bg-[#2563eb] transition-colors duration-200 whitespace-nowrap">
                   프로젝트 문의
                   <FiArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
                 </Link>
                 <Link href="/projects"
-                  className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium text-white/45 text-sm border border-white/[0.1] hover:border-white/20 hover:text-white/70 transition-all duration-200">
+                  className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium text-white/45 text-sm border border-white/[0.1] hover:border-white/20 hover:text-white/70 transition-all duration-200 whitespace-nowrap">
                   포트폴리오
                   <FiArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
                 </Link>
@@ -155,11 +155,11 @@ export default function Hero() {
                     initial={{ opacity: 0, x: 16 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.55 + i * 0.07, duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
-                    className="group flex items-center justify-between p-3.5 rounded-lg border cursor-default transition-all duration-200 hover:border-white/[0.12] hover:bg-white/[0.025]"
+                    className="group flex items-center justify-between gap-3 p-3.5 rounded-lg border cursor-default transition-all duration-200 hover:border-white/[0.12] hover:bg-white/[0.025]"
                     style={{ borderColor: 'var(--border)' }}
                   >
-                    <span className="text-sm font-medium text-white/50 group-hover:text-white/75 transition-colors">{tag}</span>
-                    <span className="text-[10px] text-white/15 font-mono-stat">0{i + 1}</span>
+                    <span className="text-sm font-medium text-white/50 group-hover:text-white/75 transition-colors truncate min-w-0">{tag}</span>
+                    <span className="text-[10px] text-white/15 font-mono-stat flex-shrink-0">0{i + 1}</span>
                   </motion.div>
                 ))}
               </div>
@@ -177,9 +177,19 @@ export default function Hero() {
         transition={{ delay: 1.1, duration: 0.6 }}
       >
         <div className="container mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0"
-            style={{ '--tw-divide-color': 'rgba(255,255,255,0.06)' } as React.CSSProperties}>
-            {stats.map((s, i) => <Stat key={i} {...s} />)}
+          <div className="grid grid-cols-2 sm:grid-cols-4">
+            {stats.map((s, i) => (
+              <div key={i}
+                className={[
+                  i % 2 === 1         ? 'border-l'    : '',
+                  i >= 2              ? 'border-t'    : '',
+                  i > 0               ? 'sm:border-l' : 'sm:border-l-0',
+                  i >= 2              ? 'sm:border-t-0' : '',
+                ].join(' ')}
+                style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+                <Stat {...s} />
+              </div>
+            ))}
           </div>
         </div>
       </motion.div>

@@ -13,11 +13,11 @@ const siteUrl = "https://devteammate.co.kr";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Mate - 유니티 외주 개발 및 개발 강의 팀",
+    default: "Mate - 게임·웹·앱 외주 개발 전문팀",
     template: "%s | Mate 외주개발팀",
   },
-  description: "유니티 개발과 개발 강의에 특화된 전문 개발 팀입니다. 실무 경험을 바탕으로 한 체계적인 교육과 안정적인 개발 서비스를 제공합니다.",
-  keywords: "외주개발, 외주 개발, 유니티, Unity, 개발 강의, 유니티 강의, Unity 교육, 게임 개발 교육, 외주 팀, 유니티 외주, 유니티 외주개발, Unity 외주개발, 게임 개발 외주, AR/VR 개발, 2D 게임 개발, 3D 게임 개발",
+  description: "Unity 게임·AR/VR·웹·앱 개발 및 개발 강의에 특화된 전문 외주개발팀입니다. 5년 경력, 30개 이상의 프로젝트로 검증된 풀스택 개발 파트너입니다.",
+  keywords: "외주개발, 외주 개발, 유니티, Unity, 게임 개발, AR/VR, 웹개발, 앱개발, React, Next.js, Flutter, 개발 강의, 유니티 강의, 외주 팀, 유니티 외주, 웹 외주, 앱 외주, 게임 외주, 2D 게임 개발, 3D 게임 개발",
   authors: [{ name: "Mate Team" }],
   creator: "Mate 외주개발팀",
   publisher: "Mate 외주개발팀",
@@ -29,8 +29,8 @@ export const metadata: Metadata = {
     locale: "ko_KR",
     url: siteUrl,
     siteName: "Mate 외주개발팀",
-    title: "Mate - 유니티 외주 개발 및 개발 강의 팀",
-    description: "유니티 외주 개발과 개발 강의에 특화된 전문 개발 팀입니다. 실무 경험을 바탕으로 한 체계적인 교육과 안정적인 외주 개발 서비스를 제공합니다.",
+    title: "Mate - 게임·웹·앱 외주 개발 전문팀",
+    description: "Unity 게임·AR/VR·웹·앱 개발 및 개발 강의에 특화된 전문 외주개발팀입니다. 5년 경력, 30개 이상의 프로젝트로 검증된 풀스택 개발 파트너입니다.",
     images: [
       {
         url: `${siteUrl}/images/og-image.jpg`,
@@ -42,8 +42,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Mate - 유니티 외주 개발 및 개발 강의 팀",
-    description: "유니티 외주 개발과 개발 강의에 특화된 전문 개발 팀입니다.",
+    title: "Mate - 게임·웹·앱 외주 개발 전문팀",
+    description: "Unity 게임·AR/VR·웹·앱 개발 및 개발 강의 전문팀.",
     images: [`${siteUrl}/images/og-image.jpg`],
   },
   robots: {

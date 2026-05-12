@@ -173,7 +173,12 @@ export default function TeamPageClient() {
           </motion.div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl">
             {teamCapabilities.capabilities.map((capability, index) => (
-              <TeamCapabilityCard key={capability.id} capability={capability} index={index} />
+              <div key={capability.id}
+                className={teamCapabilities.capabilities.length % 2 !== 0 && index === teamCapabilities.capabilities.length - 1
+                  ? 'md:col-span-2'
+                  : ''}>
+                <TeamCapabilityCard capability={capability} index={index} />
+              </div>
             ))}
           </div>
         </div>
