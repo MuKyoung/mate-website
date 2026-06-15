@@ -371,7 +371,7 @@ export default function CompanyProfilePage() {
           <div className="cover-footer">
             <div className="cover-contact">
               <div>team-mate@naver.com</div>
-              <div>010-5457-9141</div>
+              <div>0507-1339-9141</div>
               <div>devteammate.co.kr</div>
             </div>
             <div className="cover-year">2026</div>
@@ -495,7 +495,7 @@ export default function CompanyProfilePage() {
               <div className="contact-icon">📞</div>
               <div>
                 <div className="contact-label">전화</div>
-                <div className="contact-value">010-5457-9141</div>
+                <div className="contact-value">0507-1339-9141</div>
               </div>
             </div>
             <div className="contact-item">

@@ -78,7 +78,7 @@ export default function RootLayout({
     "logo": `${siteUrl}/images/logo.png`,
     "contactPoint": {
       "@type": "ContactPoint",
-      "telephone": "+82-10-5457-9141",
+      "telephone": "+82-507-1339-9141",
       "contactType": "customer service",
       "email": "team-mate@naver.com",
       "areaServed": "KR",

@@ -275,14 +275,14 @@ export default function ContactPage() {
                       </p>
                     </div>
                   </a>
-                  <a href="tel:010-5457-9141" className="flex items-start group">
+                  <a href="tel:0507-1339-9141" className="flex items-start group">
                     <div className="w-9 h-9 rounded-lg bg-blue-500/[0.1] flex items-center justify-center mr-3.5 flex-shrink-0">
                       <FiPhone className="text-[#60a5fa]" size={16} />
                     </div>
                     <div>
                       <p className="font-semibold text-white mb-1">전화</p>
                       <p className="text-white/40 group-hover:text-[#60a5fa] transition-colors text-sm">
-                        010-5457-9141
+                        0507-1339-9141
                       </p>
                     </div>
                   </a>

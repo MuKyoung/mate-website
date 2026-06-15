@@ -109,9 +109,9 @@ export default function Footer() {
               </div>
               <div>
                 <p className="text-[10px] text-white/18 uppercase tracking-wider mb-0.5">Phone</p>
-                <a href="tel:010-5457-9141"
+                <a href="tel:0507-1339-9141"
                   className="text-sm text-white/35 hover:text-white/65 transition-colors hover-underline">
-                  010-5457-9141
+                  0507-1339-9141
                 </a>
               </div>
               <Link href="/contact"
