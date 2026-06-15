@@ -59,7 +59,7 @@ export default function TeamPageClient() {
             {[
               { value: '30+', label: '완료 프로젝트' },
               { value: '5년', label: '외주 개발 경력' },
-              { value: '4명', label: '전문 개발자' },
+              { value: '5명', label: '전문 개발자' },
               { value: '100%', label: '성공률' },
             ].map((stat, i) => (
               <motion.div key={i}

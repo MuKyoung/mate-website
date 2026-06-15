@@ -31,7 +31,7 @@ export default function Footer() {
     { icon: FiGithub,   href: 'https://github.com',   label: 'GitHub' },
     { icon: FiLinkedin, href: 'https://linkedin.com', label: 'LinkedIn' },
     { icon: FiTwitter,  href: 'https://twitter.com',  label: 'Twitter' },
-    { icon: FiMail,     href: 'mailto:team-mate@naver.com', label: 'Email' },
+    { icon: FiMail,     href: 'mailto:hsib1212@naver.com', label: 'Email' },
   ];
 
   return (
@@ -102,9 +102,9 @@ export default function Footer() {
             <div className="space-y-3.5">
               <div>
                 <p className="text-[10px] text-white/18 uppercase tracking-wider mb-0.5">Email</p>
-                <a href="mailto:team-mate@naver.com"
+                <a href="mailto:hsib1212@naver.com"
                   className="text-sm text-white/35 hover:text-white/65 transition-colors hover-underline break-all">
-                  team-mate@naver.com
+                  hsib1212@naver.com
                 </a>
               </div>
               <div>

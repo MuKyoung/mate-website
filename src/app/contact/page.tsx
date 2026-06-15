@@ -264,14 +264,14 @@ export default function ContactPage() {
               <div className="p-6 rounded-xl border" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
                 <h2 className="text-base font-semibold text-white mb-5">연락처 정보</h2>
                 <div className="space-y-5">
-                  <a href="mailto:team-mate@naver.com" className="flex items-start group">
+                  <a href="mailto:hsib1212@naver.com" className="flex items-start group">
                     <div className="w-9 h-9 rounded-lg bg-blue-500/[0.1] flex items-center justify-center mr-3.5 flex-shrink-0">
                       <FiMail className="text-[#60a5fa]" size={16} />
                     </div>
                     <div>
                       <p className="font-semibold text-white mb-1">이메일</p>
                       <p className="text-white/40 group-hover:text-[#60a5fa] transition-colors text-sm break-all">
-                        team-mate@naver.com
+                        hsib1212@naver.com
                       </p>
                     </div>
                   </a>

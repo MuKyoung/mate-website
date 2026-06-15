@@ -80,7 +80,7 @@ export default function RootLayout({
       "@type": "ContactPoint",
       "telephone": "+82-507-1339-9141",
       "contactType": "customer service",
-      "email": "team-mate@naver.com",
+      "email": "hsib1212@naver.com",
       "areaServed": "KR",
       "availableLanguage": "Korean",
     },

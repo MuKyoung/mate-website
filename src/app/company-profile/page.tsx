@@ -2,18 +2,6 @@
 
 import Image from 'next/image';
 import { useEffect } from 'react';
-import { awards } from '@/data/teamCapabilities';
-
-const HIGHLIGHT_AWARDS = [
-  { year: 2025, title: 'G-STAR', org: '한국게임산업협회', rank: '전시 참가' },
-  { year: 2025, title: '학생창업유망팀300', org: '교육부', rank: '교육부장관 인증서' },
-  { year: 2024, title: '국방 AI 컨퍼런스', org: '국방부', rank: '최우수상' },
-  { year: 2024, title: '글로벌게임챌린지(GGC) 2024', org: '한국게임학회', rank: '우수논문상' },
-  { year: 2024, title: '농림축산식품부 공공데이터 창업경진대회', org: '농림축산식품부', rank: '우수상' },
-  { year: 2024, title: 'SDGs 소셜벤처 챔피언십', org: 'SDGs', rank: '은상' },
-  { year: 2023, title: '디자인씽킹', org: '영남이공대학교 공학기술교육혁신센터', rank: '대상' },
-  { year: 2021, title: '공학페스티벌 창의적 종합설계 경진대회', org: '산업통상자원부·KIAT', rank: '한국산업진흥원장상' },
-];
 
 const SERVICES = [
   {
@@ -26,7 +14,7 @@ const SERVICES = [
     no: '02',
     title: '웹 · 앱 개발',
     desc: '반응형 웹사이트, 관리자 대시보드, iOS/Android 앱 등 정적·동적 웹/앱 서비스를 기획부터 배포까지 풀사이클로 개발합니다.',
-    stack: ['React', 'Next.js', 'Flutter', 'Python', 'AWS', 'Vercel'],
+    stack: ['React', 'Next.js', 'Flutter', 'Python', 'Supabase', 'AWS', 'Vercel'],
   },
   {
     no: '03',
@@ -42,13 +30,6 @@ const PROCESS = [
   { step: '03', title: '개발', desc: '주간 소통 · 코드 리뷰 · 진행 상황 공유' },
   { step: '04', title: '테스트', desc: '버그 수정 및 사용자 테스트 · UX 개선' },
   { step: '05', title: '배포', desc: '최종 검수 · 배포 · 모니터링' },
-];
-
-const TEAM = [
-  { name: '박무경', role: 'Unity 클라이언트 개발', skills: 'AR/VR · 2D/3D · Unity · C#' },
-  { name: '정성권', role: 'Unity 클라이언트 개발', skills: 'Unity · C# · 서버 연동 · Git' },
-  { name: '전승원', role: 'UI/UX 디자인', skills: 'Figma · UI/UX · 디자인 시스템' },
-  { name: '이도연', role: '웹 · 앱 개발', skills: 'React · Next.js · Flutter · Python · AWS' },
 ];
 
 export default function CompanyProfilePage() {
@@ -221,63 +202,6 @@ export default function CompanyProfilePage() {
         }
         .process-cell:last-child .process-arrow { display: none; }
 
-        /* ── 팀 ── */
-        .team-grid {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 12px;
-        }
-        .team-card {
-          border: 1px solid #e5e7eb;
-          border-radius: 8px;
-          padding: 16px;
-          text-align: center;
-        }
-        .team-avatar {
-          width: 48px; height: 48px;
-          border-radius: 50%;
-          background: #eff6ff;
-          border: 2px solid #bfdbfe;
-          margin: 0 auto 10px;
-          display: flex; align-items: center; justify-content: center;
-          font-size: 18px; font-weight: 700; color: #2563eb;
-        }
-        .team-name { font-size: 13px; font-weight: 700; color: #111827; margin-bottom: 3px; }
-        .team-role { font-size: 11px; color: #6b7280; margin-bottom: 8px; line-height: 1.4; }
-        .team-skills { font-size: 10px; color: #9ca3af; line-height: 1.5; }
-
-        /* ── 수상 ── */
-        .award-grid {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 8px;
-        }
-        .award-item {
-          display: flex;
-          align-items: flex-start;
-          gap: 10px;
-          padding: 12px 14px;
-          border: 1px solid #e5e7eb;
-          border-radius: 8px;
-          background: #fafafa;
-        }
-        .award-year {
-          font-size: 10px; font-weight: 700; color: #2563eb;
-          font-variant-numeric: tabular-nums; flex-shrink: 0; padding-top: 1px;
-        }
-        .award-title { font-size: 12px; font-weight: 600; color: #111827; margin-bottom: 2px; }
-        .award-org { font-size: 10px; color: #9ca3af; }
-        .award-rank {
-          display: inline-block;
-          margin-left: 6px;
-          padding: 1px 6px;
-          background: #fef3c7;
-          color: #92400e;
-          border-radius: 3px;
-          font-size: 10px;
-          font-weight: 500;
-        }
-
         /* ── 연락처 ── */
         .contact-grid {
           display: grid;
@@ -370,7 +294,7 @@ export default function CompanyProfilePage() {
 
           <div className="cover-footer">
             <div className="cover-contact">
-              <div>team-mate@naver.com</div>
+              <div>hsib1212@naver.com</div>
               <div>0507-1339-9141</div>
               <div>devteammate.co.kr</div>
             </div>
@@ -384,7 +308,7 @@ export default function CompanyProfilePage() {
             { v: '30+', l: '완료 프로젝트' },
             { v: '5년', l: '개발 경력' },
             { v: '100%', l: '프로젝트 성공률' },
-            { v: '4명', l: '전문 개발자' },
+            { v: '5명', l: '전문 개발자' },
           ].map(s => (
             <div className="stat-cell" key={s.l}>
               <div className="stat-value">{s.v}</div>
@@ -440,45 +364,6 @@ export default function CompanyProfilePage() {
           </div>
         </div>
 
-        {/* ════ 팀 구성 ════ */}
-        <div className="section page-break-before">
-          <p className="section-label">Team</p>
-          <h2 className="section-title">팀 구성</h2>
-          <div className="team-grid">
-            {TEAM.map(m => (
-              <div className="team-card" key={m.name}>
-                <div className="team-avatar">{m.name[0]}</div>
-                <div className="team-name">{m.name}</div>
-                <div className="team-role">{m.role}</div>
-                <div className="team-skills">{m.skills}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* ════ 수상 및 전시 ════ */}
-        <div className="section">
-          <p className="section-label">Awards &amp; Exhibitions</p>
-          <h2 className="section-title">수상 및 전시 경력</h2>
-          <div className="award-grid">
-            {HIGHLIGHT_AWARDS.map((a, i) => (
-              <div className="award-item" key={i}>
-                <div className="award-year">{a.year}</div>
-                <div>
-                  <div className="award-title">
-                    {a.title}
-                    <span className="award-rank">{a.rank}</span>
-                  </div>
-                  <div className="award-org">{a.org}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-          <p style={{ fontSize: 11, color: '#9ca3af', marginTop: 14 }}>
-            * G-STAR, GLC, 산학협력 EXPO, DiveXR 코엑스 등 다수 전시 참가 이력 포함
-          </p>
-        </div>
-
         {/* ════ 연락처 ════ */}
         <div className="section" style={{ background: '#f9fafb' }}>
           <p className="section-label">Contact</p>
@@ -488,7 +373,7 @@ export default function CompanyProfilePage() {
               <div className="contact-icon">✉️</div>
               <div>
                 <div className="contact-label">이메일</div>
-                <div className="contact-value">team-mate@naver.com</div>
+                <div className="contact-value">hsib1212@naver.com</div>
               </div>
             </div>
             <div className="contact-item">

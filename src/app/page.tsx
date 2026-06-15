@@ -115,7 +115,7 @@ export default function Home() {
                 { metric: '30+', label: '완료 프로젝트', desc: 'Game · AR/VR · Web · App · Simulation' },
                 { metric: '5년', label: '외주 개발 경력', desc: 'Unity · 웹/앱 전문 팀으로 시작부터 검증까지' },
                 { metric: '100%', label: '프로젝트 성공률', desc: '납기 준수와 품질 보증을 최우선' },
-                { metric: '4명', label: '전문 개발자', desc: 'Unity · 웹/앱 · 서버 · UI/UX 각 분야 전문가' },
+                { metric: '5명', label: '전문 개발자', desc: 'Unity · 웹/앱 · 서버 · UI/UX 각 분야 전문가' },
               ].map((item, i) => (
                 <motion.div key={i}
                   initial={{ opacity: 0, x: 20 }}

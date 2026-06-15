@@ -184,7 +184,7 @@ export const teamCapabilities = {
       title: '웹/앱 외주 개발',
       description: '다양한 규모의 프로젝트를 안정적으로 완수하는 경험',
       icon: '🌐',
-      skills: ['React', 'Next.js', 'Flutter', 'Python', 'AWS', 'Github'],
+      skills: ['React', 'Next.js', 'Flutter', 'Python', 'Supabase', 'AWS', 'Github'],
       experience: '5년 이상',
       projects: 10,
     },
@@ -198,10 +198,10 @@ export const teamCapabilities = {
       projects: 15,
     },
   ],
-  stats: {
+      stats: {
     totalProjects: 30,
     yearsExperience: 5,
-    teamMembers: 4,
+    teamMembers: 5,
     successRate: 100,
   },
 };

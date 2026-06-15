@@ -37,7 +37,7 @@ export default function Hero() {
     { to: 30,  suffix: '+', label: '완료 프로젝트' },
     { to: 5,   suffix: '년', label: '개발 경력' },
     { to: 100, suffix: '%', label: '프로젝트 성공률' },
-    { to: 4,   suffix: '명', label: '전문 개발자' },
+    { to: 5,   suffix: '명', label: '전문 개발자' },
   ];
 
   const tags = [
