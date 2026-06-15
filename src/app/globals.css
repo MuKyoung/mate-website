@@ -245,6 +245,13 @@ body {
 .animate-pulse-subtle{ animation: pulse-subtle 2.5s ease-in-out infinite; }
 .animate-float       { animation: float 4s ease-in-out infinite; }
 
+/* ── 인쇄 전역 ────────────────────────────────── */
+@media print {
+  header, footer, nav,
+  [class*="fixed"],
+  [class*="z-50"] { display: none !important; }
+}
+
 /* ── 반응형 ───────────────────────────────────── */
 .section-padding    { @apply py-16 sm:py-20 md:py-28 lg:py-32; }
 .section-padding-sm { @apply py-12 sm:py-16 md:py-20; }
