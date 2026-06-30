@@ -19,10 +19,10 @@ function Stat({ to, suffix, label }: { to: number; suffix: string; label: string
   }, [inView, to, suffix]);
   return (
     <div className="py-6 sm:py-7 px-5 sm:px-8 text-center sm:text-left">
-      <div className="text-2xl sm:text-3xl font-bold text-white font-mono-stat mb-0.5">
+      <div className="text-2xl sm:text-3xl font-bold text-[#262626] font-mono-stat mb-0.5">
         <span ref={ref}>0{suffix}</span>
       </div>
-      <div className="text-[11px] text-white/25 uppercase tracking-widest">{label}</div>
+      <div className="text-[11px] text-[#a3a3a3] uppercase tracking-widest">{label}</div>
     </div>
   );
 }
@@ -56,9 +56,9 @@ export default function Hero() {
       {/* 배경 구조선 */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {/* 세로 분할선 */}
-        <div className="absolute top-0 bottom-0 left-1/2 w-px opacity-[0.04] bg-white hidden lg:block" />
+        <div className="absolute top-0 bottom-0 left-1/2 w-px bg-[#e1e1e1] hidden lg:block" />
         {/* 오른쪽 패널 영역 상단 */}
-        <div className="absolute top-[28%] right-0 left-1/2 h-px opacity-[0.05] bg-white hidden lg:block" />
+        <div className="absolute top-[28%] right-0 left-1/2 h-px bg-[#e1e1e1] hidden lg:block" />
       </div>
 
       <motion.div style={{ y, opacity }} className="relative z-10 flex-1 flex flex-col">
@@ -78,9 +78,9 @@ export default function Hero() {
                 className="flex items-center gap-4 mb-10"
               >
                 <Image src="/images/logo.png" alt="MATE" width={90} height={28}
-                  className="h-6 w-auto" style={{ mixBlendMode: 'screen' }} priority />
-                <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-white/30 tracking-wide">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse-subtle" />
+                  className="h-6 w-auto" priority />
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[#5d5d5d] tracking-wide">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#058765] animate-pulse-subtle" />
                   상담 가능
                 </span>
               </motion.div>
@@ -88,7 +88,7 @@ export default function Hero() {
               {/* 대형 헤드라인 */}
               <div className="overflow-hidden mb-2">
                 <motion.h1
-                  className="font-bold tracking-tight text-white leading-[0.92]"
+                  className="font-extrabold tracking-tight text-[#262626] leading-[0.92]"
                   style={{ fontSize: 'clamp(3rem, 8vw, 6.5rem)' }}
               initial={{ y: '105%' }}
               animate={{ y: '0%' }}
@@ -99,8 +99,8 @@ export default function Hero() {
           </div>
           <div className="overflow-hidden mb-8">
             <motion.h1
-              className="font-bold tracking-tight leading-[0.92]"
-              style={{ fontSize: 'clamp(3rem, 8vw, 6.5rem)', color: 'rgba(255,255,255,0.22)' }}
+              className="font-extrabold tracking-tight leading-[0.92]"
+              style={{ fontSize: 'clamp(3rem, 8vw, 6.5rem)', color: '#c6c6c6' }}
               initial={{ y: '105%' }}
               animate={{ y: '0%' }}
               transition={{ duration: 0.75, delay: 0.28, ease: [0.23, 1, 0.32, 1] }}
@@ -111,7 +111,7 @@ export default function Hero() {
 
               {/* 설명 */}
               <motion.p
-                className="text-white/40 text-sm sm:text-base leading-relaxed mb-8 max-w-sm"
+                className="text-[#4c4c4c] text-sm sm:text-base leading-relaxed mb-8 max-w-sm"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.5, ease: [0.23, 1, 0.32, 1] }}
@@ -128,12 +128,12 @@ export default function Hero() {
                 transition={{ duration: 0.55, delay: 0.65, ease: [0.23, 1, 0.32, 1] }}
               >
                 <Link href="/contact"
-                  className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-white text-sm bg-[#3b82f6] hover:bg-[#2563eb] transition-colors duration-200 whitespace-nowrap">
+                  className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium text-white text-sm bg-[#2a72e5] hover:bg-[#0957c8] transition-colors duration-150 whitespace-nowrap">
                   프로젝트 문의
                   <FiArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
                 </Link>
                 <Link href="/projects"
-                  className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium text-white/45 text-sm border border-white/[0.1] hover:border-white/20 hover:text-white/70 transition-all duration-200 whitespace-nowrap">
+                  className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium text-[#262626] text-sm bg-white border border-[#c6c6c6] hover:bg-[#f7f7f7] transition-all duration-150 whitespace-nowrap">
                   포트폴리오
                   <FiArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
                 </Link>
@@ -143,23 +143,23 @@ export default function Hero() {
             {/* 오른쪽 ─ 기술 스택 패널 */}
             <motion.div
               className="lg:w-1/2 lg:pl-16 lg:border-l"
-              style={{ borderColor: 'rgba(255,255,255,0.06)' }}
+              style={{ borderColor: 'var(--border)' }}
               initial={{ opacity: 0, x: 24 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.7, delay: 0.45, ease: [0.23, 1, 0.32, 1] }}
             >
-              <p className="text-[11px] text-white/25 uppercase tracking-[0.18em] mb-6">전문 분야</p>
+              <p className="text-[11px] text-[#a3a3a3] uppercase tracking-[0.18em] mb-6">전문 분야</p>
               <div className="space-y-2">
                 {tags.map((tag, i) => (
                   <motion.div key={tag}
                     initial={{ opacity: 0, x: 16 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.55 + i * 0.07, duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
-                    className="group flex items-center justify-between gap-3 p-3.5 rounded-lg border cursor-default transition-all duration-200 hover:border-white/[0.12] hover:bg-white/[0.025]"
+                    className="group flex items-center justify-between gap-3 p-3.5 rounded-xl border cursor-default bg-white transition-all duration-150 hover:border-[#c6c6c6] hover:bg-[#f7f7f7]"
                     style={{ borderColor: 'var(--border)' }}
                   >
-                    <span className="text-sm font-medium text-white/50 group-hover:text-white/75 transition-colors truncate min-w-0">{tag}</span>
-                    <span className="text-[10px] text-white/15 font-mono-stat flex-shrink-0">0{i + 1}</span>
+                    <span className="text-sm font-medium text-[#4c4c4c] group-hover:text-[#262626] transition-colors truncate min-w-0">{tag}</span>
+                    <span className="text-[10px] text-[#a3a3a3] font-mono-stat flex-shrink-0">0{i + 1}</span>
                   </motion.div>
                 ))}
               </div>
@@ -186,7 +186,7 @@ export default function Hero() {
                   i > 0               ? 'sm:border-l' : 'sm:border-l-0',
                   i >= 2              ? 'sm:border-t-0' : '',
                 ].join(' ')}
-                style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+                style={{ borderColor: 'var(--border)' }}>
                 <Stat {...s} />
               </div>
             ))}

@@ -21,19 +21,19 @@ export default function FAQAccordion({ faqs }: FAQAccordionProps) {
       {faqs.map((faq) => (
         <div
           key={faq.id}
-          className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow"
+          className="bg-white rounded-xl overflow-hidden border border-[#e1e1e1] hover:border-[#c6c6c6] transition-colors"
         >
           <button
             onClick={() => toggleFAQ(faq.id)}
-            className="w-full px-5 md:px-6 py-4 md:py-5 text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
+            className="w-full px-5 md:px-6 py-4 md:py-5 text-left flex items-center justify-between hover:bg-[#f7f7f7] transition-colors"
           >
-            <span className="font-semibold text-gray-900 pr-4 text-sm md:text-base">{faq.question}</span>
+            <span className="font-semibold text-[#262626] pr-4 text-sm md:text-base">{faq.question}</span>
             <motion.div
               animate={{ rotate: openId === faq.id ? 180 : 0 }}
               transition={{ duration: 0.2 }}
               className="flex-shrink-0"
             >
-              <FiChevronDown className="text-gray-500" size={20} />
+              <FiChevronDown className="text-[#5d5d5d]" size={20} />
             </motion.div>
           </button>
           <AnimatePresence>
@@ -45,8 +45,8 @@ export default function FAQAccordion({ faqs }: FAQAccordionProps) {
                 transition={{ duration: 0.3 }}
                 className="overflow-hidden"
               >
-                <div className="px-5 md:px-6 py-4 md:py-5 bg-gray-50 border-t border-gray-200">
-                  <p className="text-gray-700 leading-relaxed text-sm md:text-base">{faq.answer}</p>
+                <div className="px-5 md:px-6 py-4 md:py-5 bg-[#f7f7f7] border-t border-[#e1e1e1]">
+                  <p className="text-[#4c4c4c] leading-relaxed text-sm md:text-base">{faq.answer}</p>
                 </div>
               </motion.div>
             )}

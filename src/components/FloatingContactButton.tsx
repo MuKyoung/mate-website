@@ -22,7 +22,7 @@ export default function FloatingContactButton() {
         <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
           <Link
             href="/contact"
-            className="flex items-center gap-2 px-5 py-3 sm:px-6 sm:py-3.5 rounded-lg font-semibold text-white bg-[#3b82f6] hover:bg-[#2563eb] shadow-lg shadow-blue-500/20 transition-all duration-200"
+            className="flex items-center gap-2 px-5 py-3 sm:px-6 sm:py-3.5 rounded-lg font-semibold text-white bg-[#2a72e5] hover:bg-[#0957c8] shadow-lg transition-all duration-200"
           >
             <FiMessageCircle size={18} />
             <span className="hidden sm:inline text-sm">문의하기</span>

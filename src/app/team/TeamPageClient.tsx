@@ -43,8 +43,8 @@ export default function TeamPageClient() {
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, ease: [0.23, 1, 0.32, 1] }}>
             <span className="section-label mb-3">About Team</span>
-            <h1 className="heading-lg text-white mb-3">MATE 팀 소개</h1>
-            <p className="text-white/40 text-sm sm:text-base max-w-lg leading-relaxed">
+            <h1 className="heading-lg text-[#262626] mb-3">MATE 팀 소개</h1>
+            <p className="text-[#5d5d5d] text-sm sm:text-base max-w-lg leading-relaxed">
               Unity 게임 · AR/VR · 웹/앱 개발 및 개발 강의에 특화된 전문 외주개발팀입니다.
             </p>
           </motion.div>
@@ -67,8 +67,8 @@ export default function TeamPageClient() {
                 viewport={{ once: true }} transition={{ delay: i * 0.06, duration: 0.45 }}
                 className="py-8 px-6 text-center sm:text-left"
                 style={{ borderColor: 'var(--border)' }}>
-                <p className="text-2xl sm:text-3xl font-bold text-white font-mono-stat mb-1">{stat.value}</p>
-                <p className="text-xs text-white/30 uppercase tracking-wider">{stat.label}</p>
+                <p className="text-2xl sm:text-3xl font-bold text-[#262626] font-mono-stat mb-1">{stat.value}</p>
+                <p className="text-xs text-[#5d5d5d] uppercase tracking-wider">{stat.label}</p>
               </motion.div>
             ))}
           </div>
@@ -76,12 +76,12 @@ export default function TeamPageClient() {
       </section>
 
       {/* ── Why Choose Us ── */}
-      <section className="py-16 sm:py-20 bg-[#f8f9fa]">
+      <section className="py-16 sm:py-20 bg-[#f7f7f7]">
         <div className="container mx-auto px-4 sm:px-6">
           <motion.div {...fadeUp} transition={{ duration: 0.55 }} className="mb-10">
-            <span className="section-label mb-3" style={{ color: '#3b82f6' }}>Why Choose Us</span>
-            <h2 className="heading-md text-gray-900 mb-2">왜 MATE 팀인가요?</h2>
-            <p className="text-gray-500 text-sm mt-1 max-w-sm">Unity · 웹 · 앱까지 한 팀에서 해결합니다.</p>
+            <span className="section-label mb-3" style={{ color: '#2a72e5' }}>Why Choose Us</span>
+            <h2 className="heading-md text-[#262626] mb-2">왜 MATE 팀인가요?</h2>
+            <p className="text-[#4c4c4c] text-sm mt-1 max-w-sm">Unity · 웹 · 앱까지 한 팀에서 해결합니다.</p>
           </motion.div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-3xl">
@@ -91,11 +91,11 @@ export default function TeamPageClient() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.07, duration: 0.45 }}
-                className="flex items-start gap-3 p-5 bg-white rounded-xl border border-gray-100">
-                <FiCheckCircle className="flex-shrink-0 mt-0.5 text-[#3b82f6]" size={16} />
+                className="flex items-start gap-3 p-5 bg-white rounded-xl border border-[#e1e1e1]">
+                <FiCheckCircle className="flex-shrink-0 mt-0.5 text-[#2a72e5]" size={16} />
                 <div>
-                  <p className="text-sm font-semibold text-gray-900 mb-1">{item.title}</p>
-                  <p className="text-xs text-gray-500 leading-relaxed">{item.desc}</p>
+                  <p className="text-sm font-semibold text-[#262626] mb-1">{item.title}</p>
+                  <p className="text-xs text-[#4c4c4c] leading-relaxed">{item.desc}</p>
                 </div>
               </motion.div>
             ))}
@@ -108,11 +108,11 @@ export default function TeamPageClient() {
         <div className="container mx-auto px-4 sm:px-6">
           <motion.div {...fadeUp} transition={{ duration: 0.55 }} className="mb-10">
             <div className="flex items-center gap-2.5 mb-3">
-              <FiAward size={14} className="text-amber-400" />
-              <span className="section-label mb-0" style={{ color: '#f59e0b' }}>Awards & Exhibitions</span>
+              <FiAward size={14} className="text-[#2a72e5]" />
+              <span className="section-label mb-0" style={{ color: '#2a72e5' }}>Awards & Exhibitions</span>
             </div>
-            <h2 className="heading-md text-white mb-2">수상 및 전시 경력</h2>
-            <p className="text-white/35 text-sm max-w-md">MATE 팀의 전문성을 인정받은 이력입니다.</p>
+            <h2 className="heading-md text-[#262626] mb-2">수상 및 전시 경력</h2>
+            <p className="text-[#5d5d5d] text-sm max-w-md">MATE 팀의 전문성을 인정받은 이력입니다.</p>
           </motion.div>
 
           <div className="space-y-10 max-w-4xl">
@@ -121,7 +121,7 @@ export default function TeamPageClient() {
                 initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }} transition={{ delay: yi * 0.07, duration: 0.45 }}>
                 <div className="flex items-center gap-4 mb-5">
-                  <span className="text-sm font-bold text-white font-mono-stat">{year}</span>
+                  <span className="text-sm font-bold text-[#262626] font-mono-stat">{year}</span>
                   <div className="h-px flex-grow" style={{ background: 'var(--border)' }} />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -129,28 +129,28 @@ export default function TeamPageClient() {
                     <motion.div key={award.id}
                       initial={{ opacity: 0, x: -12 }} whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true }} transition={{ delay: ai * 0.04, duration: 0.4 }}
-                      className="flex items-start gap-3 p-4 rounded-lg border transition-colors hover:border-white/[0.14]"
-                      style={{ background: 'var(--background)', borderColor: 'var(--border)' }}>
+                      className="flex items-start gap-3 p-4 rounded-lg border transition-colors hover:border-[#c6c6c6]"
+                      style={{ background: '#ffffff', borderColor: 'var(--border)' }}>
                       <span className="text-lg leading-none flex-shrink-0">
                         {award.type === 'exhibition' ? '🎪' : getAwardIcon(award.rank)}
                       </span>
                       <div className="min-w-0">
                         <div className="flex flex-wrap gap-1.5 mb-1.5">
-                          <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded border ${
+                          <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
                             award.type === 'exhibition'
-                              ? 'bg-blue-500/10 text-blue-300/80 border-blue-500/15'
-                              : 'bg-amber-500/10 text-amber-300/80 border-amber-500/15'
+                              ? 'bg-[#c6e6ff] text-[#0043b3]'
+                              : 'bg-[#bbecd7] text-[#058765]'
                           }`}>
                             {award.type === 'exhibition' ? '전시회' : '수상'}
                           </span>
                           {award.rank && (
-                            <span className="text-[10px] px-1.5 py-0.5 bg-white/[0.05] text-white/40 rounded border border-white/[0.07]">
+                            <span className="text-[10px] px-1.5 py-0.5 bg-[#e1e1e1] text-[#262626] rounded-full">
                               {award.rank}
                             </span>
                           )}
                         </div>
-                        <p className="text-xs font-semibold text-white leading-snug">{award.title}</p>
-                        <p className="text-[11px] text-white/30 mt-0.5">{award.organization}</p>
+                        <p className="text-xs font-semibold text-[#262626] leading-snug">{award.title}</p>
+                        <p className="text-[11px] text-[#5d5d5d] mt-0.5">{award.organization}</p>
                       </div>
                     </motion.div>
                   ))}
@@ -162,12 +162,12 @@ export default function TeamPageClient() {
       </section>
 
       {/* ── 전문 역량 ── */}
-      <section className="py-16 sm:py-20 bg-[#f8f9fa]">
+      <section className="py-16 sm:py-20 bg-[#f7f7f7]">
         <div className="container mx-auto px-4 sm:px-6">
           <motion.div {...fadeUp} transition={{ duration: 0.55 }} className="mb-10">
-            <span className="section-label mb-3" style={{ color: '#3b82f6' }}>Capabilities</span>
-            <h2 className="heading-md text-gray-900 mb-2">전문 역량</h2>
-            <p className="text-gray-500 text-sm max-w-lg">
+            <span className="section-label mb-3" style={{ color: '#2a72e5' }}>Capabilities</span>
+            <h2 className="heading-md text-[#262626] mb-2">전문 역량</h2>
+            <p className="text-[#4c4c4c] text-sm max-w-lg">
               유니티 외주 개발과 강의를 통해 쌓은 실전 경험입니다.
             </p>
           </motion.div>
@@ -185,16 +185,16 @@ export default function TeamPageClient() {
       </section>
 
       {/* ── CTA ── */}
-      <section className="py-16 sm:py-20 border-t" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+      <section className="py-16 sm:py-20 border-t bg-[#262626]" style={{ borderColor: 'var(--border)' }}>
         <div className="container mx-auto px-4 sm:px-6">
           <motion.div {...fadeUp} transition={{ duration: 0.55 }}
             className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
             <div>
               <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">함께 프로젝트를 시작해볼까요?</h2>
-              <p className="text-white/40 text-sm">무료 상담으로 시작합니다.</p>
+              <p className="text-white/60 text-sm">무료 상담으로 시작합니다.</p>
             </div>
             <Link href="/contact"
-              className="group flex-shrink-0 inline-flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-semibold text-white bg-[#3b82f6] hover:bg-[#2563eb] transition-colors">
+              className="group flex-shrink-0 inline-flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-semibold text-white bg-[#2a72e5] hover:bg-[#0957c8] transition-colors">
               무료 상담 신청
               <FiArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
             </Link>

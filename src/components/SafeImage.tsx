@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import { FiImage } from 'react-icons/fi';
 
 interface SafeImageProps {
   src: string | undefined;
@@ -31,8 +32,8 @@ export default function SafeImage({
     return (
       <div className={className}>
         {placeholder || (
-          <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400">
-            <span className="text-4xl">📷</span>
+          <div className="w-full h-full flex items-center justify-center bg-[#f7f7f7] text-[#a3a3a3]">
+            <FiImage size={36} />
           </div>
         )}
       </div>
@@ -42,8 +43,8 @@ export default function SafeImage({
   return (
     <div className={`relative ${fill ? 'w-full h-full' : ''} ${className}`}>
       {imageLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-200 animate-pulse z-10">
-          <span className="text-gray-400 text-sm">Loading...</span>
+        <div className="absolute inset-0 flex items-center justify-center bg-[#f7f7f7] animate-pulse z-10">
+          <span className="text-[#a3a3a3] text-sm">Loading...</span>
         </div>
       )}
       {fill ? (

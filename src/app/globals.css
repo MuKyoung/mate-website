@@ -2,28 +2,49 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── 폰트 ─────────────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+/* ── 폰트 (Pretendard Variable) ───────────────────────── */
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
 
-/* ── CSS 변수 ────────────────────────────────────────── */
+/* ── CSS 변수 (goorm 라이트 디자인 토큰) ──────────────── */
 :root {
-  --background: #09090b;
-  --surface:    #111114;
-  --surface-2:  #18181b;
-  --border:     rgba(255, 255, 255, 0.07);
-  --border-2:   rgba(255, 255, 255, 0.12);
-  --text-1:     #fafafa;
-  --text-2:     rgba(250, 250, 250, 0.52);
-  --text-3:     rgba(250, 250, 250, 0.26);
-  --accent:     #3b82f6;
-  --accent-2:   #60a5fa;
-  --accent-dim: rgba(59, 130, 246, 0.12);
+  /* 표면 */
+  --canvas:      #ffffff;
+  --background:  #ffffff;
+  --surface:     #f7f7f7;
+  --surface-2:   #f0f0f0;
+
+  /* 경계선 — 그림자 대신 헤어라인 */
+  --border:      #e1e1e1;
+  --border-2:    #c6c6c6;
+
+  /* 잉크 / 텍스트 위계 */
+  --text-1:      #262626;
+  --text-2:      #4c4c4c;
+  --text-3:      #5d5d5d;
+  --text-faint:  #a3a3a3;
+
+  /* 브랜드 — 단일 액션 컬러 (Vapor Blue) */
+  --accent:      #2a72e5;
+  --accent-2:    #0957c8;
+  --accent-link: #0043b3;
+  --accent-dim:  rgba(42, 114, 229, 0.08);
+
+  /* 시맨틱 */
+  --success:      #058765;
+  --success-tint: #bbecd7;
+  --danger:       #da3944;
+  --danger-tint:  #ffd8d7;
+  --info-tint:    #c6e6ff;
+  --warning-tint: #ffd9c8;
 
   /* 기존 코드 호환용 */
-  --foreground:    #fafafa;
-  --primary:       #3b82f6;
-  --primary-dark:  #2563eb;
-  --secondary:     #60a5fa;
+  --foreground:   #262626;
+  --primary:      #2a72e5;
+  --primary-dark: #0957c8;
+  --secondary:    #0957c8;
+
+  /* 다크 마케팅 CTA (goorm 도입 문의 밴드) */
+  --ink-band:     #262626;
 }
 
 /* ── 기본 ───────────────────────────────────────────── */
@@ -31,10 +52,12 @@ html { scroll-behavior: smooth; }
 
 body {
   color: var(--text-1);
-  background: var(--background);
-  font-family: 'Inter', 'Outfit', sans-serif;
+  background: var(--canvas);
+  font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont,
+    'Apple SD Gothic Neo', 'Noto Sans KR', 'Segoe UI', Roboto, sans-serif;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 @layer utilities {
@@ -42,126 +65,149 @@ body {
 }
 
 /* ── 스크롤바 ─────────────────────────────────────── */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: var(--background); }
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: var(--surface); }
 ::-webkit-scrollbar-thumb {
-  background: var(--surface-2);
-  border-radius: 3px;
+  background: var(--border-2);
+  border-radius: 9999px;
+  border: 2px solid var(--surface);
 }
-::-webkit-scrollbar-thumb:hover {
-  background: var(--accent);
-}
+::-webkit-scrollbar-thumb:hover { background: #a3a3a3; }
 
-/* ── 그라디언트 유틸리티 ─────────────────────────── */
-
-/* 브랜드 하이라이트 — solid accent */
+/* ── 브랜드 강조 (그라디언트 없음 — 단색 Vapor Blue) ── */
 .gradient-text {
-  color: #60a5fa;
-  -webkit-text-fill-color: #60a5fa;
+  color: var(--accent);
+  -webkit-text-fill-color: var(--accent);
   background: none;
-  -webkit-background-clip: unset;
-  background-clip: unset;
 }
-
-/* 버튼/배경용 solid blue */
-.gradient-primary {
-  background: #3b82f6;
-}
-
-/* 다크 배경 */
-.gradient-bg {
-  background: var(--background);
-}
+.gradient-primary { background: var(--accent); }
+.gradient-bg      { background: var(--canvas); }
 
 /* ── 섹션 배경 ──────────────────────────────────── */
-.section-dark  { background: var(--background); }
-.section-mid   { background: var(--surface); }
-.section-light { background: #f8f9fa; }
+.section-canvas { background: var(--canvas); }
+.section-dark   { background: var(--canvas); }   /* 호환: 본문 기본 = 화이트 */
+.section-mid    { background: var(--surface); }
+.section-light  { background: var(--surface); }
+.section-ink    { background: var(--ink-band); } /* 다크 마케팅 CTA 밴드 */
 
-/* ── 글래스 (세련된 dark) ──────────────────────── */
+/* ── 헤더 글래스 (라이트) ──────────────────────── */
 .glass {
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--border);
 }
 
-/* ── 카드 스타일 ─────────────────────────────── */
-.card-dark {
-  background: var(--surface);
+/* ── 카드 — 플랫 헤어라인, 그림자 없음 ─────────── */
+.card-dark,
+.card {
+  background: var(--canvas);
   border: 1px solid var(--border);
   border-radius: 12px;
 }
-
-.card-dark:hover {
+.card-dark:hover,
+.card:hover {
   border-color: var(--border-2);
-  background: #141417;
+  background: var(--surface);
 }
 
-/* ── 버튼 스타일 ─────────────────────────────── */
+/* ── 버튼 ─────────────────────────────────────── */
 .btn-primary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 10px 20px;
+  gap: 8px;
+  padding: 0 16px;
+  height: 40px;
   background: var(--accent);
-  color: #fff;
-  font-weight: 600;
+  color: #ffffff;
+  font-weight: 500;
   font-size: 14px;
   border-radius: 8px;
-  transition: background 0.2s, transform 0.15s;
   border: 1px solid transparent;
+  transition: background 0.12s ease;
 }
-.btn-primary:hover {
-  background: var(--accent-2);
-  transform: translateY(-1px);
+.btn-primary:hover { background: var(--accent-2); }
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 16px;
+  height: 40px;
+  background: var(--border);
+  color: var(--text-1);
+  font-weight: 500;
+  font-size: 14px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  transition: background 0.12s ease;
 }
+.btn-secondary:hover { background: var(--border-2); }
 
 .btn-outline {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 10px 20px;
-  background: transparent;
-  color: var(--text-2);
+  gap: 8px;
+  padding: 0 16px;
+  height: 40px;
+  background: var(--canvas);
+  color: var(--text-1);
   font-weight: 500;
   font-size: 14px;
   border-radius: 8px;
   border: 1px solid var(--border-2);
-  transition: border-color 0.2s, color 0.2s, transform 0.15s;
+  transition: background 0.12s ease, border-color 0.12s ease;
 }
-.btn-outline:hover {
-  border-color: rgba(255,255,255,0.24);
-  color: var(--text-1);
-  transform: translateY(-1px);
-}
+.btn-outline:hover { background: var(--surface); border-color: #a3a3a3; }
 
-/* ── 텍스처 ────────────────────────────────────── */
-.noise {
-  position: relative;
+.btn-ink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 24px;
+  height: 48px;
+  background: var(--ink-band);
+  color: #ffffff;
+  font-weight: 500;
+  font-size: 16px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  transition: opacity 0.12s ease;
 }
+.btn-ink:hover { opacity: 0.88; }
+
+/* ── 텍스처 (거의 보이지 않게) ─────────────────── */
+.noise { position: relative; }
 .noise::before {
   content: '';
   position: absolute;
   inset: 0;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  opacity: 0.02;
+  opacity: 0.015;
   pointer-events: none;
   z-index: 0;
 }
 
 /* ── 타이포그래피 ──────────────────────────────── */
 .heading-xl {
-  @apply text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold tracking-tight;
+  @apply text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight;
+  color: var(--text-1);
 }
 .heading-lg {
-  @apply text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight;
+  @apply text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight;
+  color: var(--text-1);
 }
 .heading-md {
   @apply text-2xl sm:text-3xl font-bold tracking-tight;
+  color: var(--text-1);
 }
 .body-lg {
   @apply text-base sm:text-lg leading-relaxed;
+  color: var(--text-2);
 }
 
 .font-mono-stat {
@@ -175,8 +221,8 @@ body {
   align-items: center;
   gap: 8px;
   font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.18em;
+  font-weight: 600;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--accent);
   margin-bottom: 16px;
@@ -191,10 +237,7 @@ body {
 }
 
 /* ── 인터랙션 ──────────────────────────────────── */
-.hover-underline {
-  position: relative;
-  display: inline-block;
-}
+.hover-underline { position: relative; display: inline-block; }
 .hover-underline::after {
   content: '';
   position: absolute;
@@ -203,11 +246,9 @@ body {
   width: 0;
   height: 1px;
   background: var(--accent);
-  transition: width 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+  transition: width 0.2s cubic-bezier(0.2, 0.6, 0.25, 1);
 }
-.hover-underline:hover::after {
-  width: 100%;
-}
+.hover-underline:hover::after { width: 100%; }
 
 /* ── 키프레임 ──────────────────────────────────── */
 @keyframes clip-up {
@@ -219,31 +260,36 @@ body {
   to   { transform: scaleX(1); transform-origin: left center; }
 }
 @keyframes fade-in-up {
-  from { opacity: 0; transform: translateY(16px); filter: blur(4px); }
-  to   { opacity: 1; transform: translateY(0);    filter: blur(0px); }
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 @keyframes marquee {
   0%   { transform: translateX(0); }
   100% { transform: translateX(-50%); }
 }
-@keyframes shimmer {
-  0%   { background-position: -200% 0; }
-  100% { background-position:  200% 0; }
-}
 @keyframes pulse-subtle {
   0%, 100% { opacity: 0.6; }
-  50%       { opacity: 1; }
+  50%      { opacity: 1; }
 }
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
-  50%       { transform: translateY(-8px); }
+  50%      { transform: translateY(-8px); }
 }
 
-.animate-clip-up     { animation: clip-up 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
-.animate-fade-in-up  { animation: fade-in-up 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
-.animate-marquee     { animation: marquee 30s linear infinite; }
-.animate-pulse-subtle{ animation: pulse-subtle 2.5s ease-in-out infinite; }
-.animate-float       { animation: float 4s ease-in-out infinite; }
+.animate-clip-up      { animation: clip-up 0.6s cubic-bezier(0.2, 0.6, 0.25, 1) forwards; }
+.animate-fade-in-up   { animation: fade-in-up 0.5s cubic-bezier(0.2, 0.6, 0.25, 1) forwards; }
+.animate-marquee      { animation: marquee 30s linear infinite; }
+.animate-pulse-subtle { animation: pulse-subtle 2.5s ease-in-out infinite; }
+.animate-float        { animation: float 4s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
 
 /* ── 인쇄 전역 ────────────────────────────────── */
 @media print {
@@ -260,22 +306,42 @@ body {
 .tablet-up    { @apply hidden sm:block; }
 .desktop-only { @apply hidden lg:block; }
 
-/* ── 태그/뱃지 ─────────────────────────────────── */
+/* ── 태그 / 배지 (Leonardo 시맨틱 틴트, 9999px 필) ── */
 .tag {
   display: inline-flex;
   align-items: center;
   padding: 3px 10px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
-  border-radius: 4px;
-  border: 1px solid var(--border-2);
-  color: var(--text-2);
-  background: rgba(255,255,255,0.04);
+  line-height: 1.4;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  color: var(--text-1);
+  background: var(--border);
 }
 .tag-blue {
-  border-color: rgba(59, 130, 246, 0.25);
-  color: #93c5fd;
-  background: rgba(59, 130, 246, 0.08);
+  color: var(--accent-link);
+  background: var(--info-tint);
+}
+.badge-success {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 9999px;
+  color: var(--success);
+  background: var(--success-tint);
+}
+.badge-danger {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 9999px;
+  color: var(--danger);
+  background: var(--danger-tint);
 }
 
 /* ── 구분선 ────────────────────────────────────── */

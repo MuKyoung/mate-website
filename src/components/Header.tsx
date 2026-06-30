@@ -33,11 +33,11 @@ export default function Header() {
       className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
       style={{
         background: isScrolled || isMobileMenuOpen
-          ? 'rgba(9, 9, 11, 0.85)'
+          ? 'rgba(255, 255, 255, 0.8)'
           : 'transparent',
-        backdropFilter: isScrolled || isMobileMenuOpen ? 'blur(20px)' : 'none',
+        backdropFilter: isScrolled || isMobileMenuOpen ? 'blur(12px)' : 'none',
         borderBottom: isScrolled || isMobileMenuOpen
-          ? '1px solid rgba(255,255,255,0.06)'
+          ? '1px solid var(--border)'
           : '1px solid transparent',
       }}
     >
@@ -51,7 +51,6 @@ export default function Header() {
             width={88}
             height={28}
             className="h-7 w-auto"
-            style={{ mixBlendMode: 'screen' }}
             priority
           />
         </Link>
@@ -64,17 +63,17 @@ export default function Header() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`relative px-3.5 py-1.5 text-sm font-medium rounded-md transition-colors duration-150 ${
+                className={`relative px-3.5 py-1.5 text-sm font-semibold rounded-md transition-colors duration-150 ${
                   active
-                    ? 'text-white'
-                    : 'text-white/45 hover:text-white/80 hover:bg-white/[0.04]'
+                    ? 'text-[#0957c8]'
+                    : 'text-[#4c4c4c] hover:text-[#262626] hover:bg-black/[0.03]'
                 }`}
               >
                 {item.label}
                 {active && (
                   <motion.span
                     layoutId="nav-active"
-                    className="absolute bottom-0 left-3.5 right-3.5 h-[1.5px] bg-[#3b82f6]"
+                    className="absolute bottom-0 left-3.5 right-3.5 h-[2px] bg-[#0957c8]"
                     initial={false}
                     transition={{ type: 'spring', stiffness: 450, damping: 38 }}
                   />
@@ -85,7 +84,7 @@ export default function Header() {
 
           <Link
             href="/contact"
-            className="ml-3 px-4 py-1.5 rounded-md text-sm font-semibold text-white bg-[#3b82f6] hover:bg-[#2563eb] transition-colors duration-200"
+            className="ml-3 px-4 h-9 inline-flex items-center rounded-lg text-sm font-medium text-white bg-[#2a72e5] hover:bg-[#0957c8] transition-colors duration-150"
           >
             상담 신청
           </Link>
@@ -93,7 +92,7 @@ export default function Header() {
 
         {/* 모바일 버튼 */}
         <button
-          className="md:hidden w-9 h-9 flex items-center justify-center text-white/60 hover:text-white transition-colors rounded-md hover:bg-white/[0.05]"
+          className="md:hidden w-9 h-9 flex items-center justify-center text-[#4c4c4c] hover:text-[#262626] transition-colors rounded-md hover:bg-black/[0.04]"
           onClick={() => setMobileMenuOpen(!isMobileMenuOpen)}
           aria-label="메뉴"
         >
@@ -123,8 +122,8 @@ export default function Header() {
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
-            className="md:hidden overflow-hidden border-t border-white/[0.06]"
-            style={{ background: 'rgba(9,9,11,0.96)' }}
+            className="md:hidden overflow-hidden border-t"
+            style={{ background: 'rgba(255,255,255,0.97)', borderColor: 'var(--border)' }}
           >
             <div className="container mx-auto px-4 py-3 flex flex-col gap-0.5">
               {navItems.map((item, i) => (
@@ -139,13 +138,13 @@ export default function Header() {
                     onClick={() => setMobileMenuOpen(false)}
                     className={`flex items-center justify-between px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
                       pathname === item.href
-                        ? 'text-white bg-white/[0.06]'
-                        : 'text-white/45 hover:text-white/75 hover:bg-white/[0.04]'
+                        ? 'text-[#0957c8] bg-black/[0.04]'
+                        : 'text-[#4c4c4c] hover:text-[#262626] hover:bg-black/[0.03]'
                     }`}
                   >
                     {item.label}
                     {pathname === item.href && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#3b82f6]" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#2a72e5]" />
                     )}
                   </Link>
                 </motion.div>
@@ -159,7 +158,7 @@ export default function Header() {
                 <Link
                   href="/contact"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="block text-center px-4 py-2.5 rounded-md text-sm font-semibold text-white bg-[#3b82f6] hover:bg-[#2563eb] transition-colors"
+                  className="block text-center px-4 py-2.5 rounded-lg text-sm font-medium text-white bg-[#2a72e5] hover:bg-[#0957c8] transition-colors"
                 >
                   무료 상담 신청
                 </Link>

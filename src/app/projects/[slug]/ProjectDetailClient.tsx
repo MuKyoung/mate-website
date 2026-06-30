@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { projects } from '@/data/projects';
 import { teamMembers } from '@/data/team';
-import { FiExternalLink, FiGithub, FiArrowLeft, FiClock, FiYoutube } from 'react-icons/fi';
+import { FiExternalLink, FiGithub, FiArrowLeft, FiClock, FiYoutube, FiImage } from 'react-icons/fi';
 import SafeImage from '@/components/SafeImage';
 
 function getYouTubeVideoId(url: string): string | null {
@@ -35,7 +35,7 @@ export default function ProjectDetailClient({ params }: Props) {
       <section className="pt-28 pb-10 sm:pt-32 sm:pb-12 border-b" style={{ borderColor: 'var(--border)' }}>
         <div className="container mx-auto px-4 sm:px-6">
           <Link href="/projects"
-            className="inline-flex items-center gap-1.5 text-white/30 hover:text-white/70 mb-6 transition-colors text-xs">
+            className="inline-flex items-center gap-1.5 text-[#4c4c4c] hover:text-[#262626] mb-6 transition-colors text-xs">
             <FiArrowLeft size={12} />
             프로젝트 목록
           </Link>
@@ -43,30 +43,30 @@ export default function ProjectDetailClient({ params }: Props) {
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, ease: [0.23, 1, 0.32, 1] }}>
             <span className="section-label mb-3">Project</span>
-            <h1 className="heading-lg text-white mb-3">{project.title}</h1>
-            <p className="text-white/40 text-sm max-w-xl leading-relaxed mb-5">{project.description}</p>
+            <h1 className="heading-lg text-[#262626] mb-3">{project.title}</h1>
+            <p className="text-[#4c4c4c] text-sm max-w-xl leading-relaxed mb-5">{project.description}</p>
 
             {/* 메타 배지 */}
             <div className="flex flex-wrap gap-2">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs border text-white/50"
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs border text-[#4c4c4c]"
                 style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
                 {project.category}
               </span>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs border text-white/40"
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs border text-[#5d5d5d]"
                 style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
                 <FiClock size={10} />
                 {project.durationMonths}개월
               </span>
               {project.liveUrl && (
                 <a href={project.liveUrl} target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium text-white bg-[#3b82f6] hover:bg-[#2563eb] transition-colors">
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium text-white bg-[#2a72e5] hover:bg-[#0957c8] transition-colors">
                   <FiExternalLink size={10} />
                   라이브 데모
                 </a>
               )}
               {project.githubUrl && (
                 <a href={project.githubUrl} target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs text-white/50 border hover:text-white hover:bg-white/[0.04] transition-all"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs text-[#4c4c4c] border hover:text-[#262626] hover:bg-[#f7f7f7] transition-all"
                   style={{ borderColor: 'var(--border)' }}>
                   <FiGithub size={10} />
                   GitHub
@@ -106,9 +106,9 @@ export default function ProjectDetailClient({ params }: Props) {
                   </div>
                 ) : (
                   <div className="relative rounded-xl h-64 sm:h-80 overflow-hidden border"
-                    style={{ background: 'var(--background)', borderColor: 'var(--border)' }}>
+                    style={{ background: '#f7f7f7', borderColor: 'var(--border)' }}>
                     <SafeImage src={project.thumbnail} alt={project.title} fill className="rounded-xl object-cover"
-                      placeholder={<div className="absolute inset-0 flex items-center justify-center text-6xl text-white/10">🎮</div>} />
+                      placeholder={<div className="absolute inset-0 flex items-center justify-center text-[#a3a3a3]"><FiImage size={48} /></div>} />
                   </div>
                 )}
               </motion.div>
@@ -118,8 +118,8 @@ export default function ProjectDetailClient({ params }: Props) {
                 transition={{ delay: 0.2, duration: 0.5 }}
                 className="p-5 rounded-xl border"
                 style={{ background: 'var(--background)', borderColor: 'var(--border)' }}>
-                <h2 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">프로젝트 개요</h2>
-                <p className="text-sm text-white/50 leading-relaxed whitespace-pre-line">{project.longDescription}</p>
+                <h2 className="text-xs font-semibold text-[#5d5d5d] uppercase tracking-wider mb-3">프로젝트 개요</h2>
+                <p className="text-sm text-[#4c4c4c] leading-relaxed whitespace-pre-line">{project.longDescription}</p>
               </motion.div>
 
               {/* 갤러리 */}
@@ -128,13 +128,13 @@ export default function ProjectDetailClient({ params }: Props) {
                   transition={{ delay: 0.25, duration: 0.5 }}
                   className="p-5 rounded-xl border"
                   style={{ background: 'var(--background)', borderColor: 'var(--border)' }}>
-                  <h2 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">스크린샷</h2>
+                  <h2 className="text-xs font-semibold text-[#5d5d5d] uppercase tracking-wider mb-4">스크린샷</h2>
                   <div className="grid grid-cols-2 gap-2.5">
                     {project.images.map((img, i) => (
                       <div key={i} className="relative rounded-lg h-36 sm:h-44 overflow-hidden border"
                         style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
                         <SafeImage src={img} alt={`${project.title} ${i + 1}`} fill className="rounded-lg object-cover"
-                          placeholder={<div className="absolute inset-0 flex items-center justify-center text-3xl text-white/10">📷</div>} />
+                          placeholder={<div className="absolute inset-0 flex items-center justify-center text-[#a3a3a3]"><FiImage size={28} /></div>} />
                       </div>
                     ))}
                   </div>
@@ -150,7 +150,7 @@ export default function ProjectDetailClient({ params }: Props) {
                 transition={{ delay: 0.2, duration: 0.5 }}
                 className="p-5 rounded-xl border"
                 style={{ background: 'var(--background)', borderColor: 'var(--border)' }}>
-                <h2 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">기술 스택</h2>
+                <h2 className="text-xs font-semibold text-[#5d5d5d] uppercase tracking-wider mb-3">기술 스택</h2>
                 <div className="flex flex-wrap gap-1.5">
                   {project.techStack.map(tech => (
                     <span key={tech} className="tag tag-blue">{tech}</span>
@@ -164,17 +164,17 @@ export default function ProjectDetailClient({ params }: Props) {
                   transition={{ delay: 0.25, duration: 0.5 }}
                   className="p-5 rounded-xl border"
                   style={{ background: 'var(--background)', borderColor: 'var(--border)' }}>
-                  <h2 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">팀원</h2>
+                  <h2 className="text-xs font-semibold text-[#5d5d5d] uppercase tracking-wider mb-4">팀원</h2>
                   <div className="space-y-1.5">
                     {team.map(m => (
                       <Link key={m.id} href={`/team/${m.id}`}
-                        className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-white/[0.04] transition-colors group">
-                        <div className="w-8 h-8 rounded-lg bg-[#3b82f6] flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
+                        className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-[#f7f7f7] transition-colors group">
+                        <div className="w-8 h-8 rounded-lg bg-[#2a72e5] flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
                           {m.name.charAt(0)}
                         </div>
                         <div className="min-w-0">
-                          <p className="text-xs font-medium text-white/75 group-hover:text-[#60a5fa] transition-colors truncate">{m.name}</p>
-                          <p className="text-[11px] text-white/30 truncate">{m.role}</p>
+                          <p className="text-xs font-medium text-[#262626] group-hover:text-[#2a72e5] transition-colors truncate">{m.name}</p>
+                          <p className="text-[11px] text-[#5d5d5d] truncate">{m.role}</p>
                         </div>
                       </Link>
                     ))}

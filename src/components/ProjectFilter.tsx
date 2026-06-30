@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ProjectCard from './ProjectCard';
 import { Project } from '@/types';
+import { FiSearch } from 'react-icons/fi';
 
 // 카테고리 매핑
 const CATEGORY_MAP: Record<string, string> = {
@@ -72,8 +73,8 @@ export default function ProjectFilter({ projects }: ProjectFilterProps) {
                 flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm md:text-base
                 ${
                   selectedCategory === option.value
-                    ? 'bg-[#3b82f6] text-white shadow-md shadow-blue-500/15'
-                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200 hover:border-blue-200'
+                    ? 'bg-[#2a72e5] text-white'
+                    : 'bg-white text-[#262626] hover:bg-[#f7f7f7] border border-[#c6c6c6]'
                 }
               `}
             >
@@ -85,7 +86,7 @@ export default function ProjectFilter({ projects }: ProjectFilterProps) {
                   ${
                     selectedCategory === option.value
                       ? 'bg-white/25 text-white'
-                      : 'bg-gray-200 text-gray-600'
+                      : 'bg-[#e1e1e1] text-[#262626]'
                   }
                 `}
               >
@@ -98,9 +99,9 @@ export default function ProjectFilter({ projects }: ProjectFilterProps) {
 
       {/* 결과 정보 */}
       <div className="mb-6 sm:mb-8">
-        <p className="text-gray-700">
+        <p className="text-[#4c4c4c]">
           {selectedCategory === 'all' ? '전체' : selectedCategory} 프로젝트{' '}
-          <span className="font-medium text-[#3b82f6]">{filteredProjects.length}</span>개
+          <span className="font-medium text-[#2a72e5]">{filteredProjects.length}</span>개
         </p>
       </div>
 
@@ -129,11 +130,11 @@ export default function ProjectFilter({ projects }: ProjectFilterProps) {
           animate={{ opacity: 1 }}
           className="text-center py-20"
         >
-          <div className="text-6xl mb-4">🔍</div>
-          <h3 className="text-xl font-semibold text-gray-700 mb-2">
+          <div className="flex justify-center mb-4 text-[#a3a3a3]"><FiSearch size={56} /></div>
+          <h3 className="text-xl font-semibold text-[#262626] mb-2">
             해당 카테고리의 프로젝트가 없습니다
           </h3>
-          <p className="text-gray-500">다른 카테고리를 선택해 보세요</p>
+          <p className="text-[#4c4c4c]">다른 카테고리를 선택해 보세요</p>
         </motion.div>
       )}
     </>
