@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { Testimonial } from '@/types';
 import { FiStar } from 'react-icons/fi';
+import { easeEnter } from '@/lib/motion';
 
 interface TestimonialCardProps {
   testimonial: Testimonial;
@@ -12,30 +13,18 @@ interface TestimonialCardProps {
 export default function TestimonialCard({ testimonial, index }: TestimonialCardProps) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 24 }}
+      initial={{ opacity: 0, y: 12 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-40px' }}
-      transition={{ delay: index * 0.08, duration: 0.55, ease: [0.23, 1, 0.32, 1] }}
-      whileHover={{ y: -4 }}
-      className="group h-full"
+      viewport={{ once: true, margin: '-60px' }}
+      transition={{ delay: index * 0.06, duration: 0.32, ease: easeEnter }}
+      className="h-full"
     >
-      <div className="relative h-full p-6 bg-white rounded-xl border border-[#e1e1e1] hover:border-[#c6c6c6] transition-all duration-300 flex flex-col overflow-hidden">
-        {/* 왼쪽 상단 accent line */}
-        <div className="absolute top-0 left-0 w-0 group-hover:w-full h-[1.5px] bg-[#2a72e5] transition-all duration-400 ease-[cubic-bezier(0.23,1,0.32,1)]" />
-
+      <div className="h-full p-6 bg-white rounded-xl border border-[#e1e1e1] hover:border-[#c6c6c6] transition-colors flex flex-col">
         {/* 별점 */}
-        <div className="flex gap-0.5 mb-4">
+        <div className="flex gap-0.5 mb-4" aria-label={`평점 ${testimonial.rating}/5`}>
           {[...Array(5)].map((_, i) => (
-            <motion.div key={i}
-              initial={{ opacity: 0, scale: 0 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.07 + i * 0.05, type: 'spring', stiffness: 400, damping: 18 }}>
-              <FiStar
-                size={13}
-                className={i < testimonial.rating ? 'text-amber-400 fill-amber-400' : 'text-[#e1e1e1]'}
-              />
-            </motion.div>
+            <FiStar key={i} size={13}
+              className={i < testimonial.rating ? 'text-[#2a72e5] fill-[#2a72e5]' : 'text-[#e1e1e1]'} />
           ))}
         </div>
 
@@ -46,17 +35,14 @@ export default function TestimonialCard({ testimonial, index }: TestimonialCardP
 
         {/* 작성자 */}
         <div className="flex items-center gap-3 pt-4 border-t border-[#e1e1e1]">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-            style={{ background: '#2a72e5' }}>
+          <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[13px] font-bold flex-shrink-0 bg-[#2a72e5]">
             {testimonial.name.charAt(0)}
           </div>
-          <div>
-            <p className="font-semibold text-[#262626] text-xs">{testimonial.name}</p>
-            <p className="text-xs text-[#5d5d5d] mt-0.5">
+          <div className="min-w-0">
+            <p className="font-semibold text-[#262626] text-[13px] truncate">{testimonial.name}</p>
+            <p className="text-[12px] text-[#5d5d5d] mt-0.5 truncate">
               {testimonial.role}
-              {testimonial.company && (
-                <span className="text-[#2a72e5] font-medium"> · {testimonial.company}</span>
-              )}
+              {testimonial.company && <span className="text-[#0043b3] font-medium"> · {testimonial.company}</span>}
             </p>
           </div>
         </div>

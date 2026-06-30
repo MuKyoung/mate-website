@@ -1,7 +1,9 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { FiCheck } from 'react-icons/fi';
+import { FiCheck, FiCode, FiGlobe, FiBookOpen, FiBox } from 'react-icons/fi';
+import type { IconType } from 'react-icons';
+import { easeEnter } from '@/lib/motion';
 
 interface Capability {
   id: string;
@@ -18,56 +20,54 @@ interface TeamCapabilityCardProps {
   index: number;
 }
 
+/* 이모지 → react-icons 매핑 (UI 이모지 금지) */
+const iconMap: Record<string, IconType> = {
+  unity: FiCode,
+  outsourcing: FiGlobe,
+  education: FiBookOpen,
+};
+
 export default function TeamCapabilityCard({ capability, index }: TeamCapabilityCardProps) {
+  const Icon = iconMap[capability.id] ?? FiBox;
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 40 }}
+      initial={{ opacity: 0, y: 12 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-50px' }}
-      transition={{ delay: index * 0.08, duration: 0.55, ease: [0.23, 1, 0.32, 1] }}
-      whileHover={{ y: -6 }}
-      className="group relative h-full"
+      viewport={{ once: true, margin: '-60px' }}
+      transition={{ delay: index * 0.06, duration: 0.32, ease: easeEnter }}
+      className="h-full p-6 sm:p-7 rounded-xl border border-[#e1e1e1] bg-white hover:border-[#c6c6c6] transition-colors"
     >
-      <div className="relative h-full p-6 sm:p-8 bg-white rounded-2xl border border-[#e1e1e1] hover:border-[#c6c6c6] transition-all duration-400 overflow-hidden">
-        {/* Icon */}
-        <motion.div whileHover={{ scale: 1.08 }}
-          className="text-4xl sm:text-5xl mb-5 inline-block">
-          {capability.icon}
-        </motion.div>
+      {/* 아이콘 */}
+      <span className="inline-flex items-center justify-center w-11 h-11 rounded-lg bg-[#f7f7f7] border border-[#e1e1e1] text-[#2a72e5] mb-5">
+        <Icon size={20} />
+      </span>
 
-        <h3 className="text-lg sm:text-xl font-bold text-[#262626] mb-2">{capability.title}</h3>
-        <p className="text-[#4c4c4c] text-sm leading-relaxed mb-5">{capability.description}</p>
+      <h3 className="text-lg font-bold text-[#262626] mb-2">{capability.title}</h3>
+      <p className="text-[#5d5d5d] text-sm leading-relaxed mb-5">{capability.description}</p>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 gap-3 mb-5 p-4 rounded-xl bg-[#f7f7f7] border border-[#e1e1e1]">
-          <div className="text-center">
-            <div className="text-lg sm:text-xl font-bold text-[#2a72e5]">{capability.experience}</div>
-            <div className="text-xs text-[#5d5d5d] mt-0.5">경력</div>
-          </div>
-          <div className="text-center">
-            <div className="text-lg sm:text-xl font-bold text-[#2a72e5]">{capability.projects}개</div>
-            <div className="text-xs text-[#5d5d5d] mt-0.5">완료 프로젝트</div>
-          </div>
+      {/* 통계 */}
+      <div className="grid grid-cols-2 divide-x divide-[#e1e1e1] border-y border-[#e1e1e1] mb-5">
+        <div className="py-4 pr-4">
+          <div className="text-lg font-bold text-[#262626] font-mono-stat">{capability.experience}</div>
+          <div className="text-xs text-[#5d5d5d] mt-0.5">경력</div>
         </div>
+        <div className="py-4 pl-4">
+          <div className="text-lg font-bold text-[#262626] font-mono-stat">{capability.projects}개</div>
+          <div className="text-xs text-[#5d5d5d] mt-0.5">완료 프로젝트</div>
+        </div>
+      </div>
 
-        {/* Skills */}
-        <div>
-          <h4 className="text-xs font-semibold text-[#4c4c4c] uppercase tracking-wide mb-2.5 flex items-center gap-1.5">
-            <FiCheck className="text-[#2a72e5]" size={12} />
-            주요 기술
-          </h4>
-          <div className="flex flex-wrap gap-1.5">
-            {capability.skills.map((skill, idx) => (
-              <motion.span key={skill}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.04 }}
-                className="px-2.5 py-1 bg-[#c6e6ff] text-[#0043b3] text-xs rounded-full font-medium">
-                {skill}
-              </motion.span>
-            ))}
-          </div>
+      {/* 기술 */}
+      <div>
+        <h4 className="text-[11px] font-semibold text-[#5d5d5d] uppercase tracking-[0.12em] mb-2.5 flex items-center gap-1.5">
+          <FiCheck className="text-[#2a72e5]" size={12} />
+          주요 기술
+        </h4>
+        <div className="flex flex-wrap gap-1.5">
+          {capability.skills.map((skill) => (
+            <span key={skill} className="tag tag-blue">{skill}</span>
+          ))}
         </div>
       </div>
     </motion.div>

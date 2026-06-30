@@ -7,7 +7,7 @@ import { FiGithub, FiLinkedin, FiMail, FiTwitter, FiArrowUpRight } from 'react-i
 
 const fadeUp = {
   initial: { opacity: 0, y: 16 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.23, 1, 0.32, 1] as [number, number, number, number] } },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.32, ease: [0.2, 0.6, 0.25, 1] as [number, number, number, number] } },
 };
 const stagger = {
   initial: {},
@@ -61,8 +61,7 @@ export default function Footer() {
               {social.map((s) => (
                 <motion.a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
                   aria-label={s.label}
-                  whileHover={{ y: -2 }} whileTap={{ scale: 0.95 }}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-[#5d5d5d] hover:text-[#262626] hover:bg-white border border-[#e1e1e1] transition-all duration-200">
+                  className="w-8 h-8 rounded-lg flex items-center justify-center text-[#5d5d5d] hover:text-[#262626] hover:bg-white hover:border-[#c6c6c6] border border-[#e1e1e1] transition-colors duration-150">
                   <s.icon size={14} />
                 </motion.a>
               ))}

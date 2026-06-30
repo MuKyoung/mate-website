@@ -75,7 +75,7 @@ export default function Header() {
                     layoutId="nav-active"
                     className="absolute bottom-0 left-3.5 right-3.5 h-[2px] bg-[#0957c8]"
                     initial={false}
-                    transition={{ type: 'spring', stiffness: 450, damping: 38 }}
+                    transition={{ duration: 0.2, ease: [0.2, 0.6, 0.25, 1] }}
                   />
                 )}
               </Link>

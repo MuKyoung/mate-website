@@ -2,158 +2,173 @@
 
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import PageHeader from '@/components/PageHeader';
+import TeamMemberCard from '@/components/TeamMemberCard';
 import TeamCapabilityCard from '@/components/TeamCapabilityCard';
-import { teamCapabilities, awards } from '@/data/teamCapabilities';
-import { FiCheckCircle, FiArrowRight, FiAward } from 'react-icons/fi';
+import { teamMembers } from '@/data/team';
+import { teamCapabilities, awards, type Award } from '@/data/teamCapabilities';
+import {
+  FiCheckCircle, FiArrowRight, FiAward, FiGrid,
+  FiStar, FiFileText, FiBookmark,
+} from 'react-icons/fi';
+import type { IconType } from 'react-icons';
+import { fadeUp, stagger, inView, easeEnter } from '@/lib/motion';
 
-function getAwardIcon(rank?: string): string {
-  if (!rank) return '🏆';
-  if (rank === '대상') return '🏆';
-  if (rank === '금상') return '🥇';
-  if (rank === '은상') return '🥈';
-  if (rank === '동상') return '🥉';
-  if (['최우수상', '우수상', '장려상', '우수논문상'].includes(rank)) return '🏅';
-  if (rank.includes('인증서')) return '📜';
-  if (rank.includes('장상') || rank.includes('원장상')) return '🏅';
-  return '🏆';
+/* 수상 랭크 → react-icons (UI 이모지 금지) */
+function getAwardIcon(award: Award): IconType {
+  if (award.type === 'exhibition') return FiGrid;
+  const rank = award.rank ?? '';
+  if (rank.includes('인증서')) return FiFileText;
+  if (['대상', '금상', '은상', '동상', '최우수상', '우수상', '장려상', '우수논문상'].includes(rank)) return FiStar;
+  if (rank.includes('장상') || rank.includes('원장상')) return FiStar;
+  return FiBookmark;
 }
 
-const fadeUp = {
-  initial: { opacity: 0, y: 20 },
-  whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true as const },
-};
+const stats = [
+  { value: '30+', label: '완료 프로젝트' },
+  { value: '5년', label: '외주 개발 경력' },
+  { value: '5명', label: '전문 개발자' },
+  { value: '100%', label: '성공률' },
+];
+
+const whyChooseUs = [
+  { title: '검증된 경험',        desc: '5년 이상의 유니티 외주 개발 경험, 30개 이상 프로젝트 완수' },
+  { title: '전문 팀 구성',        desc: '클라이언트 · 서버 · UI/UX 각 분야 전문가로 구성' },
+  { title: '투명한 커뮤니케이션', desc: '프로젝트 전 과정에서 지속적인 소통과 진행 상황 공유' },
+  { title: '품질 보증',           desc: '철저한 테스트와 코드 리뷰로 높은 품질의 결과물 제공' },
+];
+
+function SectionHead({ eyebrow, title, desc }: { eyebrow: string; title: string; desc?: string }) {
+  return (
+    <motion.div {...inView} variants={fadeUp} className="mb-10">
+      <span className="section-label mb-3">{eyebrow}</span>
+      <h2 className="heading-md mb-2">{title}</h2>
+      {desc && <p className="text-[#4c4c4c] text-[15px] max-w-lg leading-relaxed">{desc}</p>}
+    </motion.div>
+  );
+}
 
 export default function TeamPageClient() {
-  const whyChooseUs = [
-    { title: '검증된 경험',        desc: '5년 이상의 유니티 외주 개발 경험, 30개 이상 프로젝트 완수' },
-    { title: '전문 팀 구성',        desc: '클라이언트 · 서버 · UI/UX 각 분야 전문가로 구성' },
-    { title: '투명한 커뮤니케이션', desc: '프로젝트 전 과정에서 지속적인 소통과 진행 상황 공유' },
-    { title: '품질 보증',           desc: '철저한 테스트와 코드 리뷰로 높은 품질의 결과물 제공' },
-  ];
-
   const yearGroups = Array.from(new Set(awards.map(a => a.year))).sort((a, b) => b - a);
 
   return (
-    <div style={{ background: 'var(--background)' }}>
-
-      {/* ── 페이지 헤더 ── */}
-      <section className="pt-28 pb-10 sm:pt-32 sm:pb-12 border-b" style={{ borderColor: 'var(--border)' }}>
-        <div className="container mx-auto px-4 sm:px-6">
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, ease: [0.23, 1, 0.32, 1] }}>
-            <span className="section-label mb-3">About Team</span>
-            <h1 className="heading-lg text-[#262626] mb-3">MATE 팀 소개</h1>
-            <p className="text-[#5d5d5d] text-sm sm:text-base max-w-lg leading-relaxed">
-              Unity 게임 · AR/VR · 웹/앱 개발 및 개발 강의에 특화된 전문 외주개발팀입니다.
-            </p>
-          </motion.div>
-        </div>
-      </section>
+    <>
+      <PageHeader
+        eyebrow="About Team"
+        title="MATE 팀 소개"
+        description="Unity 게임 · AR/VR · 웹/앱 개발 및 개발 강의에 특화된 전문 외주개발팀입니다. 5년 이상의 경험과 30개 이상의 완료 프로젝트를 보유하고 있습니다."
+      />
 
       {/* ── 핵심 수치 ── */}
-      <section className="border-b" style={{ borderColor: 'var(--border)' }}>
+      <section className="bg-white border-b border-[#e1e1e1]">
         <div className="container mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0"
-            style={{ '--tw-divide-opacity': '1' } as React.CSSProperties}>
-            {[
-              { value: '30+', label: '완료 프로젝트' },
-              { value: '5년', label: '외주 개발 경력' },
-              { value: '5명', label: '전문 개발자' },
-              { value: '100%', label: '성공률' },
-            ].map((stat, i) => (
-              <motion.div key={i}
-                initial={{ opacity: 0 }} whileInView={{ opacity: 1 }}
-                viewport={{ once: true }} transition={{ delay: i * 0.06, duration: 0.45 }}
-                className="py-8 px-6 text-center sm:text-left"
-                style={{ borderColor: 'var(--border)' }}>
+          <div className="grid grid-cols-2 sm:grid-cols-4">
+            {stats.map((stat, i) => (
+              <motion.div key={stat.label}
+                initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-60px' }}
+                transition={{ delay: i * 0.06, duration: 0.32, ease: easeEnter }}
+                className={[
+                  'py-8 px-5 sm:px-6 border-[#e1e1e1]',
+                  i % 2 === 1 ? 'border-l' : '',
+                  i >= 2 ? 'border-t' : '',
+                  i > 0 ? 'sm:border-l' : '',
+                  i >= 2 ? 'sm:border-t-0' : '',
+                ].join(' ')}>
                 <p className="text-2xl sm:text-3xl font-bold text-[#262626] font-mono-stat mb-1">{stat.value}</p>
-                <p className="text-xs text-[#5d5d5d] uppercase tracking-wider">{stat.label}</p>
+                <p className="text-[11px] text-[#a3a3a3] uppercase tracking-[0.14em]">{stat.label}</p>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── Why Choose Us ── */}
-      <section className="py-16 sm:py-20 bg-[#f7f7f7]">
+      {/* ── 팀 멤버 (white) ── */}
+      <section className="py-20 sm:py-28 bg-white">
         <div className="container mx-auto px-4 sm:px-6">
-          <motion.div {...fadeUp} transition={{ duration: 0.55 }} className="mb-10">
-            <span className="section-label mb-3" style={{ color: '#2a72e5' }}>Why Choose Us</span>
-            <h2 className="heading-md text-[#262626] mb-2">왜 MATE 팀인가요?</h2>
-            <p className="text-[#4c4c4c] text-sm mt-1 max-w-sm">Unity · 웹 · 앱까지 한 팀에서 해결합니다.</p>
-          </motion.div>
+          <SectionHead eyebrow="Members" title="팀 멤버" desc="각 분야의 전문가가 기획부터 배포까지 함께합니다." />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {teamMembers.map((member, i) => (
+              <TeamMemberCard key={member.id} member={member} index={i} />
+            ))}
+          </div>
+        </div>
+      </section>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-3xl">
-            {whyChooseUs.map((item, i) => (
-              <motion.div key={i}
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.07, duration: 0.45 }}
-                className="flex items-start gap-3 p-5 bg-white rounded-xl border border-[#e1e1e1]">
+      {/* ── Why Choose Us (surface) ── */}
+      <section className="py-20 sm:py-28 bg-[#f7f7f7] border-y border-[#e1e1e1]">
+        <div className="container mx-auto px-4 sm:px-6">
+          <SectionHead eyebrow="Why Choose Us" title="왜 MATE 팀인가요?" desc="Unity · 웹 · 앱까지 한 팀에서 해결합니다." />
+          <motion.div {...inView} variants={stagger}
+            className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-3xl">
+            {whyChooseUs.map((item) => (
+              <motion.div key={item.title} variants={fadeUp}
+                className="flex items-start gap-3 p-5 bg-white rounded-xl border border-[#e1e1e1] hover:border-[#c6c6c6] transition-colors">
                 <FiCheckCircle className="flex-shrink-0 mt-0.5 text-[#2a72e5]" size={16} />
                 <div>
                   <p className="text-sm font-semibold text-[#262626] mb-1">{item.title}</p>
-                  <p className="text-xs text-[#4c4c4c] leading-relaxed">{item.desc}</p>
+                  <p className="text-[13px] text-[#5d5d5d] leading-relaxed">{item.desc}</p>
                 </div>
               </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ── 전문 역량 (white) ── */}
+      <section className="py-20 sm:py-28 bg-white">
+        <div className="container mx-auto px-4 sm:px-6">
+          <SectionHead eyebrow="Capabilities" title="전문 역량"
+            desc="유니티 외주 개발과 강의를 통해 쌓은 실전 경험입니다." />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {teamCapabilities.capabilities.map((capability, index) => (
+              <TeamCapabilityCard key={capability.id} capability={capability} index={index} />
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── 수상 및 전시 ── */}
-      <section className="py-16 sm:py-20 border-y" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+      {/* ── 수상 및 전시 (surface) ── */}
+      <section className="py-20 sm:py-28 bg-[#f7f7f7] border-y border-[#e1e1e1]">
         <div className="container mx-auto px-4 sm:px-6">
-          <motion.div {...fadeUp} transition={{ duration: 0.55 }} className="mb-10">
-            <div className="flex items-center gap-2.5 mb-3">
-              <FiAward size={14} className="text-[#2a72e5]" />
-              <span className="section-label mb-0" style={{ color: '#2a72e5' }}>Awards & Exhibitions</span>
-            </div>
-            <h2 className="heading-md text-[#262626] mb-2">수상 및 전시 경력</h2>
-            <p className="text-[#5d5d5d] text-sm max-w-md">MATE 팀의 전문성을 인정받은 이력입니다.</p>
+          <motion.div {...inView} variants={fadeUp} className="mb-10">
+            <span className="section-label mb-3"><FiAward size={12} /> Awards &amp; Exhibitions</span>
+            <h2 className="heading-md mb-2">수상 및 전시 경력</h2>
+            <p className="text-[#4c4c4c] text-[15px] max-w-md leading-relaxed">MATE 팀의 전문성을 인정받은 이력입니다.</p>
           </motion.div>
 
           <div className="space-y-10 max-w-4xl">
-            {yearGroups.map((year, yi) => (
-              <motion.div key={year}
-                initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }} transition={{ delay: yi * 0.07, duration: 0.45 }}>
+            {yearGroups.map((year) => (
+              <motion.div key={year} {...inView} variants={fadeUp}>
                 <div className="flex items-center gap-4 mb-5">
                   <span className="text-sm font-bold text-[#262626] font-mono-stat">{year}</span>
-                  <div className="h-px flex-grow" style={{ background: 'var(--border)' }} />
+                  <div className="h-px flex-grow bg-[#e1e1e1]" />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  {awards.filter(a => a.year === year).map((award, ai) => (
-                    <motion.div key={award.id}
-                      initial={{ opacity: 0, x: -12 }} whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ once: true }} transition={{ delay: ai * 0.04, duration: 0.4 }}
-                      className="flex items-start gap-3 p-4 rounded-lg border transition-colors hover:border-[#c6c6c6]"
-                      style={{ background: '#ffffff', borderColor: 'var(--border)' }}>
-                      <span className="text-lg leading-none flex-shrink-0">
-                        {award.type === 'exhibition' ? '🎪' : getAwardIcon(award.rank)}
-                      </span>
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap gap-1.5 mb-1.5">
-                          <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
-                            award.type === 'exhibition'
-                              ? 'bg-[#c6e6ff] text-[#0043b3]'
-                              : 'bg-[#bbecd7] text-[#058765]'
-                          }`}>
-                            {award.type === 'exhibition' ? '전시회' : '수상'}
-                          </span>
-                          {award.rank && (
-                            <span className="text-[10px] px-1.5 py-0.5 bg-[#e1e1e1] text-[#262626] rounded-full">
-                              {award.rank}
+                  {awards.filter(a => a.year === year).map((award, ai) => {
+                    const Icon = getAwardIcon(award);
+                    return (
+                      <motion.div key={award.id}
+                        initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, margin: '-60px' }}
+                        transition={{ delay: ai * 0.06, duration: 0.32, ease: easeEnter }}
+                        className="flex items-start gap-3 p-4 rounded-xl border border-[#e1e1e1] bg-white hover:border-[#c6c6c6] transition-colors">
+                        <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#f7f7f7] border border-[#e1e1e1] text-[#2a72e5] flex-shrink-0">
+                          <Icon size={15} />
+                        </span>
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap gap-1.5 mb-1.5">
+                            <span className={award.type === 'exhibition' ? 'tag tag-blue' : 'badge-success'}>
+                              {award.type === 'exhibition' ? '전시회' : '수상'}
                             </span>
-                          )}
+                            {award.rank && <span className="tag">{award.rank}</span>}
+                          </div>
+                          <p className="text-[13px] font-semibold text-[#262626] leading-snug">{award.title}</p>
+                          <p className="text-[12px] text-[#5d5d5d] mt-0.5">{award.organization}</p>
                         </div>
-                        <p className="text-xs font-semibold text-[#262626] leading-snug">{award.title}</p>
-                        <p className="text-[11px] text-[#5d5d5d] mt-0.5">{award.organization}</p>
-                      </div>
-                    </motion.div>
-                  ))}
+                      </motion.div>
+                    );
+                  })}
                 </div>
               </motion.div>
             ))}
@@ -161,47 +176,24 @@ export default function TeamPageClient() {
         </div>
       </section>
 
-      {/* ── 전문 역량 ── */}
-      <section className="py-16 sm:py-20 bg-[#f7f7f7]">
-        <div className="container mx-auto px-4 sm:px-6">
-          <motion.div {...fadeUp} transition={{ duration: 0.55 }} className="mb-10">
-            <span className="section-label mb-3" style={{ color: '#2a72e5' }}>Capabilities</span>
-            <h2 className="heading-md text-[#262626] mb-2">전문 역량</h2>
-            <p className="text-[#4c4c4c] text-sm max-w-lg">
-              유니티 외주 개발과 강의를 통해 쌓은 실전 경험입니다.
-            </p>
-          </motion.div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl">
-            {teamCapabilities.capabilities.map((capability, index) => (
-              <div key={capability.id}
-                className={teamCapabilities.capabilities.length % 2 !== 0 && index === teamCapabilities.capabilities.length - 1
-                  ? 'md:col-span-2'
-                  : ''}>
-                <TeamCapabilityCard capability={capability} index={index} />
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── CTA ── */}
-      <section className="py-16 sm:py-20 border-t bg-[#262626]" style={{ borderColor: 'var(--border)' }}>
-        <div className="container mx-auto px-4 sm:px-6">
-          <motion.div {...fadeUp} transition={{ duration: 0.55 }}
-            className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+      {/* ── CTA (다크 밴드) ── */}
+      <section className="bg-[#262626]">
+        <div className="container mx-auto px-4 sm:px-6 py-20 sm:py-24">
+          <motion.div {...inView} variants={fadeUp}
+            className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-8">
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">함께 프로젝트를 시작해볼까요?</h2>
-              <p className="text-white/60 text-sm">무료 상담으로 시작합니다.</p>
+              <p className="text-xs text-white/45 uppercase tracking-[0.16em] mb-3">Contact</p>
+              <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-3">함께 프로젝트를 시작해볼까요?</h2>
+              <p className="text-white/55 text-[15px]">무료 상담으로 가능성을 확인하세요.</p>
             </div>
             <Link href="/contact"
-              className="group flex-shrink-0 inline-flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-semibold text-white bg-[#2a72e5] hover:bg-[#0957c8] transition-colors">
+              className="group flex-shrink-0 inline-flex items-center gap-2 h-12 px-7 rounded-lg text-[15px] font-medium text-white bg-[#2a72e5] hover:bg-[#0957c8] transition-colors">
               무료 상담 신청
-              <FiArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+              <FiArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
             </Link>
           </motion.div>
         </div>
       </section>
-
-    </div>
+    </>
   );
 }

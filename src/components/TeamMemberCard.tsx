@@ -3,8 +3,9 @@
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { TeamMember } from '@/types';
-import { FiGithub, FiLinkedin, FiMail } from 'react-icons/fi';
+import { FiGithub, FiLinkedin, FiMail, FiUser, FiArrowUpRight } from 'react-icons/fi';
 import SafeImage from '@/components/SafeImage';
+import { easeEnter } from '@/lib/motion';
 
 interface TeamMemberCardProps {
   member: TeamMember;
@@ -14,59 +15,60 @@ interface TeamMemberCardProps {
 export default function TeamMemberCard({ member, index }: TeamMemberCardProps) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 24 }}
+      initial={{ opacity: 0, y: 12 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay: index * 0.08, duration: 0.55, ease: [0.23, 1, 0.32, 1] }}
-      whileHover={{ y: -6 }}
-      className="bg-white rounded-xl border border-[#e1e1e1] hover:border-[#c6c6c6] overflow-hidden transition-all duration-300"
+      viewport={{ once: true, margin: '-60px' }}
+      transition={{ delay: index * 0.06, duration: 0.32, ease: easeEnter }}
+      className="group rounded-xl border border-[#e1e1e1] bg-white hover:border-[#c6c6c6] transition-colors"
     >
-      <Link href={`/team/${member.id}`}>
-        <div className="relative h-56 bg-[#2a72e5]/10 overflow-hidden">
-          <SafeImage src={member.profileImage} alt={member.name} fill className="absolute inset-0"
-            placeholder={<div className="absolute inset-0 flex items-center justify-center text-5xl text-[#2a72e5]/30">👤</div>}
-          />
+      <Link href={`/team/${member.id}`} className="block p-5">
+        <div className="flex items-start gap-4">
+          {/* 아바타 */}
+          <div className="relative w-14 h-14 rounded-full overflow-hidden border border-[#e1e1e1] flex-shrink-0 bg-[#f7f7f7]">
+            <SafeImage src={member.profileImage} alt={member.name} fill className="rounded-full"
+              placeholder={<div className="absolute inset-0 flex items-center justify-center text-[#a3a3a3]"><FiUser size={22} /></div>}
+            />
+          </div>
+          {/* 이름 / 역할 */}
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start justify-between gap-2">
+              <h3 className="text-[15px] font-bold text-[#262626] truncate">{member.name}</h3>
+              <FiArrowUpRight size={15} className="flex-shrink-0 mt-0.5 text-[#c6c6c6] group-hover:text-[#2a72e5] transition-colors" />
+            </div>
+            <p className="text-[13px] text-[#2a72e5] font-medium mt-0.5">{member.role}</p>
+          </div>
         </div>
-        <div className="p-5">
-          <h3 className="text-base font-bold text-[#262626] mb-0.5">{member.name}</h3>
-          <p className="text-xs text-[#2a72e5] font-medium mb-2.5">{member.role}</p>
-          <p className="text-[#4c4c4c] text-xs mb-4 line-clamp-2 leading-relaxed">{member.bio}</p>
 
-          <div className="flex flex-wrap gap-1.5 mb-4">
-            {member.skills.slice(0, 3).map((skill) => (
-              <span key={skill} className="px-2 py-0.5 bg-[#c6e6ff] text-[#0043b3] text-[11px] rounded-full">
-                {skill}
-              </span>
-            ))}
-            {member.skills.length > 3 && (
-              <span className="px-2 py-0.5 bg-[#e1e1e1] text-[#262626] text-[11px] rounded-full">
-                +{member.skills.length - 3}
-              </span>
-            )}
-          </div>
+        <p className="text-[#5d5d5d] text-[13px] mt-4 line-clamp-2 leading-relaxed">{member.bio}</p>
 
-          <div className="flex gap-3 pt-3 border-t border-[#e1e1e1]">
-            {member.github && (
-              <a href={member.github} target="_blank" rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="text-[#5d5d5d] hover:text-[#262626] transition-colors" aria-label="GitHub">
-                <FiGithub size={16} />
-              </a>
-            )}
-            {member.linkedin && (
-              <a href={member.linkedin} target="_blank" rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="text-[#5d5d5d] hover:text-[#2a72e5] transition-colors" aria-label="LinkedIn">
-                <FiLinkedin size={16} />
-              </a>
-            )}
-            <a href={`mailto:${member.email}`} onClick={(e) => e.stopPropagation()}
-              className="text-[#5d5d5d] hover:text-[#2a72e5] transition-colors" aria-label="Email">
-              <FiMail size={16} />
-            </a>
-          </div>
+        <div className="flex flex-wrap gap-1.5 mt-4">
+          {member.skills.slice(0, 3).map((skill) => (
+            <span key={skill} className="tag tag-blue">{skill}</span>
+          ))}
+          {member.skills.length > 3 && (
+            <span className="tag">+{member.skills.length - 3}</span>
+          )}
         </div>
       </Link>
+
+      <div className="flex gap-4 px-5 py-3.5 border-t border-[#e1e1e1]">
+        {member.github && (
+          <a href={member.github} target="_blank" rel="noopener noreferrer"
+            className="text-[#a3a3a3] hover:text-[#262626] transition-colors" aria-label="GitHub">
+            <FiGithub size={16} />
+          </a>
+        )}
+        {member.linkedin && (
+          <a href={member.linkedin} target="_blank" rel="noopener noreferrer"
+            className="text-[#a3a3a3] hover:text-[#2a72e5] transition-colors" aria-label="LinkedIn">
+            <FiLinkedin size={16} />
+          </a>
+        )}
+        <a href={`mailto:${member.email}`}
+          className="text-[#a3a3a3] hover:text-[#2a72e5] transition-colors" aria-label="Email">
+          <FiMail size={16} />
+        </a>
+      </div>
     </motion.div>
   );
 }

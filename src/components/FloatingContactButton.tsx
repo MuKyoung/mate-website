@@ -13,16 +13,16 @@ export default function FloatingContactButton() {
   return (
     <AnimatePresence>
       <motion.div
-        initial={{ opacity: 0, scale: 0.8, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.8, y: 20 }}
-        transition={{ delay: 0.8, duration: 0.4, type: 'spring' }}
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 12 }}
+        transition={{ delay: 0.6, duration: 0.32, ease: [0.2, 0.6, 0.25, 1] }}
         className="fixed bottom-6 right-4 sm:bottom-8 sm:right-6 z-50"
       >
-        <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
+        <motion.div whileTap={{ scale: 0.97 }}>
           <Link
             href="/contact"
-            className="flex items-center gap-2 px-5 py-3 sm:px-6 sm:py-3.5 rounded-lg font-semibold text-white bg-[#2a72e5] hover:bg-[#0957c8] shadow-lg transition-all duration-200"
+            className="flex items-center gap-2 px-5 py-3 sm:px-6 sm:py-3.5 rounded-lg font-medium text-white bg-[#2a72e5] hover:bg-[#0957c8] shadow-lg transition-colors duration-150"
           >
             <FiMessageCircle size={18} />
             <span className="hidden sm:inline text-sm">문의하기</span>

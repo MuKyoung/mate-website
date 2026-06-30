@@ -11,9 +11,12 @@ interface ProjectsClientProps {
 export default function ProjectsClient({ projects }: ProjectsClientProps) {
   return (
     <>
-      <ProjectFilter projects={projects} />
+      <section className="py-20 sm:py-28 bg-white">
+        <div className="container mx-auto px-4 sm:px-6">
+          <ProjectFilter projects={projects} />
+        </div>
+      </section>
       <FloatingNotice message="정보를 추가 중입니다" />
     </>
   );
 }
-

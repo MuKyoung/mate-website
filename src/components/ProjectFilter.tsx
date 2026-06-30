@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import ProjectCard from './ProjectCard';
 import { Project } from '@/types';
 import { FiSearch } from 'react-icons/fi';
+import { motion } from 'framer-motion';
+import { fadeUp, inView } from '@/lib/motion';
 
 // 카테고리 매핑
 const CATEGORY_MAP: Record<string, string> = {
@@ -18,10 +19,10 @@ const CATEGORY_MAP: Record<string, string> = {
 
 // 카테고리 옵션
 const CATEGORY_OPTIONS = [
-  { value: 'all', label: '전체', icon: '📁' },
-  { value: '유니티', label: '유니티', icon: '🎮' },
-  { value: '웹/앱', label: '웹/앱', icon: '🌐' },
-  { value: '강의', label: '강의', icon: '📚' },
+  { value: 'all', label: '전체' },
+  { value: '유니티', label: '유니티' },
+  { value: '웹/앱', label: '웹 / 앱' },
+  { value: '강의', label: '강의' },
 ];
 
 interface ProjectFilterProps {
@@ -33,20 +34,13 @@ export default function ProjectFilter({ projects }: ProjectFilterProps) {
 
   // 프로젝트 필터링 및 정렬
   const filteredProjects = useMemo(() => {
-    let filtered = projects;
-
-    // 카테고리 필터링
-    if (selectedCategory !== 'all') {
-      filtered = projects.filter((project) => {
-        const mappedCategory = CATEGORY_MAP[project.category] || project.category;
-        return mappedCategory === selectedCategory;
-      });
-    }
-
-    // id 순 정렬
-    return [...filtered].sort((a, b) => {
-      return parseInt(a.id) - parseInt(b.id);
-    });
+    const base =
+      selectedCategory === 'all'
+        ? projects
+        : projects.filter(
+            (project) => (CATEGORY_MAP[project.category] || project.category) === selectedCategory
+          );
+    return [...base].sort((a, b) => parseInt(a.id) - parseInt(b.id));
   }, [projects, selectedCategory]);
 
   // 각 카테고리별 프로젝트 수 계산
@@ -60,67 +54,50 @@ export default function ProjectFilter({ projects }: ProjectFilterProps) {
   }, [projects]);
 
   return (
-    <>
-      {/* 필터 버튼 */}
-      <div className="mb-8 sm:mb-10">
-        <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
-          {CATEGORY_OPTIONS.map((option) => (
-            <button
-              key={option.value}
-              onClick={() => setSelectedCategory(option.value)}
-              className={`
-                px-3 sm:px-5 py-2 sm:py-3 rounded-full font-medium transition-all duration-300
-                flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm md:text-base
-                ${
-                  selectedCategory === option.value
+    <div>
+      {/* 필터 바 + 결과 수 */}
+      <motion.div
+        {...inView}
+        variants={fadeUp}
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 sm:mb-10"
+      >
+        <div className="flex flex-wrap gap-2">
+          {CATEGORY_OPTIONS.map((option) => {
+            const active = selectedCategory === option.value;
+            return (
+              <button
+                key={option.value}
+                onClick={() => setSelectedCategory(option.value)}
+                className={`inline-flex items-center gap-1.5 h-9 px-4 rounded-full text-[13px] font-medium transition-colors ${
+                  active
                     ? 'bg-[#2a72e5] text-white'
-                    : 'bg-white text-[#262626] hover:bg-[#f7f7f7] border border-[#c6c6c6]'
-                }
-              `}
-            >
-              <span>{option.icon}</span>
-              <span>{option.label}</span>
-              <span
-                className={`
-                  px-1.5 sm:px-2 py-0.5 rounded-full text-xs font-medium
-                  ${
-                    selectedCategory === option.value
-                      ? 'bg-white/25 text-white'
-                      : 'bg-[#e1e1e1] text-[#262626]'
-                  }
-                `}
+                    : 'bg-white border border-[#e1e1e1] text-[#4c4c4c] hover:bg-[#f7f7f7]'
+                }`}
               >
-                {categoryCounts[option.value] || 0}
-              </span>
-            </button>
-          ))}
+                <span>{option.label}</span>
+                <span
+                  className={`text-[11px] tabular-nums ${
+                    active ? 'text-white/70' : 'text-[#a3a3a3]'
+                  }`}
+                >
+                  {categoryCounts[option.value] || 0}
+                </span>
+              </button>
+            );
+          })}
         </div>
-      </div>
 
-      {/* 결과 정보 */}
-      <div className="mb-6 sm:mb-8">
-        <p className="text-[#4c4c4c]">
+        <p className="text-[13px] text-[#5d5d5d]">
           {selectedCategory === 'all' ? '전체' : selectedCategory} 프로젝트{' '}
-          <span className="font-medium text-[#2a72e5]">{filteredProjects.length}</span>개
+          <span className="font-semibold text-[#262626] tabular-nums">{filteredProjects.length}</span>개
         </p>
-      </div>
+      </motion.div>
 
       {/* 프로젝트 그리드 */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-        <AnimatePresence mode="popLayout">
-          {filteredProjects.map((project, index) => (
-            <motion.div
-              key={project.id}
-              layout
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              transition={{ duration: 0.3, delay: index * 0.05 }}
-            >
-              <ProjectCard project={project} index={index} />
-            </motion.div>
-          ))}
-        </AnimatePresence>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {filteredProjects.map((project, index) => (
+          <ProjectCard key={project.id} project={project} index={index} />
+        ))}
       </div>
 
       {/* 결과 없음 */}
@@ -128,16 +105,17 @@ export default function ProjectFilter({ projects }: ProjectFilterProps) {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-center py-20"
+          className="py-20 text-center rounded-xl border border-[#e1e1e1] bg-[#f7f7f7]"
         >
-          <div className="flex justify-center mb-4 text-[#a3a3a3]"><FiSearch size={56} /></div>
-          <h3 className="text-xl font-semibold text-[#262626] mb-2">
+          <div className="flex justify-center mb-4 text-[#c6c6c6]">
+            <FiSearch size={40} />
+          </div>
+          <h3 className="text-[15px] font-bold text-[#262626] mb-1.5">
             해당 카테고리의 프로젝트가 없습니다
           </h3>
-          <p className="text-[#4c4c4c]">다른 카테고리를 선택해 보세요</p>
+          <p className="text-[13px] text-[#5d5d5d]">다른 카테고리를 선택해 보세요</p>
         </motion.div>
       )}
-    </>
+    </div>
   );
 }
-
