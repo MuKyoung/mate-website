@@ -59,25 +59,25 @@ export default function ProjectFilter({ projects }: ProjectFilterProps) {
       <motion.div
         {...inView}
         variants={fadeUp}
-        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 sm:mb-10"
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-10 sm:mb-14"
       >
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2.5">
           {CATEGORY_OPTIONS.map((option) => {
             const active = selectedCategory === option.value;
             return (
               <button
                 key={option.value}
                 onClick={() => setSelectedCategory(option.value)}
-                className={`inline-flex items-center gap-1.5 h-9 px-4 rounded-full text-[13px] font-medium transition-colors ${
+                className={`inline-flex items-center gap-2 h-10 px-5 rounded-full text-[13px] font-medium transition-colors ${
                   active
-                    ? 'bg-[#2a72e5] text-white'
-                    : 'bg-white border border-[#e1e1e1] text-[#4c4c4c] hover:bg-[#f7f7f7]'
+                    ? 'bg-[#0a0a0a] text-white'
+                    : 'bg-white border border-[#e4e4e4] text-[#52525b] hover:border-[#0a0a0a]'
                 }`}
               >
                 <span>{option.label}</span>
                 <span
                   className={`text-[11px] tabular-nums ${
-                    active ? 'text-white/70' : 'text-[#a3a3a3]'
+                    active ? 'text-white/60' : 'text-[#a1a1aa]'
                   }`}
                 >
                   {categoryCounts[option.value] || 0}
@@ -87,14 +87,14 @@ export default function ProjectFilter({ projects }: ProjectFilterProps) {
           })}
         </div>
 
-        <p className="text-[13px] text-[#5d5d5d]">
+        <p className="text-[13px] text-[#a1a1aa]">
           {selectedCategory === 'all' ? '전체' : selectedCategory} 프로젝트{' '}
-          <span className="font-semibold text-[#262626] tabular-nums">{filteredProjects.length}</span>개
+          <span className="font-semibold text-[#0a0a0a] tabular-nums">{filteredProjects.length}</span>개
         </p>
       </motion.div>
 
       {/* 프로젝트 그리드 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {filteredProjects.map((project, index) => (
           <ProjectCard key={project.id} project={project} index={index} />
         ))}
@@ -105,15 +105,15 @@ export default function ProjectFilter({ projects }: ProjectFilterProps) {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="py-20 text-center rounded-xl border border-[#e1e1e1] bg-[#f7f7f7]"
+          className="py-24 text-center rounded-2xl border border-[#e4e4e4] bg-[#f5f5f5]"
         >
-          <div className="flex justify-center mb-4 text-[#c6c6c6]">
+          <div className="flex justify-center mb-4 text-[#a1a1aa]">
             <FiSearch size={40} />
           </div>
-          <h3 className="text-[15px] font-bold text-[#262626] mb-1.5">
+          <h3 className="text-[15px] font-bold text-[#0a0a0a] mb-1.5">
             해당 카테고리의 프로젝트가 없습니다
           </h3>
-          <p className="text-[13px] text-[#5d5d5d]">다른 카테고리를 선택해 보세요</p>
+          <p className="text-[13px] text-[#52525b]">다른 카테고리를 선택해 보세요</p>
         </motion.div>
       )}
     </div>

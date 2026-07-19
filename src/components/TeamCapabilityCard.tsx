@@ -18,6 +18,7 @@ interface Capability {
 interface TeamCapabilityCardProps {
   capability: Capability;
   index: number;
+  dark?: boolean;
 }
 
 /* 이모지 → react-icons 매핑 (UI 이모지 금지) */
@@ -27,46 +28,68 @@ const iconMap: Record<string, IconType> = {
   education: FiBookOpen,
 };
 
-export default function TeamCapabilityCard({ capability, index }: TeamCapabilityCardProps) {
+export default function TeamCapabilityCard({ capability, index, dark = false }: TeamCapabilityCardProps) {
   const Icon = iconMap[capability.id] ?? FiBox;
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: 40 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-60px' }}
-      transition={{ delay: index * 0.06, duration: 0.32, ease: easeEnter }}
-      className="h-full p-6 sm:p-7 rounded-xl border border-[#e1e1e1] bg-white hover:border-[#c6c6c6] transition-colors"
+      viewport={{ once: true, margin: '-12%' }}
+      transition={{ delay: index * 0.09, duration: 0.7, ease: easeEnter }}
+      className={
+        dark
+          ? 'group h-full p-7 sm:p-8 rounded-2xl border border-white/10 bg-white/[0.03] hover:border-white/25 transition-colors'
+          : 'group h-full p-7 sm:p-8 rounded-2xl border border-[#e4e4e4] bg-white hover:border-[#0a0a0a] transition-colors'
+      }
     >
       {/* 아이콘 */}
-      <span className="inline-flex items-center justify-center w-11 h-11 rounded-lg bg-[#f7f7f7] border border-[#e1e1e1] text-[#2a72e5] mb-5">
-        <Icon size={20} />
+      <span className={
+        dark
+          ? 'inline-flex items-center justify-center w-12 h-12 rounded-xl bg-white/[0.06] border border-white/10 text-[#5b9bff] mb-6'
+          : 'inline-flex items-center justify-center w-12 h-12 rounded-xl bg-[#c6e6ff] text-[#0957c8] mb-6'
+      }>
+        <Icon size={21} />
       </span>
 
-      <h3 className="text-lg font-bold text-[#262626] mb-2">{capability.title}</h3>
-      <p className="text-[#5d5d5d] text-sm leading-relaxed mb-5">{capability.description}</p>
+      <h3 className={dark ? 'text-lg font-bold on-dark mb-2 group-hover:text-[#5b9bff] transition-colors' : 'text-lg font-bold text-[#0a0a0a] mb-2 group-hover:text-[#2a72e5] transition-colors'}>
+        {capability.title}
+      </h3>
+      <p className={dark ? 'on-dark-2 text-sm leading-relaxed mb-6' : 'text-[#52525b] text-sm leading-relaxed mb-6'}>
+        {capability.description}
+      </p>
 
       {/* 통계 */}
-      <div className="grid grid-cols-2 divide-x divide-[#e1e1e1] border-y border-[#e1e1e1] mb-5">
+      <div className={
+        dark
+          ? 'grid grid-cols-2 divide-x divide-white/10 border-y border-white/10 mb-6'
+          : 'grid grid-cols-2 divide-x divide-[#e4e4e4] border-y border-[#e4e4e4] mb-6'
+      }>
         <div className="py-4 pr-4">
-          <div className="text-lg font-bold text-[#262626] font-mono-stat">{capability.experience}</div>
-          <div className="text-xs text-[#5d5d5d] mt-0.5">경력</div>
+          <div className={dark ? 'text-xl font-extrabold on-dark font-mono-stat tracking-tight' : 'text-xl font-extrabold text-[#0a0a0a] font-mono-stat tracking-tight'}>{capability.experience}</div>
+          <div className={dark ? 'text-xs on-dark-3 mt-1' : 'text-xs text-[#a1a1aa] mt-1'}>경력</div>
         </div>
         <div className="py-4 pl-4">
-          <div className="text-lg font-bold text-[#262626] font-mono-stat">{capability.projects}개</div>
-          <div className="text-xs text-[#5d5d5d] mt-0.5">완료 프로젝트</div>
+          <div className={dark ? 'text-xl font-extrabold on-dark font-mono-stat tracking-tight' : 'text-xl font-extrabold text-[#0a0a0a] font-mono-stat tracking-tight'}>{capability.projects}개</div>
+          <div className={dark ? 'text-xs on-dark-3 mt-1' : 'text-xs text-[#a1a1aa] mt-1'}>완료 프로젝트</div>
         </div>
       </div>
 
       {/* 기술 */}
       <div>
-        <h4 className="text-[11px] font-semibold text-[#5d5d5d] uppercase tracking-[0.12em] mb-2.5 flex items-center gap-1.5">
-          <FiCheck className="text-[#2a72e5]" size={12} />
+        <h4 className={
+          dark
+            ? 'text-[11px] font-semibold on-dark-3 uppercase tracking-[0.14em] mb-3 flex items-center gap-1.5'
+            : 'text-[11px] font-semibold text-[#a1a1aa] uppercase tracking-[0.14em] mb-3 flex items-center gap-1.5'
+        }>
+          <FiCheck className={dark ? 'text-[#5b9bff]' : 'text-[#2a72e5]'} size={12} />
           주요 기술
         </h4>
         <div className="flex flex-wrap gap-1.5">
           {capability.skills.map((skill) => (
-            <span key={skill} className="tag tag-blue">{skill}</span>
+            dark
+              ? <span key={skill} className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium text-white/80 bg-white/[0.06] border border-white/10">{skill}</span>
+              : <span key={skill} className="tag tag-blue">{skill}</span>
           ))}
         </div>
       </div>

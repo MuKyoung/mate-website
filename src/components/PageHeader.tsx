@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { easeEnter } from '@/lib/motion';
+import { clipUp, fadeUp, onMount, stagger } from '@/lib/motion';
 
 interface PageHeaderProps {
   title: string;
@@ -11,29 +11,19 @@ interface PageHeaderProps {
 
 export default function PageHeader({ title, description, eyebrow }: PageHeaderProps) {
   return (
-    <section className="bg-[#f7f7f7] border-b border-[#e1e1e1] pt-28 sm:pt-32 pb-12 sm:pb-16">
-      <div className="container mx-auto px-4 sm:px-6">
-        {eyebrow && (
-          <motion.span
-            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.32, ease: easeEnter }}
-            className="section-label mb-4"
-          >
-            {eyebrow}
-          </motion.span>
-        )}
-        <motion.h1
-          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.32, delay: 0.04, ease: easeEnter }}
-          className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-[#262626] mb-4"
-        >
-          {title}
+    <section className="relative bg-[#0a0a0a] overflow-hidden pt-36 sm:pt-44 pb-16 sm:pb-24">
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute -top-1/3 right-0 w-[55vw] h-[55vw] rounded-full opacity-[0.12]"
+          style={{ background: 'radial-gradient(circle, #2a72e5 0%, transparent 60%)' }} />
+      </div>
+      <div className="relative container mx-auto px-4 sm:px-6">
+        <motion.span {...onMount} variants={fadeUp} className="eyebrow text-[#5b9bff] mb-6">
+          {eyebrow ?? 'MATE'}
+        </motion.span>
+        <motion.h1 {...onMount} variants={stagger} className="display-section text-white mb-6">
+          <span className="block overflow-hidden"><motion.span variants={clipUp} className="block">{title}</motion.span></span>
         </motion.h1>
-        <motion.p
-          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.32, delay: 0.1, ease: easeEnter }}
-          className="text-[15px] sm:text-base text-[#4c4c4c] leading-relaxed max-w-2xl"
-        >
+        <motion.p {...onMount} variants={fadeUp} className="text-lg on-dark-2 leading-relaxed max-w-2xl">
           {description}
         </motion.p>
       </div>

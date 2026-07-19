@@ -28,6 +28,8 @@ export default function Header() {
 
   useEffect(() => { setMobileMenuOpen(false); }, [pathname]);
 
+  const solid = isScrolled || isMobileMenuOpen;
+
   return (
     <header
       className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
@@ -50,7 +52,7 @@ export default function Header() {
             alt="MATE"
             width={88}
             height={28}
-            className="h-7 w-auto"
+            className={`h-7 w-auto transition-all duration-300 ${solid ? '' : 'brightness-0 invert'}`}
             priority
           />
         </Link>
@@ -65,15 +67,16 @@ export default function Header() {
                 href={item.href}
                 className={`relative px-3.5 py-1.5 text-sm font-semibold rounded-md transition-colors duration-150 ${
                   active
-                    ? 'text-[#0957c8]'
-                    : 'text-[#4c4c4c] hover:text-[#262626] hover:bg-black/[0.03]'
+                    ? (solid ? 'text-[#0957c8]' : 'text-white')
+                    : (solid ? 'text-[#4c4c4c] hover:text-[#0a0a0a] hover:bg-black/[0.04]'
+                             : 'text-white/65 hover:text-white hover:bg-white/10')
                 }`}
               >
                 {item.label}
                 {active && (
                   <motion.span
                     layoutId="nav-active"
-                    className="absolute bottom-0 left-3.5 right-3.5 h-[2px] bg-[#0957c8]"
+                    className={`absolute bottom-0 left-3.5 right-3.5 h-[2px] ${solid ? 'bg-[#0957c8]' : 'bg-[#5b9bff]'}`}
                     initial={false}
                     transition={{ duration: 0.2, ease: [0.2, 0.6, 0.25, 1] }}
                   />
@@ -84,7 +87,10 @@ export default function Header() {
 
           <Link
             href="/contact"
-            className="ml-3 px-4 h-9 inline-flex items-center rounded-lg text-sm font-medium text-white bg-[#2a72e5] hover:bg-[#0957c8] transition-colors duration-150"
+            className={`ml-3 px-5 h-10 inline-flex items-center rounded-full text-sm font-semibold transition-colors duration-150 ${
+              solid ? 'text-white bg-[#2a72e5] hover:bg-[#0957c8]'
+                    : 'text-[#0a0a0a] bg-white hover:bg-[#5b9bff] hover:text-white'
+            }`}
           >
             상담 신청
           </Link>
@@ -92,7 +98,10 @@ export default function Header() {
 
         {/* 모바일 버튼 */}
         <button
-          className="md:hidden w-9 h-9 flex items-center justify-center text-[#4c4c4c] hover:text-[#262626] transition-colors rounded-md hover:bg-black/[0.04]"
+          className={`md:hidden w-9 h-9 flex items-center justify-center transition-colors rounded-md ${
+            solid ? 'text-[#4c4c4c] hover:text-[#0a0a0a] hover:bg-black/[0.04]'
+                  : 'text-white hover:bg-white/10'
+          }`}
           onClick={() => setMobileMenuOpen(!isMobileMenuOpen)}
           aria-label="메뉴"
         >

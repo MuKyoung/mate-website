@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FAQ } from '@/types';
 import { FiChevronDown } from 'react-icons/fi';
-import { DUR, easeEnter } from '@/lib/motion';
+import { DUR, easeEnter, fadeUp, stagger, inView } from '@/lib/motion';
 
 interface FAQAccordionProps {
   faqs: FAQ[];
@@ -18,20 +18,21 @@ export default function FAQAccordion({ faqs }: FAQAccordionProps) {
   };
 
   return (
-    <div className="space-y-3">
+    <motion.div {...inView} variants={stagger} className="space-y-3">
       {faqs.map((faq) => {
         const isOpen = openId === faq.id;
         return (
-          <div
+          <motion.div
             key={faq.id}
-            className="rounded-xl overflow-hidden border border-[#e1e1e1] bg-white hover:border-[#c6c6c6] transition-colors"
+            variants={fadeUp}
+            className="rounded-2xl overflow-hidden border border-[#e4e4e4] bg-white hover:border-[#0a0a0a] transition-colors"
           >
             <button
               onClick={() => toggleFAQ(faq.id)}
               aria-expanded={isOpen}
-              className="w-full px-5 sm:px-6 py-4 sm:py-5 text-left flex items-center justify-between gap-4 hover:bg-[#f7f7f7] transition-colors"
+              className="w-full px-5 sm:px-6 py-4 sm:py-5 text-left flex items-center justify-between gap-4 transition-colors"
             >
-              <span className="font-medium text-[#262626] text-sm sm:text-[15px]">
+              <span className="font-semibold text-[#0a0a0a] text-sm sm:text-[15px]">
                 {faq.question}
               </span>
               <motion.span
@@ -41,7 +42,7 @@ export default function FAQAccordion({ faqs }: FAQAccordionProps) {
               >
                 <FiChevronDown
                   size={18}
-                  className={isOpen ? 'text-[#2a72e5]' : 'text-[#a3a3a3]'}
+                  className={isOpen ? 'text-[#2a72e5]' : 'text-[#a1a1aa]'}
                 />
               </motion.span>
             </button>
@@ -54,17 +55,17 @@ export default function FAQAccordion({ faqs }: FAQAccordionProps) {
                   transition={{ duration: DUR.slow, ease: easeEnter }}
                   className="overflow-hidden"
                 >
-                  <div className="px-5 sm:px-6 py-4 sm:py-5 bg-[#f7f7f7] border-t border-[#e1e1e1]">
-                    <p className="text-[#4c4c4c] leading-relaxed text-sm sm:text-[15px]">
+                  <div className="px-5 sm:px-6 py-4 sm:py-5 bg-[#f5f5f5] border-t border-[#e4e4e4]">
+                    <p className="text-[#52525b] leading-relaxed text-sm sm:text-[15px]">
                       {faq.answer}
                     </p>
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
-          </div>
+          </motion.div>
         );
       })}
-    </div>
+    </motion.div>
   );
 }

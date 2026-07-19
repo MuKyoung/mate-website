@@ -8,7 +8,7 @@ import PageHeader from '@/components/PageHeader';
 import FAQAccordion from '@/components/FAQAccordion';
 import FloatingNotice from '@/components/FloatingNotice';
 import { faqs } from '@/data/faq';
-import { fadeUp, inView } from '@/lib/motion';
+import { fadeUp, clipUp, stagger, inView } from '@/lib/motion';
 
 // 카카오톡 오픈채팅 URL
 const KAKAO_OPEN_CHAT_URL = 'https://open.kakao.com/o/scVFEK3h';
@@ -109,8 +109,8 @@ export default function ContactPage() {
   };
 
   const inputClass =
-    'w-full h-11 px-4 bg-white border border-[#e1e1e1] rounded-lg text-sm text-[#262626] placeholder-[#a3a3a3] outline-none transition-colors focus:border-[#2a72e5] focus:ring-1 focus:ring-[#2a72e5]';
-  const labelClass = 'block text-sm font-medium text-[#4c4c4c] mb-2';
+    'w-full h-11 px-4 bg-white border border-[#e4e4e4] rounded-lg text-sm text-[#0a0a0a] placeholder-[#a1a1aa] outline-none transition-colors focus:border-[#2a72e5] focus:ring-1 focus:ring-[#2a72e5]';
+  const labelClass = 'block text-sm font-medium text-[#52525b] mb-2';
 
   return (
     <>
@@ -124,14 +124,14 @@ export default function ContactPage() {
       />
 
       {/* ── 문의 영역 (white) ── */}
-      <section className="py-20 sm:py-28 bg-white">
+      <section className="py-24 sm:py-32 bg-white overflow-hidden">
         <div className="container mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <motion.div {...inView} variants={stagger} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
             {/* 문의 양식 */}
-            <motion.div {...inView} variants={fadeUp} className="lg:col-span-2">
-              <div className="p-6 sm:p-8 rounded-xl border border-[#e1e1e1] bg-white">
-                <h2 className="text-lg font-bold text-[#262626] mb-6">문의 양식</h2>
+            <motion.div variants={fadeUp} className="lg:col-span-2">
+              <div className="p-6 sm:p-8 rounded-2xl border border-[#e4e4e4] bg-white hover:border-[#0a0a0a] transition-colors">
+                <h2 className="text-lg font-bold text-[#0a0a0a] mb-6">문의 양식</h2>
                 <form onSubmit={handleSubmit} className="space-y-5">
                   <div>
                     <label htmlFor="name" className={labelClass}>이름</label>
@@ -162,7 +162,7 @@ export default function ContactPage() {
                     <textarea
                       id="message" name="message"
                       value={formData.message} onChange={handleChange} required rows={6}
-                      className="w-full px-4 py-3 bg-white border border-[#e1e1e1] rounded-lg text-sm text-[#262626] placeholder-[#a3a3a3] outline-none transition-colors resize-none focus:border-[#2a72e5] focus:ring-1 focus:ring-[#2a72e5]"
+                      className="w-full px-4 py-3 bg-white border border-[#e4e4e4] rounded-lg text-sm text-[#0a0a0a] placeholder-[#a1a1aa] outline-none transition-colors resize-none focus:border-[#2a72e5] focus:ring-1 focus:ring-[#2a72e5]"
                       placeholder="문의 내용을 입력하세요"
                     />
                   </div>
@@ -181,7 +181,7 @@ export default function ContactPage() {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full h-12 inline-flex items-center justify-center gap-2 bg-[#2a72e5] text-white rounded-lg text-[15px] font-medium hover:bg-[#0957c8] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full h-12 inline-flex items-center justify-center gap-2 bg-[#2a72e5] text-white rounded-full text-[15px] font-semibold hover:bg-[#0957c8] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isSubmitting ? (
                       '전송 중...'
@@ -197,13 +197,13 @@ export default function ContactPage() {
             </motion.div>
 
             {/* 연락 수단 */}
-            <motion.div {...inView} variants={fadeUp} className="lg:col-span-1 space-y-6">
+            <motion.div variants={fadeUp} className="lg:col-span-1 space-y-6">
               {/* 카카오톡 오픈채팅 */}
               <a
                 href={KAKAO_OPEN_CHAT_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block p-5 rounded-xl bg-[#FEE500] hover:bg-[#FDD835] transition-colors group"
+                className="block p-5 rounded-2xl bg-[#FEE500] hover:bg-[#FDD835] transition-colors group"
               >
                 <div className="flex items-center gap-4 mb-4">
                   <div className="w-12 h-12 bg-[#3C1E1E] rounded-xl flex items-center justify-center">
@@ -217,7 +217,7 @@ export default function ContactPage() {
                 <p className="text-[#3C1E1E]/70 text-xs mb-3 leading-relaxed">
                   빠른 상담 — <span className="font-semibold text-[#3C1E1E]">평일 10:00–18:00</span> 실시간 응대
                 </p>
-                <div className="flex items-center gap-2 bg-[#3C1E1E] text-[#FEE500] h-10 px-4 rounded-lg text-sm font-semibold group-hover:bg-[#2D1616] transition-colors">
+                <div className="flex items-center gap-2 bg-[#3C1E1E] text-[#FEE500] h-10 px-4 rounded-full text-sm font-semibold group-hover:bg-[#2D1616] transition-colors">
                   <FiMessageCircle />
                   <span>채팅 시작하기</span>
                   <FiArrowRight className="group-hover:translate-x-0.5 transition-transform" />
@@ -225,16 +225,16 @@ export default function ContactPage() {
               </a>
 
               {/* 연락처 정보 */}
-              <div className="p-6 rounded-xl border border-[#e1e1e1] bg-white">
-                <h2 className="text-base font-bold text-[#262626] mb-5">연락처 정보</h2>
+              <div className="p-6 rounded-2xl border border-[#e4e4e4] bg-white hover:border-[#0a0a0a] transition-colors">
+                <h2 className="text-base font-bold text-[#0a0a0a] mb-5">연락처 정보</h2>
                 <div className="space-y-5">
                   <a href="mailto:hsib1212@naver.com" className="flex items-start group">
                     <div className="w-9 h-9 rounded-lg bg-[#c6e6ff] flex items-center justify-center mr-3.5 flex-shrink-0">
                       <FiMail className="text-[#2a72e5]" size={16} />
                     </div>
                     <div>
-                      <p className="font-medium text-[#262626] mb-0.5 text-sm">이메일</p>
-                      <p className="text-[#4c4c4c] group-hover:text-[#2a72e5] transition-colors text-sm break-all">
+                      <p className="font-medium text-[#0a0a0a] mb-0.5 text-sm">이메일</p>
+                      <p className="text-[#52525b] group-hover:text-[#2a72e5] transition-colors text-sm break-all">
                         hsib1212@naver.com
                       </p>
                     </div>
@@ -244,15 +244,15 @@ export default function ContactPage() {
                       <FiPhone className="text-[#2a72e5]" size={16} />
                     </div>
                     <div>
-                      <p className="font-medium text-[#262626] mb-0.5 text-sm">전화</p>
-                      <p className="text-[#4c4c4c] group-hover:text-[#2a72e5] transition-colors text-sm">
+                      <p className="font-medium text-[#0a0a0a] mb-0.5 text-sm">전화</p>
+                      <p className="text-[#52525b] group-hover:text-[#2a72e5] transition-colors text-sm">
                         0507-1339-9141
                       </p>
                     </div>
                   </a>
                 </div>
 
-                <div className="border-t border-[#e1e1e1] my-6" />
+                <div className="border-t border-[#e4e4e4] my-6" />
 
                 <div className="p-3.5 rounded-lg bg-[#c6e6ff]">
                   <p className="text-xs text-[#0043b3] leading-relaxed">
@@ -261,20 +261,24 @@ export default function ContactPage() {
                 </div>
               </div>
             </motion.div>
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* ── FAQ (surface) ── */}
-      <section className="py-20 sm:py-28 bg-[#f7f7f7] border-y border-[#e1e1e1]">
+      <section className="py-24 sm:py-32 bg-[#f5f5f5] border-y border-[#e4e4e4] overflow-hidden">
         <div className="container mx-auto px-4 sm:px-6">
-          <motion.div {...inView} variants={fadeUp} className="mb-10">
-            <span className="section-label mb-2">FAQ</span>
-            <h2 className="heading-md mb-3">자주 묻는 질문</h2>
-            <p className="text-[#4c4c4c] text-[15px] leading-relaxed">
+          <div className="mb-14 max-w-xl">
+            <motion.span {...inView} variants={fadeUp} className="eyebrow text-[#2a72e5] mb-5">
+              FAQ
+            </motion.span>
+            <motion.h2 {...inView} variants={stagger} className="display-section text-[#0a0a0a] mb-6">
+              <span className="block overflow-hidden"><motion.span variants={clipUp} className="block">자주 묻는 질문</motion.span></span>
+            </motion.h2>
+            <motion.p {...inView} variants={fadeUp} className="text-[#52525b] text-lg leading-relaxed">
               궁금한 점이 있으시면 FAQ를 확인해보세요.
-            </p>
-          </motion.div>
+            </motion.p>
+          </div>
           <div className="max-w-2xl">
             <FAQAccordion faqs={faqs} />
           </div>

@@ -5,10 +5,10 @@ import { notFound } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { teamMembers } from '@/data/team';
 import { projects } from '@/data/projects';
-import { FiGithub, FiLinkedin, FiMail, FiArrowLeft, FiExternalLink, FiUser } from 'react-icons/fi';
+import { FiGithub, FiLinkedin, FiMail, FiArrowLeft, FiArrowRight, FiExternalLink, FiUser } from 'react-icons/fi';
 import ProjectCard from '@/components/ProjectCard';
 import SafeImage from '@/components/SafeImage';
-import { fadeUp, inView } from '@/lib/motion';
+import { fadeUp, clipUp, stagger, inView, onMount } from '@/lib/motion';
 
 interface TeamMemberClientProps { params: { id: string } }
 
@@ -20,51 +20,57 @@ export default function TeamMemberClient({ params }: TeamMemberClientProps) {
 
   return (
     <>
-      {/* ── 헤더 (surface) ── */}
-      <section className="bg-[#f7f7f7] border-b border-[#e1e1e1] pt-28 sm:pt-32 pb-12 sm:pb-16">
-        <div className="container mx-auto px-4 sm:px-6">
-          <Link href="/team"
-            className="inline-flex items-center gap-1.5 text-[13px] text-[#5d5d5d] hover:text-[#262626] mb-8 transition-colors">
-            <FiArrowLeft size={13} />
-            팀 목록으로
-          </Link>
+      {/* ── 헤더 (DARK) ── */}
+      <section className="relative bg-[#0a0a0a] overflow-hidden pt-36 sm:pt-44 pb-16 sm:pb-24">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute -top-1/3 right-0 w-[55vw] h-[55vw] rounded-full opacity-[0.12]"
+            style={{ background: 'radial-gradient(circle, #2a72e5 0%, transparent 60%)' }} />
+        </div>
+        <div className="relative container mx-auto px-4 sm:px-6">
+          <motion.div {...onMount} variants={fadeUp}>
+            <Link href="/team"
+              className="inline-flex items-center gap-1.5 text-[13px] text-white/50 hover:text-white mb-10 transition-colors">
+              <FiArrowLeft size={14} />
+              팀 목록으로
+            </Link>
+          </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.32, ease: [0.2, 0.6, 0.25, 1] }}
-            className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
             {/* 아바타 */}
-            <div className="relative w-20 h-20 rounded-full overflow-hidden border border-[#e1e1e1] flex-shrink-0 bg-[#f7f7f7]">
+            <motion.div {...onMount} variants={fadeUp}
+              className="relative w-24 h-24 rounded-full overflow-hidden border border-white/15 flex-shrink-0 bg-white/[0.04]">
               <SafeImage src={member.profileImage} alt={member.name} fill className="rounded-full"
-                placeholder={<div className="absolute inset-0 flex items-center justify-center text-[#a3a3a3]"><FiUser size={30} /></div>} />
-            </div>
+                placeholder={<div className="absolute inset-0 flex items-center justify-center text-white/40"><FiUser size={34} /></div>} />
+            </motion.div>
             {/* 이름 / 역할 */}
             <div>
-              <span className="section-label mb-2">Team Member</span>
-              <h1 className="heading-lg mb-1">{member.name}</h1>
-              <p className="text-[15px] text-[#2a72e5] font-medium">{member.role}</p>
+              <motion.span {...onMount} variants={fadeUp} className="eyebrow text-[#5b9bff] mb-4">Team Member</motion.span>
+              <motion.h1 {...onMount} variants={stagger} className="display-section text-white mb-3">
+                <span className="block overflow-hidden"><motion.span variants={clipUp} className="block">{member.name}</motion.span></span>
+              </motion.h1>
+              <motion.p {...onMount} variants={fadeUp} className="text-lg text-[#5b9bff] font-medium">{member.role}</motion.p>
             </div>
-          </motion.div>
+          </div>
         </div>
       </section>
 
       {/* ── 본문 (white) ── */}
-      <section className="py-20 sm:py-28 bg-white">
+      <section className="py-24 sm:py-32 bg-white">
         <div className="container mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12 max-w-6xl">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 lg:gap-14 max-w-6xl">
 
             {/* 메인 */}
-            <div className="lg:col-span-2 space-y-12">
+            <div className="lg:col-span-2 space-y-14">
               {/* 소개 */}
               <motion.div {...inView} variants={fadeUp}>
-                <h2 className="text-[11px] font-semibold text-[#a3a3a3] uppercase tracking-[0.14em] mb-3">소개</h2>
-                <p className="text-[15px] text-[#4c4c4c] leading-relaxed max-w-2xl">{member.bio}</p>
+                <h2 className="eyebrow text-[#2a72e5] mb-5">소개</h2>
+                <p className="text-lg text-[#52525b] leading-relaxed max-w-2xl">{member.bio}</p>
               </motion.div>
 
               {/* 기술 스택 */}
               <motion.div {...inView} variants={fadeUp}>
-                <h2 className="text-[11px] font-semibold text-[#a3a3a3] uppercase tracking-[0.14em] mb-3">기술 스택</h2>
-                <div className="flex flex-wrap gap-1.5">
+                <h2 className="eyebrow text-[#2a72e5] mb-5">기술 스택</h2>
+                <div className="flex flex-wrap gap-2">
                   {member.skills.map((skill) => (
                     <span key={skill} className="tag tag-blue">{skill}</span>
                   ))}
@@ -74,8 +80,8 @@ export default function TeamMemberClient({ params }: TeamMemberClientProps) {
               {/* 참여 프로젝트 */}
               {memberProjects.length > 0 && (
                 <motion.div {...inView} variants={fadeUp}>
-                  <h2 className="text-[11px] font-semibold text-[#a3a3a3] uppercase tracking-[0.14em] mb-4">참여 프로젝트</h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <h2 className="eyebrow text-[#2a72e5] mb-6">참여 프로젝트</h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     {memberProjects.map((project, index) => (
                       <ProjectCard key={project.id} project={project} index={index} />
                     ))}
@@ -87,28 +93,28 @@ export default function TeamMemberClient({ params }: TeamMemberClientProps) {
             {/* 사이드바 — 연락처 */}
             <div className="lg:col-span-1">
               <motion.div {...inView} variants={fadeUp}
-                className="p-5 rounded-xl border border-[#e1e1e1] bg-white sticky top-24">
-                <h2 className="text-[11px] font-semibold text-[#a3a3a3] uppercase tracking-[0.14em] mb-4">연락처</h2>
+                className="p-6 rounded-2xl border border-[#e4e4e4] bg-white sticky top-24">
+                <h2 className="eyebrow text-[#2a72e5] mb-5">연락처</h2>
                 <div className="space-y-1">
                   <a href={`mailto:${member.email}`}
-                    className="flex items-center gap-3 -mx-2 px-2 py-2 rounded-lg text-[#5d5d5d] hover:text-[#262626] hover:bg-[#f7f7f7] transition-colors">
-                    <FiMail size={15} className="flex-shrink-0" />
+                    className="flex items-center gap-3 -mx-2 px-2 py-2.5 rounded-lg text-[#52525b] hover:text-[#0a0a0a] hover:bg-[#f5f5f5] transition-colors">
+                    <FiMail size={16} className="flex-shrink-0" />
                     <span className="text-[13px] break-all">{member.email}</span>
                   </a>
                   {member.github && (
                     <a href={member.github} target="_blank" rel="noopener noreferrer"
-                      className="group flex items-center gap-3 -mx-2 px-2 py-2 rounded-lg text-[#5d5d5d] hover:text-[#262626] hover:bg-[#f7f7f7] transition-colors">
-                      <FiGithub size={15} className="flex-shrink-0" />
+                      className="group flex items-center gap-3 -mx-2 px-2 py-2.5 rounded-lg text-[#52525b] hover:text-[#0a0a0a] hover:bg-[#f5f5f5] transition-colors">
+                      <FiGithub size={16} className="flex-shrink-0" />
                       <span className="text-[13px]">GitHub 프로필</span>
-                      <FiExternalLink size={11} className="ml-auto text-[#a3a3a3] opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <FiExternalLink size={12} className="ml-auto text-[#a1a1aa] opacity-0 group-hover:opacity-100 transition-opacity" />
                     </a>
                   )}
                   {member.linkedin && (
                     <a href={member.linkedin} target="_blank" rel="noopener noreferrer"
-                      className="group flex items-center gap-3 -mx-2 px-2 py-2 rounded-lg text-[#5d5d5d] hover:text-[#2a72e5] hover:bg-[#f7f7f7] transition-colors">
-                      <FiLinkedin size={15} className="flex-shrink-0" />
+                      className="group flex items-center gap-3 -mx-2 px-2 py-2.5 rounded-lg text-[#52525b] hover:text-[#2a72e5] hover:bg-[#f5f5f5] transition-colors">
+                      <FiLinkedin size={16} className="flex-shrink-0" />
                       <span className="text-[13px]">LinkedIn 프로필</span>
-                      <FiExternalLink size={11} className="ml-auto text-[#a3a3a3] opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <FiExternalLink size={12} className="ml-auto text-[#a1a1aa] opacity-0 group-hover:opacity-100 transition-opacity" />
                     </a>
                   )}
                 </div>
@@ -116,6 +122,26 @@ export default function TeamMemberClient({ params }: TeamMemberClientProps) {
             </div>
 
           </div>
+        </div>
+      </section>
+
+      {/* ── CTA (DARK) ── */}
+      <section className="relative py-24 sm:py-32 bg-[#0a0a0a] overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[70vw] h-[40vw] rounded-full opacity-[0.16]"
+            style={{ background: 'radial-gradient(circle, #2a72e5 0%, transparent 60%)' }} />
+        </div>
+        <div className="relative container mx-auto px-4 sm:px-6 text-center">
+          <motion.h2 {...inView} variants={stagger} className="display-section text-white mb-8">
+            <span className="block overflow-hidden"><motion.span variants={clipUp} className="block">함께 만들어볼까요?</motion.span></span>
+          </motion.h2>
+          <motion.div {...inView} variants={fadeUp} className="flex justify-center">
+            <Link href="/contact"
+              className="group inline-flex items-center gap-2 h-14 px-9 rounded-full font-semibold text-[#0a0a0a] bg-white hover:bg-[#5b9bff] hover:text-white transition-colors">
+              프로젝트 문의
+              <FiArrowRight size={17} className="group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </motion.div>
         </div>
       </section>
     </>

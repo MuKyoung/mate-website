@@ -5,15 +5,6 @@ import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { FiGithub, FiLinkedin, FiMail, FiTwitter, FiArrowUpRight } from 'react-icons/fi';
 
-const fadeUp = {
-  initial: { opacity: 0, y: 16 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.32, ease: [0.2, 0.6, 0.25, 1] as [number, number, number, number] } },
-};
-const stagger = {
-  initial: {},
-  animate: { transition: { staggerChildren: 0.07, delayChildren: 0.05 } },
-};
-
 export default function Footer() {
   const year = new Date().getFullYear();
 
@@ -35,105 +26,106 @@ export default function Footer() {
   ];
 
   return (
-    <footer className="relative border-t" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
-      <div className="container mx-auto px-4 sm:px-6 py-12 sm:py-16">
+    <footer className="relative bg-[#0a0a0a]">
+      <div className="container mx-auto px-4 sm:px-6 py-16 sm:py-24">
 
+        {/* 대형 CTA 스테이트먼트 */}
         <motion.div
-          variants={stagger} initial="initial" whileInView="animate"
-          viewport={{ once: true, margin: '-60px' }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-8 sm:gap-12 mb-12"
+          initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-60px' }} transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 pb-16 mb-16 border-b border-white/10"
         >
+          <div>
+            <p className="eyebrow text-[#5b9bff] mb-5">Let&apos;s work together</p>
+            <a href="mailto:hsib1212@naver.com"
+              className="display-section text-white hover:text-[#5b9bff] transition-colors break-all">
+              hsib1212@naver.com
+            </a>
+          </div>
+          <Link href="/contact"
+            className="group inline-flex items-center gap-2 h-14 px-8 rounded-full font-semibold text-[#0a0a0a] bg-white hover:bg-[#5b9bff] hover:text-white transition-colors flex-shrink-0">
+            프로젝트 문의
+            <FiArrowUpRight size={17} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+          </Link>
+        </motion.div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 sm:gap-12 mb-16">
           {/* 브랜드 */}
-          <motion.div variants={fadeUp} className="col-span-2 md:col-span-1">
+          <div className="col-span-2 md:col-span-1">
             <Link href="/" className="inline-block mb-4 hover:opacity-75 transition-opacity">
-              <Image
-                src="/images/logo.png"
-                alt="MATE"
-                width={80}
-                height={26}
-                className="h-6 w-auto"
-              />
+              <Image src="/images/logo.png" alt="MATE" width={80} height={26}
+                className="h-6 w-auto brightness-0 invert" />
             </Link>
-            <p className="text-sm text-[#5d5d5d] leading-relaxed mb-5">
+            <p className="text-sm on-dark-3 leading-relaxed mb-5">
               유니티 외주 개발과 개발 강의에 특화된 전문 개발 팀.
             </p>
             <div className="flex gap-2">
               {social.map((s) => (
-                <motion.a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
+                <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
                   aria-label={s.label}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-[#5d5d5d] hover:text-[#262626] hover:bg-white hover:border-[#c6c6c6] border border-[#e1e1e1] transition-colors duration-150">
+                  className="w-9 h-9 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 border border-white/15 transition-colors duration-150">
                   <s.icon size={14} />
-                </motion.a>
+                </a>
               ))}
             </div>
-          </motion.div>
+          </div>
 
           {/* 네비게이션 */}
-          <motion.div variants={fadeUp}>
-            <h4 className="text-xs font-semibold text-[#a3a3a3] tracking-[0.15em] uppercase mb-5">Navigation</h4>
+          <div>
+            <h4 className="text-xs font-semibold text-white/40 tracking-[0.15em] uppercase mb-5">Navigation</h4>
             <ul className="space-y-2.5">
               {nav.map((l) => (
                 <li key={l.href}>
                   <Link href={l.href}
-                    className="group inline-flex items-center gap-1 text-sm text-[#4c4c4c] hover:text-[#262626] transition-colors hover-underline">
+                    className="group inline-flex items-center gap-1 text-sm text-white/60 hover:text-white transition-colors">
                     {l.label}
                     <FiArrowUpRight size={10} className="opacity-0 group-hover:opacity-100 transition-opacity" />
                   </Link>
                 </li>
               ))}
             </ul>
-          </motion.div>
+          </div>
 
           {/* 서비스 */}
-          <motion.div variants={fadeUp}>
-            <h4 className="text-xs font-semibold text-[#a3a3a3] tracking-[0.15em] uppercase mb-5">Services</h4>
+          <div>
+            <h4 className="text-xs font-semibold text-white/40 tracking-[0.15em] uppercase mb-5">Services</h4>
             <ul className="space-y-2.5">
               {svcs.map((s) => (
-                <li key={s} className="text-sm text-[#5d5d5d]">{s}</li>
+                <li key={s} className="text-sm on-dark-3">{s}</li>
               ))}
             </ul>
-          </motion.div>
+          </div>
 
           {/* 연락처 */}
-          <motion.div variants={fadeUp} className="col-span-2 md:col-span-1">
-            <h4 className="text-xs font-semibold text-[#a3a3a3] tracking-[0.15em] uppercase mb-5">Contact</h4>
+          <div className="col-span-2 md:col-span-1">
+            <h4 className="text-xs font-semibold text-white/40 tracking-[0.15em] uppercase mb-5">Contact</h4>
             <div className="space-y-3.5">
               <div>
-                <p className="text-[10px] text-[#a3a3a3] uppercase tracking-wider mb-0.5">Email</p>
+                <p className="text-[10px] text-white/35 uppercase tracking-wider mb-0.5">Email</p>
                 <a href="mailto:hsib1212@naver.com"
-                  className="text-sm text-[#4c4c4c] hover:text-[#262626] transition-colors hover-underline break-all">
+                  className="text-sm text-white/60 hover:text-white transition-colors break-all">
                   hsib1212@naver.com
                 </a>
               </div>
               <div>
-                <p className="text-[10px] text-[#a3a3a3] uppercase tracking-wider mb-0.5">Phone</p>
+                <p className="text-[10px] text-white/35 uppercase tracking-wider mb-0.5">Phone</p>
                 <a href="tel:0507-1339-9141"
-                  className="text-sm text-[#4c4c4c] hover:text-[#262626] transition-colors hover-underline">
+                  className="text-sm text-white/60 hover:text-white transition-colors">
                   0507-1339-9141
                 </a>
               </div>
-              <Link href="/contact"
-                className="inline-flex items-center gap-1.5 mt-1 px-3.5 py-1.5 rounded-lg text-xs font-medium text-white bg-[#2a72e5] hover:bg-[#0957c8] transition-colors duration-150">
-                프로젝트 문의
-                <FiArrowUpRight size={11} />
-              </Link>
             </div>
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
 
         {/* 하단 */}
-        <motion.div
-          initial={{ opacity: 0 }} whileInView={{ opacity: 1 }}
-          viewport={{ once: true }} transition={{ duration: 0.5, delay: 0.3 }}
-          className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-3"
-          style={{ borderTop: '1px solid var(--border)' }}
-        >
-          <p className="text-xs text-[#a3a3a3]">© {year} Mate. All rights reserved.</p>
+        <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-white/10">
+          <p className="text-xs text-white/35">© {year} Mate. All rights reserved.</p>
           <div className="flex items-center gap-5">
-            <span className="text-[10px] text-[#a3a3a3] font-mono">v0.1.0</span>
-            <span className="text-[10px] text-[#a3a3a3]">Made in Korea</span>
+            <span className="text-[10px] text-white/25 font-mono">v0.1.0</span>
+            <span className="text-[10px] text-white/35">Made in Korea</span>
           </div>
-        </motion.div>
+        </div>
       </div>
     </footer>
   );

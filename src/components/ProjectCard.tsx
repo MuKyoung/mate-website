@@ -15,14 +15,14 @@ interface ProjectCardProps {
 export default function ProjectCard({ project, index }: ProjectCardProps) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: 40 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-60px' }}
-      transition={{ delay: index * 0.06, duration: 0.32, ease: easeEnter }}
+      viewport={{ once: true, margin: '-12%' }}
+      transition={{ delay: index * 0.09, duration: 0.7, ease: easeEnter }}
       className="group h-full"
     >
       <Link href={`/projects/${project.id}`} className="block h-full">
-        <div className="h-full rounded-xl border border-[#e1e1e1] bg-white overflow-hidden hover:border-[#c6c6c6] transition-colors flex flex-col">
+        <div className="h-full rounded-2xl border border-[#e4e4e4] bg-white overflow-hidden hover:border-[#0a0a0a] transition-colors flex flex-col">
           {/* 이미지 */}
           <div className="relative h-44 sm:h-48 overflow-hidden bg-[#f7f7f7] border-b border-[#e1e1e1]">
             <SafeImage

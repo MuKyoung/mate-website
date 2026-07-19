@@ -13,13 +13,13 @@ interface TestimonialCardProps {
 export default function TestimonialCard({ testimonial, index }: TestimonialCardProps) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: 40 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-60px' }}
-      transition={{ delay: index * 0.06, duration: 0.32, ease: easeEnter }}
+      viewport={{ once: true, margin: '-12%' }}
+      transition={{ delay: index * 0.09, duration: 0.7, ease: easeEnter }}
       className="h-full"
     >
-      <div className="h-full p-6 bg-white rounded-xl border border-[#e1e1e1] hover:border-[#c6c6c6] transition-colors flex flex-col">
+      <div className="h-full p-6 bg-white rounded-2xl border border-[#e4e4e4] hover:border-[#0a0a0a] transition-colors flex flex-col">
         {/* 별점 */}
         <div className="flex gap-0.5 mb-4" aria-label={`평점 ${testimonial.rating}/5`}>
           {[...Array(5)].map((_, i) => (

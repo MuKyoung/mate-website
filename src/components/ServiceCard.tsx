@@ -22,13 +22,13 @@ export default function ServiceCard({ service, index }: ServiceCardProps) {
   const Icon = iconById[service.id] ?? FiBox;
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: 40 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-60px' }}
-      transition={{ delay: index * 0.06, duration: 0.32, ease: easeEnter }}
+      viewport={{ once: true, margin: '-12%' }}
+      transition={{ delay: index * 0.09, duration: 0.7, ease: easeEnter }}
       className="group h-full"
     >
-      <div className="h-full p-7 rounded-xl border border-[#e1e1e1] bg-white hover:bg-[#f7f7f7] hover:border-[#c6c6c6] transition-colors">
+      <div className="h-full p-8 rounded-2xl border border-[#e4e4e4] bg-white hover:border-[#0a0a0a] transition-colors">
         {/* 아이콘 */}
         <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-6 bg-[#c6e6ff] text-[#0957c8]">
           <Icon size={19} />

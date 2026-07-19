@@ -216,6 +216,43 @@ body {
   line-height: 1.15;
   letter-spacing: -0.02em;
 }
+/* 초대형 에디토리얼 디스플레이 (devigns식 히어로) */
+.display-hero {
+  font-weight: 800;
+  line-height: 0.98;
+  letter-spacing: -0.03em;
+  font-size: clamp(2.75rem, 9vw, 8.5rem);
+}
+.display-section {
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -0.025em;
+  font-size: clamp(2.25rem, 5.5vw, 4.5rem);
+}
+
+/* 영문 아이브로우 라벨 (에이전시 스타일 — 와이드 트래킹) */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+.eyebrow::before {
+  content: '';
+  width: 24px;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.5;
+}
+
+/* 다크 섹션 위계 (near-black 밴드용) */
+.on-dark              { color: #fafafa; }
+.on-dark-2           { color: rgba(255, 255, 255, 0.6); }
+.on-dark-3           { color: rgba(255, 255, 255, 0.38); }
+.border-on-dark      { border-color: rgba(255, 255, 255, 0.12); }
 .body-lg {
   @apply text-base sm:text-lg leading-relaxed;
   color: var(--text-2);
