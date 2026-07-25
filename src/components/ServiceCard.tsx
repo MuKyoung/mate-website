@@ -34,7 +34,7 @@ export default function ServiceCard({ service, index }: ServiceCardProps) {
           <Icon size={19} />
         </div>
 
-        <h3 className="text-[17px] font-bold text-[#262626] mb-2 group-hover:text-[#2a72e5] transition-colors">
+        <h3 className="text-[17px] font-bold text-[#0a0a0a] mb-2 group-hover:text-[#2a72e5] transition-colors">
           {service.title}
         </h3>
         <p className="text-sm text-[#5d5d5d] mb-6 leading-relaxed">

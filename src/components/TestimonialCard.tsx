@@ -34,12 +34,12 @@ export default function TestimonialCard({ testimonial, index }: TestimonialCardP
         </p>
 
         {/* 작성자 */}
-        <div className="flex items-center gap-3 pt-4 border-t border-[#e1e1e1]">
+        <div className="flex items-center gap-3 pt-4 border-t border-[#e4e4e4]">
           <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[13px] font-bold flex-shrink-0 bg-[#2a72e5]">
             {testimonial.name.charAt(0)}
           </div>
           <div className="min-w-0">
-            <p className="font-semibold text-[#262626] text-[13px] truncate">{testimonial.name}</p>
+            <p className="font-semibold text-[#0a0a0a] text-[13px] truncate">{testimonial.name}</p>
             <p className="text-[12px] text-[#5d5d5d] mt-0.5 truncate">
               {testimonial.role}
               {testimonial.company && <span className="text-[#0043b3] font-medium"> · {testimonial.company}</span>}

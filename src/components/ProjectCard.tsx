@@ -24,7 +24,7 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
       <Link href={`/projects/${project.id}`} className="block h-full">
         <div className="h-full rounded-2xl border border-[#e4e4e4] bg-white overflow-hidden hover:border-[#0a0a0a] transition-colors flex flex-col">
           {/* 이미지 */}
-          <div className="relative h-44 sm:h-48 overflow-hidden bg-[#f7f7f7] border-b border-[#e1e1e1]">
+          <div className="relative h-44 sm:h-48 overflow-hidden bg-[#f5f5f5] border-b border-[#e4e4e4]">
             <SafeImage
               src={project.thumbnail}
               alt={project.title}
@@ -38,7 +38,7 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
             />
             {/* 카테고리 */}
             <div className="absolute top-3 left-3">
-              <span className="px-2.5 py-1 rounded-full text-[11px] font-medium text-[#262626] bg-white/90 backdrop-blur-sm border border-[#e1e1e1]">
+              <span className="px-2.5 py-1 rounded-full text-[11px] font-medium text-[#0a0a0a] bg-white/90 backdrop-blur-sm border border-[#e4e4e4]">
                 {project.category}
               </span>
             </div>
@@ -52,12 +52,12 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
           {/* 콘텐츠 */}
           <div className="p-5 flex flex-col flex-grow">
             <div className="flex items-start justify-between gap-2 mb-1.5">
-              <h3 className="text-[15px] font-bold text-[#262626] group-hover:text-[#2a72e5] transition-colors">
+              <h3 className="text-[15px] font-bold text-[#0a0a0a] group-hover:text-[#2a72e5] transition-colors">
                 {project.title}
               </h3>
               <FiArrowUpRight size={16} className="flex-shrink-0 mt-0.5 text-[#c6c6c6] group-hover:text-[#2a72e5] transition-colors" />
             </div>
-            <p className="text-[13px] text-[#5d5d5d] mb-4 line-clamp-2 leading-relaxed">
+            <p className="text-[13px] text-[#52525b] mb-4 line-clamp-2 leading-relaxed">
               {project.description}
             </p>
 
@@ -71,18 +71,18 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
             </div>
 
             {(project.liveUrl || project.githubUrl) && (
-              <div className="flex items-center gap-4 pt-3.5 border-t border-[#e1e1e1]">
+              <div className="flex items-center gap-4 pt-3.5 border-t border-[#e4e4e4]">
                 {project.liveUrl && (
                   <a href={project.liveUrl} target="_blank" rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
-                    className="flex items-center gap-1 text-[12px] text-[#5d5d5d] hover:text-[#2a72e5] transition-colors">
+                    className="flex items-center gap-1 text-[12px] text-[#52525b] hover:text-[#2a72e5] transition-colors">
                     <FiExternalLink size={12} /> Live
                   </a>
                 )}
                 {project.githubUrl && (
                   <a href={project.githubUrl} target="_blank" rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
-                    className="flex items-center gap-1 text-[12px] text-[#5d5d5d] hover:text-[#262626] transition-colors">
+                    className="flex items-center gap-1 text-[12px] text-[#52525b] hover:text-[#0a0a0a] transition-colors">
                     <FiGithub size={12} /> GitHub
                   </a>
                 )}
