@@ -36,16 +36,17 @@ export default function Footer() {
           className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 pb-16 mb-16 border-b border-white/10"
         >
           <div>
-            <p className="eyebrow text-[#5b9bff] mb-5">Let&apos;s work together</p>
+            <p className="text-[13px] text-white/35 mb-5">Let&apos;s work together</p>
             <a href="mailto:hsib1212@naver.com"
-              className="display-section text-white hover:text-[#5b9bff] transition-colors break-all">
+              className="text-white font-semibold tracking-[-0.025em] hover:text-white/60 transition-colors break-all"
+              style={{ fontSize: 'clamp(1.5rem, 3vw, 2.5rem)' }}>
               hsib1212@naver.com
             </a>
           </div>
           <Link href="/contact"
-            className="group inline-flex items-center gap-2 h-14 px-8 rounded-full font-semibold text-[#0a0a0a] bg-white hover:bg-[#5b9bff] hover:text-white transition-colors flex-shrink-0">
+            className="group inline-flex items-center gap-2 h-12 px-6 rounded-sm text-[14px] font-medium text-[#0a0a0a] bg-white hover:bg-white/85 transition-colors flex-shrink-0">
             프로젝트 문의
-            <FiArrowUpRight size={17} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+            <FiArrowUpRight size={16} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
           </Link>
         </motion.div>
 

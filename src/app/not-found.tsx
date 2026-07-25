@@ -8,14 +8,8 @@ import { fadeUp, clipUp, stagger, onMount } from '@/lib/motion';
 
 export default function NotFound() {
   return (
-    <div className="relative min-h-screen flex items-center justify-center bg-[#0a0a0a] px-4 overflow-hidden">
-      {/* 배경 글로우 */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[70vw] h-[70vw] rounded-full opacity-[0.14]"
-          style={{ background: 'radial-gradient(circle, #2a72e5 0%, transparent 60%)' }} />
-      </div>
-
-      <motion.div {...onMount} variants={stagger} className="relative text-center">
+    <div className="min-h-screen flex items-center bg-[#0a0a0a] px-4 sm:px-6">
+      <motion.div {...onMount} variants={stagger} className="container mx-auto max-w-2xl">
         {/* 로고 */}
         <motion.div variants={fadeUp} className="mb-12">
           <Link href="/" className="inline-block hover:opacity-70 transition-opacity">
@@ -25,33 +19,32 @@ export default function NotFound() {
         </motion.div>
 
         {/* 404 */}
-        <motion.h1 variants={stagger} className="display-hero text-white mb-6">
+        <motion.p variants={fadeUp} className="text-[13px] text-white/35 mb-4">404 — Not Found</motion.p>
+
+        <motion.h1 variants={stagger} className="text-white font-semibold tracking-[-0.03em] leading-[1.05] mb-5"
+          style={{ fontSize: 'clamp(2.25rem, 5vw, 4rem)' }}>
           <span className="block overflow-hidden">
-            <motion.span variants={clipUp} className="block">404</motion.span>
+            <motion.span variants={clipUp} className="block">페이지를 찾을 수 없습니다</motion.span>
           </span>
         </motion.h1>
 
-        <motion.h2 variants={fadeUp} className="text-xl sm:text-2xl font-bold text-white mb-4">
-          페이지를 찾을 수 없습니다
-        </motion.h2>
-
-        <motion.p variants={fadeUp} className="text-lg on-dark-2 leading-relaxed mb-10 max-w-md mx-auto">
+        <motion.p variants={fadeUp} className="text-[15px] text-white/55 leading-[1.75] mb-9 max-w-md">
           요청하신 페이지가 존재하지 않거나 이동되었을 수 있습니다.
         </motion.p>
 
-        <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-3 justify-center">
+        <motion.div variants={fadeUp} className="flex flex-wrap items-center gap-6">
           <Link
             href="/"
-            className="group inline-flex items-center justify-center gap-2 h-14 px-8 rounded-full text-[15px] font-semibold text-[#0a0a0a] bg-white hover:bg-[#5b9bff] hover:text-white transition-colors"
+            className="group inline-flex items-center gap-2 h-12 px-6 rounded-sm text-[14px] font-medium text-[#0a0a0a] bg-white hover:bg-white/85 transition-colors"
           >
-            <FiHome size={16} />
+            <FiHome size={15} />
             홈으로 돌아가기
           </Link>
           <button
             onClick={() => window.history.back()}
-            className="inline-flex items-center justify-center gap-2 h-14 px-8 rounded-full text-[15px] font-medium text-white border border-white/25 hover:border-white/60 hover:bg-white/5 transition-colors"
+            className="inline-flex items-center gap-1.5 text-[14px] text-white/55 hover:text-white transition-colors underline underline-offset-4 decoration-white/25 hover:decoration-white"
           >
-            <FiArrowLeft size={16} />
+            <FiArrowLeft size={14} />
             이전 페이지
           </button>
         </motion.div>

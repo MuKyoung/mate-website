@@ -19,12 +19,12 @@ export default function TestimonialCard({ testimonial, index }: TestimonialCardP
       transition={{ delay: index * 0.09, duration: 0.7, ease: easeEnter }}
       className="h-full"
     >
-      <div className="h-full p-6 bg-white rounded-2xl border border-[#e4e4e4] hover:border-[#0a0a0a] transition-colors flex flex-col">
+      <div className="h-full p-6 bg-white rounded-sm border border-[#e4e4e4] hover:border-[#0a0a0a] transition-colors flex flex-col">
         {/* 별점 */}
         <div className="flex gap-0.5 mb-4" aria-label={`평점 ${testimonial.rating}/5`}>
           {[...Array(5)].map((_, i) => (
             <FiStar key={i} size={13}
-              className={i < testimonial.rating ? 'text-[#2a72e5] fill-[#2a72e5]' : 'text-[#e1e1e1]'} />
+              className={i < testimonial.rating ? 'text-[#0a0a0a] fill-[#0a0a0a]' : 'text-[#e4e4e4]'} />
           ))}
         </div>
 
@@ -35,14 +35,14 @@ export default function TestimonialCard({ testimonial, index }: TestimonialCardP
 
         {/* 작성자 */}
         <div className="flex items-center gap-3 pt-4 border-t border-[#e4e4e4]">
-          <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[13px] font-bold flex-shrink-0 bg-[#2a72e5]">
+          <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[13px] font-medium flex-shrink-0 bg-[#0a0a0a]">
             {testimonial.name.charAt(0)}
           </div>
           <div className="min-w-0">
             <p className="font-semibold text-[#0a0a0a] text-[13px] truncate">{testimonial.name}</p>
             <p className="text-[12px] text-[#5d5d5d] mt-0.5 truncate">
               {testimonial.role}
-              {testimonial.company && <span className="text-[#0043b3] font-medium"> · {testimonial.company}</span>}
+              {testimonial.company && <span className="text-[#52525b]"> · {testimonial.company}</span>}
             </p>
           </div>
         </div>

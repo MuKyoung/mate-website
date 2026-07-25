@@ -65,18 +65,18 @@ export default function Header() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`relative px-3.5 py-1.5 text-sm font-semibold rounded-md transition-colors duration-150 ${
+                className={`relative px-3.5 py-1.5 text-sm font-medium rounded-md transition-colors duration-150 ${
                   active
-                    ? (solid ? 'text-[#0957c8]' : 'text-white')
-                    : (solid ? 'text-[#4c4c4c] hover:text-[#0a0a0a] hover:bg-black/[0.04]'
-                             : 'text-white/65 hover:text-white hover:bg-white/10')
+                    ? (solid ? 'text-[#0a0a0a]' : 'text-white')
+                    : (solid ? 'text-[#52525b] hover:text-[#0a0a0a]'
+                             : 'text-white/55 hover:text-white')
                 }`}
               >
                 {item.label}
                 {active && (
                   <motion.span
                     layoutId="nav-active"
-                    className={`absolute bottom-0 left-3.5 right-3.5 h-[2px] ${solid ? 'bg-[#0957c8]' : 'bg-[#5b9bff]'}`}
+                    className={`absolute bottom-0 left-3.5 right-3.5 h-[1.5px] ${solid ? 'bg-[#0a0a0a]' : 'bg-white'}`}
                     initial={false}
                     transition={{ duration: 0.2, ease: [0.2, 0.6, 0.25, 1] }}
                   />
@@ -87,9 +87,9 @@ export default function Header() {
 
           <Link
             href="/contact"
-            className={`ml-3 px-5 h-10 inline-flex items-center rounded-full text-sm font-semibold transition-colors duration-150 ${
-              solid ? 'text-white bg-[#2a72e5] hover:bg-[#0957c8]'
-                    : 'text-[#0a0a0a] bg-white hover:bg-[#5b9bff] hover:text-white'
+            className={`ml-4 px-5 h-10 inline-flex items-center rounded-sm text-sm font-medium transition-colors duration-150 ${
+              solid ? 'text-white bg-[#0a0a0a] hover:bg-[#333]'
+                    : 'text-[#0a0a0a] bg-white hover:bg-white/85'
             }`}
           >
             상담 신청
@@ -147,13 +147,13 @@ export default function Header() {
                     onClick={() => setMobileMenuOpen(false)}
                     className={`flex items-center justify-between px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
                       pathname === item.href
-                        ? 'text-[#0957c8] bg-black/[0.04]'
+                        ? 'text-[#0a0a0a] bg-black/[0.04]'
                         : 'text-[#4c4c4c] hover:text-[#262626] hover:bg-black/[0.03]'
                     }`}
                   >
                     {item.label}
                     {pathname === item.href && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#2a72e5]" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#0a0a0a]" />
                     )}
                   </Link>
                 </motion.div>
@@ -167,7 +167,7 @@ export default function Header() {
                 <Link
                   href="/contact"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="block text-center px-4 py-2.5 rounded-lg text-sm font-medium text-white bg-[#2a72e5] hover:bg-[#0957c8] transition-colors"
+                  className="block text-center px-4 py-2.5 rounded-sm text-sm font-medium text-white bg-[#0a0a0a] hover:bg-[#333] transition-colors"
                 >
                   무료 상담 신청
                 </Link>

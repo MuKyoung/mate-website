@@ -8,7 +8,7 @@ import ProcessTimeline from '@/components/ProcessTimeline';
 import { services } from '@/data/services';
 import { processSteps } from '@/data/process';
 import { FiArrowRight } from 'react-icons/fi';
-import { fadeUp, clipUp, stagger, inView } from '@/lib/motion';
+import { fadeUp, stagger, inView } from '@/lib/motion';
 
 export default function ServicesPageClient() {
   return (
@@ -20,17 +20,17 @@ export default function ServicesPageClient() {
         description="Unity 게임 · AR/VR부터 웹/앱 개발, 개발 강의까지. 고객의 니즈에 맞는 검증된 서비스를 제공합니다."
       />
 
-      {/* ── 서비스 그리드 (light) ── */}
-      <section className="py-24 sm:py-32 bg-white overflow-hidden">
+      {/* ── 서비스 그리드 (light) — 가로 규칙선 헤더 ── */}
+      <section className="py-24 sm:py-32 bg-white">
         <div className="container mx-auto px-4 sm:px-6">
-          <div className="mb-14">
-            <motion.span {...inView} variants={fadeUp} className="eyebrow text-[#2a72e5] mb-5">
-              What We Do
-            </motion.span>
-            <motion.h2 {...inView} variants={stagger} className="display-section text-[#0a0a0a]">
-              <span className="block overflow-hidden"><motion.span variants={clipUp} className="block">제공 서비스</motion.span></span>
-            </motion.h2>
-          </div>
+          <motion.div {...inView} variants={fadeUp}
+            className="flex items-baseline gap-5 pb-6 mb-12 border-b border-[#e4e4e4]">
+            <span className="text-[13px] text-[#a1a1aa]">01</span>
+            <h2 className="text-[#0a0a0a] font-semibold tracking-[-0.025em]"
+              style={{ fontSize: 'clamp(1.875rem, 3.5vw, 2.75rem)' }}>
+              제공 서비스
+            </h2>
+          </motion.div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {services.map((service, index) => (
               <ServiceCard key={service.id} service={service} index={index} />
@@ -39,46 +39,52 @@ export default function ServicesPageClient() {
         </div>
       </section>
 
-      {/* ── 개발 프로세스 (DARK 대비 밴드) ── */}
-      <section className="py-24 sm:py-36 bg-[#0a0a0a] overflow-hidden">
+      {/* ── 개발 프로세스 (DARK 대비 밴드) — 좌측 고정 제목 ── */}
+      <section className="py-24 sm:py-36 bg-[#0a0a0a]">
         <div className="container mx-auto px-4 sm:px-6">
-          <div className="mb-14 max-w-xl">
-            <motion.span {...inView} variants={fadeUp} className="eyebrow text-[#5b9bff] mb-5">
-              Our Process
-            </motion.span>
-            <motion.h2 {...inView} variants={stagger} className="display-section text-white mb-6">
-              <span className="block overflow-hidden"><motion.span variants={clipUp} className="block">개발 프로세스</motion.span></span>
-            </motion.h2>
-            <motion.p {...inView} variants={fadeUp} className="on-dark-2 text-lg leading-relaxed">
-              체계적인 프로세스로 고품질의 결과물을 만들어갑니다.
-            </motion.p>
+          <div className="grid lg:grid-cols-12 gap-y-12 gap-x-8">
+            <div className="lg:col-span-4">
+              <motion.div {...inView} variants={fadeUp} className="lg:sticky lg:top-28">
+                <p className="text-[13px] text-white/35 mb-4">02 — Process</p>
+                <h2 className="text-white font-semibold tracking-[-0.025em] leading-[1.1] mb-6"
+                  style={{ fontSize: 'clamp(1.875rem, 3.5vw, 2.75rem)' }}>
+                  개발 프로세스
+                </h2>
+                <p className="text-[15px] text-white/55 leading-[1.75] max-w-sm">
+                  체계적인 프로세스로 고품질의 결과물을 만들어갑니다.
+                </p>
+              </motion.div>
+            </div>
+            <div className="lg:col-span-8">
+              <ProcessTimeline steps={processSteps} />
+            </div>
           </div>
-          <ProcessTimeline steps={processSteps} />
         </div>
       </section>
 
-      {/* ── CTA (DARK) ── */}
-      <section className="relative py-28 sm:py-40 bg-[#0a0a0a] border-t border-white/10 overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[70vw] h-[40vw] rounded-full opacity-[0.16]"
-            style={{ background: 'radial-gradient(circle, #2a72e5 0%, transparent 60%)' }} />
-        </div>
-        <div className="relative container mx-auto px-4 sm:px-6 text-center">
-          <motion.span {...inView} variants={fadeUp} className="eyebrow text-[#5b9bff] mb-6 justify-center">Contact</motion.span>
-          <motion.h2 {...inView} variants={stagger} className="display-hero text-white mb-8">
-            <span className="block overflow-hidden"><motion.span variants={clipUp} className="block">프로젝트를 시작할</motion.span></span>
-            <span className="block overflow-hidden"><motion.span variants={clipUp} className="block">준비가 되셨나요?</motion.span></span>
-          </motion.h2>
-          <motion.p {...inView} variants={fadeUp} className="on-dark-2 text-lg mb-10 max-w-lg mx-auto">
-            게임 · 웹 · 앱 · AR/VR — 무료 상담을 통해 이야기해 보세요.
-          </motion.p>
-          <motion.div {...inView} variants={fadeUp} className="flex justify-center">
-            <Link href="/contact"
-              className="group inline-flex items-center gap-2 h-14 px-9 rounded-full font-semibold text-[#0a0a0a] bg-white hover:bg-[#5b9bff] hover:text-white transition-colors">
-              무료 상담 신청
-              <FiArrowRight size={17} className="group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </motion.div>
+      {/* ── CTA (DARK) — 좌측 정렬 ── */}
+      <section className="py-24 sm:py-32 bg-[#0a0a0a] border-t border-white/10">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-10">
+            <motion.div {...inView} variants={stagger}>
+              <p className="text-[13px] text-white/35 mb-5">Contact</p>
+              <motion.h2 variants={fadeUp}
+                className="text-white font-semibold tracking-[-0.03em] leading-[1.05] mb-5"
+                style={{ fontSize: 'clamp(2.25rem, 5vw, 4rem)' }}>
+                프로젝트를 시작할 준비가 되셨나요?
+              </motion.h2>
+              <motion.p variants={fadeUp} className="text-[15px] text-white/55 max-w-md">
+                게임 · 웹 · 앱 · AR/VR — 무료 상담을 통해 이야기해 보세요.
+              </motion.p>
+            </motion.div>
+            <motion.div {...inView} variants={fadeUp} className="flex-shrink-0">
+              <Link href="/contact"
+                className="group inline-flex items-center gap-2 h-12 px-7 rounded-sm text-[14px] font-medium text-[#0a0a0a] bg-white hover:bg-white/85 transition-colors">
+                무료 상담 신청
+                <FiArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
+              </Link>
+            </motion.div>
+          </div>
         </div>
       </section>
     </>

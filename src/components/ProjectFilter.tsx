@@ -68,7 +68,7 @@ export default function ProjectFilter({ projects }: ProjectFilterProps) {
               <button
                 key={option.value}
                 onClick={() => setSelectedCategory(option.value)}
-                className={`inline-flex items-center gap-2 h-10 px-5 rounded-full text-[13px] font-medium transition-colors ${
+                className={`inline-flex items-center gap-2 h-10 px-4 rounded-sm text-[13px] font-medium transition-colors ${
                   active
                     ? 'bg-[#0a0a0a] text-white'
                     : 'bg-white border border-[#e4e4e4] text-[#52525b] hover:border-[#0a0a0a]'
@@ -105,12 +105,12 @@ export default function ProjectFilter({ projects }: ProjectFilterProps) {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="py-24 text-center rounded-2xl border border-[#e4e4e4] bg-[#f5f5f5]"
+          className="py-20 px-6 rounded-sm border border-[#e4e4e4] bg-[#f5f5f5]"
         >
-          <div className="flex justify-center mb-4 text-[#a1a1aa]">
-            <FiSearch size={40} />
+          <div className="mb-4 text-[#a1a1aa]">
+            <FiSearch size={28} />
           </div>
-          <h3 className="text-[15px] font-bold text-[#0a0a0a] mb-1.5">
+          <h3 className="text-[15px] font-semibold text-[#0a0a0a] mb-1.5">
             해당 카테고리의 프로젝트가 없습니다
           </h3>
           <p className="text-[13px] text-[#52525b]">다른 카테고리를 선택해 보세요</p>

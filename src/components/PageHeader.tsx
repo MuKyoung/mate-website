@@ -11,21 +11,28 @@ interface PageHeaderProps {
 
 export default function PageHeader({ title, description, eyebrow }: PageHeaderProps) {
   return (
-    <section className="relative bg-[#0a0a0a] overflow-hidden pt-36 sm:pt-44 pb-16 sm:pb-24">
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute -top-1/3 right-0 w-[55vw] h-[55vw] rounded-full opacity-[0.12]"
-          style={{ background: 'radial-gradient(circle, #2a72e5 0%, transparent 60%)' }} />
-      </div>
-      <div className="relative container mx-auto px-4 sm:px-6">
-        <motion.span {...onMount} variants={fadeUp} className="eyebrow text-[#5b9bff] mb-6">
-          {eyebrow ?? 'MATE'}
-        </motion.span>
-        <motion.h1 {...onMount} variants={stagger} className="display-section text-white mb-6">
-          <span className="block overflow-hidden"><motion.span variants={clipUp} className="block">{title}</motion.span></span>
-        </motion.h1>
-        <motion.p {...onMount} variants={fadeUp} className="text-lg on-dark-2 leading-relaxed max-w-2xl">
-          {description}
-        </motion.p>
+    <section className="bg-[#0a0a0a] pt-36 sm:pt-44 pb-16 sm:pb-20">
+      <div className="container mx-auto px-4 sm:px-6">
+        <div className="grid lg:grid-cols-12 gap-y-6 gap-x-8 items-end">
+          <div className="lg:col-span-7">
+            {eyebrow && (
+              <motion.p {...onMount} variants={fadeUp} className="text-[13px] text-white/35 mb-5">
+                {eyebrow}
+              </motion.p>
+            )}
+            <motion.h1 {...onMount} variants={stagger}
+              className="text-white font-semibold tracking-[-0.03em] leading-[1.05]"
+              style={{ fontSize: 'clamp(2.25rem, 5vw, 4rem)' }}>
+              <span className="block overflow-hidden">
+                <motion.span variants={clipUp} className="block">{title}</motion.span>
+              </span>
+            </motion.h1>
+          </div>
+          <motion.p {...onMount} variants={fadeUp}
+            className="lg:col-span-5 text-[15px] text-white/55 leading-[1.75] lg:pb-2">
+            {description}
+          </motion.p>
+        </div>
       </div>
     </section>
   );

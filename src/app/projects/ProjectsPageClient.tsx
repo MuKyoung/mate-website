@@ -7,7 +7,7 @@ import ProjectFilter from '@/components/ProjectFilter';
 import FloatingNotice from '@/components/FloatingNotice';
 import { Project } from '@/types';
 import { FiArrowRight } from 'react-icons/fi';
-import { fadeUp, clipUp, stagger, inView } from '@/lib/motion';
+import { fadeUp, stagger, inView } from '@/lib/motion';
 
 interface ProjectsPageClientProps {
   projects: Project[];
@@ -29,28 +29,29 @@ export default function ProjectsPageClient({ projects }: ProjectsPageClientProps
         </div>
       </section>
 
-      {/* ━━ CTA (DARK) ━━ */}
-      <section className="relative py-28 sm:py-40 bg-[#0a0a0a] overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[70vw] h-[40vw] rounded-full opacity-[0.16]"
-            style={{ background: 'radial-gradient(circle, #2a72e5 0%, transparent 60%)' }} />
-        </div>
-        <div className="relative container mx-auto px-4 sm:px-6 text-center">
-          <motion.span {...inView} variants={fadeUp} className="eyebrow text-[#5b9bff] mb-6 justify-center">Let&apos;s build together</motion.span>
-          <motion.h2 {...inView} variants={stagger} className="display-hero text-white mb-8">
-            <span className="block overflow-hidden"><motion.span variants={clipUp} className="block">비슷한 프로젝트를</motion.span></span>
-            <span className="block overflow-hidden"><motion.span variants={clipUp} className="block">계획 중이신가요?</motion.span></span>
-          </motion.h2>
-          <motion.p {...inView} variants={fadeUp} className="on-dark-2 text-lg mb-10 max-w-lg mx-auto">
-            게임 · 웹 · 앱 · AR/VR — 무료 상담으로 가능성을 확인하세요.
-          </motion.p>
-          <motion.div {...inView} variants={fadeUp} className="flex justify-center">
-            <Link href="/contact"
-              className="group inline-flex items-center gap-2 h-14 px-9 rounded-full font-semibold text-[#0a0a0a] bg-white hover:bg-[#5b9bff] hover:text-white transition-colors">
-              무료 상담 신청
-              <FiArrowRight size={17} className="group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </motion.div>
+      {/* ━━ CTA (DARK) — 좌측 정렬 ━━ */}
+      <section className="py-24 sm:py-32 bg-[#0a0a0a] border-t border-white/10">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-10">
+            <motion.div {...inView} variants={stagger}>
+              <p className="text-[13px] text-white/35 mb-5">Contact</p>
+              <motion.h2 variants={fadeUp} className="text-white font-semibold tracking-[-0.03em] leading-[1.05] mb-5"
+                style={{ fontSize: 'clamp(1.875rem, 4vw, 3.25rem)' }}>
+                비슷한 프로젝트를<br />
+                <span className="text-white/35">계획 중이신가요?</span>
+              </motion.h2>
+              <motion.p variants={fadeUp} className="text-[15px] text-white/55 leading-[1.75] max-w-md">
+                게임 · 웹 · 앱 · AR/VR — 무료 상담으로 가능성을 확인하세요.
+              </motion.p>
+            </motion.div>
+            <motion.div {...inView} variants={fadeUp} className="flex-shrink-0">
+              <Link href="/contact"
+                className="group inline-flex items-center gap-2 h-12 px-7 rounded-sm text-[14px] font-medium text-[#0a0a0a] bg-white hover:bg-white/85 transition-colors">
+                무료 상담 신청
+                <FiArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
+              </Link>
+            </motion.div>
+          </div>
         </div>
       </section>
 

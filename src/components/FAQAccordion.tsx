@@ -25,7 +25,7 @@ export default function FAQAccordion({ faqs }: FAQAccordionProps) {
           <motion.div
             key={faq.id}
             variants={fadeUp}
-            className="rounded-2xl overflow-hidden border border-[#e4e4e4] bg-white hover:border-[#0a0a0a] transition-colors"
+            className="rounded-sm overflow-hidden border border-[#e4e4e4] bg-white hover:border-[#0a0a0a] transition-colors"
           >
             <button
               onClick={() => toggleFAQ(faq.id)}
@@ -42,7 +42,7 @@ export default function FAQAccordion({ faqs }: FAQAccordionProps) {
               >
                 <FiChevronDown
                   size={18}
-                  className={isOpen ? 'text-[#2a72e5]' : 'text-[#a1a1aa]'}
+                  className={isOpen ? 'text-[#0a0a0a]' : 'text-[#a1a1aa]'}
                 />
               </motion.span>
             </button>

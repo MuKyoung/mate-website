@@ -28,29 +28,30 @@ export default function ServiceCard({ service, index }: ServiceCardProps) {
       transition={{ delay: index * 0.09, duration: 0.7, ease: easeEnter }}
       className="group h-full"
     >
-      <div className="h-full p-8 rounded-2xl border border-[#e4e4e4] bg-white hover:border-[#0a0a0a] transition-colors">
-        {/* 아이콘 */}
-        <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-6 bg-[#c6e6ff] text-[#0957c8]">
-          <Icon size={19} />
+      <div className="h-full p-8 rounded-sm border border-[#e4e4e4] bg-white hover:border-[#0a0a0a] transition-colors">
+        {/* 아이콘 + 인덱스 */}
+        <div className="flex items-start justify-between mb-8">
+          <Icon size={22} className="text-[#0a0a0a]" />
+          <span className="text-[12px] text-[#a1a1aa] font-mono-stat">0{index + 1}</span>
         </div>
 
-        <h3 className="text-[17px] font-bold text-[#0a0a0a] mb-2 group-hover:text-[#2a72e5] transition-colors">
+        <h3 className="text-[17px] font-semibold text-[#0a0a0a] mb-2.5">
           {service.title}
         </h3>
-        <p className="text-sm text-[#5d5d5d] mb-6 leading-relaxed">
+        <p className="text-sm text-[#52525b] mb-7 leading-[1.7]">
           {service.description}
         </p>
 
-        <ul className="space-y-2.5 mb-7">
+        <ul className="space-y-2.5 mb-8">
           {service.features.map((feature, idx) => (
-            <li key={idx} className="flex items-start gap-2.5 text-sm text-[#4c4c4c]">
-              <FiCheck className="flex-shrink-0 mt-0.5 text-[#058765]" size={15} />
+            <li key={idx} className="flex items-start gap-2.5 text-sm text-[#52525b]">
+              <FiCheck className="flex-shrink-0 mt-0.5 text-[#a1a1aa]" size={14} />
               {feature}
             </li>
           ))}
         </ul>
 
-        <div className="flex items-center gap-1.5 text-[13px] font-medium text-[#5d5d5d] group-hover:text-[#2a72e5] transition-colors">
+        <div className="flex items-center gap-1.5 text-[13px] text-[#0a0a0a]">
           자세히 보기
           <FiArrowRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
         </div>
