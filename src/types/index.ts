@@ -1,7 +1,11 @@
+/** 조직 부서 구분 */
+export type Department = 'development' | 'design' | 'operations';
+
 export interface TeamMember {
   id: string;
   name: string;
   role: string;
+  department: Department;
   bio: string;
   profileImage: string;
   skills: string[];

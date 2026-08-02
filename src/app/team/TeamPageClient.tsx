@@ -5,6 +5,7 @@ import Link from 'next/link';
 import PageHeader from '@/components/PageHeader';
 import TeamMemberCard from '@/components/TeamMemberCard';
 import TeamCapabilityCard from '@/components/TeamCapabilityCard';
+import OrgChart from '@/components/OrgChart';
 import { teamMembers } from '@/data/team';
 import { teamCapabilities, awards, type Award } from '@/data/teamCapabilities';
 import {
@@ -26,7 +27,7 @@ function getAwardIcon(award: Award): IconType {
 const stats = [
   { value: '30+', label: '완료 프로젝트' },
   { value: '5년', label: '외주 개발 경력' },
-  { value: '5명', label: '전문 개발자' },
+  { value: '7명', label: '전문 인력' },
   { value: '100%', label: '성공률' },
 ];
 
@@ -91,7 +92,7 @@ export default function TeamPageClient() {
               </motion.p>
               <motion.p variants={fadeUp} className="text-[17px] text-[#4e5968] leading-[1.75] mb-16">
                 5년 이상의 외주 개발 경험과 30개 이상의 완료 프로젝트를 바탕으로,
-                클라이언트 · 서버 · UI/UX 각 분야 전문가 5명이 하나의 팀으로 움직입니다.
+                개발 4명 · 디자인 2명 · 운영 1명, 총 7명이 하나의 팀으로 움직입니다.
                 여러 회사에 나눠 맡기지 않아도, 필요한 개발을 한 팀에서 해결할 수 있습니다.
               </motion.p>
 
@@ -159,6 +160,27 @@ export default function TeamPageClient() {
               ))}
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* ━━ 조직도 ━━ */}
+      <section className="py-32 sm:py-44 bg-[#f4f6f8] border-y border-[#e5e8eb]">
+        <div className="container mx-auto px-4 sm:px-6">
+          <motion.div {...inView} variants={fadeUp}
+            className="flex flex-wrap items-end justify-between gap-8 mb-20">
+            <div className="max-w-3xl">
+              <p className="index-num mb-6">Organization</p>
+              <h2 className="text-[#191f28] font-extrabold tracking-[-0.035em] leading-[1.06]"
+                style={{ fontSize: 'clamp(2.25rem, 6vw, 4.5rem)' }}>
+                조직 구성
+              </h2>
+            </div>
+            <p className="text-[16px] text-[#4e5968] leading-[1.75] pb-3 max-w-sm">
+              개발 · 디자인 · 운영 세 축이 하나의 팀으로 움직입니다.
+            </p>
+          </motion.div>
+
+          <OrgChart />
         </div>
       </section>
 
