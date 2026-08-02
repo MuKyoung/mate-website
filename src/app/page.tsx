@@ -137,7 +137,7 @@ export default function Home() {
           <motion.p {...inView} variants={fadeUp} className="index-num mb-10">(05) Contact</motion.p>
           <motion.h2 {...inView} variants={stagger}
             className="text-[#191f28] font-extrabold tracking-[-0.05em] leading-[0.96] mb-14 sm:mb-20"
-            style={{ fontSize: 'clamp(2.75rem, 10vw, 9rem)' }}>
+            style={{ fontSize: 'clamp(2.5rem, 10vw, 9rem)' }}>
             <span className="block overflow-hidden pb-[0.07em]">
               <motion.span variants={clipUp} className="block">상상을 현실로,</motion.span>
             </span>

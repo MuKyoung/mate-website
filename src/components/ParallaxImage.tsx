@@ -41,7 +41,8 @@ export default function ParallaxImage({
       transition={{ duration: 1.3, ease: easeEnter }}
       className={`relative overflow-hidden bg-[#f4f6f8] ${rounded} ${className}`}
     >
-      <motion.div style={{ y }} className="absolute inset-x-0 -inset-y-[12%]">
+      {/* 블리드를 이동량(px)만큼 확보해 어떤 컨테이너 크기에서도 빈 공간이 드러나지 않게 한다 */}
+      <motion.div style={{ y, top: -strength, bottom: -strength }} className="absolute inset-x-0">
         <SafeImage
           src={src}
           alt={alt}

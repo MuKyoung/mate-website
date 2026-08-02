@@ -44,7 +44,7 @@ export default function Hero() {
   return (
     <section ref={ref} className="relative bg-white">
       <motion.div style={{ y, opacity }}
-        className="container mx-auto px-4 sm:px-6 min-h-[88vh] flex flex-col justify-end pt-32 pb-14 sm:pb-20">
+        className="container mx-auto px-4 sm:px-6 min-h-[88svh] flex flex-col justify-end pt-32 pb-14 sm:pb-20">
 
         {/* 상단 메타 행 */}
         <motion.div {...onMount} variants={fadeUp}
@@ -59,11 +59,12 @@ export default function Hero() {
         {/* 초대형 스테이트먼트 */}
         <motion.h1 {...onMount} variants={stagger}
           className="text-[#191f28] font-extrabold tracking-[-0.05em] leading-[0.94] mb-12 sm:mb-16"
-          style={{ fontSize: 'clamp(3rem, 12vw, 12rem)' }}>
-          <span className="block overflow-hidden pb-[0.06em]">
+          style={{ fontSize: 'clamp(2.625rem, 12vw, 12rem)' }}>
+          {/* pb/-mb 보정 — 라틴 디센더(g)가 클립되지 않게 여유를 주되 행간은 유지 */}
+          <span className="block overflow-hidden pb-[0.14em] -mb-[0.14em]">
             <motion.span variants={clipUp} className="block">With MATE,</motion.span>
           </span>
-          <span className="block overflow-hidden pb-[0.06em]">
+          <span className="block overflow-hidden pb-[0.14em] -mb-[0.14em]">
             <motion.span variants={clipUp} className="block">
               Imagination<span className="text-[#3182f6]">.</span>
             </motion.span>
