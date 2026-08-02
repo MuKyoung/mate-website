@@ -26,20 +26,20 @@ export default function FAQAccordion({ faqs }: FAQAccordionProps) {
           <motion.div
             key={faq.id}
             variants={fadeUp}
-            className="border-t border-[#e5e8eb] last:border-b"
+            className="border-t border-white/10 last:border-b"
           >
             <button
               onClick={() => toggleFAQ(faq.id)}
               aria-expanded={isOpen}
               className="group w-full py-7 text-left flex items-center justify-between gap-6"
             >
-              <span className="text-[17px] sm:text-[19px] font-bold text-[#191f28] tracking-[-0.02em] leading-[1.4] transition-colors duration-300 group-hover:text-[#3182f6]">
+              <span className="text-[17px] sm:text-[19px] font-bold text-[#f5f6f7] tracking-[-0.02em] leading-[1.4] transition-colors duration-300 group-hover:text-[#3182f6]">
                 {faq.question}
               </span>
               <motion.span
                 animate={{ rotate: isOpen ? 180 : 0 }}
                 transition={{ duration: DUR.standard, ease: easeEnter }}
-                className="flex-shrink-0 text-[#adb5bd]"
+                className="flex-shrink-0 text-white/40"
               >
                 <FiChevronDown size={22} />
               </motion.span>
@@ -53,7 +53,7 @@ export default function FAQAccordion({ faqs }: FAQAccordionProps) {
                   transition={{ duration: DUR.slow, ease: easeEnter }}
                   className="overflow-hidden"
                 >
-                  <p className="text-[16px] leading-[1.8] text-[#4e5968] pb-8 max-w-2xl">
+                  <p className="text-[16px] leading-[1.8] text-white/55 pb-8 max-w-2xl">
                     {faq.answer}
                   </p>
                 </motion.div>

@@ -11,7 +11,7 @@ interface ProjectsClientProps {
 export default function ProjectsClient({ projects }: ProjectsClientProps) {
   return (
     <>
-      <section className="py-24 sm:py-32 bg-white">
+      <section className="py-24 sm:py-32">
         <div className="container mx-auto px-4 sm:px-6">
           <ProjectFilter projects={projects} />
         </div>

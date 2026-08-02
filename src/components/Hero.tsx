@@ -1,10 +1,69 @@
 'use client';
 
-import { motion, useScroll, useTransform, useInView, animate } from 'framer-motion';
+import { motion, AnimatePresence, useScroll, useTransform, useInView, animate } from 'framer-motion';
 import Link from 'next/link';
-import { FiArrowUpRight } from 'react-icons/fi';
-import { useRef, useEffect } from 'react';
-import { clipUp, fadeUp, stagger, onMount, inView, easeEnter } from '@/lib/motion';
+import { FiArrowUpRight, FiArrowDown } from 'react-icons/fi';
+import { useRef, useEffect, useState, useCallback } from 'react';
+import { easeEnter } from '@/lib/motion';
+
+/* ── 글자 단위 리빌 (Splitting.js 방식) ── */
+const charVariants = {
+  hidden: { y: '112%' },
+  show: (i: number) => ({
+    y: '0%',
+    transition: { delay: i * 0.028, duration: 0.85, ease: easeEnter },
+  }),
+  exit: (i: number) => ({
+    y: '-112%',
+    transition: { delay: i * 0.012, duration: 0.45, ease: easeEnter },
+  }),
+};
+
+function CharLine({ text, offset = 0, accent = false }: { text: string; offset?: number; accent?: boolean }) {
+  const words = text.split(' ');
+  let charIndex = offset;
+  return (
+    <span className="block">
+      {words.map((word, wi) => {
+        const chars = word.split('').map((ch) => {
+          const i = charIndex++;
+          return (
+            <span key={i} className="inline-block overflow-hidden align-bottom pb-[0.14em] -mb-[0.14em]">
+              <motion.span custom={i} variants={charVariants} className="inline-block">
+                {ch}
+              </motion.span>
+            </span>
+          );
+        });
+        charIndex++; // 공백 몫
+        return (
+          <span key={wi} className={`inline-block whitespace-nowrap ${accent ? 'text-[#3182f6]' : ''}`}>
+            {chars}
+            {wi < words.length - 1 && <span className="inline-block">&nbsp;</span>}
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
+/* ── 슬라이드 데이터 — EN 대형 + KR 캡션 ── */
+const slides = [
+  {
+    en1: 'Ideas to Code,', en2: 'Code to Life', accent2: true,
+    kr: '상상을 현실로 만드는 외주개발 스튜디오',
+  },
+  {
+    en1: 'One Team,', en2: 'Full Cycle', accent2: true,
+    kr: '기획부터 배포까지, 한 팀이 끝까지 책임집니다',
+  },
+  {
+    en1: 'Quality,', en2: 'Proven by Work', accent2: true,
+    kr: '5년간 30개 이상의 프로젝트로 증명한 품질',
+  },
+];
+
+const ROTATE_MS = 6000;
 
 function Stat({ to, suffix, label }: { to: number; suffix: string; label: string }) {
   const ref = useRef<HTMLSpanElement>(null);
@@ -20,10 +79,10 @@ function Stat({ to, suffix, label }: { to: number; suffix: string; label: string
   return (
     <div className="flex items-baseline gap-3 py-7 sm:py-9">
       <span ref={ref}
-        className="text-3xl sm:text-4xl font-extrabold text-[#191f28] font-mono-stat tracking-[-0.03em]">
+        className="font-en text-3xl sm:text-4xl font-extrabold text-[#f5f6f7] font-mono-stat tracking-[-0.02em]">
         0{suffix}
       </span>
-      <span className="text-[13px] text-[#6b7684]">{label}</span>
+      <span className="text-[13px] text-white/45">{label}</span>
     </div>
   );
 }
@@ -38,68 +97,107 @@ const stats = [
 export default function Hero() {
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] });
-  const y = useTransform(scrollYProgress, [0, 1], [0, -120]);
+  const y = useTransform(scrollYProgress, [0, 1], [0, -110]);
   const opacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
 
+  const [index, setIndex] = useState(0);
+  const goTo = useCallback((i: number) => setIndex(i % slides.length), []);
+
+  useEffect(() => {
+    const t = setInterval(() => setIndex((p) => (p + 1) % slides.length), ROTATE_MS);
+    return () => clearInterval(t);
+  }, []);
+
+  const slide = slides[index];
+
   return (
-    <section ref={ref} className="relative bg-white">
+    <section ref={ref} className="relative bg-[#131518]">
       <motion.div style={{ y, opacity }}
-        className="container mx-auto px-4 sm:px-6 min-h-[88svh] flex flex-col justify-end pt-32 pb-14 sm:pb-20">
+        className="container mx-auto px-4 sm:px-6 min-h-[92svh] flex flex-col justify-end pt-32 pb-12 sm:pb-16">
 
         {/* 상단 메타 행 */}
-        <motion.div {...onMount} variants={fadeUp}
-          className="flex items-center justify-between pb-10 sm:pb-14">
+        <div className="flex items-center justify-between pb-10 sm:pb-16">
           <p className="index-num">Game · Web · App Studio</p>
           <p className="index-num">
             <span className="w-1.5 h-1.5 rounded-full bg-[#3182f6] inline-block" />
             상담 가능
           </p>
-        </motion.div>
+        </div>
 
-        {/* 초대형 스테이트먼트 */}
-        <motion.h1 {...onMount} variants={stagger}
-          className="text-[#191f28] font-extrabold tracking-[-0.05em] leading-[0.94] mb-12 sm:mb-16"
-          style={{ fontSize: 'clamp(2.625rem, 12vw, 12rem)' }}>
-          {/* pb/-mb 보정 — 라틴 디센더(g)가 클립되지 않게 여유를 주되 행간은 유지 */}
-          <span className="block overflow-hidden pb-[0.14em] -mb-[0.14em]">
-            <motion.span variants={clipUp} className="block">With MATE,</motion.span>
-          </span>
-          <span className="block overflow-hidden pb-[0.14em] -mb-[0.14em]">
-            <motion.span variants={clipUp} className="block">
-              Imagination<span className="text-[#3182f6]">.</span>
-            </motion.span>
-          </span>
-        </motion.h1>
+        {/* 로테이팅 스테이트먼트 — 글자 단위 리빌 */}
+        <div className="mb-10 sm:mb-14">
+          <AnimatePresence mode="wait">
+            <motion.div key={index} initial="hidden" animate="show" exit="exit">
+              <h1 className="font-en text-[#f5f6f7] font-extrabold tracking-[-0.04em] leading-[1.0]"
+                style={{ fontSize: 'clamp(2.5rem, 10.5vw, 10.5rem)' }}>
+                <CharLine text={slide.en1} />
+                <CharLine text={slide.en2} offset={slide.en1.length + 2} accent={slide.accent2} />
+              </h1>
+              <motion.p
+                initial={{ opacity: 0, y: 22 }}
+                animate={{ opacity: 1, y: 0, transition: { delay: 0.55, duration: 0.8, ease: easeEnter } }}
+                exit={{ opacity: 0, y: -14, transition: { duration: 0.35, ease: easeEnter } }}
+                className="caption-kr mt-7 sm:mt-9">
+                — {slide.kr}
+              </motion.p>
+            </motion.div>
+          </AnimatePresence>
+        </div>
 
-        {/* 하단 행 — 설명 좌 / 액션 우 */}
-        <motion.div {...onMount} variants={fadeUp}
-          className="grid lg:grid-cols-12 gap-y-8 gap-x-8 items-end">
-          <p className="lg:col-span-6 text-lg sm:text-xl text-[#4e5968] leading-[1.65] max-w-xl">
-            게임 · 웹 · 앱 · AR/VR까지 한 팀에서.
-            기획부터 배포까지 책임지는 외주개발 스튜디오입니다.
-          </p>
-          <div className="lg:col-span-6 flex flex-wrap items-center gap-7 lg:justify-end">
+        {/* 하단 행 — 페이지네이션 좌 / 액션 우 */}
+        <div className="flex flex-wrap items-center justify-between gap-y-8 gap-x-8">
+          {/* 번호 페이지네이션 (레퍼런스 1/5 방식) */}
+          <div className="flex items-center gap-5">
+            {slides.map((_, i) => (
+              <button key={i} onClick={() => goTo(i)} aria-label={`슬라이드 ${i + 1}`}
+                className="group flex items-center gap-2.5">
+                <span className={`font-en text-[13px] font-bold tabular-nums transition-colors duration-300 ${
+                  i === index ? 'text-[#f5f6f7]' : 'text-white/30 group-hover:text-white/60'
+                }`}>
+                  0{i + 1}
+                </span>
+                <span className="relative block w-10 h-px bg-white/15 overflow-hidden">
+                  {i === index && (
+                    <motion.span
+                      key={`bar-${index}`}
+                      initial={{ scaleX: 0 }} animate={{ scaleX: 1 }}
+                      transition={{ duration: ROTATE_MS / 1000, ease: 'linear' }}
+                      className="absolute inset-0 bg-[#f5f6f7] origin-left" />
+                  )}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-7">
             <Link href="/contact"
-              className="group inline-flex items-center gap-2.5 h-14 px-8 rounded-[10px] text-[15px] font-bold text-white bg-[#191f28] hover:bg-[#3182f6] transition-colors duration-300">
+              className="group inline-flex items-center gap-2.5 h-14 px-9 rounded-full text-[15px] font-bold text-[#131518] bg-white hover:bg-[#3182f6] hover:text-white transition-colors duration-300">
               프로젝트 문의
               <FiArrowUpRight size={17} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-300" />
             </Link>
             <Link href="/projects"
-              className="text-[15px] font-semibold text-[#191f28] border-b border-[#191f28]/30 hover:border-[#191f28] pb-0.5 transition-colors">
+              className="text-[15px] font-semibold text-white/70 hover:text-white border-b border-white/25 hover:border-white pb-0.5 transition-colors">
               포트폴리오 보기
             </Link>
           </div>
-        </motion.div>
+        </div>
+      </motion.div>
+
+      {/* 스크롤 큐 */}
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.6, duration: 0.8 }}
+        className="absolute bottom-6 left-1/2 -translate-x-1/2 hidden lg:flex flex-col items-center gap-1.5 text-white/30 pointer-events-none">
+        <span className="font-en text-[10px] font-bold tracking-[0.25em] uppercase">Scroll</span>
+        <FiArrowDown size={13} className="animate-bounce" />
       </motion.div>
 
       {/* 지표 — 헤어라인 행 */}
-      <motion.div {...inView} variants={fadeUp} className="border-t border-[#e5e8eb]">
+      <div className="border-t border-white/10">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-2 lg:grid-cols-4">
             {stats.map((s, i) => (
               <div key={s.label}
                 className={[
-                  'border-[#e5e8eb]',
+                  'border-white/10',
                   i % 2 === 1 ? 'border-l pl-6 sm:pl-8' : '',
                   i >= 2 ? 'border-t' : '',
                   i > 0 ? 'lg:border-l lg:pl-8' : 'lg:border-l-0 lg:pl-0',
@@ -110,7 +208,7 @@ export default function Hero() {
             ))}
           </div>
         </div>
-      </motion.div>
+      </div>
     </section>
   );
 }

@@ -1,9 +1,17 @@
 import type { Metadata } from "next";
+import { Raleway } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import FloatingContactButton from "@/components/FloatingContactButton";
 import { Analytics } from "@vercel/analytics/react";
+
+const raleway = Raleway({
+  subsets: ["latin"],
+  weight: ["300", "500", "700", "800"],
+  variable: "--font-raleway",
+  display: "swap",
+});
 
 const siteUrl = "https://devteammate.co.kr";
 
@@ -106,7 +114,7 @@ export default function RootLayout({
 
   return (
     <html lang="ko">
-      <body>
+      <body className={raleway.variable}>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}

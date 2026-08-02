@@ -56,9 +56,9 @@ export default function ProjectFilter({ projects }: ProjectFilterProps) {
     <div>
       {/* 카테고리 — 텍스트 탭 + 헤어라인 */}
       <motion.div {...inView} variants={fadeUp} className="mb-16 sm:mb-24">
-        <p className="index-num mb-8">(01) Category</p>
+        <p className="index-num font-en mb-8">(01) Category</p>
 
-        <div className="flex flex-wrap items-end justify-between gap-x-10 gap-y-3 border-b border-[#e5e8eb]">
+        <div className="flex flex-wrap items-end justify-between gap-x-10 gap-y-3 border-b border-white/10">
           <div className="flex flex-wrap items-end gap-x-6 sm:gap-x-9 gap-y-3">
             {CATEGORY_OPTIONS.map((option) => {
               const active = selectedCategory === option.value;
@@ -68,12 +68,12 @@ export default function ProjectFilter({ projects }: ProjectFilterProps) {
                   onClick={() => setSelectedCategory(option.value)}
                   className={`pb-4 -mb-px border-b-2 text-[15px] font-semibold transition-colors ${
                     active
-                      ? 'border-[#191f28] text-[#191f28]'
-                      : 'border-transparent text-[#adb5bd] hover:text-[#191f28]'
+                      ? 'border-white text-white'
+                      : 'border-transparent text-white/30 hover:text-white'
                   }`}
                 >
                   {option.label}
-                  <span className="ml-1.5 text-[12px] font-semibold tabular-nums opacity-55">
+                  <span className="ml-1.5 text-[12px] font-semibold tabular-nums opacity-50">
                     {categoryCounts[option.value] || 0}
                   </span>
                 </button>
@@ -99,11 +99,11 @@ export default function ProjectFilter({ projects }: ProjectFilterProps) {
       {/* 결과 없음 — 플레인 텍스트 */}
       {filteredProjects.length === 0 && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-28 text-center">
-          <p className="index-num justify-center mb-6">No results</p>
-          <h3 className="text-[24px] sm:text-[28px] font-extrabold text-[#191f28] tracking-[-0.025em] leading-[1.2] mb-4">
+          <p className="index-num font-en justify-center mb-6">No results</p>
+          <h3 className="text-[24px] sm:text-[28px] font-extrabold text-[#f5f6f7] tracking-[-0.025em] leading-[1.2] mb-4">
             해당 카테고리의 프로젝트가 없습니다
           </h3>
-          <p className="text-[16px] text-[#6b7684] leading-[1.75]">다른 카테고리를 선택해 보세요</p>
+          <p className="text-[16px] text-white/45 leading-[1.75]">다른 카테고리를 선택해 보세요</p>
         </motion.div>
       )}
     </div>

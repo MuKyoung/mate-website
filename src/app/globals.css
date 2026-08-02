@@ -5,30 +5,30 @@
 /* ── 폰트 (Pretendard Variable) ───────────────────────── */
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
 
-/* ── CSS 변수 (엔터프라이즈 프리미엄 토큰 — 쿨 그레이 + 코퍼레이트 블루) ── */
+/* ── CSS 변수 (다크 시네마틱 토큰 — 원강금속 레퍼런스) ── */
 :root {
   /* 표면 */
-  --canvas:      #ffffff;
-  --background:  #ffffff;
-  --surface:     #f4f6f8;   /* 쿨 그레이 서피스 */
-  --surface-2:   #eaedf1;
+  --canvas:      #131518;
+  --background:  #131518;
+  --surface:     #1b1e23;   /* 카드/패널 서피스 */
+  --surface-2:   #23262c;
 
-  /* 경계선 — 뉴트럴 헤어라인 */
-  --border:      #e5e8eb;
-  --border-2:    #d1d6db;
+  /* 경계선 — 화이트 헤어라인 */
+  --border:      rgba(255, 255, 255, 0.10);
+  --border-2:    rgba(255, 255, 255, 0.22);
 
-  /* 잉크 / 텍스트 위계 */
-  --text-1:      #191f28;
-  --text-2:      #4e5968;
-  --text-3:      #6b7684;
-  --text-faint:  #adb5bd;
+  /* 텍스트 위계 (화이트 래더) */
+  --text-1:      #f5f6f7;
+  --text-2:      rgba(245, 246, 247, 0.64);
+  --text-3:      rgba(245, 246, 247, 0.45);
+  --text-faint:  rgba(245, 246, 247, 0.30);
 
   /* 브랜드 — 코퍼레이트 블루 (단일 액션 컬러) */
   --accent:      #3182f6;
-  --accent-2:    #1b64da;
-  --accent-link: #1b64da;
-  --accent-dim:  rgba(49, 130, 246, 0.08);
-  --accent-tint: #e8f3ff;
+  --accent-2:    #5a9cf8;   /* 다크 위 호버는 밝은 쪽으로 */
+  --accent-link: #5a9cf8;
+  --accent-dim:  rgba(49, 130, 246, 0.14);
+  --accent-tint: rgba(49, 130, 246, 0.16);
 
   /* 시맨틱 */
   --success:      #12b76a;
@@ -39,7 +39,7 @@
   --warning-tint: #fef0c7;
 
   /* 기존 코드 호환용 */
-  --foreground:   #191f28;
+  --foreground:   #f5f6f7;
   --primary:      #3182f6;
   --primary-dark: #1b64da;
   --secondary:    #1b64da;
@@ -251,6 +251,19 @@ body {
   font-size: clamp(3rem, 10vw, 9rem);
   color: transparent;
   -webkit-text-stroke: 1px var(--border-2);
+}
+
+/* 영문 디스플레이 — Raleway (레퍼런스의 EN/KR 이중 폰트 체계) */
+.font-en {
+  font-family: var(--font-raleway), 'Pretendard Variable', Pretendard, sans-serif;
+}
+
+/* 국문 캡션 — 영문 대형 타이포에 병기되는 가벼운 한 줄 */
+.caption-kr {
+  font-size: clamp(15px, 1.6vw, 19px);
+  font-weight: 300;
+  letter-spacing: 0.01em;
+  color: var(--text-2);
 }
 
 /* 섹션 라벨 — 뉴트럴 소문자 캡션 (파랑 남용 금지) */

@@ -34,21 +34,21 @@ export default function Header() {
     <header
       className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
       style={{
-        background: solid ? 'rgba(255, 255, 255, 0.85)' : 'transparent',
-        backdropFilter: solid ? 'blur(12px)' : 'none',
-        borderBottom: solid ? '1px solid var(--border)' : '1px solid transparent',
+        background: solid ? 'rgba(19, 21, 24, 0.72)' : 'transparent',
+        backdropFilter: solid ? 'blur(14px)' : 'none',
+        borderBottom: solid ? '1px solid rgba(255,255,255,0.10)' : '1px solid transparent',
       }}
     >
       <nav className="container mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
 
-        {/* 로고 */}
+        {/* 로고 — 다크 위 화이트 */}
         <Link href="/" className="inline-flex items-center hover:opacity-80 transition-opacity">
           <Image
             src="/images/logo.png"
             alt="MATE"
             width={88}
             height={28}
-            className="h-7 w-auto"
+            className="h-7 w-auto brightness-0 invert"
             priority
           />
         </Link>
@@ -61,17 +61,15 @@ export default function Header() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`relative px-3.5 py-1.5 text-sm font-semibold rounded-lg transition-colors duration-150 ${
-                  active
-                    ? 'text-[#191f28]'
-                    : 'text-[#6b7684] hover:text-[#191f28]'
+                className={`relative px-3.5 py-1.5 text-sm font-semibold transition-colors duration-150 ${
+                  active ? 'text-white' : 'text-white/55 hover:text-white'
                 }`}
               >
                 {item.label}
                 {active && (
                   <motion.span
                     layoutId="nav-active"
-                    className="absolute bottom-0 left-3.5 right-3.5 h-[2px] rounded-full bg-[#3182f6]"
+                    className="absolute bottom-0 left-3.5 right-3.5 h-[2px] rounded-full bg-white"
                     initial={false}
                     transition={{ duration: 0.2, ease: [0.2, 0.6, 0.25, 1] }}
                   />
@@ -82,7 +80,7 @@ export default function Header() {
 
           <Link
             href="/contact"
-            className="ml-4 px-5 h-10 inline-flex items-center rounded-[10px] text-sm font-bold text-white bg-[#191f28] hover:bg-[#3182f6] transition-colors duration-300"
+            className="ml-4 px-6 h-10 inline-flex items-center rounded-full text-sm font-bold text-[#131518] bg-white hover:bg-[#3182f6] hover:text-white transition-colors duration-300"
           >
             상담 신청
           </Link>
@@ -90,7 +88,7 @@ export default function Header() {
 
         {/* 모바일 버튼 */}
         <button
-          className="md:hidden w-9 h-9 flex items-center justify-center transition-colors rounded-lg text-[#4e5968] hover:text-[#191f28] hover:bg-black/[0.04]"
+          className="md:hidden w-9 h-9 flex items-center justify-center transition-colors rounded-lg text-white/70 hover:text-white hover:bg-white/10"
           onClick={() => setMobileMenuOpen(!isMobileMenuOpen)}
           aria-label="메뉴"
         >
@@ -120,8 +118,8 @@ export default function Header() {
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
-            className="md:hidden overflow-hidden border-t"
-            style={{ background: 'rgba(255,255,255,0.97)', borderColor: 'var(--border)' }}
+            className="md:hidden overflow-hidden border-t border-white/10"
+            style={{ background: 'rgba(19,21,24,0.95)', backdropFilter: 'blur(14px)' }}
           >
             <div className="container mx-auto px-4 py-3 flex flex-col gap-0.5">
               {navItems.map((item, i) => (
@@ -134,10 +132,10 @@ export default function Header() {
                   <Link
                     href={item.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center justify-between px-3 py-2.5 rounded-[10px] text-sm font-semibold transition-colors ${
+                    className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
                       pathname === item.href
-                        ? 'text-[#191f28] bg-[#f4f6f8]'
-                        : 'text-[#4e5968] hover:text-[#191f28] hover:bg-black/[0.03]'
+                        ? 'text-white bg-white/[0.07]'
+                        : 'text-white/55 hover:text-white hover:bg-white/[0.04]'
                     }`}
                   >
                     {item.label}
@@ -156,7 +154,7 @@ export default function Header() {
                 <Link
                   href="/contact"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="block text-center px-4 py-3 rounded-[10px] text-sm font-bold text-white bg-[#191f28] hover:bg-[#3182f6] transition-colors"
+                  className="block text-center px-4 py-3 rounded-full text-sm font-bold text-[#131518] bg-white hover:bg-[#3182f6] hover:text-white transition-colors"
                 >
                   무료 상담 신청
                 </Link>

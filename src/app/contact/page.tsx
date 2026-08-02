@@ -109,8 +109,8 @@ export default function ContactPage() {
   };
 
   const inputClass =
-    'w-full h-14 px-5 bg-white border border-[#d1d6db] rounded-[10px] text-[16px] text-[#191f28] placeholder-[#adb5bd] outline-none transition-colors focus:border-[#191f28] focus:ring-0';
-  const labelClass = 'block text-[13px] font-semibold text-[#191f28] mb-2.5';
+    'w-full h-14 px-5 bg-white/[0.04] border border-white/15 rounded-[10px] text-[16px] text-[#f5f6f7] placeholder:text-white/25 outline-none transition-colors focus:border-white/60 focus:ring-0';
+  const labelClass = 'block text-[13px] font-semibold text-white/85 mb-2.5';
 
   return (
     <>
@@ -124,18 +124,19 @@ export default function ContactPage() {
       />
 
       {/* ━━ (01) Inquiry — 폼 좌 / 채널 우 ━━ */}
-      <section className="py-28 sm:py-40 bg-white">
+      <section className="py-28 sm:py-40">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="mb-16 sm:mb-20">
             <motion.div {...inView} variants={fadeUp}
-              className="flex items-center justify-between pb-6 border-b border-[#e5e8eb] mb-10 sm:mb-14">
-              <p className="index-num">(01) Inquiry</p>
+              className="flex items-center justify-between pb-6 border-b border-white/10 mb-10 sm:mb-14">
+              <p className="index-num font-en">(01) Inquiry</p>
             </motion.div>
             <motion.h2 {...inView} variants={fadeUp}
-              className="text-[#191f28] font-extrabold tracking-[-0.04em] leading-[1.04]"
+              className="font-en text-[#f5f6f7] font-extrabold tracking-[-0.03em] leading-[1.04]"
               style={{ fontSize: 'clamp(2.25rem, 6vw, 4.75rem)' }}>
-              문의 양식
+              Get in Touch
             </motion.h2>
+            <motion.p {...inView} variants={fadeUp} className="caption-kr mt-6">— 문의 양식</motion.p>
           </div>
 
           <motion.div {...inView} variants={stagger}
@@ -173,18 +174,18 @@ export default function ContactPage() {
                   <textarea
                     id="message" name="message"
                     value={formData.message} onChange={handleChange} required rows={7}
-                    className="w-full px-5 py-4 bg-white border border-[#d1d6db] rounded-[10px] text-[16px] leading-[1.75] text-[#191f28] placeholder-[#adb5bd] outline-none transition-colors resize-none focus:border-[#191f28] focus:ring-0"
+                    className="w-full px-5 py-4 bg-white/[0.04] border border-white/15 rounded-[10px] text-[16px] leading-[1.75] text-[#f5f6f7] placeholder:text-white/25 outline-none transition-colors resize-none focus:border-white/60 focus:ring-0"
                     placeholder="문의 내용을 입력하세요"
                   />
                 </div>
 
                 {submitStatus === 'success' && (
-                  <p className="border-l-2 border-[#12b76a] pl-4 text-[15px] font-medium text-[#12b76a]">
+                  <p className="border-l-2 border-[#12b76a] pl-4 text-[15px] font-medium text-[#4ade80]">
                     메시지가 성공적으로 전송되었습니다.
                   </p>
                 )}
                 {submitStatus === 'error' && (
-                  <p className="border-l-2 border-[#f04438] pl-4 text-[15px] font-medium text-[#f04438]">
+                  <p className="border-l-2 border-[#f04438] pl-4 text-[15px] font-medium text-[#f87171]">
                     {errorMessage || '오류가 발생했습니다. 다시 시도해주세요.'}
                   </p>
                 )}
@@ -192,7 +193,7 @@ export default function ContactPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="group inline-flex items-center justify-center gap-2.5 h-14 px-8 rounded-[10px] text-[15px] font-bold text-white bg-[#191f28] hover:bg-[#3182f6] transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="group inline-flex items-center justify-center gap-2.5 h-14 px-9 rounded-full text-[15px] font-bold text-[#131518] bg-white hover:bg-[#3182f6] hover:text-white transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? (
                     '전송 중...'
@@ -233,23 +234,23 @@ export default function ContactPage() {
 
               {/* 연락처 — 헤어라인 리스트 */}
               <div className="mt-14 sm:mt-16">
-                <p className="index-num pb-6 border-b border-[#e5e8eb]">(02) Direct</p>
+                <p className="index-num font-en pb-6 border-b border-white/10">(02) Direct</p>
                 <a href="mailto:hsib1212@naver.com"
-                  className="group flex items-baseline justify-between gap-6 py-6 border-b border-[#e5e8eb]">
-                  <span className="text-[13px] text-[#6b7684] flex-shrink-0">이메일</span>
-                  <span className="text-[16px] sm:text-[17px] font-semibold text-[#191f28] group-hover:text-[#3182f6] transition-colors break-all text-right">
+                  className="group flex items-baseline justify-between gap-6 py-6 border-b border-white/10">
+                  <span className="text-[13px] text-white/45 flex-shrink-0">이메일</span>
+                  <span className="text-[16px] sm:text-[17px] font-semibold text-[#f5f6f7] group-hover:text-[#3182f6] transition-colors break-all text-right">
                     hsib1212@naver.com
                   </span>
                 </a>
                 <a href="tel:0507-1339-9141"
-                  className="group flex items-baseline justify-between gap-6 py-6 border-b border-[#e5e8eb]">
-                  <span className="text-[13px] text-[#6b7684] flex-shrink-0">전화</span>
-                  <span className="text-[16px] sm:text-[17px] font-semibold text-[#191f28] group-hover:text-[#3182f6] transition-colors text-right">
+                  className="group flex items-baseline justify-between gap-6 py-6 border-b border-white/10">
+                  <span className="text-[13px] text-white/45 flex-shrink-0">전화</span>
+                  <span className="text-[16px] sm:text-[17px] font-semibold text-[#f5f6f7] group-hover:text-[#3182f6] transition-colors text-right">
                     0507-1339-9141
                   </span>
                 </a>
-                <p className="pt-8 text-[15px] text-[#4e5968] leading-[1.75]">
-                  <span className="font-semibold text-[#191f28]">빠른 답변</span>을 원하시면 카카오톡 오픈채팅을 이용해주세요.
+                <p className="pt-8 text-[15px] text-white/55 leading-[1.75]">
+                  <span className="font-semibold text-[#f5f6f7]">빠른 답변</span>을 원하시면 카카오톡 오픈채팅을 이용해주세요.
                 </p>
               </div>
             </motion.div>
@@ -258,21 +259,20 @@ export default function ContactPage() {
       </section>
 
       {/* ━━ (03) FAQ ━━ */}
-      <section className="py-28 sm:py-40 bg-white border-t border-[#e5e8eb]">
+      <section className="py-28 sm:py-40 border-t border-white/10">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="mb-16 sm:mb-20">
             <motion.div {...inView} variants={fadeUp}
-              className="flex items-center justify-between pb-6 border-b border-[#e5e8eb] mb-10 sm:mb-14">
-              <p className="index-num">(03) FAQ</p>
+              className="flex items-center justify-between pb-6 border-b border-white/10 mb-10 sm:mb-14">
+              <p className="index-num font-en">(03) FAQ</p>
             </motion.div>
             <motion.h2 {...inView} variants={fadeUp}
-              className="text-[#191f28] font-extrabold tracking-[-0.04em] leading-[1.04]"
+              className="font-en text-[#f5f6f7] font-extrabold tracking-[-0.03em] leading-[1.04]"
               style={{ fontSize: 'clamp(2.25rem, 6vw, 4.75rem)' }}>
-              자주 묻는 질문
+              FAQ
             </motion.h2>
-            <motion.p {...inView} variants={fadeUp}
-              className="mt-8 max-w-md text-lg sm:text-xl text-[#4e5968] leading-[1.7]">
-              궁금한 점이 있으시면 FAQ를 확인해보세요.
+            <motion.p {...inView} variants={fadeUp} className="caption-kr mt-6">
+              — 자주 묻는 질문 · 궁금한 점이 있으시면 FAQ를 확인해보세요
             </motion.p>
           </div>
           <div className="max-w-3xl">

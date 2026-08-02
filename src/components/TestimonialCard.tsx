@@ -17,14 +17,14 @@ export default function TestimonialCard({ testimonial, index }: TestimonialCardP
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-10%' }}
       transition={{ delay: (index % 2) * 0.1, duration: 0.95, ease: easeEnter }}
-      className="border-t border-[#e5e8eb] pt-8"
+      className="border-t border-white/10 pt-8"
     >
-      <p className="text-[17px] sm:text-[19px] text-[#191f28] leading-[1.7] font-medium mb-7">
+      <p className="text-[17px] sm:text-[19px] text-white/85 leading-[1.7] font-medium mb-7">
         &ldquo;{testimonial.content}&rdquo;
       </p>
       <p className="index-num">
         {testimonial.name}
-        {testimonial.company && <span className="text-[#adb5bd]">— {testimonial.company}</span>}
+        {testimonial.company && <span className="text-white/30">— {testimonial.company}</span>}
       </p>
     </motion.div>
   );
