@@ -31,21 +31,21 @@ export default function ProcessTimeline({ steps }: ProcessTimelineProps) {
 
   return (
     <motion.div {...inView} variants={stagger}
-      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-x-8 gap-y-12">
+      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-x-10 gap-y-16">
       {sortedSteps.map((step) => {
         const Icon = iconById[step.id] ?? FiMessageCircle;
         return (
           <motion.div key={step.id} variants={fadeUp} className="rule-top">
-            <span className="index-num-lg mb-6">
+            <span className="index-num-lg mb-8">
               {String(step.order).padStart(2, '0')}
             </span>
-            <div className="flex items-center gap-2 mb-3">
-              <Icon size={16} className="text-[#3182f6] flex-shrink-0" />
-              <h3 className="text-[20px] font-bold text-[#191f28] tracking-[-0.02em]">
+            <div className="flex items-center gap-2.5 mb-4">
+              <Icon size={22} className="text-[#3182f6] flex-shrink-0" />
+              <h3 className="text-[26px] sm:text-[30px] font-extrabold text-[#191f28] tracking-[-0.025em] leading-[1.2]">
                 {step.title}
               </h3>
             </div>
-            <p className="text-[15px] text-[#4e5968] leading-[1.75]">
+            <p className="text-[16px] text-[#4e5968] leading-[1.75]">
               {step.description}
             </p>
           </motion.div>
