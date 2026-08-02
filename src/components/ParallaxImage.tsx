@@ -23,7 +23,7 @@ interface ParallaxImageProps {
  */
 export default function ParallaxImage({
   src, alt, className = 'aspect-[16/10]', strength = 80,
-  placeholder, rounded = 'rounded-[24px]',
+  placeholder, rounded = 'rounded-xl',
 }: ParallaxImageProps) {
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({

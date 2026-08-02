@@ -3,7 +3,6 @@
 import { useState, useMemo } from 'react';
 import ProjectCard from './ProjectCard';
 import { Project } from '@/types';
-import { FiSearch } from 'react-icons/fi';
 import { motion } from 'framer-motion';
 import { fadeUp, inView } from '@/lib/motion';
 
@@ -55,30 +54,26 @@ export default function ProjectFilter({ projects }: ProjectFilterProps) {
 
   return (
     <div>
-      {/* 카테고리 필터 + 결과 수 */}
-      <motion.div {...inView} variants={fadeUp} className="mb-14 sm:mb-20">
-        <p className="index-num mb-6">Category</p>
+      {/* 카테고리 — 텍스트 탭 + 헤어라인 */}
+      <motion.div {...inView} variants={fadeUp} className="mb-16 sm:mb-24">
+        <p className="index-num mb-8">(01) Category</p>
 
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
-          <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap items-end justify-between gap-x-10 gap-y-3 border-b border-[#e5e8eb]">
+          <div className="flex flex-wrap items-end gap-x-6 sm:gap-x-9 gap-y-3">
             {CATEGORY_OPTIONS.map((option) => {
               const active = selectedCategory === option.value;
               return (
                 <button
                   key={option.value}
                   onClick={() => setSelectedCategory(option.value)}
-                  className={`inline-flex items-center gap-2.5 h-12 px-6 rounded-full text-[15px] font-semibold transition-colors ${
+                  className={`pb-4 -mb-px border-b-2 text-[15px] font-semibold transition-colors ${
                     active
-                      ? 'bg-[#3182f6] text-white'
-                      : 'bg-white border border-[#e5e8eb] text-[#4e5968] hover:border-[#3182f6] hover:text-[#3182f6]'
+                      ? 'border-[#191f28] text-[#191f28]'
+                      : 'border-transparent text-[#adb5bd] hover:text-[#191f28]'
                   }`}
                 >
-                  <span>{option.label}</span>
-                  <span
-                    className={`text-[13px] tabular-nums ${
-                      active ? 'text-white/70' : 'text-[#adb5bd]'
-                    }`}
-                  >
+                  {option.label}
+                  <span className="ml-1.5 text-[12px] font-semibold tabular-nums opacity-55">
                     {categoryCounts[option.value] || 0}
                   </span>
                 </button>
@@ -86,34 +81,29 @@ export default function ProjectFilter({ projects }: ProjectFilterProps) {
             })}
           </div>
 
-          <p className="text-[15px] text-[#6b7684]">
-            {selectedCategory === 'all' ? '전체' : selectedCategory} 프로젝트{' '}
-            <span className="font-semibold text-[#191f28] tabular-nums">{filteredProjects.length}</span>개
+          <p className="index-num pb-4 ml-auto whitespace-nowrap">
+            {selectedCategory === 'all' ? '전체' : selectedCategory} 프로젝트 {filteredProjects.length}개
           </p>
         </div>
       </motion.div>
 
-      {/* 프로젝트 그리드 — 대형 2열 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-20">
+      {/* 프로젝트 그리드 — 비대칭 2열 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-20 md:gap-y-28">
         {filteredProjects.map((project, index) => (
-          <ProjectCard key={project.id} project={project} index={index} />
+          <div key={project.id} className={index % 2 === 1 ? 'md:mt-28' : ''}>
+            <ProjectCard project={project} index={index} />
+          </div>
         ))}
       </div>
 
-      {/* 결과 없음 */}
+      {/* 결과 없음 — 플레인 텍스트 */}
       {filteredProjects.length === 0 && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="py-32 px-8 rounded-[28px] border border-[#e5e8eb] bg-[#f4f6f8] text-center"
-        >
-          <div className="mb-8 text-[#adb5bd] flex justify-center">
-            <FiSearch size={48} />
-          </div>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-28 text-center">
+          <p className="index-num justify-center mb-6">No results</p>
           <h3 className="text-[24px] sm:text-[28px] font-extrabold text-[#191f28] tracking-[-0.025em] leading-[1.2] mb-4">
             해당 카테고리의 프로젝트가 없습니다
           </h3>
-          <p className="text-[17px] text-[#6b7684] leading-[1.75]">다른 카테고리를 선택해 보세요</p>
+          <p className="text-[16px] text-[#6b7684] leading-[1.75]">다른 카테고리를 선택해 보세요</p>
         </motion.div>
       )}
     </div>

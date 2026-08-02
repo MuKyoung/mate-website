@@ -10,6 +10,7 @@ interface FAQAccordionProps {
   faqs: FAQ[];
 }
 
+// 헤어라인 아코디언 — 카드 박스 없이 border-t로 구분되는 풀폭 행.
 export default function FAQAccordion({ faqs }: FAQAccordionProps) {
   const [openId, setOpenId] = useState<string | null>(null);
 
@@ -18,32 +19,29 @@ export default function FAQAccordion({ faqs }: FAQAccordionProps) {
   };
 
   return (
-    <motion.div {...inView} variants={stagger} className="space-y-4">
+    <motion.div {...inView} variants={stagger}>
       {faqs.map((faq) => {
         const isOpen = openId === faq.id;
         return (
           <motion.div
             key={faq.id}
             variants={fadeUp}
-            className="rounded-[28px] overflow-hidden border border-[#e5e8eb] bg-white shadow-[0_1px_3px_rgba(25,31,40,0.05)] hover:border-[#3182f6] hover:shadow-[0_24px_56px_rgba(25,31,40,0.13)] transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
+            className="border-t border-[#e5e8eb] last:border-b"
           >
             <button
               onClick={() => toggleFAQ(faq.id)}
               aria-expanded={isOpen}
-              className="w-full px-8 sm:px-10 py-7 sm:py-8 text-left flex items-center justify-between gap-6 transition-colors"
+              className="group w-full py-7 text-left flex items-center justify-between gap-6"
             >
-              <span className="font-bold text-[#191f28] text-[17px] sm:text-[19px] tracking-[-0.02em] leading-[1.4]">
+              <span className="text-[17px] sm:text-[19px] font-bold text-[#191f28] tracking-[-0.02em] leading-[1.4] transition-colors duration-300 group-hover:text-[#3182f6]">
                 {faq.question}
               </span>
               <motion.span
                 animate={{ rotate: isOpen ? 180 : 0 }}
                 transition={{ duration: DUR.standard, ease: easeEnter }}
-                className="flex-shrink-0"
+                className="flex-shrink-0 text-[#adb5bd]"
               >
-                <FiChevronDown
-                  size={26}
-                  className={isOpen ? 'text-[#3182f6]' : 'text-[#adb5bd]'}
-                />
+                <FiChevronDown size={22} />
               </motion.span>
             </button>
             <AnimatePresence initial={false}>
@@ -55,13 +53,9 @@ export default function FAQAccordion({ faqs }: FAQAccordionProps) {
                   transition={{ duration: DUR.slow, ease: easeEnter }}
                   className="overflow-hidden"
                 >
-                  <div className="px-8 sm:px-10 pb-8 sm:pb-10">
-                    <div className="rounded-2xl bg-[#f4f6f8] px-7 py-6">
-                      <p className="text-[#4e5968] leading-[1.8] text-[16px]">
-                        {faq.answer}
-                      </p>
-                    </div>
-                  </div>
+                  <p className="text-[16px] leading-[1.8] text-[#4e5968] pb-8 max-w-2xl">
+                    {faq.answer}
+                  </p>
                 </motion.div>
               )}
             </AnimatePresence>

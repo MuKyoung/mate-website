@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { projects } from '@/data/projects';
 import { summarizeDepartments } from '@/data/organization';
-import { FiExternalLink, FiGithub, FiArrowLeft, FiClock, FiYoutube, FiImage, FiArrowRight } from 'react-icons/fi';
+import { FiExternalLink, FiGithub, FiArrowLeft, FiYoutube, FiImage, FiArrowUpRight } from 'react-icons/fi';
 import ParallaxImage from '@/components/ParallaxImage';
 import { fadeUp, revealUp, clipUp, stagger, inView, onMount } from '@/lib/motion';
 
@@ -31,58 +31,55 @@ export default function ProjectDetailClient({ params }: Props) {
 
   return (
     <>
-      {/* ── 헤더 밴드 (쿨 그레이 그라데이션) ── */}
-      <section className="relative bg-gradient-to-b from-[#f4f6f8] to-white pt-44 sm:pt-56 pb-20 sm:pb-28 border-b border-[#e5e8eb]">
+      {/* ── 헤더 — 화이트 + 하단 헤어라인 ── */}
+      <section className="bg-white pt-40 sm:pt-52 pb-16 sm:pb-24 border-b border-[#e5e8eb]">
         <div className="container mx-auto px-4 sm:px-6">
-          <motion.div {...onMount} variants={fadeUp}>
+          <motion.div {...onMount} variants={fadeUp} className="mb-12 sm:mb-16">
             <Link href="/projects"
-              className="group inline-flex items-center gap-2 text-[15px] font-semibold text-[#4e5968] hover:text-[#3182f6] transition-colors mb-10">
-              <FiArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform duration-300" />
+              className="group inline-flex items-center gap-2 text-[15px] font-semibold text-[#4e5968] hover:text-[#191f28] border-b border-[#d1d6db] hover:border-[#191f28] pb-0.5 transition-colors">
+              <FiArrowLeft size={15} className="group-hover:-translate-x-0.5 transition-transform duration-300" />
               프로젝트 목록
             </Link>
           </motion.div>
 
-          {/* 메타 */}
-          <motion.div {...onMount} variants={fadeUp} className="flex flex-wrap items-center gap-3.5 mb-7">
-            <span className="px-4 py-1.5 rounded-full text-[14px] font-bold text-[#3182f6] bg-white border border-[#e5e8eb]">
-              {project.category}
-            </span>
-            <span className="inline-flex items-center gap-2 text-[15px] font-medium text-[#6b7684]">
-              <FiClock size={15} />
-              {project.durationMonths}개월
-            </span>
-          </motion.div>
+          {/* 메타 — 카테고리 · 기간 */}
+          <motion.p {...onMount} variants={fadeUp} className="index-num mb-7">
+            {project.category} · {project.durationMonths}개월
+          </motion.p>
 
           <motion.h1 {...onMount} variants={stagger}
-            className="text-[#191f28] font-extrabold tracking-[-0.04em] leading-[1.0] mb-8 max-w-5xl"
-            style={{ fontSize: 'clamp(2.5rem, 7vw, 5.5rem)' }}>
-            <span className="block overflow-hidden pb-[0.08em]"><motion.span variants={clipUp} className="block">{project.title}</motion.span></span>
+            className="text-[#191f28] font-extrabold tracking-[-0.05em] leading-[0.96] mb-8 sm:mb-10 max-w-5xl"
+            style={{ fontSize: 'clamp(2.75rem, 9vw, 7.5rem)' }}>
+            <span className="block overflow-hidden pb-[0.07em]">
+              <motion.span variants={clipUp} className="block">{project.title}</motion.span>
+            </span>
           </motion.h1>
 
-          <motion.p {...onMount} variants={fadeUp} className="text-xl sm:text-2xl text-[#4e5968] leading-[1.6] max-w-3xl mb-12">
+          <motion.p {...onMount} variants={fadeUp}
+            className="text-xl sm:text-2xl text-[#4e5968] leading-[1.65] max-w-3xl mb-12 sm:mb-14">
             {project.description}
           </motion.p>
 
-          {/* 액션 버튼 */}
-          <motion.div {...onMount} variants={fadeUp} className="flex flex-wrap items-center gap-4">
+          {/* 액션 — 잉크 버튼 / 아웃라인 / 언더라인 링크 */}
+          <motion.div {...onMount} variants={fadeUp} className="flex flex-wrap items-center gap-x-8 gap-y-5">
             {project.liveUrl && (
               <a href={project.liveUrl} target="_blank" rel="noopener noreferrer"
-                className="group inline-flex items-center gap-2.5 h-16 px-10 rounded-2xl text-[17px] font-bold text-white bg-[#3182f6] hover:bg-[#1b64da] transition-colors shadow-[0_8px_28px_rgba(49,130,246,0.32)]">
-                <FiExternalLink size={19} />
+                className="inline-flex items-center gap-2.5 h-14 px-8 rounded-[10px] text-[15px] font-bold text-white bg-[#191f28] hover:bg-[#3182f6] transition-colors duration-300">
+                <FiExternalLink size={17} />
                 라이브 데모
               </a>
             )}
             {project.youtubeUrl && (
               <a href={project.youtubeUrl} target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-2.5 h-16 px-10 rounded-2xl text-[17px] font-bold text-white bg-red-600 hover:bg-red-700 transition-colors">
-                <FiYoutube size={20} />
+                className="inline-flex items-center gap-2.5 h-14 px-8 rounded-[10px] text-[15px] font-bold text-[#191f28] border border-[#d1d6db] hover:border-[#191f28] transition-colors duration-300">
+                <FiYoutube size={18} className="text-[#ff0000]" />
                 YouTube
               </a>
             )}
             {project.githubUrl && (
               <a href={project.githubUrl} target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-2.5 h-16 px-10 rounded-2xl text-[17px] font-bold text-[#191f28] bg-white border border-[#d1d6db] hover:bg-[#f4f6f8] transition-colors">
-                <FiGithub size={19} />
+                className="inline-flex items-center gap-2 text-[15px] font-semibold text-[#4e5968] hover:text-[#191f28] border-b border-[#d1d6db] hover:border-[#191f28] pb-0.5 transition-colors">
+                <FiGithub size={16} />
                 GitHub
               </a>
             )}
@@ -90,18 +87,18 @@ export default function ProjectDetailClient({ params }: Props) {
         </div>
       </section>
 
-      {/* ── 본문 (white) ── */}
-      <section className="py-32 sm:py-44 bg-white">
+      {/* ── 본문 ── */}
+      <section className="py-28 sm:py-40 bg-white">
         <div className="container mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-y-16 gap-x-10 lg:gap-x-16 max-w-6xl">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-y-20 gap-x-10 lg:gap-x-16 max-w-6xl">
 
             {/* 메인 */}
-            <div className="lg:col-span-2 space-y-24">
+            <div className="lg:col-span-2 space-y-24 sm:space-y-28">
 
               {/* 영상 / 썸네일 — 대형 */}
               {project.youtubeUrl ? (
                 <motion.div {...inView} variants={revealUp}
-                  className="relative rounded-[32px] overflow-hidden aspect-video border border-[#e5e8eb] bg-[#f4f6f8]">
+                  className="relative rounded-[16px] overflow-hidden aspect-video bg-[#f4f6f8]">
                   <iframe
                     src={`https://www.youtube.com/embed/${getYouTubeVideoId(project.youtubeUrl)}?rel=0`}
                     title={project.title}
@@ -113,31 +110,39 @@ export default function ProjectDetailClient({ params }: Props) {
                   src={project.thumbnail}
                   alt={project.title}
                   className="aspect-[16/9]"
-                  rounded="rounded-[32px]"
+                  rounded="rounded-[16px]"
                   placeholder={<div className="absolute inset-0 flex items-center justify-center text-[#d1d6db]"><FiImage size={64} /></div>}
                 />
               )}
 
-              {/* 프로젝트 개요 */}
+              {/* (01) Overview */}
               <motion.div {...inView} variants={stagger}>
-                <motion.p variants={fadeUp} className="index-num mb-6">01 — Overview</motion.p>
-                <motion.h2 variants={fadeUp} className="text-[#191f28] font-extrabold tracking-[-0.035em] leading-[1.06] mb-9"
-                  style={{ fontSize: 'clamp(2.25rem, 6vw, 4.5rem)' }}>
+                <motion.div variants={fadeUp}
+                  className="pb-6 border-b border-[#e5e8eb] mb-10 sm:mb-14">
+                  <p className="index-num">(01) Overview</p>
+                </motion.div>
+                <motion.h2 variants={fadeUp}
+                  className="text-[#191f28] font-extrabold tracking-[-0.04em] leading-[1.04] mb-9"
+                  style={{ fontSize: 'clamp(2.25rem, 6vw, 4.75rem)' }}>
                   프로젝트 개요
                 </motion.h2>
-                <motion.p variants={fadeUp} className="text-[17px] text-[#4e5968] leading-[1.85] whitespace-pre-line">{project.longDescription}</motion.p>
+                <motion.p variants={fadeUp} className="text-[17px] text-[#4e5968] leading-[1.85] whitespace-pre-line">
+                  {project.longDescription}
+                </motion.p>
               </motion.div>
 
-              {/* 갤러리 */}
+              {/* (02) Gallery */}
               {project.images && project.images.length > 0 && (
                 <motion.div {...inView} variants={stagger}>
-                  <motion.div variants={fadeUp} className="pb-8 mb-12 border-b border-[#e5e8eb]">
-                    <p className="index-num mb-6">02 — Gallery</p>
-                    <h2 className="text-[#191f28] font-extrabold tracking-[-0.035em] leading-[1.06]"
-                      style={{ fontSize: 'clamp(2.25rem, 6vw, 4.5rem)' }}>
-                      스크린샷
-                    </h2>
+                  <motion.div variants={fadeUp}
+                    className="pb-6 border-b border-[#e5e8eb] mb-10 sm:mb-14">
+                    <p className="index-num">(02) Gallery</p>
                   </motion.div>
+                  <motion.h2 variants={fadeUp}
+                    className="text-[#191f28] font-extrabold tracking-[-0.04em] leading-[1.04] mb-10 sm:mb-12"
+                    style={{ fontSize: 'clamp(2.25rem, 6vw, 4.75rem)' }}>
+                    스크린샷
+                  </motion.h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                     {project.images.map((img, i) => (
                       <ParallaxImage
@@ -145,7 +150,7 @@ export default function ProjectDetailClient({ params }: Props) {
                         src={img}
                         alt={`${project.title} ${i + 1}`}
                         className="aspect-[16/9]"
-                        rounded="rounded-[24px]"
+                        rounded="rounded-xl"
                         placeholder={<div className="absolute inset-0 flex items-center justify-center text-[#d1d6db]"><FiImage size={40} /></div>}
                       />
                     ))}
@@ -154,17 +159,15 @@ export default function ProjectDetailClient({ params }: Props) {
               )}
             </div>
 
-            {/* 사이드바 */}
+            {/* 사이드바 — 룰탑 블록 */}
             <div className="lg:col-span-1 space-y-16">
 
               {/* 기술 스택 */}
               <motion.div {...inView} variants={fadeUp} className="rule-top">
                 <p className="index-num mb-6">Tech stack</p>
                 <div className="flex flex-wrap gap-2">
-                  {project.techStack.map((tech, i) => (
-                    <span key={tech} className={i % 2 === 0 ? 'tag tag-blue' : 'tag'}>
-                      {tech}
-                    </span>
+                  {project.techStack.map((tech) => (
+                    <span key={tech} className="tag">{tech}</span>
                   ))}
                 </div>
               </motion.div>
@@ -199,29 +202,34 @@ export default function ProjectDetailClient({ params }: Props) {
         </div>
       </section>
 
-      {/* ── 초대형 중앙 CTA (devigns 패턴) ── */}
-      <section className="py-40 sm:py-56 bg-white">
-        <div className="container mx-auto px-4 sm:px-6 text-center">
+      {/* ── (03) CTA ── */}
+      <section className="py-32 sm:py-48 bg-white border-t border-[#e5e8eb]">
+        <div className="container mx-auto px-4 sm:px-6">
+          <motion.p {...inView} variants={fadeUp} className="index-num mb-10">(03) Contact</motion.p>
           <motion.h2 {...inView} variants={stagger}
-            className="text-[#191f28] font-extrabold tracking-[-0.04em] leading-[1.0] mb-10 max-w-6xl mx-auto"
-            style={{ fontSize: 'clamp(2.5rem, 8vw, 6.5rem)' }}>
-            <span className="block overflow-hidden pb-[0.08em]">
+            className="text-[#191f28] font-extrabold tracking-[-0.05em] leading-[0.96] mb-10 sm:mb-14"
+            style={{ fontSize: 'clamp(2.75rem, 10vw, 9rem)' }}>
+            <span className="block overflow-hidden pb-[0.07em]">
               <motion.span variants={clipUp} className="block">비슷한 프로젝트를</motion.span>
             </span>
-            <span className="block overflow-hidden pb-[0.08em]">
-              <motion.span variants={clipUp} className="block">계획 중이신가요?</motion.span>
+            <span className="block overflow-hidden pb-[0.07em]">
+              <motion.span variants={clipUp} className="block text-[#3182f6]">계획 중이신가요?</motion.span>
             </span>
           </motion.h2>
           <motion.p {...inView} variants={fadeUp}
-            className="text-xl text-[#4e5968] leading-[1.75] max-w-2xl mx-auto mb-14">
+            className="text-lg sm:text-xl text-[#4e5968] leading-[1.75] max-w-2xl mb-12 sm:mb-16">
             게임 · 웹 · 앱 · AR/VR — 무료 상담으로 가능성을 확인하세요.
           </motion.p>
-          <motion.div {...inView} variants={fadeUp} className="flex justify-center">
+          <motion.div {...inView} variants={fadeUp} className="flex flex-wrap items-center gap-8">
             <Link href="/contact"
-              className="group inline-flex items-center gap-3 h-16 px-10 rounded-2xl text-[17px] font-bold text-white bg-[#3182f6] hover:bg-[#1b64da] transition-colors shadow-[0_8px_28px_rgba(49,130,246,0.32)]">
+              className="group inline-flex items-center gap-2.5 h-14 px-8 rounded-[10px] text-[15px] font-bold text-white bg-[#191f28] hover:bg-[#3182f6] transition-colors duration-300">
               문의하기
-              <FiArrowRight size={20} className="group-hover:translate-x-1.5 transition-transform duration-300" />
+              <FiArrowUpRight size={17} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-300" />
             </Link>
+            <a href="mailto:hsib1212@naver.com"
+              className="text-[15px] font-semibold text-[#4e5968] hover:text-[#191f28] border-b border-[#d1d6db] hover:border-[#191f28] pb-0.5 transition-colors">
+              hsib1212@naver.com
+            </a>
           </motion.div>
         </div>
       </section>

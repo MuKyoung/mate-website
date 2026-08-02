@@ -2,7 +2,7 @@
 
 import { motion, useScroll, useTransform, useInView, animate } from 'framer-motion';
 import Link from 'next/link';
-import { FiArrowRight, FiArrowDown } from 'react-icons/fi';
+import { FiArrowUpRight } from 'react-icons/fi';
 import { useRef, useEffect } from 'react';
 import { clipUp, fadeUp, stagger, onMount, inView, easeEnter } from '@/lib/motion';
 
@@ -12,17 +12,18 @@ function Stat({ to, suffix, label }: { to: number; suffix: string; label: string
   useEffect(() => {
     if (!seen) return;
     const ctrl = animate(0, to, {
-      duration: 1.6, ease: easeEnter,
+      duration: 1.4, ease: easeEnter,
       onUpdate(v) { if (ref.current) ref.current.textContent = Math.round(v) + suffix; },
     });
     return () => ctrl.stop();
   }, [seen, to, suffix]);
   return (
-    <div className="py-10 sm:py-14">
-      <div className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-[#191f28] font-mono-stat tracking-[-0.03em]">
-        <span ref={ref}>0{suffix}</span>
-      </div>
-      <div className="mt-3 text-[13px] sm:text-[14px] font-medium text-[#6b7684]">{label}</div>
+    <div className="flex items-baseline gap-3 py-7 sm:py-9">
+      <span ref={ref}
+        className="text-3xl sm:text-4xl font-extrabold text-[#191f28] font-mono-stat tracking-[-0.03em]">
+        0{suffix}
+      </span>
+      <span className="text-[13px] text-[#6b7684]">{label}</span>
     </div>
   );
 }
@@ -30,87 +31,78 @@ function Stat({ to, suffix, label }: { to: number; suffix: string; label: string
 const stats = [
   { to: 30, suffix: '+', label: '완료 프로젝트' },
   { to: 5, suffix: '년', label: '개발 경력' },
-  { to: 100, suffix: '%', label: '프로젝트 성공률' },
+  { to: 100, suffix: '%', label: '성공률' },
   { to: 7, suffix: '명', label: '전문 인력' },
 ];
 
 export default function Hero() {
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] });
-  // 스크롤 시 헤드라인이 크게 밀려 올라가며 사라짐
-  const y = useTransform(scrollYProgress, [0, 1], [0, -160]);
-  const opacity = useTransform(scrollYProgress, [0, 0.75], [1, 0]);
-  const scale = useTransform(scrollYProgress, [0, 1], [1, 0.94]);
+  const y = useTransform(scrollYProgress, [0, 1], [0, -120]);
+  const opacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
 
   return (
-    <>
-      {/* ── 풀스크린 태그라인 히어로 ── */}
-      <section ref={ref} className="relative bg-white min-h-[92vh] flex flex-col justify-center overflow-hidden">
-        <motion.div style={{ y, opacity, scale }} className="container mx-auto px-4 sm:px-6 pt-40 pb-24 origin-top">
-          <motion.p {...onMount} variants={fadeUp}
-            className="inline-flex items-center gap-2.5 text-[14px] sm:text-[15px] font-semibold text-[#4e5968] mb-10">
-            <span className="w-2 h-2 rounded-full bg-[#3182f6]" />
-            We are Dev Team MATE
-          </motion.p>
+    <section ref={ref} className="relative bg-white">
+      <motion.div style={{ y, opacity }}
+        className="container mx-auto px-4 sm:px-6 min-h-[88vh] flex flex-col justify-end pt-32 pb-14 sm:pb-20">
 
-          {/* 화면을 가득 채우는 초대형 스테이트먼트 */}
-          <motion.h1 {...onMount} variants={stagger}
-            className="text-[#191f28] font-extrabold tracking-[-0.045em] leading-[0.92] mb-14"
-            style={{ fontSize: 'clamp(3rem, 11vw, 11rem)' }}>
-            <span className="block overflow-hidden pb-[0.08em]">
-              <motion.span variants={clipUp} className="block">With MATE,</motion.span>
-            </span>
-            <span className="block overflow-hidden pb-[0.08em]">
-              <motion.span variants={clipUp} className="block">Imagination</motion.span>
-            </span>
-            <span className="block overflow-hidden pb-[0.08em]">
-              <motion.span variants={clipUp} className="block text-[#3182f6]">becomes real</motion.span>
-            </span>
-          </motion.h1>
+        {/* 상단 메타 행 */}
+        <motion.div {...onMount} variants={fadeUp}
+          className="flex items-center justify-between pb-10 sm:pb-14">
+          <p className="index-num">Game · Web · App Studio</p>
+          <p className="index-num">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#3182f6] inline-block" />
+            상담 가능
+          </p>
+        </motion.div>
 
-          <div className="grid lg:grid-cols-12 gap-y-10 gap-x-8 items-end">
-            <motion.p {...onMount} variants={fadeUp}
-              className="lg:col-span-7 text-xl sm:text-2xl lg:text-[28px] text-[#4e5968] leading-[1.6] tracking-[-0.01em]">
-              게임 · 웹 · 앱 · AR/VR까지 한 팀에서.<br className="hidden sm:block" />
-              기획부터 배포까지 책임지는 외주개발 스튜디오.
-            </motion.p>
+        {/* 초대형 스테이트먼트 */}
+        <motion.h1 {...onMount} variants={stagger}
+          className="text-[#191f28] font-extrabold tracking-[-0.05em] leading-[0.94] mb-12 sm:mb-16"
+          style={{ fontSize: 'clamp(3rem, 12vw, 12rem)' }}>
+          <span className="block overflow-hidden pb-[0.06em]">
+            <motion.span variants={clipUp} className="block">With MATE,</motion.span>
+          </span>
+          <span className="block overflow-hidden pb-[0.06em]">
+            <motion.span variants={clipUp} className="block">
+              Imagination<span className="text-[#3182f6]">.</span>
+            </motion.span>
+          </span>
+        </motion.h1>
 
-            <motion.div {...onMount} variants={fadeUp}
-              className="lg:col-span-5 flex flex-wrap items-center gap-4 lg:justify-end">
-              <Link href="/contact"
-                className="group inline-flex items-center gap-3 h-16 px-10 rounded-2xl text-[17px] font-bold text-white bg-[#3182f6] hover:bg-[#1b64da] transition-colors shadow-[0_8px_28px_rgba(49,130,246,0.32)]">
-                문의하기
-                <FiArrowRight size={20} className="group-hover:translate-x-1.5 transition-transform duration-300" />
-              </Link>
-              <Link href="/projects"
-                className="group inline-flex items-center gap-2 text-[17px] font-bold text-[#191f28] hover:text-[#3182f6] transition-colors">
-                <span className="border-b-2 border-[#191f28] group-hover:border-[#3182f6] pb-1 transition-colors">포트폴리오</span>
-              </Link>
-            </motion.div>
+        {/* 하단 행 — 설명 좌 / 액션 우 */}
+        <motion.div {...onMount} variants={fadeUp}
+          className="grid lg:grid-cols-12 gap-y-8 gap-x-8 items-end">
+          <p className="lg:col-span-6 text-lg sm:text-xl text-[#4e5968] leading-[1.65] max-w-xl">
+            게임 · 웹 · 앱 · AR/VR까지 한 팀에서.
+            기획부터 배포까지 책임지는 외주개발 스튜디오입니다.
+          </p>
+          <div className="lg:col-span-6 flex flex-wrap items-center gap-7 lg:justify-end">
+            <Link href="/contact"
+              className="group inline-flex items-center gap-2.5 h-14 px-8 rounded-[10px] text-[15px] font-bold text-white bg-[#191f28] hover:bg-[#3182f6] transition-colors duration-300">
+              프로젝트 문의
+              <FiArrowUpRight size={17} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-300" />
+            </Link>
+            <Link href="/projects"
+              className="text-[15px] font-semibold text-[#191f28] border-b border-[#191f28]/30 hover:border-[#191f28] pb-0.5 transition-colors">
+              포트폴리오 보기
+            </Link>
           </div>
         </motion.div>
+      </motion.div>
 
-        {/* 스크롤 큐 */}
-        <motion.div
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.4, duration: 0.8 }}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-[#adb5bd]">
-          <span className="text-[11px] font-semibold tracking-[0.2em] uppercase">Scroll</span>
-          <FiArrowDown size={16} className="animate-bounce" />
-        </motion.div>
-      </section>
-
-      {/* ── 신뢰 지표 — 큼직하게 ── */}
-      <motion.div {...inView} variants={fadeUp} className="border-y border-[#e5e8eb] bg-[#f4f6f8]">
+      {/* 지표 — 헤어라인 행 */}
+      <motion.div {...inView} variants={fadeUp} className="border-t border-[#e5e8eb]">
         <div className="container mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-2 sm:grid-cols-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4">
             {stats.map((s, i) => (
               <div key={s.label}
                 className={[
-                  'border-[#e5e8eb] px-5 sm:px-8',
-                  i % 2 === 1 ? 'border-l' : '',
+                  'border-[#e5e8eb]',
+                  i % 2 === 1 ? 'border-l pl-6 sm:pl-8' : '',
                   i >= 2 ? 'border-t' : '',
-                  i > 0 ? 'sm:border-l' : 'sm:border-l-0',
-                  i >= 2 ? 'sm:border-t-0' : '',
+                  i > 0 ? 'lg:border-l lg:pl-8' : 'lg:border-l-0 lg:pl-0',
+                  i >= 2 ? 'lg:border-t-0' : '',
                 ].join(' ')}>
                 <Stat {...s} />
               </div>
@@ -118,6 +110,6 @@ export default function Hero() {
           </div>
         </div>
       </motion.div>
-    </>
+    </section>
   );
 }

@@ -82,7 +82,7 @@ export default function Header() {
 
           <Link
             href="/contact"
-            className="ml-4 px-5 h-10 inline-flex items-center rounded-xl text-sm font-bold text-white bg-[#3182f6] hover:bg-[#1b64da] transition-colors duration-150"
+            className="ml-4 px-5 h-10 inline-flex items-center rounded-[10px] text-sm font-bold text-white bg-[#191f28] hover:bg-[#3182f6] transition-colors duration-300"
           >
             상담 신청
           </Link>
@@ -134,9 +134,9 @@ export default function Header() {
                   <Link
                     href={item.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+                    className={`flex items-center justify-between px-3 py-2.5 rounded-[10px] text-sm font-semibold transition-colors ${
                       pathname === item.href
-                        ? 'text-[#3182f6] bg-[#e8f3ff]'
+                        ? 'text-[#191f28] bg-[#f4f6f8]'
                         : 'text-[#4e5968] hover:text-[#191f28] hover:bg-black/[0.03]'
                     }`}
                   >
@@ -156,7 +156,7 @@ export default function Header() {
                 <Link
                   href="/contact"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="block text-center px-4 py-3 rounded-xl text-sm font-bold text-white bg-[#3182f6] hover:bg-[#1b64da] transition-colors"
+                  className="block text-center px-4 py-3 rounded-[10px] text-sm font-bold text-white bg-[#191f28] hover:bg-[#3182f6] transition-colors"
                 >
                   무료 상담 신청
                 </Link>

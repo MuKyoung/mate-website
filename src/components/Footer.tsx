@@ -36,15 +36,15 @@ export default function Footer() {
           className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 pb-16 mb-16 border-b border-[#e5e8eb]"
         >
           <div>
-            <p className="text-[13px] font-semibold text-[#3182f6] mb-5">Let&apos;s work together</p>
+            <p className="index-num mb-6">Let&apos;s work together</p>
             <a href="mailto:hsib1212@naver.com"
-              className="text-[#191f28] font-extrabold tracking-[-0.03em] hover:text-[#3182f6] transition-colors break-all"
-              style={{ fontSize: 'clamp(1.5rem, 3vw, 2.75rem)' }}>
+              className="text-[#191f28] font-extrabold tracking-[-0.04em] hover:text-[#3182f6] transition-colors break-all"
+              style={{ fontSize: 'clamp(1.75rem, 4.5vw, 4rem)' }}>
               hsib1212@naver.com
             </a>
           </div>
           <Link href="/contact"
-            className="group inline-flex items-center gap-2 h-12 px-7 rounded-xl text-[14px] font-bold text-white bg-[#3182f6] hover:bg-[#1b64da] transition-colors flex-shrink-0">
+            className="group inline-flex items-center gap-2 h-12 px-7 rounded-[10px] text-[14px] font-bold text-white bg-[#191f28] hover:bg-[#3182f6] transition-colors duration-300 flex-shrink-0">
             프로젝트 문의
             <FiArrowUpRight size={16} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
           </Link>
@@ -63,7 +63,7 @@ export default function Footer() {
               {social.map((s) => (
                 <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
                   aria-label={s.label}
-                  className="w-9 h-9 rounded-xl flex items-center justify-center text-[#4e5968] hover:text-[#3182f6] hover:bg-[#e8f3ff] border border-[#e5e8eb] transition-colors duration-150">
+                  className="w-9 h-9 flex items-center justify-center text-[#adb5bd] hover:text-[#191f28] transition-colors duration-150">
                   <s.icon size={14} />
                 </a>
               ))}
