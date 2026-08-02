@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { projects } from '@/data/projects';
-import { teamMembers } from '@/data/team';
+import { summarizeDepartments } from '@/data/organization';
 import { FiExternalLink, FiGithub, FiArrowLeft, FiClock, FiYoutube, FiImage, FiArrowRight } from 'react-icons/fi';
 import ParallaxImage from '@/components/ParallaxImage';
 import { fadeUp, revealUp, clipUp, stagger, inView, onMount } from '@/lib/motion';
@@ -27,7 +27,7 @@ export default function ProjectDetailClient({ params }: Props) {
   const project = projects.find(p => p.id === params.slug);
   if (!project) notFound();
 
-  const team = teamMembers.filter(m => project.teamMembers.includes(m.id));
+  const team = summarizeDepartments(project.teamMembers);
 
   return (
     <>
@@ -169,22 +169,26 @@ export default function ProjectDetailClient({ params }: Props) {
                 </div>
               </motion.div>
 
-              {/* 팀원 */}
+              {/* 참여 조직 — 실명 대신 부서 구성만 표시 */}
               {team.length > 0 && (
                 <motion.div {...inView} variants={fadeUp} className="rule-top">
                   <p className="index-num mb-3">Team</p>
+                  <p className="text-[17px] font-bold text-[#191f28] mb-5">
+                    참여 인원 {project.teamMembers.length}명
+                  </p>
                   <div>
-                    {team.map(m => (
-                      <Link key={m.id} href={`/team/${m.id}`}
-                        className="group flex items-center gap-4 py-5 border-b border-[#e5e8eb] transition-colors">
-                        <div className="w-12 h-12 rounded-full bg-[#3182f6] flex items-center justify-center text-[16px] font-bold text-white flex-shrink-0">
-                          {m.name.charAt(0)}
+                    {team.map(d => (
+                      <div key={d.id}
+                        className="flex items-center justify-between gap-4 py-5 border-b border-[#e5e8eb]">
+                        <div className="min-w-0">
+                          <p className="text-[16px] font-bold text-[#191f28]">{d.name}</p>
+                          <p className="text-[14px] text-[#4e5968]">{d.label}</p>
                         </div>
-                        <div className="min-w-0 flex-grow">
-                          <p className="text-[17px] font-bold text-[#191f28] group-hover:text-[#3182f6] truncate transition-colors">{m.name}</p>
-                          <p className="text-[14px] text-[#4e5968] truncate">{m.role}</p>
-                        </div>
-                      </Link>
+                        <span className="text-2xl font-extrabold text-[#191f28] font-mono-stat tracking-[-0.03em] flex-shrink-0">
+                          {d.count}
+                          <span className="text-[13px] font-bold text-[#adb5bd] ml-1">명</span>
+                        </span>
+                      </div>
                     ))}
                   </div>
                 </motion.div>

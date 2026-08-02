@@ -44,3 +44,27 @@ export const departments: DepartmentInfo[] = [
 
 /** 전체 인원 */
 export const totalHeadcount = departments.reduce((sum, d) => sum + d.headcount, 0);
+
+/**
+ * 프로젝트 참여자 ID → 소속 부서 매핑.
+ * 실명·프로필을 노출하지 않기 위해, 프로젝트 상세에서는 이 매핑으로
+ * 참여 인원 수와 부서 구성만 표시한다.
+ */
+export const memberDepartments: Record<string, Department> = {
+  '1': 'development',
+  '2': 'development',
+  '3': 'design',
+  '4': 'development',
+};
+
+/** 참여자 ID 목록 → 부서별 인원 집계 */
+export function summarizeDepartments(memberIds: string[]) {
+  const counts = new Map<Department, number>();
+  memberIds.forEach((id) => {
+    const dept = memberDepartments[id];
+    if (dept) counts.set(dept, (counts.get(dept) ?? 0) + 1);
+  });
+  return departments
+    .filter((d) => counts.has(d.id))
+    .map((d) => ({ ...d, count: counts.get(d.id) as number }));
+}

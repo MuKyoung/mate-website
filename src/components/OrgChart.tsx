@@ -1,11 +1,9 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import Link from 'next/link';
 import { FiCode, FiPenTool, FiCompass } from 'react-icons/fi';
 import type { IconType } from 'react-icons';
 import { departments, totalHeadcount } from '@/data/organization';
-import { teamMembers } from '@/data/team';
 import type { Department } from '@/types';
 import { fadeUp, revealUp, stagger, inView, easeEnter } from '@/lib/motion';
 
@@ -56,7 +54,6 @@ export default function OrgChart() {
         className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10 md:mt-0">
         {departments.map((dept) => {
           const Icon = iconByDept[dept.id];
-          const members = teamMembers.filter((m) => m.department === dept.id);
           return (
             <motion.div key={dept.id} variants={fadeUp}
               className="rounded-[28px] border border-[#e5e8eb] bg-white p-8 sm:p-10 shadow-[0_1px_3px_rgba(25,31,40,0.05)] hover:shadow-[0_24px_56px_rgba(25,31,40,0.13)] hover:-translate-y-2 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]">
@@ -77,33 +74,14 @@ export default function OrgChart() {
               <p className="text-[16px] text-[#4e5968] leading-[1.75] mb-8">{dept.description}</p>
 
               {/* 담당 영역 */}
-              <ul className="flex flex-wrap gap-2 mb-8">
-                {dept.focus.map((f) => (
-                  <li key={f} className="tag">{f}</li>
-                ))}
-              </ul>
-
-              {/* 소속 구성원 */}
-              {members.length > 0 && (
-                <div className="pt-6 border-t border-[#e5e8eb]">
-                  <p className="text-[12px] font-semibold text-[#adb5bd] mb-3">구성원</p>
-                  <ul className="flex flex-wrap gap-2">
-                    {members.map((m) => (
-                      <li key={m.id}>
-                        <Link href={`/team/${m.id}`}
-                          className="inline-flex items-center gap-2 pl-1.5 pr-3.5 py-1.5 rounded-full border border-[#e5e8eb] hover:border-[#3182f6] transition-colors group">
-                          <span className="w-6 h-6 rounded-full bg-[#e8f3ff] text-[#3182f6] text-[11px] font-bold flex items-center justify-center">
-                            {m.name.charAt(0)}
-                          </span>
-                          <span className="text-[14px] font-semibold text-[#191f28] group-hover:text-[#3182f6] transition-colors">
-                            {m.name}
-                          </span>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+              <div className="pt-6 border-t border-[#e5e8eb]">
+                <p className="text-[12px] font-semibold text-[#adb5bd] mb-3">담당 영역</p>
+                <ul className="flex flex-wrap gap-2">
+                  {dept.focus.map((f) => (
+                    <li key={f} className="tag">{f}</li>
+                  ))}
+                </ul>
+              </div>
             </motion.div>
           );
         })}

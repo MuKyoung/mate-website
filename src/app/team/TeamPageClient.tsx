@@ -3,10 +3,8 @@
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import PageHeader from '@/components/PageHeader';
-import TeamMemberCard from '@/components/TeamMemberCard';
 import TeamCapabilityCard from '@/components/TeamCapabilityCard';
 import OrgChart from '@/components/OrgChart';
-import { teamMembers } from '@/data/team';
 import { teamCapabilities, awards, type Award } from '@/data/teamCapabilities';
 import {
   FiArrowRight, FiStar, FiFileText, FiBookmark, FiGrid,
@@ -181,29 +179,6 @@ export default function TeamPageClient() {
           </motion.div>
 
           <OrgChart />
-        </div>
-      </section>
-
-      {/* ━━ 팀 멤버 ━━ */}
-      <section className="py-32 sm:py-44 bg-white">
-        <div className="container mx-auto px-4 sm:px-6">
-          <motion.div {...inView} variants={fadeUp}
-            className="flex flex-wrap items-end justify-between gap-8 mb-20">
-            <div className="max-w-3xl">
-              <p className="index-num mb-6">Members</p>
-              <h2 className="text-[#191f28] font-extrabold tracking-[-0.035em] leading-[1.06]"
-                style={{ fontSize: 'clamp(2.25rem, 6vw, 4.5rem)' }}>
-                팀 멤버
-              </h2>
-            </div>
-            <p className="text-[16px] text-[#4e5968] leading-[1.75] pb-3">각 분야의 전문가가 기획부터 배포까지 함께합니다.</p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {teamMembers.map((member, i) => (
-              <TeamMemberCard key={member.id} member={member} index={i} />
-            ))}
-          </div>
         </div>
       </section>
 
