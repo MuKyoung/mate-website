@@ -25,14 +25,14 @@ const iconById: Record<string, IconType> = {
   '5': FiSend, // 배포
 };
 
-// 화이트/라벤더 배경 위 — 번호가 채워진 원형 노드 + 헤어라인 커넥터.
+// 화이트/쿨 그레이 배경 위 — 번호가 채워진 원형 노드 + 헤어라인 커넥터.
 export default function ProcessTimeline({ steps }: ProcessTimelineProps) {
   const sortedSteps = [...steps].sort((a, b) => a.order - b.order);
 
   return (
     <motion.div {...inView} variants={staggerTight} className="relative max-w-2xl">
       {/* 세로 커넥터 라인 */}
-      <div className="absolute left-6 top-6 bottom-6 w-px bg-[#e6e4f2]" />
+      <div className="absolute left-6 top-6 bottom-6 w-px bg-[#e5e8eb]" />
 
       <div className="space-y-0">
         {sortedSteps.map((step, index) => {
@@ -45,18 +45,18 @@ export default function ProcessTimeline({ steps }: ProcessTimelineProps) {
               className={`relative flex gap-5 ${isLast ? '' : 'pb-10'}`}
             >
               {/* 번호 노드 */}
-              <div className="relative z-10 flex-shrink-0 w-12 h-12 rounded-full bg-[#4f46ff] flex items-center justify-center text-white font-bold">
+              <div className="relative z-10 flex-shrink-0 w-12 h-12 rounded-full bg-[#3182f6] flex items-center justify-center text-white font-bold">
                 <Icon size={19} />
               </div>
 
               <div className="min-w-0 pt-2">
                 <div className="flex items-baseline gap-2.5 mb-1.5">
-                  <span className="text-[12px] text-[#4f46ff] font-bold font-mono-stat">
+                  <span className="text-[12px] text-[#3182f6] font-bold font-mono-stat">
                     {String(step.order).padStart(2, '0')}
                   </span>
-                  <h3 className="text-[16px] font-bold text-[#0f0f19]">{step.title}</h3>
+                  <h3 className="text-[16px] font-bold text-[#191f28]">{step.title}</h3>
                 </div>
-                <p className="text-sm text-[#5b5b6b] leading-[1.7] max-w-md">
+                <p className="text-sm text-[#4e5968] leading-[1.7] max-w-md">
                   {step.description}
                 </p>
               </div>

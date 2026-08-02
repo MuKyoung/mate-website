@@ -109,8 +109,8 @@ export default function ContactPage() {
   };
 
   const inputClass =
-    'w-full h-12 px-4 bg-white border border-[#e6e4f2] rounded-xl text-[15px] text-[#0f0f19] placeholder-[#b3b3c2] outline-none transition-colors focus:border-[#4f46ff] focus:ring-2 focus:ring-[#ecebff]';
-  const labelClass = 'block text-sm font-semibold text-[#0f0f19] mb-2';
+    'w-full h-12 px-4 bg-white border border-[#e5e8eb] rounded-xl text-[15px] text-[#191f28] placeholder-[#adb5bd] outline-none transition-colors focus:border-[#3182f6] focus:ring-2 focus:ring-[#e8f3ff]';
+  const labelClass = 'block text-sm font-semibold text-[#191f28] mb-2';
 
   return (
     <>
@@ -130,9 +130,9 @@ export default function ContactPage() {
 
             {/* 문의 양식 */}
             <motion.div variants={fadeUp} className="lg:col-span-2">
-              <div className="p-6 sm:p-8 rounded-2xl border border-[#e6e4f2] bg-white">
-                <p className="text-[13px] font-semibold text-[#4f46ff] mb-4">01 — Inquiry</p>
-                <h2 className="text-[#0f0f19] font-extrabold tracking-[-0.03em] mb-7"
+              <div className="p-6 sm:p-8 rounded-[20px] border border-[#e5e8eb] bg-white shadow-[0_1px_3px_rgba(25,31,40,0.05)]">
+                <p className="text-[13px] font-semibold text-[#3182f6] mb-4">01 — Inquiry</p>
+                <h2 className="text-[#191f28] font-extrabold tracking-[-0.03em] mb-7"
                   style={{ fontSize: 'clamp(1.375rem, 2.5vw, 1.75rem)' }}>
                   문의 양식
                 </h2>
@@ -166,7 +166,7 @@ export default function ContactPage() {
                     <textarea
                       id="message" name="message"
                       value={formData.message} onChange={handleChange} required rows={6}
-                      className="w-full px-4 py-3 bg-white border border-[#e6e4f2] rounded-xl text-[15px] text-[#0f0f19] placeholder-[#b3b3c2] outline-none transition-colors resize-none focus:border-[#4f46ff] focus:ring-2 focus:ring-[#ecebff]"
+                      className="w-full px-4 py-3 bg-white border border-[#e5e8eb] rounded-xl text-[15px] text-[#191f28] placeholder-[#adb5bd] outline-none transition-colors resize-none focus:border-[#3182f6] focus:ring-2 focus:ring-[#e8f3ff]"
                       placeholder="문의 내용을 입력하세요"
                     />
                   </div>
@@ -185,7 +185,7 @@ export default function ContactPage() {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="h-12 px-6 inline-flex items-center justify-center gap-2 bg-[#4f46ff] text-white rounded-xl text-[15px] font-bold hover:bg-[#3d33e8] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="h-12 px-6 inline-flex items-center justify-center gap-2 bg-[#3182f6] text-white rounded-xl text-[15px] font-bold hover:bg-[#1b64da] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isSubmitting ? (
                       '전송 중...'
@@ -207,7 +207,7 @@ export default function ContactPage() {
                 href={KAKAO_OPEN_CHAT_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block p-5 rounded-2xl bg-[#FEE500] hover:bg-[#FDD835] transition-colors group"
+                className="block p-5 rounded-[20px] bg-[#FEE500] hover:bg-[#FDD835] transition-colors group"
               >
                 <div className="flex items-center gap-4 mb-4">
                   <div className="w-11 h-11 bg-[#3C1E1E] rounded-xl flex items-center justify-center">
@@ -229,31 +229,31 @@ export default function ContactPage() {
               </a>
 
               {/* 연락처 정보 */}
-              <div className="p-6 rounded-2xl border border-[#e6e4f2] bg-white">
-                <h2 className="text-[13px] font-semibold text-[#4f46ff] mb-5">Direct</h2>
-                <div className="divide-y divide-[#e6e4f2]">
+              <div className="p-6 rounded-[20px] border border-[#e5e8eb] bg-white shadow-[0_1px_3px_rgba(25,31,40,0.05)]">
+                <h2 className="text-[13px] font-semibold text-[#3182f6] mb-5">Direct</h2>
+                <div className="divide-y divide-[#e5e8eb]">
                   <a href="mailto:hsib1212@naver.com" className="flex items-start gap-3.5 py-4 first:pt-0 group">
-                    <FiMail className="text-[#b3b3c2] mt-0.5 flex-shrink-0 group-hover:text-[#4f46ff] transition-colors" size={16} />
+                    <FiMail className="text-[#adb5bd] mt-0.5 flex-shrink-0 group-hover:text-[#3182f6] transition-colors" size={16} />
                     <div>
-                      <p className="text-[13px] text-[#858594] mb-0.5">이메일</p>
-                      <p className="text-[14px] font-medium text-[#0f0f19] break-all">
+                      <p className="text-[13px] text-[#6b7684] mb-0.5">이메일</p>
+                      <p className="text-[14px] font-medium text-[#191f28] break-all">
                         hsib1212@naver.com
                       </p>
                     </div>
                   </a>
                   <a href="tel:0507-1339-9141" className="flex items-start gap-3.5 py-4 group">
-                    <FiPhone className="text-[#b3b3c2] mt-0.5 flex-shrink-0 group-hover:text-[#4f46ff] transition-colors" size={16} />
+                    <FiPhone className="text-[#adb5bd] mt-0.5 flex-shrink-0 group-hover:text-[#3182f6] transition-colors" size={16} />
                     <div>
-                      <p className="text-[13px] text-[#858594] mb-0.5">전화</p>
-                      <p className="text-[14px] font-medium text-[#0f0f19]">
+                      <p className="text-[13px] text-[#6b7684] mb-0.5">전화</p>
+                      <p className="text-[14px] font-medium text-[#191f28]">
                         0507-1339-9141
                       </p>
                     </div>
                   </a>
                 </div>
 
-                <p className="mt-5 pt-5 border-t border-[#e6e4f2] text-[13px] text-[#5b5b6b] leading-relaxed">
-                  <span className="font-semibold text-[#0f0f19]">빠른 답변</span>을 원하시면 카카오톡 오픈채팅을 이용해주세요.
+                <p className="mt-5 pt-5 border-t border-[#e5e8eb] text-[13px] text-[#4e5968] leading-relaxed">
+                  <span className="font-semibold text-[#191f28]">빠른 답변</span>을 원하시면 카카오톡 오픈채팅을 이용해주세요.
                 </p>
               </div>
             </motion.div>
@@ -261,19 +261,19 @@ export default function ContactPage() {
         </div>
       </section>
 
-      {/* ── FAQ (라벤더 서피스 밴드) ── */}
-      <section className="py-24 sm:py-32 bg-[#f4f3ff]">
+      {/* ── FAQ (쿨 그레이 서피스 밴드) ── */}
+      <section className="py-24 sm:py-32 bg-[#f4f6f8]">
         <div className="container mx-auto px-4 sm:px-6">
           <motion.div {...inView} variants={fadeUp}
             className="flex flex-wrap items-baseline justify-between gap-4 mb-12">
             <div className="flex items-baseline gap-4">
-              <span className="text-[13px] font-semibold text-[#4f46ff]">02</span>
-              <h2 className="text-[#0f0f19] font-extrabold tracking-[-0.03em]"
+              <span className="text-[13px] font-semibold text-[#3182f6]">02</span>
+              <h2 className="text-[#191f28] font-extrabold tracking-[-0.03em]"
                 style={{ fontSize: 'clamp(1.875rem, 3.5vw, 2.75rem)' }}>
                 자주 묻는 질문
               </h2>
             </div>
-            <p className="text-[14px] text-[#5b5b6b]">궁금한 점이 있으시면 FAQ를 확인해보세요.</p>
+            <p className="text-[14px] text-[#4e5968]">궁금한 점이 있으시면 FAQ를 확인해보세요.</p>
           </motion.div>
           <div className="max-w-2xl">
             <FAQAccordion faqs={faqs} />

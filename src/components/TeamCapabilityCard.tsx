@@ -18,7 +18,7 @@ interface Capability {
 interface TeamCapabilityCardProps {
   capability: Capability;
   index: number;
-  /** 볼드 블루 패널 위에 얹힐 때(예: 전문 역량 인셋 패널) — 어두운 근접색 대신 화이트 틴트로 표시 */
+  /** 딥 잉크 패널 위에 얹힐 때(예: 전문 역량 인셋 패널) — 화이트 틴트로 표시 */
   onBlue?: boolean;
 }
 
@@ -40,44 +40,44 @@ export default function TeamCapabilityCard({ capability, index, onBlue = false }
       transition={{ delay: index * 0.09, duration: 0.7, ease: easeEnter }}
       className={
         onBlue
-          ? 'group h-full p-7 sm:p-8 rounded-2xl border border-white/20 bg-white/[0.08] hover:bg-white/[0.14] transition-colors'
-          : 'group h-full p-7 sm:p-8 rounded-2xl border border-[#e6e4f2] bg-white hover:border-[#4f46ff] hover:shadow-[0_8px_28px_-8px_rgba(79,70,255,0.25)] transition-all duration-200'
+          ? 'group h-full p-7 sm:p-8 rounded-[20px] border border-white/10 bg-white/[0.04] hover:bg-white/[0.07] transition-colors'
+          : 'group h-full p-7 sm:p-8 rounded-[20px] border border-[#e5e8eb] bg-white shadow-[0_1px_3px_rgba(25,31,40,0.05)] hover:shadow-[0_12px_32px_rgba(25,31,40,0.10)] hover:-translate-y-0.5 transition-all duration-200'
       }
     >
       {/* 아이콘 + 인덱스 */}
       <div className="flex items-start justify-between mb-7">
         <div className={
           onBlue
-            ? 'w-12 h-12 rounded-xl flex items-center justify-center bg-white/15 text-white'
-            : 'w-12 h-12 rounded-xl flex items-center justify-center bg-[#ecebff] text-[#4f46ff] group-hover:bg-[#4f46ff] group-hover:text-white transition-colors'
+            ? 'w-12 h-12 rounded-xl flex items-center justify-center bg-white/10 text-white'
+            : 'w-12 h-12 rounded-xl flex items-center justify-center bg-[#e8f3ff] text-[#3182f6] group-hover:bg-[#3182f6] group-hover:text-white transition-colors'
         }>
           <Icon size={22} />
         </div>
-        <span className={onBlue ? 'text-[12px] text-white/50 font-mono-stat' : 'text-[12px] text-[#b3b3c2] font-mono-stat'}>
+        <span className={onBlue ? 'text-[12px] text-white/50 font-mono-stat' : 'text-[12px] text-[#adb5bd] font-mono-stat'}>
           0{index + 1}
         </span>
       </div>
 
-      <h3 className={onBlue ? 'text-[17px] font-bold text-white mb-2.5' : 'text-[17px] font-bold text-[#0f0f19] mb-2.5'}>
+      <h3 className={onBlue ? 'text-[17px] font-bold text-white mb-2.5' : 'text-[17px] font-bold text-[#191f28] mb-2.5'}>
         {capability.title}
       </h3>
-      <p className={onBlue ? 'text-sm text-white/75 leading-[1.7] mb-6' : 'text-sm text-[#5b5b6b] leading-[1.7] mb-6'}>
+      <p className={onBlue ? 'text-sm text-white/65 leading-[1.7] mb-6' : 'text-sm text-[#4e5968] leading-[1.7] mb-6'}>
         {capability.description}
       </p>
 
       {/* 통계 */}
       <div className={
         onBlue
-          ? 'grid grid-cols-2 divide-x divide-white/15 border-y border-white/15 mb-6'
-          : 'grid grid-cols-2 divide-x divide-[#e6e4f2] border-y border-[#e6e4f2] mb-6'
+          ? 'grid grid-cols-2 divide-x divide-white/10 border-y border-white/10 mb-6'
+          : 'grid grid-cols-2 divide-x divide-[#e5e8eb] border-y border-[#e5e8eb] mb-6'
       }>
         <div className="py-4 pr-4">
-          <div className={onBlue ? 'text-xl font-extrabold text-white font-mono-stat tracking-tight' : 'text-xl font-extrabold text-[#0f0f19] font-mono-stat tracking-tight'}>{capability.experience}</div>
-          <div className={onBlue ? 'text-[12px] text-white/60 mt-1' : 'text-[12px] text-[#858594] mt-1'}>경력</div>
+          <div className={onBlue ? 'text-xl font-extrabold text-white font-mono-stat tracking-tight' : 'text-xl font-extrabold text-[#191f28] font-mono-stat tracking-tight'}>{capability.experience}</div>
+          <div className={onBlue ? 'text-[12px] text-white/60 mt-1' : 'text-[12px] text-[#6b7684] mt-1'}>경력</div>
         </div>
         <div className="py-4 pl-4">
-          <div className={onBlue ? 'text-xl font-extrabold text-white font-mono-stat tracking-tight' : 'text-xl font-extrabold text-[#0f0f19] font-mono-stat tracking-tight'}>{capability.projects}개</div>
-          <div className={onBlue ? 'text-[12px] text-white/60 mt-1' : 'text-[12px] text-[#858594] mt-1'}>완료 프로젝트</div>
+          <div className={onBlue ? 'text-xl font-extrabold text-white font-mono-stat tracking-tight' : 'text-xl font-extrabold text-[#191f28] font-mono-stat tracking-tight'}>{capability.projects}개</div>
+          <div className={onBlue ? 'text-[12px] text-white/60 mt-1' : 'text-[12px] text-[#6b7684] mt-1'}>완료 프로젝트</div>
         </div>
       </div>
 
@@ -86,15 +86,15 @@ export default function TeamCapabilityCard({ capability, index, onBlue = false }
         <h4 className={
           onBlue
             ? 'text-[12px] text-white/60 mb-3 flex items-center gap-1.5'
-            : 'text-[12px] text-[#858594] mb-3 flex items-center gap-1.5'
+            : 'text-[12px] text-[#6b7684] mb-3 flex items-center gap-1.5'
         }>
-          <FiCheck className={onBlue ? 'text-white/60' : 'text-[#858594]'} size={12} />
+          <FiCheck className={onBlue ? 'text-white/60' : 'text-[#6b7684]'} size={12} />
           주요 기술
         </h4>
         <div className="flex flex-wrap gap-1.5">
           {capability.skills.map((skill) => (
             onBlue
-              ? <span key={skill} className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium text-white bg-white/10 border border-white/20">{skill}</span>
+              ? <span key={skill} className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium text-white/80 bg-white/10">{skill}</span>
               : <span key={skill} className="tag-blue">{skill}</span>
           ))}
         </div>

@@ -34,16 +34,12 @@ export default function Header() {
     <header
       className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
       style={{
-        background: isScrolled || isMobileMenuOpen
-          ? 'rgba(255, 255, 255, 0.8)'
-          : 'transparent',
-        backdropFilter: isScrolled || isMobileMenuOpen ? 'blur(12px)' : 'none',
-        borderBottom: isScrolled || isMobileMenuOpen
-          ? '1px solid var(--border)'
-          : '1px solid transparent',
+        background: solid ? 'rgba(255, 255, 255, 0.85)' : 'transparent',
+        backdropFilter: solid ? 'blur(12px)' : 'none',
+        borderBottom: solid ? '1px solid var(--border)' : '1px solid transparent',
       }}
     >
-      <nav className="container mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+      <nav className="container mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
 
         {/* 로고 */}
         <Link href="/" className="inline-flex items-center hover:opacity-80 transition-opacity">
@@ -52,7 +48,7 @@ export default function Header() {
             alt="MATE"
             width={88}
             height={28}
-            className={`h-7 w-auto transition-all duration-300 ${solid ? '' : 'brightness-0 invert'}`}
+            className="h-7 w-auto"
             priority
           />
         </Link>
@@ -65,18 +61,17 @@ export default function Header() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`relative px-3.5 py-1.5 text-sm font-semibold rounded-xl transition-colors duration-150 ${
+                className={`relative px-3.5 py-1.5 text-sm font-semibold rounded-lg transition-colors duration-150 ${
                   active
-                    ? (solid ? 'text-[#4f46ff]' : 'text-white')
-                    : (solid ? 'text-[#5b5b6b] hover:text-[#0f0f19]'
-                             : 'text-white/65 hover:text-white')
+                    ? 'text-[#191f28]'
+                    : 'text-[#6b7684] hover:text-[#191f28]'
                 }`}
               >
                 {item.label}
                 {active && (
                   <motion.span
                     layoutId="nav-active"
-                    className={`absolute bottom-0 left-3.5 right-3.5 h-[2px] rounded-full ${solid ? 'bg-[#4f46ff]' : 'bg-[#d4ff3d]'}`}
+                    className="absolute bottom-0 left-3.5 right-3.5 h-[2px] rounded-full bg-[#3182f6]"
                     initial={false}
                     transition={{ duration: 0.2, ease: [0.2, 0.6, 0.25, 1] }}
                   />
@@ -87,10 +82,7 @@ export default function Header() {
 
           <Link
             href="/contact"
-            className={`ml-4 px-5 h-10 inline-flex items-center rounded-xl text-sm font-bold transition-colors duration-150 ${
-              solid ? 'text-white bg-[#4f46ff] hover:bg-[#3d33e8]'
-                    : 'text-[#4f46ff] bg-white hover:bg-[#d4ff3d] hover:text-[#0f0f19]'
-            }`}
+            className="ml-4 px-5 h-10 inline-flex items-center rounded-xl text-sm font-bold text-white bg-[#3182f6] hover:bg-[#1b64da] transition-colors duration-150"
           >
             상담 신청
           </Link>
@@ -98,10 +90,7 @@ export default function Header() {
 
         {/* 모바일 버튼 */}
         <button
-          className={`md:hidden w-9 h-9 flex items-center justify-center transition-colors rounded-xl ${
-            solid ? 'text-[#5b5b6b] hover:text-[#0f0f19] hover:bg-black/[0.04]'
-                  : 'text-white hover:bg-white/10'
-          }`}
+          className="md:hidden w-9 h-9 flex items-center justify-center transition-colors rounded-lg text-[#4e5968] hover:text-[#191f28] hover:bg-black/[0.04]"
           onClick={() => setMobileMenuOpen(!isMobileMenuOpen)}
           aria-label="메뉴"
         >
@@ -147,13 +136,13 @@ export default function Header() {
                     onClick={() => setMobileMenuOpen(false)}
                     className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
                       pathname === item.href
-                        ? 'text-[#4f46ff] bg-[#ecebff]'
-                        : 'text-[#5b5b6b] hover:text-[#0f0f19] hover:bg-black/[0.03]'
+                        ? 'text-[#3182f6] bg-[#e8f3ff]'
+                        : 'text-[#4e5968] hover:text-[#191f28] hover:bg-black/[0.03]'
                     }`}
                   >
                     {item.label}
                     {pathname === item.href && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#4f46ff]" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#3182f6]" />
                     )}
                   </Link>
                 </motion.div>
@@ -167,7 +156,7 @@ export default function Header() {
                 <Link
                   href="/contact"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="block text-center px-4 py-3 rounded-xl text-sm font-bold text-white bg-[#4f46ff] hover:bg-[#3d33e8] transition-colors"
+                  className="block text-center px-4 py-3 rounded-xl text-sm font-bold text-white bg-[#3182f6] hover:bg-[#1b64da] transition-colors"
                 >
                   무료 상담 신청
                 </Link>

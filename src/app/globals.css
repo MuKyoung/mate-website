@@ -5,51 +5,49 @@
 /* ── 폰트 (Pretendard Variable) ───────────────────────── */
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
 
-/* ── CSS 변수 (2026 비비드 디자인 토큰 — 일렉트릭 블루 + 라임) ── */
+/* ── CSS 변수 (엔터프라이즈 프리미엄 토큰 — 쿨 그레이 + 코퍼레이트 블루) ── */
 :root {
   /* 표면 */
   --canvas:      #ffffff;
   --background:  #ffffff;
-  --surface:     #f4f3ff;   /* 옅은 라벤더 틴트 서피스 */
-  --surface-2:   #ececff;
+  --surface:     #f4f6f8;   /* 쿨 그레이 서피스 */
+  --surface-2:   #eaedf1;
 
-  /* 경계선 — 브랜드 틴트가 도는 헤어라인 */
-  --border:      #e6e4f2;
-  --border-2:    #cfcbe8;
+  /* 경계선 — 뉴트럴 헤어라인 */
+  --border:      #e5e8eb;
+  --border-2:    #d1d6db;
 
   /* 잉크 / 텍스트 위계 */
-  --text-1:      #0f0f19;
-  --text-2:      #5b5b6b;
-  --text-3:      #858594;
-  --text-faint:  #b3b3c2;
+  --text-1:      #191f28;
+  --text-2:      #4e5968;
+  --text-3:      #6b7684;
+  --text-faint:  #adb5bd;
 
-  /* 브랜드 — 일렉트릭 블루 (메인 액션 컬러) */
-  --accent:      #4f46ff;
-  --accent-2:    #3d33e8;
-  --accent-link: #3d33e8;
-  --accent-dim:  rgba(79, 70, 255, 0.08);
-  --accent-tint: #ecebff;
-
-  /* 브랜드 — 라임 (팝 액센트, 소량만) */
-  --lime:        #d4ff3d;
-  --lime-ink:    #4a5400;
+  /* 브랜드 — 코퍼레이트 블루 (단일 액션 컬러) */
+  --accent:      #3182f6;
+  --accent-2:    #1b64da;
+  --accent-link: #1b64da;
+  --accent-dim:  rgba(49, 130, 246, 0.08);
+  --accent-tint: #e8f3ff;
 
   /* 시맨틱 */
   --success:      #12b76a;
   --success-tint: #d3f8df;
   --danger:       #f04438;
   --danger-tint:  #fee4e2;
-  --info-tint:    #ecebff;
+  --info-tint:    #e8f3ff;
   --warning-tint: #fef0c7;
 
   /* 기존 코드 호환용 */
-  --foreground:   #0f0f19;
-  --primary:      #4f46ff;
-  --primary-dark: #3d33e8;
-  --secondary:    #3d33e8;
+  --foreground:   #191f28;
+  --primary:      #3182f6;
+  --primary-dark: #1b64da;
+  --secondary:    #1b64da;
+  --lime:         #3182f6;  /* 라임 제거 — 잔여 참조는 블루로 폴백 */
+  --lime-ink:     #ffffff;
 
-  /* 볼드 컬러 블록 (히어로 / CTA 밴드) */
-  --ink-band:     #4f46ff;
+  /* 컬러 블록 (CTA 밴드) */
+  --ink-band:     #3182f6;
 }
 
 /* ── 기본 ───────────────────────────────────────────── */
@@ -103,18 +101,25 @@ body {
   border: 1px solid var(--border);
 }
 
-/* ── 카드 — 부드러운 라운드, 은은한 그림자 ─────── */
+/* ── 카드 — 부드러운 라운드, 레이어드 프리미엄 섀도 ── */
 .card-dark,
 .card {
   background: var(--canvas);
   border: 1px solid var(--border);
   border-radius: 20px;
+  box-shadow: 0 1px 3px rgba(25, 31, 40, 0.05);
+  transition: box-shadow 0.25s ease, border-color 0.2s ease, transform 0.25s ease;
 }
 .card-dark:hover,
 .card:hover {
-  border-color: var(--accent);
-  background: var(--surface);
+  border-color: var(--border-2);
+  box-shadow: 0 12px 32px rgba(25, 31, 40, 0.10);
+  transform: translateY(-2px);
 }
+
+/* 프리미엄 섀도 유틸 */
+.shadow-card       { box-shadow: 0 1px 3px rgba(25, 31, 40, 0.05); }
+.shadow-card-hover { box-shadow: 0 12px 32px rgba(25, 31, 40, 0.10); }
 
 /* ── 버튼 — 모서리 적당히 둥글게(rounded-xl 감) ── */
 .btn-primary {
@@ -183,7 +188,7 @@ body {
   border: 1px solid transparent;
   transition: transform 0.15s ease, background 0.15s ease;
 }
-.btn-ink:hover { transform: translateY(-1px); background: var(--lime); color: var(--text-1); }
+.btn-ink:hover { transform: translateY(-1px); background: var(--accent-tint); color: var(--accent-2); }
 
 /* ── 텍스처 (거의 보이지 않게) ─────────────────── */
 .noise { position: relative; }
@@ -300,10 +305,10 @@ body {
 .section-label::before {
   content: '';
   display: block;
-  width: 8px;
-  height: 8px;
-  border-radius: 2px;
-  background: var(--lime);
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: var(--accent);
   flex-shrink: 0;
 }
 

@@ -26,25 +26,25 @@ export default function Footer() {
   ];
 
   return (
-    <footer className="relative bg-white border-t border-[#e6e4f2]">
+    <footer className="relative bg-white border-t border-[#e5e8eb]">
       <div className="container mx-auto px-4 sm:px-6 py-16 sm:py-24">
 
         {/* 대형 CTA 스테이트먼트 */}
         <motion.div
           initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-60px' }} transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 pb-16 mb-16 border-b border-[#e6e4f2]"
+          className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 pb-16 mb-16 border-b border-[#e5e8eb]"
         >
           <div>
-            <p className="text-[13px] font-semibold text-[#4f46ff] mb-5">Let&apos;s work together</p>
+            <p className="text-[13px] font-semibold text-[#3182f6] mb-5">Let&apos;s work together</p>
             <a href="mailto:hsib1212@naver.com"
-              className="text-[#0f0f19] font-extrabold tracking-[-0.03em] hover:text-[#4f46ff] transition-colors break-all"
+              className="text-[#191f28] font-extrabold tracking-[-0.03em] hover:text-[#3182f6] transition-colors break-all"
               style={{ fontSize: 'clamp(1.5rem, 3vw, 2.75rem)' }}>
               hsib1212@naver.com
             </a>
           </div>
           <Link href="/contact"
-            className="group inline-flex items-center gap-2 h-12 px-7 rounded-2xl text-[14px] font-bold text-white bg-[#4f46ff] hover:bg-[#3d33e8] transition-colors flex-shrink-0">
+            className="group inline-flex items-center gap-2 h-12 px-7 rounded-xl text-[14px] font-bold text-white bg-[#3182f6] hover:bg-[#1b64da] transition-colors flex-shrink-0">
             프로젝트 문의
             <FiArrowUpRight size={16} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
           </Link>
@@ -56,14 +56,14 @@ export default function Footer() {
             <Link href="/" className="inline-block mb-4 hover:opacity-75 transition-opacity">
               <Image src="/images/logo.png" alt="MATE" width={80} height={26} className="h-6 w-auto" />
             </Link>
-            <p className="text-sm text-[#858594] leading-relaxed mb-5">
+            <p className="text-sm text-[#6b7684] leading-relaxed mb-5">
               유니티 외주 개발과 개발 강의에 특화된 전문 개발 팀.
             </p>
             <div className="flex gap-2">
               {social.map((s) => (
                 <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
                   aria-label={s.label}
-                  className="w-9 h-9 rounded-xl flex items-center justify-center text-[#5b5b6b] hover:text-[#4f46ff] hover:bg-[#ecebff] border border-[#e6e4f2] transition-colors duration-150">
+                  className="w-9 h-9 rounded-xl flex items-center justify-center text-[#4e5968] hover:text-[#3182f6] hover:bg-[#e8f3ff] border border-[#e5e8eb] transition-colors duration-150">
                   <s.icon size={14} />
                 </a>
               ))}
@@ -72,12 +72,12 @@ export default function Footer() {
 
           {/* 네비게이션 */}
           <div>
-            <h4 className="text-xs font-bold text-[#0f0f19] tracking-[0.05em] uppercase mb-5">Navigation</h4>
+            <h4 className="text-xs font-bold text-[#191f28] tracking-[0.05em] uppercase mb-5">Navigation</h4>
             <ul className="space-y-2.5">
               {nav.map((l) => (
                 <li key={l.href}>
                   <Link href={l.href}
-                    className="group inline-flex items-center gap-1 text-sm text-[#5b5b6b] hover:text-[#4f46ff] transition-colors">
+                    className="group inline-flex items-center gap-1 text-sm text-[#4e5968] hover:text-[#3182f6] transition-colors">
                     {l.label}
                     <FiArrowUpRight size={10} className="opacity-0 group-hover:opacity-100 transition-opacity" />
                   </Link>
@@ -88,29 +88,29 @@ export default function Footer() {
 
           {/* 서비스 */}
           <div>
-            <h4 className="text-xs font-bold text-[#0f0f19] tracking-[0.05em] uppercase mb-5">Services</h4>
+            <h4 className="text-xs font-bold text-[#191f28] tracking-[0.05em] uppercase mb-5">Services</h4>
             <ul className="space-y-2.5">
               {svcs.map((s) => (
-                <li key={s} className="text-sm text-[#858594]">{s}</li>
+                <li key={s} className="text-sm text-[#6b7684]">{s}</li>
               ))}
             </ul>
           </div>
 
           {/* 연락처 */}
           <div className="col-span-2 md:col-span-1">
-            <h4 className="text-xs font-bold text-[#0f0f19] tracking-[0.05em] uppercase mb-5">Contact</h4>
+            <h4 className="text-xs font-bold text-[#191f28] tracking-[0.05em] uppercase mb-5">Contact</h4>
             <div className="space-y-3.5">
               <div>
-                <p className="text-[10px] text-[#b3b3c2] uppercase tracking-wider mb-0.5">Email</p>
+                <p className="text-[10px] text-[#adb5bd] uppercase tracking-wider mb-0.5">Email</p>
                 <a href="mailto:hsib1212@naver.com"
-                  className="text-sm text-[#5b5b6b] hover:text-[#4f46ff] transition-colors break-all">
+                  className="text-sm text-[#4e5968] hover:text-[#3182f6] transition-colors break-all">
                   hsib1212@naver.com
                 </a>
               </div>
               <div>
-                <p className="text-[10px] text-[#b3b3c2] uppercase tracking-wider mb-0.5">Phone</p>
+                <p className="text-[10px] text-[#adb5bd] uppercase tracking-wider mb-0.5">Phone</p>
                 <a href="tel:0507-1339-9141"
-                  className="text-sm text-[#5b5b6b] hover:text-[#4f46ff] transition-colors">
+                  className="text-sm text-[#4e5968] hover:text-[#3182f6] transition-colors">
                   0507-1339-9141
                 </a>
               </div>
@@ -119,11 +119,11 @@ export default function Footer() {
         </div>
 
         {/* 하단 */}
-        <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-[#e6e4f2]">
-          <p className="text-xs text-[#b3b3c2]">© {year} Mate. All rights reserved.</p>
+        <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-[#e5e8eb]">
+          <p className="text-xs text-[#adb5bd]">© {year} Mate. All rights reserved.</p>
           <div className="flex items-center gap-5">
-            <span className="text-[10px] text-[#b3b3c2] font-mono">v0.1.0</span>
-            <span className="text-[10px] text-[#b3b3c2]">Made in Korea</span>
+            <span className="text-[10px] text-[#adb5bd] font-mono">v0.1.0</span>
+            <span className="text-[10px] text-[#adb5bd]">Made in Korea</span>
           </div>
         </div>
       </div>

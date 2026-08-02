@@ -32,13 +32,16 @@ export default function Home() {
           <div className="grid lg:grid-cols-12 gap-y-12 gap-x-8">
             <div className="lg:col-span-4">
               <motion.div {...inView} variants={fadeUp} className="lg:sticky lg:top-28">
-                <p className="text-[13px] font-semibold text-[#4f46ff] mb-4">01 — Services</p>
-                <h2 className="text-[#0f0f19] font-extrabold tracking-[-0.03em] leading-[1.1] mb-6"
+                <p className="text-[13px] font-semibold text-[#3182f6] mb-4">Services</p>
+                <h2 className="text-[#191f28] font-extrabold tracking-[-0.03em] leading-[1.12] mb-6"
                   style={{ fontSize: 'clamp(1.875rem, 3.5vw, 2.75rem)' }}>
-                  게임 · 웹 · 앱 개발
+                  게임 · 웹 · 앱,<br />필요한 개발을 한 팀에서
                 </h2>
+                <p className="text-[15px] text-[#4e5968] leading-[1.75] max-w-sm mb-7">
+                  분야별 전문가가 프로젝트 성격에 맞는 최적의 기술로 완성합니다.
+                </p>
                 <Link href="/services"
-                  className="group inline-flex items-center gap-1.5 text-[14px] font-semibold text-[#0f0f19] hover:text-[#4f46ff] transition-colors">
+                  className="group inline-flex items-center gap-1.5 text-[14px] font-semibold text-[#191f28] hover:text-[#3182f6] transition-colors">
                   모든 서비스 보기
                   <FiArrowUpRight size={15} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                 </Link>
@@ -51,20 +54,20 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ━━ 프로젝트 — 라벤더 서피스 밴드 ━━ */}
-      <section className="py-24 sm:py-32 bg-[#f4f3ff]">
+      {/* ━━ 프로젝트 — 쿨 그레이 서피스 밴드 ━━ */}
+      <section className="py-24 sm:py-32 bg-[#f4f6f8]">
         <div className="container mx-auto px-4 sm:px-6">
           <motion.div {...inView} variants={fadeUp}
-            className="flex flex-wrap items-baseline justify-between gap-4 mb-12">
-            <div className="flex items-baseline gap-4">
-              <span className="text-[13px] font-semibold text-[#4f46ff]">02</span>
-              <h2 className="text-[#0f0f19] font-extrabold tracking-[-0.03em]"
+            className="flex flex-wrap items-end justify-between gap-4 mb-12">
+            <div>
+              <p className="text-[13px] font-semibold text-[#3182f6] mb-4">Portfolio</p>
+              <h2 className="text-[#191f28] font-extrabold tracking-[-0.03em]"
                 style={{ fontSize: 'clamp(1.875rem, 3.5vw, 2.75rem)' }}>
                 최근 프로젝트
               </h2>
             </div>
             <Link href="/projects"
-              className="group inline-flex items-center gap-1.5 text-[14px] font-semibold text-[#0f0f19] hover:text-[#4f46ff] transition-colors">
+              className="group inline-flex items-center gap-1.5 text-[14px] font-semibold text-[#191f28] hover:text-[#3182f6] transition-colors">
               전체 포트폴리오
               <FiArrowUpRight size={15} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
             </Link>
@@ -76,27 +79,26 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ━━ Why MATE — 볼드 블루 벤토 패널 (화이트 섹션 안에 인셋) ━━ */}
+      {/* ━━ Why MATE — 딥 잉크 프리미엄 패널 ━━ */}
       <section className="py-24 sm:py-32 bg-white">
         <div className="container mx-auto px-4 sm:px-6">
-          <div className="rounded-[2.5rem] bg-[#4f46ff] px-6 py-14 sm:px-14 sm:py-20 relative overflow-hidden">
-            <div className="absolute -bottom-16 -left-16 w-56 h-56 rounded-[3rem] bg-white/[0.06] rotate-12 pointer-events-none" />
-            <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-y-14 gap-x-8">
+          <div className="rounded-[24px] bg-[#191f28] px-6 py-14 sm:px-14 sm:py-20 overflow-hidden">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-y-14 gap-x-8">
               <div className="lg:col-span-5">
-                <p className="text-[13px] font-semibold text-[#d4ff3d] mb-4">03 — Why MATE</p>
+                <p className="text-[13px] font-semibold text-[#5a9cf8] mb-4">Why MATE</p>
                 <motion.h2 {...inView} variants={stagger}
-                  className="text-white font-extrabold tracking-[-0.03em] leading-[1.08] mb-7"
-                  style={{ fontSize: 'clamp(1.875rem, 4vw, 3.25rem)' }}>
+                  className="text-white font-extrabold tracking-[-0.03em] leading-[1.12] mb-7"
+                  style={{ fontSize: 'clamp(1.875rem, 4vw, 3rem)' }}>
                   <span className="block overflow-hidden"><motion.span variants={clipUp} className="block">기획부터 배포까지,</motion.span></span>
-                  <span className="block overflow-hidden"><motion.span variants={clipUp} className="block text-white/60">끝까지 함께합니다</motion.span></span>
+                  <span className="block overflow-hidden"><motion.span variants={clipUp} className="block text-white/55">끝까지 함께합니다</motion.span></span>
                 </motion.h2>
-                <motion.p {...inView} variants={fadeUp} className="text-[15px] text-white/75 leading-[1.75] max-w-md mb-9">
+                <motion.p {...inView} variants={fadeUp} className="text-[15px] text-white/65 leading-[1.75] max-w-md mb-9">
                   Unity 게임 · AR/VR · 웹 · 앱까지, 5년간 30개 이상의 프로젝트로
                   검증된 풀스택 외주개발팀입니다.
                 </motion.p>
                 <motion.div {...inView} variants={fadeUp}>
                   <Link href="/team"
-                    className="group inline-flex items-center gap-2 h-12 px-7 rounded-2xl text-[14px] font-bold text-[#4f46ff] bg-white hover:bg-[#d4ff3d] hover:text-[#0f0f19] transition-colors">
+                    className="group inline-flex items-center gap-2 h-12 px-7 rounded-xl text-[14px] font-bold text-[#191f28] bg-white hover:bg-[#e8f3ff] transition-colors">
                     팀 소개 보기
                     <FiArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
                   </Link>
@@ -106,11 +108,11 @@ export default function Home() {
               <motion.div {...inView} variants={stagger} className="lg:col-span-6 lg:col-start-7">
                 {metrics.map((item) => (
                   <motion.div key={item.label} variants={fadeUp}
-                    className="grid grid-cols-[5rem_1fr] sm:grid-cols-[7rem_1fr] gap-5 py-6 border-b border-white/15 first:border-t first:border-white/15">
+                    className="grid grid-cols-[5rem_1fr] sm:grid-cols-[7rem_1fr] gap-5 py-6 border-b border-white/10 first:border-t first:border-white/10">
                     <span className="text-xl sm:text-2xl font-extrabold text-white font-mono-stat tracking-tight">{item.metric}</span>
                     <div>
                       <p className="text-[15px] font-semibold text-white mb-1">{item.label}</p>
-                      <p className="text-[13px] text-white/60 leading-relaxed">{item.desc}</p>
+                      <p className="text-[13px] text-white/50 leading-relaxed">{item.desc}</p>
                     </div>
                   </motion.div>
                 ))}
@@ -123,12 +125,11 @@ export default function Home() {
       {/* ━━ 후기 ━━ */}
       <section className="py-24 sm:py-32 bg-white">
         <div className="container mx-auto px-4 sm:px-6">
-          <motion.div {...inView} variants={fadeUp}
-            className="flex items-baseline gap-4 mb-12">
-            <span className="text-[13px] font-semibold text-[#4f46ff]">04</span>
-            <h2 className="text-[#0f0f19] font-extrabold tracking-[-0.03em]"
+          <motion.div {...inView} variants={fadeUp} className="mb-12">
+            <p className="text-[13px] font-semibold text-[#3182f6] mb-4">Testimonials</p>
+            <h2 className="text-[#191f28] font-extrabold tracking-[-0.03em]"
               style={{ fontSize: 'clamp(1.875rem, 3.5vw, 2.75rem)' }}>
-              고객 후기
+              함께한 고객의 평가
             </h2>
           </motion.div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -137,24 +138,24 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ━━ CTA — 볼드 블루 풀블리드 (히어로와 북엔드) ━━ */}
-      <section className="relative py-24 sm:py-32 bg-[#4f46ff] overflow-hidden">
-        <div className="absolute -top-20 -right-20 w-72 h-72 rounded-[3rem] bg-[#d4ff3d] rotate-12 opacity-90 pointer-events-none" />
-        <div className="relative container mx-auto px-4 sm:px-6">
+      {/* ━━ CTA — 코퍼레이트 블루 풀블리드 ━━ */}
+      <section className="py-24 sm:py-32 bg-[#3182f6]">
+        <div className="container mx-auto px-4 sm:px-6">
           <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-10">
             <motion.div {...inView} variants={stagger}>
-              <p className="text-[13px] font-semibold text-white/80 mb-5">Contact</p>
-              <h2 className="text-white font-extrabold tracking-[-0.035em] leading-[1.02] mb-5"
-                style={{ fontSize: 'clamp(2.25rem, 5.5vw, 4.5rem)' }}>
-                <span className="block overflow-hidden"><motion.span variants={clipUp} className="block">프로젝트를 시작해볼까요?</motion.span></span>
-              </h2>
-              <motion.p variants={fadeUp} className="text-lg text-white/75 max-w-md">
+              <p className="text-[13px] font-semibold text-white/70 mb-5">Contact</p>
+              <motion.h2 variants={fadeUp}
+                className="text-white font-extrabold tracking-[-0.035em] leading-[1.08] mb-5"
+                style={{ fontSize: 'clamp(2rem, 4.5vw, 3.5rem)' }}>
+                프로젝트를 시작해볼까요?
+              </motion.h2>
+              <motion.p variants={fadeUp} className="text-[15px] text-white/75 max-w-md">
                 게임 · 웹 · 앱 · AR/VR — 무료 상담으로 가능성을 확인하세요.
               </motion.p>
             </motion.div>
             <motion.div {...inView} variants={fadeUp} className="flex-shrink-0">
               <Link href="/contact"
-                className="group inline-flex items-center gap-2 h-14 px-8 rounded-2xl text-[15px] font-bold text-[#4f46ff] bg-white hover:bg-[#d4ff3d] hover:text-[#0f0f19] transition-colors">
+                className="group inline-flex items-center gap-2 h-14 px-8 rounded-xl text-[15px] font-bold text-[#3182f6] bg-white hover:bg-[#e8f3ff] transition-colors">
                 무료 상담 신청
                 <FiArrowRight size={17} className="group-hover:translate-x-1 transition-transform" />
               </Link>

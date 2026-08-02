@@ -70,14 +70,14 @@ export default function ProjectFilter({ projects }: ProjectFilterProps) {
                 onClick={() => setSelectedCategory(option.value)}
                 className={`inline-flex items-center gap-2 h-10 px-4 rounded-full text-[13px] font-medium transition-colors ${
                   active
-                    ? 'bg-[#4f46ff] text-white font-bold'
-                    : 'bg-white border border-[#e6e4f2] text-[#5b5b6b] hover:border-[#4f46ff] hover:text-[#4f46ff]'
+                    ? 'bg-[#3182f6] text-white font-bold'
+                    : 'bg-white border border-[#e5e8eb] text-[#4e5968] hover:border-[#3182f6] hover:text-[#3182f6]'
                 }`}
               >
                 <span>{option.label}</span>
                 <span
                   className={`text-[11px] tabular-nums ${
-                    active ? 'text-white/70' : 'text-[#b3b3c2]'
+                    active ? 'text-white/70' : 'text-[#adb5bd]'
                   }`}
                 >
                   {categoryCounts[option.value] || 0}
@@ -87,9 +87,9 @@ export default function ProjectFilter({ projects }: ProjectFilterProps) {
           })}
         </div>
 
-        <p className="text-[13px] text-[#858594]">
+        <p className="text-[13px] text-[#6b7684]">
           {selectedCategory === 'all' ? '전체' : selectedCategory} 프로젝트{' '}
-          <span className="font-semibold text-[#0f0f19] tabular-nums">{filteredProjects.length}</span>개
+          <span className="font-semibold text-[#191f28] tabular-nums">{filteredProjects.length}</span>개
         </p>
       </motion.div>
 
@@ -105,15 +105,15 @@ export default function ProjectFilter({ projects }: ProjectFilterProps) {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="py-20 px-6 rounded-2xl border border-[#e6e4f2] bg-[#f4f3ff] text-center"
+          className="py-20 px-6 rounded-[20px] border border-[#e5e8eb] bg-[#f4f6f8] text-center"
         >
-          <div className="mb-4 text-[#0f0f19] flex justify-center">
+          <div className="mb-4 text-[#191f28] flex justify-center">
             <FiSearch size={28} />
           </div>
-          <h3 className="text-[15px] font-semibold text-[#0f0f19] mb-1.5">
+          <h3 className="text-[15px] font-semibold text-[#191f28] mb-1.5">
             해당 카테고리의 프로젝트가 없습니다
           </h3>
-          <p className="text-[13px] text-[#5b5b6b]">다른 카테고리를 선택해 보세요</p>
+          <p className="text-[13px] text-[#4e5968]">다른 카테고리를 선택해 보세요</p>
         </motion.div>
       )}
     </div>

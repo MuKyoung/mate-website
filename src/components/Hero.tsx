@@ -18,11 +18,11 @@ function Stat({ to, suffix, label }: { to: number; suffix: string; label: string
     return () => ctrl.stop();
   }, [seen, to, suffix]);
   return (
-    <div>
-      <div className="text-3xl sm:text-4xl font-extrabold text-white font-mono-stat tracking-tight">
+    <div className="py-8 sm:py-10">
+      <div className="text-3xl sm:text-4xl font-extrabold text-[#191f28] font-mono-stat tracking-tight">
         <span ref={ref}>0{suffix}</span>
       </div>
-      <div className="mt-1.5 text-[13px] font-medium text-white/60">{label}</div>
+      <div className="mt-2 text-[13px] font-medium text-[#6b7684]">{label}</div>
     </div>
   );
 }
@@ -37,54 +37,50 @@ const stats = [
 export default function Hero() {
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] });
-  const y = useTransform(scrollYProgress, [0, 1], [0, 70]);
+  const y = useTransform(scrollYProgress, [0, 1], [0, 60]);
 
   return (
-    <section ref={ref} className="relative flex flex-col overflow-hidden bg-[#4f46ff]">
-      {/* 배경 라임 도형 — 큼직하고 대담하게, 모서리 둥글게 */}
-      <div className="absolute -top-24 -right-24 w-72 h-72 sm:w-96 sm:h-96 rounded-[3rem] bg-[#d4ff3d] rotate-12 opacity-90 pointer-events-none" />
-      <div className="absolute top-1/3 -right-10 w-24 h-24 rounded-full bg-white/10 pointer-events-none hidden sm:block" />
+    <section ref={ref} className="relative bg-white overflow-hidden">
+      {/* 상단 옅은 그레이 그라데이션 — 장식 도형 없이 깊이만 */}
+      <div className="absolute inset-x-0 top-0 h-[420px] bg-gradient-to-b from-[#f4f6f8] to-white pointer-events-none" />
 
-      <motion.div style={{ y }} className="relative flex-1 flex flex-col justify-center">
-        <div className="container mx-auto px-4 sm:px-6 pt-32 sm:pt-40 pb-16 sm:pb-20">
+      <motion.div style={{ y }} className="relative">
+        <div className="container mx-auto px-4 sm:px-6 pt-36 sm:pt-44 pb-16 sm:pb-24">
 
           <motion.p {...onMount} variants={fadeUp}
-            className="eyebrow text-white/85 mb-6">
-            <span className="w-2 h-2 rounded-full bg-[#d4ff3d]" />
-            Dev Team MATE · 외주개발 스튜디오
+            className="inline-flex items-center gap-2 text-[13px] font-semibold text-[#4e5968] mb-7">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#3182f6]" />
+            Dev Team MATE — 게임 · 웹 · 앱 외주개발 스튜디오
           </motion.p>
 
           {/* 초대형 헤드라인 */}
           <motion.h1 {...onMount} variants={stagger}
-            className="text-white font-extrabold tracking-[-0.035em] leading-[0.98] mb-8 max-w-4xl"
-            style={{ fontSize: 'clamp(2.75rem, 8.5vw, 6.5rem)' }}>
+            className="text-[#191f28] font-extrabold tracking-[-0.035em] leading-[1.04] mb-8 max-w-5xl"
+            style={{ fontSize: 'clamp(2.5rem, 7vw, 5.5rem)' }}>
             <span className="block overflow-hidden">
-              <motion.span variants={clipUp} className="block">게임 · 웹 · 앱</motion.span>
+              <motion.span variants={clipUp} className="block">아이디어를 제품으로,</motion.span>
             </span>
             <span className="block overflow-hidden">
               <motion.span variants={clipUp} className="block">
-                <span className="relative inline-block">
-                  외주개발
-                  <span className="absolute left-0 right-0 -bottom-1 sm:-bottom-2 h-3 sm:h-5 bg-[#d4ff3d] -z-10 rounded-sm" />
-                </span>{' '}전문팀
+                <span className="text-[#3182f6]">검증된 팀</span>이 만듭니다
               </motion.span>
             </span>
           </motion.h1>
 
           <motion.p {...onMount} variants={fadeUp}
-            className="max-w-lg text-lg sm:text-xl text-white/80 leading-relaxed mb-10">
-            Unity 게임 · AR/VR부터 웹 · 앱까지.
-            기획부터 배포까지 함께하는 5년 경력의 외주개발 파트너입니다.
+            className="max-w-xl text-lg sm:text-xl text-[#4e5968] leading-[1.7] mb-10">
+            Unity 게임 · AR/VR부터 웹 · 앱까지 — 기획부터 배포, 그 이후까지
+            책임지는 5년 경력의 외주개발 파트너입니다.
           </motion.p>
 
-          <motion.div {...onMount} variants={fadeUp} className="flex flex-wrap items-center gap-4">
+          <motion.div {...onMount} variants={fadeUp} className="flex flex-wrap items-center gap-3">
             <Link href="/contact"
-              className="group inline-flex items-center gap-2 h-14 px-8 rounded-2xl text-[15px] font-bold text-[#4f46ff] bg-white hover:bg-[#d4ff3d] hover:text-[#0f0f19] transition-colors">
+              className="group inline-flex items-center gap-2 h-14 px-8 rounded-xl text-[15px] font-bold text-white bg-[#3182f6] hover:bg-[#1b64da] transition-colors shadow-[0_4px_14px_rgba(49,130,246,0.30)]">
               프로젝트 문의
               <FiArrowRight size={17} className="group-hover:translate-x-1 transition-transform" />
             </Link>
             <Link href="/projects"
-              className="group inline-flex items-center gap-2 h-14 px-8 rounded-2xl text-[15px] font-bold text-white border-2 border-white/30 hover:border-white hover:bg-white/10 transition-colors">
+              className="group inline-flex items-center gap-2 h-14 px-8 rounded-xl text-[15px] font-bold text-[#191f28] bg-white border border-[#d1d6db] hover:bg-[#f4f6f8] transition-colors">
               포트폴리오 보기
               <FiArrowUpRight size={16} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
             </Link>
@@ -92,11 +88,22 @@ export default function Hero() {
         </div>
       </motion.div>
 
-      {/* 통계 — 화이트 카드 라운드 밴드로 하단 마감 */}
-      <motion.div {...onMount} variants={fadeUp} className="relative border-t border-white/15">
-        <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-10">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-8">
-            {stats.map((s) => <Stat key={s.label} {...s} />)}
+      {/* 신뢰 지표 스트립 — 헤어라인 구분 */}
+      <motion.div {...onMount} variants={fadeUp} className="relative border-t border-[#e5e8eb]">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="grid grid-cols-2 sm:grid-cols-4">
+            {stats.map((s, i) => (
+              <div key={s.label}
+                className={[
+                  'border-[#e5e8eb] px-5 sm:px-8',
+                  i % 2 === 1 ? 'border-l' : '',
+                  i >= 2 ? 'border-t' : '',
+                  i > 0 ? 'sm:border-l' : 'sm:border-l-0',
+                  i >= 2 ? 'sm:border-t-0' : '',
+                ].join(' ')}>
+                <Stat {...s} />
+              </div>
+            ))}
           </div>
         </div>
       </motion.div>

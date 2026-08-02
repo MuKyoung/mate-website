@@ -25,14 +25,14 @@ export default function FAQAccordion({ faqs }: FAQAccordionProps) {
           <motion.div
             key={faq.id}
             variants={fadeUp}
-            className="rounded-2xl overflow-hidden border border-[#e6e4f2] bg-white hover:border-[#4f46ff] transition-colors"
+            className="rounded-[20px] overflow-hidden border border-[#e5e8eb] bg-white shadow-[0_1px_3px_rgba(25,31,40,0.05)] hover:border-[#3182f6] transition-colors"
           >
             <button
               onClick={() => toggleFAQ(faq.id)}
               aria-expanded={isOpen}
               className="w-full px-5 sm:px-6 py-4 sm:py-5 text-left flex items-center justify-between gap-4 transition-colors"
             >
-              <span className="font-semibold text-[#0f0f19] text-sm sm:text-[15px]">
+              <span className="font-semibold text-[#191f28] text-sm sm:text-[15px]">
                 {faq.question}
               </span>
               <motion.span
@@ -42,7 +42,7 @@ export default function FAQAccordion({ faqs }: FAQAccordionProps) {
               >
                 <FiChevronDown
                   size={18}
-                  className={isOpen ? 'text-[#4f46ff]' : 'text-[#b3b3c2]'}
+                  className={isOpen ? 'text-[#3182f6]' : 'text-[#adb5bd]'}
                 />
               </motion.span>
             </button>
@@ -56,8 +56,8 @@ export default function FAQAccordion({ faqs }: FAQAccordionProps) {
                   className="overflow-hidden"
                 >
                   <div className="px-5 sm:px-6 pb-5 sm:pb-6">
-                    <div className="rounded-xl bg-[#f4f3ff] px-5 py-4">
-                      <p className="text-[#5b5b6b] leading-relaxed text-sm sm:text-[15px]">
+                    <div className="rounded-xl bg-[#f4f6f8] px-5 py-4">
+                      <p className="text-[#4e5968] leading-relaxed text-sm sm:text-[15px]">
                         {faq.answer}
                       </p>
                     </div>
