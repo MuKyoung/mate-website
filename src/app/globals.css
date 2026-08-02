@@ -5,46 +5,51 @@
 /* ── 폰트 (Pretendard Variable) ───────────────────────── */
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
 
-/* ── CSS 변수 (goorm 라이트 디자인 토큰) ──────────────── */
+/* ── CSS 변수 (2026 비비드 디자인 토큰 — 일렉트릭 블루 + 라임) ── */
 :root {
   /* 표면 */
   --canvas:      #ffffff;
   --background:  #ffffff;
-  --surface:     #f7f7f7;
-  --surface-2:   #f0f0f0;
+  --surface:     #f4f3ff;   /* 옅은 라벤더 틴트 서피스 */
+  --surface-2:   #ececff;
 
-  /* 경계선 — 그림자 대신 헤어라인 */
-  --border:      #e1e1e1;
-  --border-2:    #c6c6c6;
+  /* 경계선 — 브랜드 틴트가 도는 헤어라인 */
+  --border:      #e6e4f2;
+  --border-2:    #cfcbe8;
 
   /* 잉크 / 텍스트 위계 */
-  --text-1:      #262626;
-  --text-2:      #4c4c4c;
-  --text-3:      #5d5d5d;
-  --text-faint:  #a3a3a3;
+  --text-1:      #0f0f19;
+  --text-2:      #5b5b6b;
+  --text-3:      #858594;
+  --text-faint:  #b3b3c2;
 
-  /* 브랜드 — 단일 액션 컬러 (Vapor Blue) */
-  --accent:      #2a72e5;
-  --accent-2:    #0957c8;
-  --accent-link: #0043b3;
-  --accent-dim:  rgba(42, 114, 229, 0.08);
+  /* 브랜드 — 일렉트릭 블루 (메인 액션 컬러) */
+  --accent:      #4f46ff;
+  --accent-2:    #3d33e8;
+  --accent-link: #3d33e8;
+  --accent-dim:  rgba(79, 70, 255, 0.08);
+  --accent-tint: #ecebff;
+
+  /* 브랜드 — 라임 (팝 액센트, 소량만) */
+  --lime:        #d4ff3d;
+  --lime-ink:    #4a5400;
 
   /* 시맨틱 */
-  --success:      #058765;
-  --success-tint: #bbecd7;
-  --danger:       #da3944;
-  --danger-tint:  #ffd8d7;
-  --info-tint:    #c6e6ff;
-  --warning-tint: #ffd9c8;
+  --success:      #12b76a;
+  --success-tint: #d3f8df;
+  --danger:       #f04438;
+  --danger-tint:  #fee4e2;
+  --info-tint:    #ecebff;
+  --warning-tint: #fef0c7;
 
   /* 기존 코드 호환용 */
-  --foreground:   #262626;
-  --primary:      #2a72e5;
-  --primary-dark: #0957c8;
-  --secondary:    #0957c8;
+  --foreground:   #0f0f19;
+  --primary:      #4f46ff;
+  --primary-dark: #3d33e8;
+  --secondary:    #3d33e8;
 
-  /* 다크 마케팅 CTA (goorm 도입 문의 밴드) */
-  --ink-band:     #262626;
+  /* 볼드 컬러 블록 (히어로 / CTA 밴드) */
+  --ink-band:     #4f46ff;
 }
 
 /* ── 기본 ───────────────────────────────────────────── */
@@ -72,9 +77,9 @@ body {
   border-radius: 9999px;
   border: 2px solid var(--surface);
 }
-::-webkit-scrollbar-thumb:hover { background: #a3a3a3; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
-/* ── 브랜드 강조 (그라디언트 없음 — 단색 Vapor Blue) ── */
+/* ── 브랜드 강조 ──────────────────────────────────── */
 .gradient-text {
   color: var(--accent);
   -webkit-text-fill-color: var(--accent);
@@ -85,10 +90,10 @@ body {
 
 /* ── 섹션 배경 ──────────────────────────────────── */
 .section-canvas { background: var(--canvas); }
-.section-dark   { background: var(--canvas); }   /* 호환: 본문 기본 = 화이트 */
+.section-dark   { background: var(--canvas); }
 .section-mid    { background: var(--surface); }
 .section-light  { background: var(--surface); }
-.section-ink    { background: var(--ink-band); } /* 다크 마케팅 CTA 밴드 */
+.section-ink    { background: var(--ink-band); } /* 볼드 블루 CTA 밴드 */
 
 /* ── 헤더 글래스 (라이트) ──────────────────────── */
 .glass {
@@ -98,87 +103,87 @@ body {
   border: 1px solid var(--border);
 }
 
-/* ── 카드 — 플랫 헤어라인, 그림자 없음 ─────────── */
+/* ── 카드 — 부드러운 라운드, 은은한 그림자 ─────── */
 .card-dark,
 .card {
   background: var(--canvas);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 20px;
 }
 .card-dark:hover,
 .card:hover {
-  border-color: var(--border-2);
+  border-color: var(--accent);
   background: var(--surface);
 }
 
-/* ── 버튼 ─────────────────────────────────────── */
+/* ── 버튼 — 모서리 적당히 둥글게(rounded-xl 감) ── */
 .btn-primary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 0 16px;
-  height: 40px;
+  padding: 0 20px;
+  height: 44px;
   background: var(--accent);
   color: #ffffff;
-  font-weight: 500;
+  font-weight: 600;
   font-size: 14px;
-  border-radius: 8px;
+  border-radius: 14px;
   border: 1px solid transparent;
-  transition: background 0.12s ease;
+  transition: background 0.15s ease, transform 0.15s ease;
 }
-.btn-primary:hover { background: var(--accent-2); }
+.btn-primary:hover { background: var(--accent-2); transform: translateY(-1px); }
 
 .btn-secondary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 0 16px;
-  height: 40px;
-  background: var(--border);
+  padding: 0 20px;
+  height: 44px;
+  background: var(--surface);
   color: var(--text-1);
-  font-weight: 500;
+  font-weight: 600;
   font-size: 14px;
-  border-radius: 8px;
-  border: 1px solid transparent;
-  transition: background 0.12s ease;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
-.btn-secondary:hover { background: var(--border-2); }
+.btn-secondary:hover { background: var(--surface-2); border-color: var(--border-2); }
 
 .btn-outline {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 0 16px;
-  height: 40px;
+  padding: 0 20px;
+  height: 44px;
   background: var(--canvas);
   color: var(--text-1);
-  font-weight: 500;
+  font-weight: 600;
   font-size: 14px;
-  border-radius: 8px;
-  border: 1px solid var(--border-2);
-  transition: background 0.12s ease, border-color 0.12s ease;
+  border-radius: 14px;
+  border: 1.5px solid var(--text-1);
+  transition: background 0.15s ease, color 0.15s ease;
 }
-.btn-outline:hover { background: var(--surface); border-color: #a3a3a3; }
+.btn-outline:hover { background: var(--text-1); color: #fff; }
 
 .btn-ink {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 0 24px;
-  height: 48px;
-  background: var(--ink-band);
-  color: #ffffff;
-  font-weight: 500;
+  padding: 0 26px;
+  height: 52px;
+  background: #ffffff;
+  color: var(--accent);
+  font-weight: 700;
   font-size: 16px;
-  border-radius: 8px;
+  border-radius: 16px;
   border: 1px solid transparent;
-  transition: opacity 0.12s ease;
+  transition: transform 0.15s ease, background 0.15s ease;
 }
-.btn-ink:hover { opacity: 0.88; }
+.btn-ink:hover { transform: translateY(-1px); background: var(--lime); color: var(--text-1); }
 
 /* ── 텍스처 (거의 보이지 않게) ─────────────────── */
 .noise { position: relative; }
@@ -193,57 +198,57 @@ body {
 }
 
 /* ── 타이포그래피 ──────────────────────────────── */
-/* 디스플레이 — 제품/선언형 (ExtraBold 800) */
 .heading-xl {
   @apply text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight;
   color: var(--text-1);
-  line-height: 1.1;
+  line-height: 1.05;
 }
 .heading-lg {
   @apply text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight;
   color: var(--text-1);
-  line-height: 1.15;
+  line-height: 1.1;
 }
 .heading-md {
   @apply text-2xl sm:text-3xl font-bold tracking-tight;
   color: var(--text-1);
-  line-height: 1.25;
+  line-height: 1.2;
 }
-/* 디스플레이 — 마케팅/에디토리얼 (lighter, tight tracking) */
 .display-soft {
-  @apply text-4xl sm:text-5xl md:text-6xl font-semibold;
+  @apply text-4xl sm:text-5xl md:text-6xl font-extrabold;
   color: var(--text-1);
-  line-height: 1.15;
+  line-height: 1.08;
   letter-spacing: -0.02em;
 }
-/* 에디토리얼 디스플레이 — 인라인 clamp 사용을 기본으로 하되 유지 */
+/* 초대형 에디토리얼 디스플레이 — 큼직하고 대담하게 */
 .display-hero {
-  font-weight: 600;
-  line-height: 1.02;
-  letter-spacing: -0.03em;
-  font-size: clamp(2.5rem, 7vw, 6rem);
+  font-weight: 800;
+  line-height: 0.98;
+  letter-spacing: -0.035em;
+  font-size: clamp(2.75rem, 8.5vw, 7.5rem);
 }
 .display-section {
-  font-weight: 600;
-  line-height: 1.1;
-  letter-spacing: -0.025em;
-  font-size: clamp(1.875rem, 3.5vw, 2.75rem);
+  font-weight: 800;
+  line-height: 1.04;
+  letter-spacing: -0.03em;
+  font-size: clamp(2.25rem, 5vw, 4rem);
 }
 
-/* 라벨 — 조용한 캡션 (장식용 대시/와이드 트래킹 없음) */
+/* 라벨 — 브랜드 컬러 캡션 */
 .eyebrow {
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-size: 13px;
-  font-weight: 400;
-  letter-spacing: 0;
-  text-transform: none;
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
-/* 다크 섹션 위계 (near-black 밴드용) */
-.on-dark              { color: #fafafa; }
-.on-dark-2           { color: rgba(255, 255, 255, 0.6); }
-.on-dark-3           { color: rgba(255, 255, 255, 0.38); }
-.border-on-dark      { border-color: rgba(255, 255, 255, 0.12); }
+/* 볼드 컬러 블록 위 텍스트 위계 (히어로/CTA 등 --ink-band 배경용) */
+.on-dark          { color: #ffffff; }
+.on-dark-2        { color: rgba(255, 255, 255, 0.72); }
+.on-dark-3        { color: rgba(255, 255, 255, 0.48); }
+.border-on-dark   { border-color: rgba(255, 255, 255, 0.18); }
+
 .body-lg {
   @apply text-base sm:text-lg leading-relaxed;
   color: var(--text-2);
@@ -258,7 +263,7 @@ body {
 /* 인라인 링크 */
 .link-inline {
   color: var(--accent-link);
-  font-weight: 500;
+  font-weight: 600;
   transition: color 0.12s ease;
 }
 .link-inline:hover { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
@@ -268,12 +273,12 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-2);
-  transition: color 0.12s ease;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-1);
+  transition: gap 0.15s ease, color 0.12s ease;
 }
-.link-more:hover { color: var(--text-1); }
+.link-more:hover { gap: 8px; color: var(--accent); }
 
 .font-mono-stat {
   font-variant-numeric: tabular-nums;
@@ -285,9 +290,9 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.16em;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--accent);
   margin-bottom: 16px;
@@ -295,9 +300,10 @@ body {
 .section-label::before {
   content: '';
   display: block;
-  width: 20px;
-  height: 1.5px;
-  background: var(--accent);
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--lime);
   flex-shrink: 0;
 }
 
@@ -309,7 +315,7 @@ body {
   bottom: -1px;
   left: 0;
   width: 0;
-  height: 1px;
+  height: 2px;
   background: var(--accent);
   transition: width 0.2s cubic-bezier(0.2, 0.6, 0.25, 1);
 }
@@ -338,7 +344,7 @@ body {
 }
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
-  50%      { transform: translateY(-8px); }
+  50%      { transform: translateY(-10px); }
 }
 
 .animate-clip-up      { animation: clip-up 0.6s cubic-bezier(0.2, 0.6, 0.25, 1) forwards; }
@@ -371,30 +377,29 @@ body {
 .tablet-up    { @apply hidden sm:block; }
 .desktop-only { @apply hidden lg:block; }
 
-/* ── 태그 / 배지 — 흑백 아웃라인 (틴트 없음) ── */
+/* ── 태그 / 배지 — 브랜드 틴트 필 ── */
 .tag {
   display: inline-flex;
   align-items: center;
-  padding: 3px 9px;
+  padding: 4px 12px;
   font-size: 12px;
-  font-weight: 400;
+  font-weight: 600;
   line-height: 1.4;
-  border-radius: 2px;
-  border: 1px solid #e4e4e4;
-  color: #52525b;
-  background: transparent;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  color: var(--text-2);
+  background: var(--surface);
 }
 .tag-blue {
-  border-color: #d4d4d4;
-  color: #0a0a0a;
-  background: transparent;
+  color: var(--accent-2);
+  background: var(--accent-tint);
 }
 .badge-success {
   display: inline-flex;
   align-items: center;
-  padding: 3px 10px;
+  padding: 4px 12px;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   border-radius: 9999px;
   color: var(--success);
   background: var(--success-tint);
@@ -402,9 +407,9 @@ body {
 .badge-danger {
   display: inline-flex;
   align-items: center;
-  padding: 3px 10px;
+  padding: 4px 12px;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   border-radius: 9999px;
   color: var(--danger);
   background: var(--danger-tint);

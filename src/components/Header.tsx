@@ -65,18 +65,18 @@ export default function Header() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`relative px-3.5 py-1.5 text-sm font-medium rounded-md transition-colors duration-150 ${
+                className={`relative px-3.5 py-1.5 text-sm font-semibold rounded-xl transition-colors duration-150 ${
                   active
-                    ? (solid ? 'text-[#0a0a0a]' : 'text-white')
-                    : (solid ? 'text-[#52525b] hover:text-[#0a0a0a]'
-                             : 'text-white/55 hover:text-white')
+                    ? (solid ? 'text-[#4f46ff]' : 'text-white')
+                    : (solid ? 'text-[#5b5b6b] hover:text-[#0f0f19]'
+                             : 'text-white/65 hover:text-white')
                 }`}
               >
                 {item.label}
                 {active && (
                   <motion.span
                     layoutId="nav-active"
-                    className={`absolute bottom-0 left-3.5 right-3.5 h-[1.5px] ${solid ? 'bg-[#0a0a0a]' : 'bg-white'}`}
+                    className={`absolute bottom-0 left-3.5 right-3.5 h-[2px] rounded-full ${solid ? 'bg-[#4f46ff]' : 'bg-[#d4ff3d]'}`}
                     initial={false}
                     transition={{ duration: 0.2, ease: [0.2, 0.6, 0.25, 1] }}
                   />
@@ -87,9 +87,9 @@ export default function Header() {
 
           <Link
             href="/contact"
-            className={`ml-4 px-5 h-10 inline-flex items-center rounded-sm text-sm font-medium transition-colors duration-150 ${
-              solid ? 'text-white bg-[#0a0a0a] hover:bg-[#333]'
-                    : 'text-[#0a0a0a] bg-white hover:bg-white/85'
+            className={`ml-4 px-5 h-10 inline-flex items-center rounded-xl text-sm font-bold transition-colors duration-150 ${
+              solid ? 'text-white bg-[#4f46ff] hover:bg-[#3d33e8]'
+                    : 'text-[#4f46ff] bg-white hover:bg-[#d4ff3d] hover:text-[#0f0f19]'
             }`}
           >
             상담 신청
@@ -98,8 +98,8 @@ export default function Header() {
 
         {/* 모바일 버튼 */}
         <button
-          className={`md:hidden w-9 h-9 flex items-center justify-center transition-colors rounded-md ${
-            solid ? 'text-[#4c4c4c] hover:text-[#0a0a0a] hover:bg-black/[0.04]'
+          className={`md:hidden w-9 h-9 flex items-center justify-center transition-colors rounded-xl ${
+            solid ? 'text-[#5b5b6b] hover:text-[#0f0f19] hover:bg-black/[0.04]'
                   : 'text-white hover:bg-white/10'
           }`}
           onClick={() => setMobileMenuOpen(!isMobileMenuOpen)}
@@ -145,15 +145,15 @@ export default function Header() {
                   <Link
                     href={item.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center justify-between px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
+                    className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
                       pathname === item.href
-                        ? 'text-[#0a0a0a] bg-black/[0.04]'
-                        : 'text-[#4c4c4c] hover:text-[#262626] hover:bg-black/[0.03]'
+                        ? 'text-[#4f46ff] bg-[#ecebff]'
+                        : 'text-[#5b5b6b] hover:text-[#0f0f19] hover:bg-black/[0.03]'
                     }`}
                   >
                     {item.label}
                     {pathname === item.href && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#0a0a0a]" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#4f46ff]" />
                     )}
                   </Link>
                 </motion.div>
@@ -167,7 +167,7 @@ export default function Header() {
                 <Link
                   href="/contact"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="block text-center px-4 py-2.5 rounded-sm text-sm font-medium text-white bg-[#0a0a0a] hover:bg-[#333] transition-colors"
+                  className="block text-center px-4 py-3 rounded-xl text-sm font-bold text-white bg-[#4f46ff] hover:bg-[#3d33e8] transition-colors"
                 >
                   무료 상담 신청
                 </Link>
