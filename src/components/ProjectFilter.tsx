@@ -55,42 +55,42 @@ export default function ProjectFilter({ projects }: ProjectFilterProps) {
 
   return (
     <div>
-      {/* 필터 바 + 결과 수 */}
-      <motion.div
-        {...inView}
-        variants={fadeUp}
-        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-10 sm:mb-14"
-      >
-        <div className="flex flex-wrap gap-2.5">
-          {CATEGORY_OPTIONS.map((option) => {
-            const active = selectedCategory === option.value;
-            return (
-              <button
-                key={option.value}
-                onClick={() => setSelectedCategory(option.value)}
-                className={`inline-flex items-center gap-2 h-10 px-4 rounded-full text-[13px] font-medium transition-colors ${
-                  active
-                    ? 'bg-[#3182f6] text-white font-bold'
-                    : 'bg-white border border-[#e5e8eb] text-[#4e5968] hover:border-[#3182f6] hover:text-[#3182f6]'
-                }`}
-              >
-                <span>{option.label}</span>
-                <span
-                  className={`text-[11px] tabular-nums ${
-                    active ? 'text-white/70' : 'text-[#adb5bd]'
+      {/* 카테고리 필터 + 결과 수 */}
+      <motion.div {...inView} variants={fadeUp} className="mb-10 sm:mb-14">
+        <p className="index-num mb-5">Category</p>
+
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex flex-wrap gap-2.5">
+            {CATEGORY_OPTIONS.map((option) => {
+              const active = selectedCategory === option.value;
+              return (
+                <button
+                  key={option.value}
+                  onClick={() => setSelectedCategory(option.value)}
+                  className={`inline-flex items-center gap-2 h-10 px-5 rounded-full text-[13px] font-medium transition-colors ${
+                    active
+                      ? 'bg-[#3182f6] text-white font-bold'
+                      : 'bg-white border border-[#e5e8eb] text-[#4e5968] hover:border-[#3182f6] hover:text-[#3182f6]'
                   }`}
                 >
-                  {categoryCounts[option.value] || 0}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+                  <span>{option.label}</span>
+                  <span
+                    className={`text-[11px] tabular-nums ${
+                      active ? 'text-white/70' : 'text-[#adb5bd]'
+                    }`}
+                  >
+                    {categoryCounts[option.value] || 0}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
 
-        <p className="text-[13px] text-[#6b7684]">
-          {selectedCategory === 'all' ? '전체' : selectedCategory} 프로젝트{' '}
-          <span className="font-semibold text-[#191f28] tabular-nums">{filteredProjects.length}</span>개
-        </p>
+          <p className="text-[13px] text-[#6b7684]">
+            {selectedCategory === 'all' ? '전체' : selectedCategory} 프로젝트{' '}
+            <span className="font-semibold text-[#191f28] tabular-nums">{filteredProjects.length}</span>개
+          </p>
+        </div>
       </motion.div>
 
       {/* 프로젝트 그리드 */}
@@ -105,15 +105,15 @@ export default function ProjectFilter({ projects }: ProjectFilterProps) {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="py-20 px-6 rounded-[20px] border border-[#e5e8eb] bg-[#f4f6f8] text-center"
+          className="py-24 px-6 rounded-[20px] border border-[#e5e8eb] bg-[#f4f6f8] text-center"
         >
-          <div className="mb-4 text-[#191f28] flex justify-center">
+          <div className="mb-5 text-[#adb5bd] flex justify-center">
             <FiSearch size={28} />
           </div>
-          <h3 className="text-[15px] font-semibold text-[#191f28] mb-1.5">
+          <h3 className="text-[16px] font-bold text-[#191f28] tracking-[-0.02em] mb-2">
             해당 카테고리의 프로젝트가 없습니다
           </h3>
-          <p className="text-[13px] text-[#4e5968]">다른 카테고리를 선택해 보세요</p>
+          <p className="text-[13px] text-[#6b7684]">다른 카테고리를 선택해 보세요</p>
         </motion.div>
       )}
     </div>

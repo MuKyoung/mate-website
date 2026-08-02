@@ -118,11 +118,24 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* 하단 */}
-        <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-[#e5e8eb]">
-          <p className="text-xs text-[#adb5bd]">© {year} Mate. All rights reserved.</p>
-          <div className="flex items-center gap-5">
-            <span className="text-[10px] text-[#adb5bd] font-mono">v0.1.0</span>
+        {/* 사업자 정보 */}
+        <div className="pt-8 border-t border-[#e5e8eb]">
+          <dl className="flex flex-wrap gap-x-8 gap-y-2 mb-6">
+            <div className="flex items-center gap-2">
+              <dt className="text-[11px] font-semibold text-[#adb5bd]">상호</dt>
+              <dd className="text-[12px] text-[#4e5968]">MATE 외주개발팀</dd>
+            </div>
+            <div className="flex items-center gap-2">
+              <dt className="text-[11px] font-semibold text-[#adb5bd]">이메일</dt>
+              <dd className="text-[12px] text-[#4e5968]">hsib1212@naver.com</dd>
+            </div>
+            <div className="flex items-center gap-2">
+              <dt className="text-[11px] font-semibold text-[#adb5bd]">대표번호</dt>
+              <dd className="text-[12px] text-[#4e5968]">0507-1339-9141</dd>
+            </div>
+          </dl>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <p className="text-xs text-[#adb5bd]">© {year} MATE. All rights reserved.</p>
             <span className="text-[10px] text-[#adb5bd]">Made in Korea</span>
           </div>
         </div>

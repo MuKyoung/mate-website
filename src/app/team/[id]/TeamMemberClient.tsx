@@ -49,8 +49,7 @@ export default function TeamMemberClient({ params }: TeamMemberClientProps) {
                 style={{ fontSize: 'clamp(2.25rem, 5.5vw, 4.25rem)' }}>
                 <span className="block overflow-hidden"><motion.span variants={clipUp} className="block">{member.name}</motion.span></span>
               </motion.h1>
-              <motion.p {...onMount} variants={fadeUp} className="text-[16px] text-[#3182f6] font-bold mb-4">{member.role}</motion.p>
-              <motion.p {...onMount} variants={fadeUp} className="text-[15px] text-[#4e5968] leading-[1.75] max-w-xl">{member.bio}</motion.p>
+              <motion.p {...onMount} variants={fadeUp} className="text-[16px] text-[#3182f6] font-bold">{member.role}</motion.p>
             </div>
           </div>
         </div>
@@ -63,9 +62,15 @@ export default function TeamMemberClient({ params }: TeamMemberClientProps) {
 
             {/* 메인 */}
             <div className="lg:col-span-2 space-y-14">
+              {/* 소개 */}
+              <motion.div {...inView} variants={fadeUp}>
+                <p className="index-num mb-5">01 — 소개</p>
+                <p className="text-[16px] sm:text-[17px] text-[#4e5968] leading-[1.8]">{member.bio}</p>
+              </motion.div>
+
               {/* 기술 스택 */}
               <motion.div {...inView} variants={fadeUp}>
-                <p className="text-[13px] font-semibold text-[#3182f6] mb-4">01 — 기술 스택</p>
+                <p className="index-num mb-5">02 — 기술 스택</p>
                 <div className="flex flex-wrap gap-2">
                   {member.skills.map((skill) => (
                     <span key={skill} className="tag-blue">{skill}</span>
@@ -76,7 +81,7 @@ export default function TeamMemberClient({ params }: TeamMemberClientProps) {
               {/* 참여 프로젝트 */}
               {memberProjects.length > 0 && (
                 <motion.div {...inView} variants={fadeUp}>
-                  <p className="text-[13px] font-semibold text-[#3182f6] mb-5">02 — 참여 프로젝트</p>
+                  <p className="index-num mb-5">03 — 참여 프로젝트</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     {memberProjects.map((project, index) => (
                       <ProjectCard key={project.id} project={project} index={index} />
@@ -90,7 +95,7 @@ export default function TeamMemberClient({ params }: TeamMemberClientProps) {
             <div className="lg:col-span-1">
               <motion.div {...inView} variants={fadeUp}
                 className="p-6 rounded-[20px] border border-[#e5e8eb] bg-white shadow-[0_1px_3px_rgba(25,31,40,0.05)] sticky top-24">
-                <p className="text-[13px] font-semibold text-[#3182f6] mb-4">연락처</p>
+                <p className="index-num mb-5">연락처</p>
                 <div className="space-y-1">
                   <a href={`mailto:${member.email}`}
                     className="flex items-center gap-3 -mx-2 px-2 py-2.5 rounded-xl text-[#4e5968] hover:text-[#3182f6] hover:bg-[#e8f3ff] transition-colors">
@@ -121,25 +126,21 @@ export default function TeamMemberClient({ params }: TeamMemberClientProps) {
         </div>
       </section>
 
-      {/* ── CTA — 코퍼레이트 블루 풀블리드 ── */}
-      <section className="py-24 sm:py-32 bg-[#3182f6]">
-        <div className="container mx-auto px-4 sm:px-6">
-          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-10">
-            <motion.div {...inView} variants={fadeUp}>
-              <p className="text-[13px] font-semibold text-white/70 mb-5">Contact</p>
-              <h2 className="text-white font-extrabold tracking-[-0.035em] leading-[1.08]"
-                style={{ fontSize: 'clamp(1.875rem, 4vw, 3.25rem)' }}>
-                함께 만들어볼까요?
-              </h2>
-            </motion.div>
-            <motion.div {...inView} variants={fadeUp} className="flex-shrink-0">
-              <Link href="/contact"
-                className="group inline-flex items-center gap-2 h-14 px-8 rounded-xl text-[15px] font-bold text-[#3182f6] bg-white hover:bg-[#e8f3ff] transition-colors">
-                프로젝트 문의
-                <FiArrowRight size={17} className="group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </motion.div>
-          </div>
+      {/* ── 대형 중앙 CTA ── */}
+      <section className="py-28 sm:py-40 bg-white border-t border-[#e5e8eb]">
+        <div className="container mx-auto px-4 sm:px-6 text-center">
+          <motion.h2 {...inView} variants={fadeUp}
+            className="text-[#191f28] font-extrabold tracking-[-0.035em] leading-[1.08] mb-10 max-w-4xl mx-auto"
+            style={{ fontSize: 'clamp(2rem, 5.5vw, 4.25rem)' }}>
+            함께 만들어볼까요?
+          </motion.h2>
+          <motion.div {...inView} variants={fadeUp} className="flex justify-center">
+            <Link href="/contact"
+              className="group inline-flex items-center gap-2 h-14 px-9 rounded-xl text-[15px] font-bold text-white bg-[#3182f6] hover:bg-[#1b64da] transition-colors shadow-[0_4px_14px_rgba(49,130,246,0.30)]">
+              문의하기
+              <FiArrowRight size={17} className="group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </motion.div>
         </div>
       </section>
     </>

@@ -10,7 +10,7 @@ import {
   FiCheckCircle,
   FiSend,
 } from 'react-icons/fi';
-import { revealUp, staggerTight, inView } from '@/lib/motion';
+import { fadeUp, stagger, inView } from '@/lib/motion';
 
 interface ProcessTimelineProps {
   steps: ProcessStep[];
@@ -25,45 +25,32 @@ const iconById: Record<string, IconType> = {
   '5': FiSend, // 배포
 };
 
-// 화이트/쿨 그레이 배경 위 — 번호가 채워진 원형 노드 + 헤어라인 커넥터.
+// devigns 스텝 패턴 — 상단 헤어라인 + 대형 인덱스. 라이트 밴드(화이트/쿨 그레이) 위 사용.
 export default function ProcessTimeline({ steps }: ProcessTimelineProps) {
   const sortedSteps = [...steps].sort((a, b) => a.order - b.order);
 
   return (
-    <motion.div {...inView} variants={staggerTight} className="relative max-w-2xl">
-      {/* 세로 커넥터 라인 */}
-      <div className="absolute left-6 top-6 bottom-6 w-px bg-[#e5e8eb]" />
-
-      <div className="space-y-0">
-        {sortedSteps.map((step, index) => {
-          const Icon = iconById[step.id] ?? FiMessageCircle;
-          const isLast = index === sortedSteps.length - 1;
-          return (
-            <motion.div
-              key={step.id}
-              variants={revealUp}
-              className={`relative flex gap-5 ${isLast ? '' : 'pb-10'}`}
-            >
-              {/* 번호 노드 */}
-              <div className="relative z-10 flex-shrink-0 w-12 h-12 rounded-full bg-[#3182f6] flex items-center justify-center text-white font-bold">
-                <Icon size={19} />
-              </div>
-
-              <div className="min-w-0 pt-2">
-                <div className="flex items-baseline gap-2.5 mb-1.5">
-                  <span className="text-[12px] text-[#3182f6] font-bold font-mono-stat">
-                    {String(step.order).padStart(2, '0')}
-                  </span>
-                  <h3 className="text-[16px] font-bold text-[#191f28]">{step.title}</h3>
-                </div>
-                <p className="text-sm text-[#4e5968] leading-[1.7] max-w-md">
-                  {step.description}
-                </p>
-              </div>
-            </motion.div>
-          );
-        })}
-      </div>
+    <motion.div {...inView} variants={stagger}
+      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-x-8 gap-y-12">
+      {sortedSteps.map((step) => {
+        const Icon = iconById[step.id] ?? FiMessageCircle;
+        return (
+          <motion.div key={step.id} variants={fadeUp} className="rule-top">
+            <span className="index-num-lg mb-6">
+              {String(step.order).padStart(2, '0')}
+            </span>
+            <div className="flex items-center gap-2 mb-3">
+              <Icon size={16} className="text-[#3182f6] flex-shrink-0" />
+              <h3 className="text-[20px] font-bold text-[#191f28] tracking-[-0.02em]">
+                {step.title}
+              </h3>
+            </div>
+            <p className="text-[15px] text-[#4e5968] leading-[1.75]">
+              {step.description}
+            </p>
+          </motion.div>
+        );
+      })}
     </motion.div>
   );
 }

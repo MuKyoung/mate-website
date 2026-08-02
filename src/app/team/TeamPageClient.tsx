@@ -8,10 +8,10 @@ import TeamCapabilityCard from '@/components/TeamCapabilityCard';
 import { teamMembers } from '@/data/team';
 import { teamCapabilities, awards, type Award } from '@/data/teamCapabilities';
 import {
-  FiCheckCircle, FiArrowRight, FiStar, FiFileText, FiBookmark, FiGrid,
+  FiArrowRight, FiStar, FiFileText, FiBookmark, FiGrid,
 } from 'react-icons/fi';
 import type { IconType } from 'react-icons';
-import { fadeUp, stagger, inView, easeEnter } from '@/lib/motion';
+import { fadeUp, clipUp, stagger, inView, easeEnter } from '@/lib/motion';
 
 /* 수상 랭크 → react-icons (UI 이모지 금지) */
 function getAwardIcon(award: Award): IconType {
@@ -48,8 +48,8 @@ export default function TeamPageClient() {
         description="Unity 게임 · AR/VR · 웹/앱 개발 및 개발 강의에 특화된 전문 외주개발팀입니다. 5년 이상의 경험과 30개 이상의 완료 프로젝트를 보유하고 있습니다."
       />
 
-      {/* ── 핵심 수치 (white) ── */}
-      <section className="bg-white border-b border-[#e5e8eb]">
+      {/* ━━ 핵심 수치 스트립 ━━ */}
+      <section className="bg-[#f4f6f8] border-b border-[#e5e8eb]">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-2 sm:grid-cols-4">
             {stats.map((stat, i) => (
@@ -58,7 +58,7 @@ export default function TeamPageClient() {
                 viewport={{ once: true, margin: '-12%' }}
                 transition={{ delay: i * 0.09, duration: 0.7, ease: easeEnter }}
                 className={[
-                  'py-10 px-5 sm:px-6 border-[#e5e8eb]',
+                  'py-10 px-5 sm:px-6 border-[#d1d6db]',
                   i % 2 === 1 ? 'border-l' : '',
                   i >= 2 ? 'border-t' : '',
                   i > 0 ? 'sm:border-l' : '',
@@ -72,20 +72,111 @@ export default function TeamPageClient() {
         </div>
       </section>
 
-      {/* ── 팀 멤버 (white) — 가로 규칙선 헤더 ── */}
+      {/* ━━ About MATE — 좌 제목 / 우 본문 ━━ */}
+      <section className="py-24 sm:py-32 bg-white">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="grid lg:grid-cols-12 gap-y-12 gap-x-8">
+            <motion.div {...inView} variants={fadeUp} className="lg:col-span-5">
+              <p className="index-num mb-5">About</p>
+              <h2 className="text-[#191f28] font-extrabold tracking-[-0.03em] leading-[1.12]"
+                style={{ fontSize: 'clamp(1.875rem, 4vw, 3rem)' }}>
+                Unity · 웹 · 앱까지<br />한 팀에서
+              </h2>
+            </motion.div>
+
+            <motion.div {...inView} variants={stagger} className="lg:col-span-6 lg:col-start-7">
+              <motion.p variants={fadeUp}
+                className="text-[17px] sm:text-[19px] font-semibold text-[#191f28] leading-[1.65] mb-6">
+                MATE는 Unity 게임 · AR/VR · 웹/앱 개발 및 개발 강의에 특화된 전문 외주개발팀입니다.
+              </motion.p>
+              <motion.p variants={fadeUp} className="text-[15px] text-[#4e5968] leading-[1.8] mb-12">
+                5년 이상의 외주 개발 경험과 30개 이상의 완료 프로젝트를 바탕으로,
+                클라이언트 · 서버 · UI/UX 각 분야 전문가 5명이 하나의 팀으로 움직입니다.
+                여러 회사에 나눠 맡기지 않아도, 필요한 개발을 한 팀에서 해결할 수 있습니다.
+              </motion.p>
+
+              <div>
+                {whyChooseUs.map((item) => (
+                  <motion.div key={item.title} variants={fadeUp}
+                    className="grid sm:grid-cols-[9rem_1fr] gap-x-6 gap-y-1 py-5 border-b border-[#e5e8eb] first:border-t first:border-[#e5e8eb]">
+                    <p className="text-[15px] font-bold text-[#191f28]">{item.title}</p>
+                    <p className="text-[14px] text-[#4e5968] leading-[1.75]">{item.desc}</p>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* ━━ Vision ━━ */}
+      <section className="py-24 sm:py-32 bg-[#f4f6f8] border-y border-[#e5e8eb]">
+        <div className="container mx-auto px-4 sm:px-6">
+          <motion.p {...inView} variants={fadeUp} className="index-num mb-8">Vision</motion.p>
+
+          <motion.h2 {...inView} variants={stagger}
+            className="text-[#191f28] font-extrabold tracking-[-0.035em] leading-[1.08] mb-12"
+            style={{ fontSize: 'clamp(2rem, 5.5vw, 4.25rem)' }}>
+            <span className="block overflow-hidden">
+              <motion.span variants={clipUp} className="block">
+                MATE <span className="text-[#3182f6]">=</span> 기획 + 개발 + 배포
+              </motion.span>
+            </span>
+            <span className="block overflow-hidden">
+              <motion.span variants={clipUp} className="block text-[#adb5bd]">끝까지 함께하는 개발 파트너</motion.span>
+            </span>
+          </motion.h2>
+
+          <div className="grid lg:grid-cols-12 gap-y-8 gap-x-8">
+            <motion.p {...inView} variants={fadeUp}
+              className="lg:col-span-6 lg:col-start-7 text-[15px] sm:text-base text-[#4e5968] leading-[1.8]">
+              요구사항을 정리하는 기획 단계부터 설계와 개발, 배포와 운영까지 프로젝트의 전 과정을 한 팀이 책임집니다.
+              요청받은 기능을 만들어 넘기고 끝나는 외주가 아니라, 만들기 전에 방향을 함께 검증하고
+              배포 이후의 개선까지 이어가는 파트너로 일합니다.
+            </motion.p>
+          </div>
+        </div>
+      </section>
+
+      {/* ━━ 전문 역량 — 딥 잉크 프리미엄 패널 ━━ */}
+      <section className="py-24 sm:py-32 bg-white">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="rounded-[24px] bg-[#191f28] px-6 py-14 sm:px-14 sm:py-20 overflow-hidden">
+            <motion.div {...inView} variants={fadeUp} className="mb-12 max-w-xl">
+              <p className="text-[13px] font-semibold text-[#5a9cf8] mb-5">Capabilities</p>
+              <h2 className="text-white font-extrabold tracking-[-0.03em] leading-[1.12] mb-5"
+                style={{ fontSize: 'clamp(1.875rem, 4vw, 3rem)' }}>
+                전문 역량
+              </h2>
+              <p className="text-[15px] text-white/65 leading-[1.75]">
+                유니티 외주 개발과 강의를 통해 쌓은 실전 경험입니다.
+              </p>
+            </motion.div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {teamCapabilities.capabilities.map((capability, index) => (
+                <TeamCapabilityCard key={capability.id} capability={capability} index={index} onBlue />
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ━━ 팀 멤버 ━━ */}
       <section className="py-24 sm:py-32 bg-white">
         <div className="container mx-auto px-4 sm:px-6">
           <motion.div {...inView} variants={fadeUp}
-            className="flex flex-wrap items-baseline justify-between gap-4 mb-12">
-            <div className="flex items-baseline gap-4">
-              <span className="text-[13px] font-semibold text-[#3182f6]">01</span>
-              <h2 className="text-[#191f28] font-extrabold tracking-[-0.03em]"
-                style={{ fontSize: 'clamp(1.875rem, 3.5vw, 2.75rem)' }}>
+            className="flex flex-wrap items-end justify-between gap-6 mb-14">
+            <div className="max-w-2xl">
+              <p className="index-num mb-5">Members</p>
+              <h2 className="text-[#191f28] font-extrabold tracking-[-0.03em] leading-[1.12]"
+                style={{ fontSize: 'clamp(1.875rem, 4vw, 3rem)' }}>
                 팀 멤버
               </h2>
             </div>
-            <p className="text-[14px] text-[#4e5968]">각 분야의 전문가가 기획부터 배포까지 함께합니다.</p>
+            <p className="text-[14px] text-[#4e5968] pb-2">각 분야의 전문가가 기획부터 배포까지 함께합니다.</p>
           </motion.div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {teamMembers.map((member, i) => (
               <TeamMemberCard key={member.id} member={member} index={i} />
@@ -94,109 +185,45 @@ export default function TeamPageClient() {
         </div>
       </section>
 
-      {/* ── Why Choose Us (라벤더 서피스 밴드) — 좌측 고정 제목 ── */}
-      <section className="py-24 sm:py-32 bg-[#f4f6f8]">
+      {/* ━━ 수상 및 전시 ━━ */}
+      <section className="py-24 sm:py-32 bg-[#f4f6f8] border-y border-[#e5e8eb]">
         <div className="container mx-auto px-4 sm:px-6">
-          <div className="grid lg:grid-cols-12 gap-y-12 gap-x-8">
-            <div className="lg:col-span-4">
-              <motion.div {...inView} variants={fadeUp} className="lg:sticky lg:top-28">
-                <p className="text-[13px] font-semibold text-[#3182f6] mb-4">02 — Why MATE</p>
-                <h2 className="text-[#191f28] font-extrabold tracking-[-0.03em] leading-[1.1] mb-6"
-                  style={{ fontSize: 'clamp(1.875rem, 3.5vw, 2.75rem)' }}>
-                  왜 MATE 팀인가요?
-                </h2>
-                <p className="text-[15px] text-[#4e5968] leading-[1.75] max-w-sm">
-                  Unity · 웹 · 앱까지 한 팀에서 해결합니다.
-                </p>
-              </motion.div>
-            </div>
-            <motion.div {...inView} variants={stagger}
-              className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-5">
-              {whyChooseUs.map((item) => (
-                <motion.div key={item.title} variants={fadeUp}
-                  className="flex items-start gap-4 p-7 bg-white rounded-[20px] border border-[#e5e8eb] shadow-[0_1px_3px_rgba(25,31,40,0.05)] hover:shadow-[0_12px_32px_rgba(25,31,40,0.10)] hover:-translate-y-0.5 transition-all duration-200">
-                  <span className="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center bg-[#e8f3ff] text-[#3182f6]">
-                    <FiCheckCircle size={17} />
-                  </span>
-                  <div>
-                    <p className="text-[15px] font-bold text-[#191f28] mb-1.5">{item.title}</p>
-                    <p className="text-[13px] text-[#4e5968] leading-relaxed">{item.desc}</p>
-                  </div>
-                </motion.div>
-              ))}
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── 전문 역량 — 딥 잉크 프리미엄 패널 (화이트 섹션 안에 인셋) ── */}
-      <section className="py-24 sm:py-32 bg-white">
-        <div className="container mx-auto px-4 sm:px-6">
-          <div className="rounded-[24px] bg-[#191f28] px-6 py-14 sm:px-14 sm:py-20 overflow-hidden">
-            <div>
-              <motion.div {...inView} variants={fadeUp} className="mb-12 max-w-xl">
-                <p className="text-[13px] font-semibold text-[#5a9cf8] mb-4">03 — Capabilities</p>
-                <h2 className="text-white font-extrabold tracking-[-0.03em] leading-[1.1] mb-5"
-                  style={{ fontSize: 'clamp(1.875rem, 3.5vw, 2.75rem)' }}>
-                  전문 역량
-                </h2>
-                <p className="text-[15px] text-white/65 leading-[1.75]">
-                  유니티 외주 개발과 강의를 통해 쌓은 실전 경험입니다.
-                </p>
-              </motion.div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                {teamCapabilities.capabilities.map((capability, index) => (
-                  <TeamCapabilityCard key={capability.id} capability={capability} index={index} onBlue />
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── 수상 및 전시 (white) ── */}
-      <section className="py-24 sm:py-32 bg-white">
-        <div className="container mx-auto px-4 sm:px-6">
-          <motion.div {...inView} variants={fadeUp} className="mb-12">
-            <p className="text-[13px] font-semibold text-[#3182f6] mb-4">04 — Awards &amp; Exhibitions</p>
-            <h2 className="text-[#191f28] font-extrabold tracking-[-0.03em]"
-              style={{ fontSize: 'clamp(1.5rem, 2.5vw, 2rem)' }}>
+          <motion.div {...inView} variants={fadeUp} className="mb-14 max-w-2xl">
+            <p className="index-num mb-5">Awards &amp; Exhibitions</p>
+            <h2 className="text-[#191f28] font-extrabold tracking-[-0.03em] leading-[1.12]"
+              style={{ fontSize: 'clamp(1.875rem, 4vw, 3rem)' }}>
               수상 및 전시 경력
             </h2>
           </motion.div>
 
-          <div className="space-y-12 max-w-4xl">
+          <div className="max-w-5xl space-y-14">
             {yearGroups.map((year) => (
-              <motion.div key={year} {...inView} variants={fadeUp}>
-                <div className="flex items-center gap-4 mb-5">
-                  <span className="text-base font-bold text-[#191f28] font-mono-stat tracking-tight">{year}</span>
-                  <div className="h-px flex-grow bg-[#e5e8eb]" />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {awards.filter(a => a.year === year).map((award, ai) => {
+              <motion.div key={year} {...inView} variants={stagger} className="border-t border-[#d1d6db] pt-6">
+                <span className="index-num-lg mb-6">{year}</span>
+                <div>
+                  {awards.filter(a => a.year === year).map((award) => {
                     const Icon = getAwardIcon(award);
                     return (
-                      <motion.div key={award.id}
-                        initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true, margin: '-12%' }}
-                        transition={{ delay: ai * 0.09, duration: 0.7, ease: easeEnter }}
-                        className="flex items-start gap-3 p-5 rounded-[20px] border border-[#e5e8eb] bg-white shadow-[0_1px_3px_rgba(25,31,40,0.05)] hover:shadow-[0_12px_32px_rgba(25,31,40,0.10)] hover:-translate-y-0.5 transition-all duration-200">
-                        <span className="flex items-center justify-center w-9 h-9 rounded-xl bg-[#e8f3ff] text-[#3182f6] flex-shrink-0">
+                      <motion.div key={award.id} variants={fadeUp}
+                        className="flex items-start gap-4 py-5 border-b border-[#d1d6db]">
+                        <span className="flex-shrink-0 mt-0.5 w-9 h-9 rounded-xl flex items-center justify-center bg-[#e8f3ff] text-[#3182f6]">
                           <Icon size={16} />
                         </span>
-                        <div className="min-w-0">
-                          <div className="flex flex-wrap gap-1.5 mb-1.5">
+                        <div className="min-w-0 flex-1 sm:flex sm:items-baseline sm:justify-between sm:gap-6">
+                          <div className="min-w-0">
+                            <p className="text-[15px] font-bold text-[#191f28] leading-snug">{award.title}</p>
+                            <p className="text-[13px] text-[#4e5968] mt-1">{award.organization}</p>
+                          </div>
+                          <div className="flex flex-wrap gap-1.5 mt-2.5 sm:mt-0 flex-shrink-0">
                             <span className="tag-blue">
                               {award.type === 'exhibition' ? '전시회' : '수상'}
                             </span>
                             {award.rank && (
-                              <span className="inline-flex items-center rounded-full border border-[#e5e8eb] px-2.5 py-[3px] text-[12px] font-medium text-[#4e5968]">
+                              <span className="inline-flex items-center rounded-full border border-[#d1d6db] bg-white px-2.5 py-[3px] text-[12px] font-medium text-[#4e5968]">
                                 {award.rank}
                               </span>
                             )}
                           </div>
-                          <p className="text-[13px] font-bold text-[#191f28] leading-snug">{award.title}</p>
-                          <p className="text-[12px] text-[#4e5968] mt-0.5">{award.organization}</p>
                         </div>
                       </motion.div>
                     );
@@ -208,29 +235,29 @@ export default function TeamPageClient() {
         </div>
       </section>
 
-      {/* ── CTA — 코퍼레이트 블루 풀블리드 ── */}
-      <section className="py-24 sm:py-32 bg-[#3182f6]">
-        <div className="container mx-auto px-4 sm:px-6">
-          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-10">
-            <motion.div {...inView} variants={stagger}>
-              <p className="text-[13px] font-semibold text-white/70 mb-5">Contact</p>
-              <motion.h2 variants={fadeUp}
-                className="text-white font-extrabold tracking-[-0.035em] leading-[1.08] mb-5"
-                style={{ fontSize: 'clamp(2rem, 4.5vw, 3.5rem)' }}>
-                함께 프로젝트를 시작해볼까요?
-              </motion.h2>
-              <motion.p variants={fadeUp} className="text-[15px] text-white/75 max-w-md">
-                무료 상담으로 가능성을 확인하세요.
-              </motion.p>
-            </motion.div>
-            <motion.div {...inView} variants={fadeUp} className="flex-shrink-0">
-              <Link href="/contact"
-                className="group inline-flex items-center gap-2 h-14 px-8 rounded-xl text-[15px] font-bold text-[#3182f6] bg-white hover:bg-[#e8f3ff] transition-colors">
-                무료 상담 신청
-                <FiArrowRight size={17} className="group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </motion.div>
-          </div>
+      {/* ━━ 대형 중앙 CTA ━━ */}
+      <section className="py-28 sm:py-40 bg-white">
+        <div className="container mx-auto px-4 sm:px-6 text-center">
+          <motion.h2 {...inView} variants={stagger}
+            className="text-[#191f28] font-extrabold tracking-[-0.035em] leading-[1.08] mb-7 max-w-4xl mx-auto"
+            style={{ fontSize: 'clamp(2rem, 5.5vw, 4.25rem)' }}>
+            <span className="block overflow-hidden">
+              <motion.span variants={clipUp} className="block">함께 프로젝트를</motion.span>
+            </span>
+            <span className="block overflow-hidden">
+              <motion.span variants={clipUp} className="block">시작해볼까요?</motion.span>
+            </span>
+          </motion.h2>
+          <motion.p {...inView} variants={fadeUp} className="text-[15px] text-[#4e5968] mb-10">
+            무료 상담으로 가능성을 확인하세요.
+          </motion.p>
+          <motion.div {...inView} variants={fadeUp} className="flex justify-center">
+            <Link href="/contact"
+              className="group inline-flex items-center gap-2 h-14 px-9 rounded-xl text-[15px] font-bold text-white bg-[#3182f6] hover:bg-[#1b64da] transition-colors shadow-[0_4px_14px_rgba(49,130,246,0.30)]">
+              문의하기
+              <FiArrowRight size={17} className="group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </motion.div>
         </div>
       </section>
     </>

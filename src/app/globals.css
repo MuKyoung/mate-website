@@ -238,6 +238,51 @@ body {
   font-size: clamp(2.25rem, 5vw, 4rem);
 }
 
+/* ── devigns식 섹션 타이틀 (초대형 영문 디스플레이) ── */
+.display-xl {
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+  font-size: clamp(3rem, 10vw, 9rem);
+  color: var(--text-1);
+}
+/* 아웃라인 고스트 타이틀 — 반복 강조용 */
+.display-ghost {
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+  font-size: clamp(3rem, 10vw, 9rem);
+  color: transparent;
+  -webkit-text-stroke: 1px var(--border-2);
+}
+
+/* 번호 인덱스 (01 · 02 · 03) */
+.index-num {
+  display: block;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+}
+.index-num-lg {
+  display: block;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+  font-weight: 800;
+  font-size: clamp(2rem, 4vw, 3.25rem);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--border-2);
+}
+
+/* 상단 규칙선이 있는 인덱스 행 (devigns 스텝 패턴) */
+.rule-top {
+  border-top: 1px solid var(--border);
+  padding-top: 24px;
+}
+
 /* 라벨 — 브랜드 컬러 캡션 */
 .eyebrow {
   display: inline-flex;
