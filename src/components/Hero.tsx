@@ -124,25 +124,37 @@ export default function Hero() {
           </p>
         </div>
 
-        {/* 로테이팅 스테이트먼트 — 글자 단위 리빌 */}
-        <div className="mb-10 sm:mb-14">
-          <AnimatePresence mode="wait">
-            <motion.div key={index} initial="hidden" animate="show" exit="exit">
-              <h1 className="font-en text-[#f5f6f7] font-extrabold tracking-[-0.04em] leading-[1.0]"
-                style={{ fontSize: 'clamp(2.5rem, 10.5vw, 10.5rem)' }}>
-                <CharLine text={slide.en1} />
-                <CharLine text={slide.en2} offset={slide.en1.length + 2} accent={slide.accent2} />
-              </h1>
-              {/* 캡션은 좌측에서 미끄러져 들어와 진입 방향을 분리 */}
-              <motion.p
-                initial={{ opacity: 0, x: -44 }}
-                animate={{ opacity: 1, x: 0, transition: { delay: 0.55, duration: 0.85, ease: easeEnter } }}
-                exit={{ opacity: 0, x: 32, transition: { duration: 0.35, ease: easeEnter } }}
-                className="caption-kr mt-7 sm:mt-9">
-                — {slide.kr}
-              </motion.p>
-            </motion.div>
-          </AnimatePresence>
+        {/* 로테이팅 스테이트먼트 — 글자 단위 리빌 (고스트 사이저로 높이 고정) */}
+        <div className="mb-10 sm:mb-14 grid">
+          {/* 슬라이드 전환 중 높이 붕괴로 하단 요소가 점프하지 않도록 자리를 잡는 정적 복제 */}
+          <div className="invisible col-start-1 row-start-1" aria-hidden="true">
+            <h1 className="font-en font-extrabold tracking-[-0.04em] leading-[1.0]"
+              style={{ fontSize: 'clamp(2.5rem, 10.5vw, 10.5rem)' }}>
+              <span className="block">Ideas to Code,</span>
+              <span className="block">Proven by Work</span>
+            </h1>
+            <p className="caption-kr mt-7 sm:mt-9">— 기획부터 배포까지, 한 팀이 끝까지 책임집니다</p>
+          </div>
+
+          <div className="col-start-1 row-start-1">
+            <AnimatePresence mode="wait">
+              <motion.div key={index} initial="hidden" animate="show" exit="exit">
+                <h1 className="font-en text-[#f5f6f7] font-extrabold tracking-[-0.04em] leading-[1.0]"
+                  style={{ fontSize: 'clamp(2.5rem, 10.5vw, 10.5rem)' }}>
+                  <CharLine text={slide.en1} />
+                  <CharLine text={slide.en2} offset={slide.en1.length + 2} accent={slide.accent2} />
+                </h1>
+                {/* 캡션은 좌측에서 미끄러져 들어와 진입 방향을 분리 */}
+                <motion.p
+                  initial={{ opacity: 0, x: -44 }}
+                  animate={{ opacity: 1, x: 0, transition: { delay: 0.55, duration: 0.85, ease: easeEnter } }}
+                  exit={{ opacity: 0, x: 32, transition: { duration: 0.35, ease: easeEnter } }}
+                  className="caption-kr mt-7 sm:mt-9">
+                  — {slide.kr}
+                </motion.p>
+              </motion.div>
+            </AnimatePresence>
+          </div>
         </div>
 
         {/* 하단 행 — 페이지네이션 좌 / 액션 우 */}
@@ -151,7 +163,7 @@ export default function Hero() {
           <div className="flex items-center gap-5">
             {slides.map((_, i) => (
               <button key={i} onClick={() => goTo(i)} aria-label={`슬라이드 ${i + 1}`}
-                className="group flex items-center gap-2.5">
+                className="group flex items-center gap-2.5 py-3 -my-3">
                 <span className={`font-en text-[13px] font-bold tabular-nums transition-colors duration-300 ${
                   i === index ? 'text-[#f5f6f7]' : 'text-white/30 group-hover:text-white/60'
                 }`}>

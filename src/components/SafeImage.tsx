@@ -32,7 +32,7 @@ export default function SafeImage({
     return (
       <div className={className}>
         {placeholder || (
-          <div className="w-full h-full flex items-center justify-center bg-[#f5f5f5] text-[#a3a3a3]">
+          <div className="w-full h-full flex items-center justify-center bg-[#1d2024] text-white/20">
             <FiImage size={36} />
           </div>
         )}
@@ -43,9 +43,7 @@ export default function SafeImage({
   return (
     <div className={`relative ${fill ? 'w-full h-full' : ''} ${className}`}>
       {imageLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-[#f5f5f5] animate-pulse z-10">
-          <span className="text-[#a3a3a3] text-sm">Loading...</span>
-        </div>
+        <div className="absolute inset-0 bg-[#1d2024] animate-pulse z-10" />
       )}
       {fill ? (
         <Image

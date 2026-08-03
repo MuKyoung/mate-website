@@ -51,7 +51,23 @@
 }
 
 /* ── 기본 ───────────────────────────────────────────── */
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+  background: var(--canvas); /* 오버스크롤(러버밴드) 영역도 다크 유지 */
+}
+
+/* 텍스트 선택 — 브랜드 블루 */
+::selection {
+  background: var(--accent);
+  color: #ffffff;
+}
+
+/* 키보드 포커스 — 마우스 클릭에는 나타나지 않음 */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
 
 body {
   color: var(--text-1);
