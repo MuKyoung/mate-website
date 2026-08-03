@@ -17,11 +17,21 @@ const navItems = [
 
 export default function Header() {
   const [isScrolled, setIsScrolled]         = useState(false);
+  const [isHidden, setHidden]               = useState(false);
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
 
   useEffect(() => {
-    const onScroll = () => setIsScrolled(window.scrollY > 16);
+    let last = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      setIsScrolled(y > 16);
+      // 아래로 내리면 헤더를 감추고, 위로 올리면 즉시 되돌린다 (콘텐츠에 화면을 양보)
+      if (Math.abs(y - last) > 6) {
+        setHidden(y > last && y > 160);
+        last = y;
+      }
+    };
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
@@ -29,11 +39,13 @@ export default function Header() {
   useEffect(() => { setMobileMenuOpen(false); }, [pathname]);
 
   const solid = isScrolled || isMobileMenuOpen;
+  const hidden = isHidden && !isMobileMenuOpen;
 
   return (
     <header
-      className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
+      className="fixed top-0 left-0 right-0 z-50 transition-[transform,background,border-color] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
       style={{
+        transform: hidden ? 'translateY(-100%)' : 'translateY(0)',
         background: solid ? 'rgba(19, 21, 24, 0.72)' : 'transparent',
         backdropFilter: solid ? 'blur(14px)' : 'none',
         borderBottom: solid ? '1px solid rgba(255,255,255,0.10)' : '1px solid transparent',

@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { FiGithub, FiLinkedin, FiMail, FiTwitter, FiArrowUpRight } from 'react-icons/fi';
+import { FiMail, FiPhone, FiArrowUpRight } from 'react-icons/fi';
+import { RiKakaoTalkFill } from 'react-icons/ri';
 
 export default function Footer() {
   const year = new Date().getFullYear();
@@ -18,11 +19,11 @@ export default function Footer() {
 
   const svcs = ['유니티 외주 개발', '개발 강의', 'AR/VR 개발', '게임 서버 개발'];
 
+  // 실제로 연결되는 채널만 노출한다 (미개설 SNS 링크는 두지 않음)
   const social = [
-    { icon: FiGithub,   href: 'https://github.com',   label: 'GitHub' },
-    { icon: FiLinkedin, href: 'https://linkedin.com', label: 'LinkedIn' },
-    { icon: FiTwitter,  href: 'https://twitter.com',  label: 'Twitter' },
-    { icon: FiMail,     href: 'mailto:hsib1212@naver.com', label: 'Email' },
+    { icon: RiKakaoTalkFill, href: 'https://open.kakao.com/o/scVFEK3h', label: '카카오톡 오픈채팅' },
+    { icon: FiMail,          href: 'mailto:hsib1212@naver.com',        label: '이메일' },
+    { icon: FiPhone,         href: 'tel:0507-1339-9141',               label: '전화' },
   ];
 
   return (
@@ -60,14 +61,18 @@ export default function Footer() {
             <p className="text-sm text-white/45 leading-relaxed mb-5">
               유니티 외주 개발과 개발 강의에 특화된 전문 개발 팀.
             </p>
-            <div className="flex gap-2">
-              {social.map((s) => (
-                <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
-                  aria-label={s.label}
-                  className="w-9 h-9 flex items-center justify-center text-white/35 hover:text-white transition-colors duration-150">
-                  <s.icon size={14} />
-                </a>
-              ))}
+            <div className="flex gap-1">
+              {social.map((s) => {
+                const external = s.href.startsWith('http');
+                return (
+                  <a key={s.label} href={s.href}
+                    {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                    aria-label={s.label} title={s.label}
+                    className="w-10 h-10 flex items-center justify-center rounded-full text-white/35 hover:text-white hover:bg-white/[0.06] transition-colors duration-200">
+                    <s.icon size={16} />
+                  </a>
+                );
+              })}
             </div>
           </div>
 

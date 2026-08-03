@@ -4,11 +4,13 @@ import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import FloatingContactButton from "@/components/FloatingContactButton";
+import SmoothScroll from "@/components/SmoothScroll";
 import { Analytics } from "@vercel/analytics/react";
 
 const raleway = Raleway({
   subsets: ["latin"],
-  weight: ["300", "500", "700", "800"],
+  // 실제 사용하는 weight — 600(index-num), 700/800(디스플레이) 포함
+  weight: ["400", "500", "600", "700", "800"],
   variable: "--font-raleway",
   display: "swap",
 });
@@ -128,6 +130,7 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
         />
+        <SmoothScroll />
         <Header />
         <main className="min-h-screen">{children}</main>
         <Footer />

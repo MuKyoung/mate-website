@@ -56,6 +56,11 @@ html {
   background: var(--canvas); /* 오버스크롤(러버밴드) 영역도 다크 유지 */
 }
 
+/* Lenis 관성 스크롤이 활성일 때는 네이티브 smooth와 충돌하므로 해제 */
+html.lenis, html.lenis body { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
+.lenis.lenis-stopped { overflow: hidden; }
+
 /* 텍스트 선택 — 브랜드 블루 */
 ::selection {
   background: var(--accent);
