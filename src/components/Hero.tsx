@@ -6,15 +6,15 @@ import { FiArrowUpRight, FiArrowDown } from 'react-icons/fi';
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { easeEnter } from '@/lib/motion';
 
-/* ── 글자 단위 리빌 (Splitting.js 방식) ── */
+/* ── 글자 단위 리빌 (Splitting.js 방식) — 미세 회전 각도 포함 ── */
 const charVariants = {
-  hidden: { y: '112%' },
+  hidden: { y: '118%', rotate: 8, transformOrigin: '0% 100%' },
   show: (i: number) => ({
-    y: '0%',
-    transition: { delay: i * 0.028, duration: 0.85, ease: easeEnter },
+    y: '0%', rotate: 0,
+    transition: { delay: i * 0.028, duration: 0.9, ease: easeEnter },
   }),
   exit: (i: number) => ({
-    y: '-112%',
+    y: '-118%', rotate: -6,
     transition: { delay: i * 0.012, duration: 0.45, ease: easeEnter },
   }),
 };
@@ -133,10 +133,11 @@ export default function Hero() {
                 <CharLine text={slide.en1} />
                 <CharLine text={slide.en2} offset={slide.en1.length + 2} accent={slide.accent2} />
               </h1>
+              {/* 캡션은 좌측에서 미끄러져 들어와 진입 방향을 분리 */}
               <motion.p
-                initial={{ opacity: 0, y: 22 }}
-                animate={{ opacity: 1, y: 0, transition: { delay: 0.55, duration: 0.8, ease: easeEnter } }}
-                exit={{ opacity: 0, y: -14, transition: { duration: 0.35, ease: easeEnter } }}
+                initial={{ opacity: 0, x: -44 }}
+                animate={{ opacity: 1, x: 0, transition: { delay: 0.55, duration: 0.85, ease: easeEnter } }}
+                exit={{ opacity: 0, x: 32, transition: { duration: 0.35, ease: easeEnter } }}
                 className="caption-kr mt-7 sm:mt-9">
                 — {slide.kr}
               </motion.p>

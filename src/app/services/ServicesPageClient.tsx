@@ -8,7 +8,9 @@ import ProcessTimeline from '@/components/ProcessTimeline';
 import { services } from '@/data/services';
 import { processSteps } from '@/data/process';
 import { FiArrowUpRight } from 'react-icons/fi';
-import { fadeUp, clipUp, stagger, inView } from '@/lib/motion';
+import {
+  fadeUp, fadeLeft, fadeRight, riseTilt, clipUp, clipLeft, clipRight, lineDraw, stagger, inView,
+} from '@/lib/motion';
 
 /* Flow — 아이디어에서 개발까지의 세로 진행 */
 const flow = [
@@ -44,23 +46,31 @@ const howTo = [
   { num: '06', label: '프로덕션 개발' },
 ];
 
-/* 섹션 헤더 — EN 라벨 행 + 대형 타이틀 + KR 캡션 (page.tsx 패턴) */
+/* 섹션 헤더 — EN 라벨 행(라인 드로우) + 대형 타이틀(홀짝 방향 교차) + KR 캡션 (page.tsx 패턴) */
 function SectionHead({ num, label, title, kr, desc }: {
   num: string; label: string; title: React.ReactNode; kr?: string; desc?: string;
 }) {
+  const even = parseInt(num, 10) % 2 === 0;
   return (
     <div className="mb-16 sm:mb-20">
-      <motion.div {...inView} variants={fadeUp}
-        className="flex items-center justify-between pb-6 border-b border-white/10 mb-10 sm:mb-14">
-        <p className="index-num font-en">({num}) {label}</p>
-      </motion.div>
-      <motion.h2 {...inView} variants={fadeUp}
+      <div className="relative pb-6 mb-10 sm:mb-14">
+        <div className="flex items-center justify-between">
+          <motion.p {...inView} variants={even ? fadeRight : fadeLeft}
+            className="index-num font-en">({num}) {label}</motion.p>
+        </div>
+        {/* 헤어라인이 좌→우로 그어짐 */}
+        <motion.span {...inView} variants={lineDraw}
+          className="absolute bottom-0 left-0 right-0 h-px bg-white/10 block" />
+      </div>
+      <motion.h2 {...inView} variants={stagger}
         className="font-en text-[#f5f6f7] font-extrabold tracking-[-0.03em] leading-[1.04]"
         style={{ fontSize: 'clamp(2.25rem, 6vw, 4.75rem)' }}>
-        {title}
+        <span className="block overflow-hidden pb-[0.12em] -mb-[0.12em]">
+          <motion.span variants={even ? clipLeft : clipUp} className="block">{title}</motion.span>
+        </span>
       </motion.h2>
       {kr && (
-        <motion.p {...inView} variants={fadeUp} className="caption-kr mt-6">— {kr}</motion.p>
+        <motion.p {...inView} variants={even ? fadeLeft : fadeRight} className="caption-kr mt-6">— {kr}</motion.p>
       )}
       {desc && (
         <motion.p {...inView} variants={fadeUp}
@@ -107,10 +117,13 @@ export default function ServicesPageClient() {
       <section className="py-28 sm:py-40">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="mb-16 sm:mb-20">
-            <motion.div {...inView} variants={fadeUp}
-              className="flex items-center justify-between pb-6 border-b border-white/10 mb-10 sm:mb-14">
-              <p className="index-num font-en">(03) Flow</p>
-            </motion.div>
+            <div className="relative pb-6 mb-10 sm:mb-14">
+              <div className="flex items-center justify-between">
+                <motion.p {...inView} variants={fadeLeft} className="index-num font-en">(03) Flow</motion.p>
+              </div>
+              <motion.span {...inView} variants={lineDraw}
+                className="absolute bottom-0 left-0 right-0 h-px bg-white/10 block" />
+            </div>
             <motion.h2 {...inView} variants={stagger}
               className="text-[#f5f6f7] font-extrabold tracking-[-0.035em] leading-[1.04]"
               style={{ fontSize: 'clamp(2.25rem, 6vw, 4.75rem)' }}>
@@ -118,23 +131,23 @@ export default function ServicesPageClient() {
                 <motion.span variants={clipUp} className="block">막연한 아이디어가</motion.span>
               </span>
               <span className="block overflow-hidden pb-[0.06em]">
-                <motion.span variants={clipUp} className="block">서비스가 되기까지</motion.span>
+                <motion.span variants={clipRight} className="block">서비스가 되기까지</motion.span>
               </span>
             </motion.h2>
           </div>
 
           <motion.div {...inView} variants={stagger} className="border-b border-white/10">
             {flow.map((s) => (
-              <motion.div key={s.num} variants={fadeUp}
+              <div key={s.num}
                 className="grid grid-cols-1 md:grid-cols-12 gap-y-6 gap-x-10 border-t border-white/10 py-14 sm:py-20">
-                <span className="index-num-lg font-en md:col-span-2">{s.num}</span>
-                <h3 className="md:col-span-5 text-[26px] sm:text-[30px] text-[#f5f6f7] font-extrabold tracking-[-0.025em] leading-[1.2]">
+                <motion.span variants={fadeLeft} className="index-num-lg font-en md:col-span-2">{s.num}</motion.span>
+                <motion.h3 variants={fadeUp} className="md:col-span-5 text-[26px] sm:text-[30px] text-[#f5f6f7] font-extrabold tracking-[-0.025em] leading-[1.2]">
                   {s.title}
-                </h3>
-                <p className="md:col-span-5 text-[17px] text-white/55 leading-[1.75] md:pt-2">
+                </motion.h3>
+                <motion.p variants={fadeRight} className="md:col-span-5 text-[17px] text-white/55 leading-[1.75] md:pt-2">
                   {s.desc}
-                </p>
-              </motion.div>
+                </motion.p>
+              </div>
             ))}
           </motion.div>
         </div>
@@ -147,8 +160,8 @@ export default function ServicesPageClient() {
 
           <motion.div {...inView} variants={stagger}
             className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-x-8 gap-y-14">
-            {howTo.map((s) => (
-              <motion.div key={s.num} variants={fadeUp} className="rule-top">
+            {howTo.map((s, i) => (
+              <motion.div key={s.num} variants={[fadeUp, fadeLeft, riseTilt, fadeRight][i % 4]} className="rule-top">
                 <span className="index-num-lg font-en mb-6">{s.num}</span>
                 <p className="text-[17px] sm:text-[19px] font-bold text-[#f5f6f7] tracking-[-0.02em] leading-[1.35]">
                   {s.label}
@@ -167,16 +180,16 @@ export default function ServicesPageClient() {
             className="font-en text-[#f5f6f7] font-extrabold tracking-[-0.04em] leading-[0.98] mb-8"
             style={{ fontSize: 'clamp(2.5rem, 10vw, 9rem)' }}>
             <span className="block overflow-hidden pb-[0.12em] -mb-[0.12em]">
-              <motion.span variants={clipUp} className="block">Start your</motion.span>
+              <motion.span variants={clipLeft} className="block">Start your</motion.span>
             </span>
             <span className="block overflow-hidden pb-[0.12em] -mb-[0.12em]">
               <motion.span variants={clipUp} className="block text-[#3182f6]">project</motion.span>
             </span>
           </motion.h2>
-          <motion.p {...inView} variants={fadeUp} className="caption-kr mb-14 sm:mb-20">
+          <motion.p {...inView} variants={fadeLeft} className="caption-kr mb-14 sm:mb-20">
             — 당신의 멋진 상상을 현실로 만들어보세요
           </motion.p>
-          <motion.div {...inView} variants={fadeUp}
+          <motion.div {...inView} variants={fadeRight}
             className="flex flex-wrap items-center gap-8">
             <Link href="/contact"
               className="group inline-flex items-center gap-2.5 h-14 px-9 rounded-full text-[15px] font-bold text-[#131518] bg-white hover:bg-[#3182f6] hover:text-white transition-colors duration-300">

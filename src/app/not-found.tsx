@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { FiArrowLeft, FiHome } from 'react-icons/fi';
-import { fadeUp, clipUp, stagger, onMount } from '@/lib/motion';
+import { fadeUp, fadeRight, clipLeft, lineDraw, stagger, onMount } from '@/lib/motion';
 
 export default function NotFound() {
   return (
@@ -17,21 +17,25 @@ export default function NotFound() {
           </Link>
         </motion.div>
 
-        {/* 라벨 행 */}
-        <motion.p variants={fadeUp} className="index-num font-en pb-6 border-b border-white/10 mb-10 sm:mb-12">
-          404 — Not Found
-        </motion.p>
+        {/* 라벨 행 — 헤어라인 라인 드로우 */}
+        <div className="relative pb-6 mb-10 sm:mb-12">
+          <motion.p variants={fadeRight} className="index-num font-en">
+            404 — Not Found
+          </motion.p>
+          <motion.span variants={lineDraw}
+            className="absolute bottom-0 left-0 right-0 h-px bg-white/10 block" />
+        </div>
 
         {/* 대형 타이틀 */}
         <motion.h1 variants={stagger}
           className="text-[#f5f6f7] font-extrabold tracking-[-0.04em] leading-[1.04] mb-6"
           style={{ fontSize: 'clamp(2.25rem, 6vw, 4.75rem)' }}>
           <span className="block overflow-hidden pb-[0.08em]">
-            <motion.span variants={clipUp} className="block">페이지를 찾을 수 없습니다</motion.span>
+            <motion.span variants={clipLeft} className="block">페이지를 찾을 수 없습니다</motion.span>
           </span>
         </motion.h1>
 
-        <motion.p variants={fadeUp} className="text-[15px] sm:text-[16px] text-white/55 leading-[1.75] mb-12 max-w-md">
+        <motion.p variants={fadeRight} className="text-[15px] sm:text-[16px] text-white/55 leading-[1.75] mb-12 max-w-md">
           요청하신 페이지가 존재하지 않거나 이동되었을 수 있습니다.
         </motion.p>
 

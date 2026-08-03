@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { easeEnter } from '@/lib/motion';
+import { fadeUp, fadeLeft, fadeRight, inView } from '@/lib/motion';
 
 interface Capability {
   id: string;
@@ -21,11 +21,8 @@ interface TeamCapabilityCardProps {
 /* 플레인 칼럼 — 박스/칩 없이 인덱스 · 타이포 · 헤어라인만으로 구성 */
 export default function TeamCapabilityCard({ capability, index }: TeamCapabilityCardProps) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 64 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-10%' }}
-      transition={{ delay: index * 0.12, duration: 1.05, ease: easeEnter }}
+    <motion.div {...inView}
+      variants={[fadeUp, fadeLeft, fadeRight][index % 3]}
     >
       <span className="index-num-lg font-en">0{index + 1}</span>
 

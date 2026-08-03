@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FAQ } from '@/types';
 import { FiChevronDown } from 'react-icons/fi';
-import { DUR, easeEnter, fadeUp, stagger, inView } from '@/lib/motion';
+import { DUR, easeEnter, fadeLeft, fadeRight, stagger, inView } from '@/lib/motion';
 
 interface FAQAccordionProps {
   faqs: FAQ[];
@@ -20,12 +20,12 @@ export default function FAQAccordion({ faqs }: FAQAccordionProps) {
 
   return (
     <motion.div {...inView} variants={stagger}>
-      {faqs.map((faq) => {
+      {faqs.map((faq, i) => {
         const isOpen = openId === faq.id;
         return (
           <motion.div
             key={faq.id}
-            variants={fadeUp}
+            variants={i % 2 === 0 ? fadeLeft : fadeRight}
             className="border-t border-white/10 last:border-b"
           >
             <button

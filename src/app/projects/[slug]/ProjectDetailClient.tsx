@@ -7,7 +7,10 @@ import { projects } from '@/data/projects';
 import { summarizeDepartments } from '@/data/organization';
 import { FiExternalLink, FiGithub, FiArrowLeft, FiYoutube, FiImage, FiArrowUpRight } from 'react-icons/fi';
 import ParallaxImage from '@/components/ParallaxImage';
-import { fadeUp, revealUp, clipUp, stagger, inView, onMount } from '@/lib/motion';
+import {
+  fadeUp, fadeLeft, fadeRight, riseTiltR, clipUp, clipLeft, clipRight,
+  zoomTilt, lineDraw, stagger, inView, onMount,
+} from '@/lib/motion';
 
 function getYouTubeVideoId(url: string): string | null {
   const patterns = [
@@ -34,7 +37,7 @@ export default function ProjectDetailClient({ params }: Props) {
       {/* ── 헤더 — 다크 + 하단 헤어라인 ── */}
       <section className="pt-40 sm:pt-52 pb-16 sm:pb-24 border-b border-white/10">
         <div className="container mx-auto px-4 sm:px-6">
-          <motion.div {...onMount} variants={fadeUp} className="mb-12 sm:mb-16">
+          <motion.div {...onMount} variants={fadeLeft} className="mb-12 sm:mb-16">
             <Link href="/projects"
               className="group inline-flex items-center gap-2 text-[15px] font-semibold text-white/55 hover:text-white border-b border-white/20 hover:border-white pb-0.5 transition-colors">
               <FiArrowLeft size={15} className="group-hover:-translate-x-0.5 transition-transform duration-300" />
@@ -43,7 +46,7 @@ export default function ProjectDetailClient({ params }: Props) {
           </motion.div>
 
           {/* 메타 — 카테고리 · 기간 */}
-          <motion.p {...onMount} variants={fadeUp} className="index-num mb-7">
+          <motion.p {...onMount} variants={fadeLeft} className="index-num mb-7">
             {project.category} · {project.durationMonths}개월
           </motion.p>
 
@@ -55,7 +58,7 @@ export default function ProjectDetailClient({ params }: Props) {
             </span>
           </motion.h1>
 
-          <motion.p {...onMount} variants={fadeUp}
+          <motion.p {...onMount} variants={fadeRight}
             className="text-xl sm:text-2xl text-white/55 leading-[1.65] max-w-3xl mb-12 sm:mb-14">
             {project.description}
           </motion.p>
@@ -97,7 +100,7 @@ export default function ProjectDetailClient({ params }: Props) {
 
               {/* 영상 / 썸네일 — 대형 */}
               {project.youtubeUrl ? (
-                <motion.div {...inView} variants={revealUp}
+                <motion.div {...inView} variants={zoomTilt}
                   className="relative rounded-[16px] overflow-hidden aspect-video bg-[#1d2024]">
                   <iframe
                     src={`https://www.youtube.com/embed/${getYouTubeVideoId(project.youtubeUrl)}?rel=0`}
@@ -117,15 +120,19 @@ export default function ProjectDetailClient({ params }: Props) {
 
               {/* (01) Overview */}
               <motion.div {...inView} variants={stagger}>
-                <motion.div variants={fadeUp}
-                  className="pb-6 border-b border-white/10 mb-10 sm:mb-14">
-                  <p className="index-num font-en">(01) Overview</p>
-                </motion.div>
-                <motion.h2 variants={fadeUp}
+                <div className="relative pb-6 mb-10 sm:mb-14">
+                  <motion.p variants={fadeLeft} className="index-num font-en">(01) Overview</motion.p>
+                  {/* 헤어라인이 좌→우로 그어짐 */}
+                  <motion.span variants={lineDraw}
+                    className="absolute bottom-0 left-0 right-0 h-px bg-white/10 block" />
+                </div>
+                <h2
                   className="text-[#f5f6f7] font-extrabold tracking-[-0.04em] leading-[1.04] mb-9"
                   style={{ fontSize: 'clamp(2.25rem, 6vw, 4.75rem)' }}>
-                  프로젝트 개요
-                </motion.h2>
+                  <span className="block overflow-hidden pb-[0.12em] -mb-[0.12em]">
+                    <motion.span variants={clipLeft} className="block">프로젝트 개요</motion.span>
+                  </span>
+                </h2>
                 <motion.p variants={fadeUp} className="text-[17px] text-white/55 leading-[1.85] whitespace-pre-line">
                   {project.longDescription}
                 </motion.p>
@@ -134,15 +141,19 @@ export default function ProjectDetailClient({ params }: Props) {
               {/* (02) Gallery */}
               {project.images && project.images.length > 0 && (
                 <motion.div {...inView} variants={stagger}>
-                  <motion.div variants={fadeUp}
-                    className="pb-6 border-b border-white/10 mb-10 sm:mb-14">
-                    <p className="index-num font-en">(02) Gallery</p>
-                  </motion.div>
-                  <motion.h2 variants={fadeUp}
+                  <div className="relative pb-6 mb-10 sm:mb-14">
+                    <motion.p variants={fadeRight} className="index-num font-en">(02) Gallery</motion.p>
+                    {/* 헤어라인이 좌→우로 그어짐 */}
+                    <motion.span variants={lineDraw}
+                      className="absolute bottom-0 left-0 right-0 h-px bg-white/10 block" />
+                  </div>
+                  <h2
                     className="text-[#f5f6f7] font-extrabold tracking-[-0.04em] leading-[1.04] mb-10 sm:mb-12"
                     style={{ fontSize: 'clamp(2.25rem, 6vw, 4.75rem)' }}>
-                    스크린샷
-                  </motion.h2>
+                    <span className="block overflow-hidden pb-[0.12em] -mb-[0.12em]">
+                      <motion.span variants={clipRight} className="block">스크린샷</motion.span>
+                    </span>
+                  </h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                     {project.images.map((img, i) => (
                       <ParallaxImage
@@ -163,7 +174,7 @@ export default function ProjectDetailClient({ params }: Props) {
             <div className="lg:col-span-1 space-y-16">
 
               {/* 기술 스택 */}
-              <motion.div {...inView} variants={fadeUp} className="rule-top">
+              <motion.div {...inView} variants={fadeRight} className="rule-top">
                 <p className="index-num font-en mb-6">Tech stack</p>
                 <div className="flex flex-wrap gap-2">
                   {project.techStack.map((tech) => (
@@ -174,7 +185,7 @@ export default function ProjectDetailClient({ params }: Props) {
 
               {/* 참여 조직 — 실명 대신 부서 구성만 표시 */}
               {team.length > 0 && (
-                <motion.div {...inView} variants={fadeUp} className="rule-top">
+                <motion.div {...inView} variants={riseTiltR} className="rule-top">
                   <p className="index-num font-en mb-3">Team</p>
                   <p className="text-[17px] font-bold text-[#f5f6f7] mb-5">
                     참여 인원 {project.teamMembers.length}명
@@ -210,16 +221,16 @@ export default function ProjectDetailClient({ params }: Props) {
             className="font-en text-[#f5f6f7] font-extrabold tracking-[-0.04em] leading-[0.98] mb-8"
             style={{ fontSize: 'clamp(2.5rem, 10vw, 9rem)' }}>
             <span className="block overflow-hidden pb-[0.12em] -mb-[0.12em]">
-              <motion.span variants={clipUp} className="block">Let&apos;s build</motion.span>
+              <motion.span variants={clipLeft} className="block">Let&apos;s build</motion.span>
             </span>
             <span className="block overflow-hidden pb-[0.12em] -mb-[0.12em]">
               <motion.span variants={clipUp} className="block text-[#3182f6]">together</motion.span>
             </span>
           </motion.h2>
-          <motion.p {...inView} variants={fadeUp} className="caption-kr mb-14 sm:mb-20">
+          <motion.p {...inView} variants={fadeLeft} className="caption-kr mb-14 sm:mb-20">
             — 비슷한 프로젝트를 계획 중이신가요? 게임 · 웹 · 앱 · AR/VR, 무료 상담으로 가능성을 확인하세요
           </motion.p>
-          <motion.div {...inView} variants={fadeUp} className="flex flex-wrap items-center gap-8">
+          <motion.div {...inView} variants={fadeRight} className="flex flex-wrap items-center gap-8">
             <Link href="/contact"
               className="group inline-flex items-center gap-2.5 h-14 px-9 rounded-full text-[15px] font-bold text-[#131518] bg-white hover:bg-[#3182f6] hover:text-white transition-colors duration-300">
               문의하기

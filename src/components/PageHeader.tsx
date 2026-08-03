@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { clipUp, fadeUp, onMount, stagger } from '@/lib/motion';
+import { clipUp, fadeLeft, fadeRight, lineDraw, onMount, stagger } from '@/lib/motion';
 
 interface PageHeaderProps {
   title: string;
@@ -14,10 +14,13 @@ export default function PageHeader({ title, description, eyebrow }: PageHeaderPr
     <section className="pt-40 sm:pt-52 pb-14 sm:pb-20 border-b border-white/10">
       <div className="container mx-auto px-4 sm:px-6">
         {eyebrow && (
-          <motion.p {...onMount} variants={fadeUp}
-            className="index-num font-en pb-6 border-b border-white/10 mb-12 sm:mb-16">
-            {eyebrow}
-          </motion.p>
+          <div className="relative pb-6 mb-12 sm:mb-16">
+            <motion.p {...onMount} variants={fadeLeft} className="index-num font-en">
+              {eyebrow}
+            </motion.p>
+            <motion.span {...onMount} variants={lineDraw}
+              className="absolute bottom-0 left-0 right-0 h-px bg-white/10 block" />
+          </div>
         )}
         <div className="grid lg:grid-cols-12 gap-y-8 gap-x-8 items-end">
           <motion.h1 {...onMount} variants={stagger}
@@ -27,7 +30,8 @@ export default function PageHeader({ title, description, eyebrow }: PageHeaderPr
               <motion.span variants={clipUp} className="block">{title}</motion.span>
             </span>
           </motion.h1>
-          <motion.p {...onMount} variants={fadeUp}
+          {/* 설명은 우측 칼럼 — 오른쪽에서 진입해 방향을 분리 */}
+          <motion.p {...onMount} variants={fadeRight}
             className="lg:col-span-4 text-[16px] sm:text-lg text-white/55 leading-[1.7] lg:pb-4">
             {description}
           </motion.p>

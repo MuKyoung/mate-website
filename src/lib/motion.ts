@@ -51,6 +51,69 @@ export const fade: Variants = {
   show: { opacity: 1, transition: { duration: DUR.slow, ease: easeEnter } },
 };
 
+/* ── 방향·각도 변주 — 균일한 상승 일변도를 깨는 어휘 ──
+   같은 섹션 안에서 좌/우/틸트를 콘텐츠 위치에 맞춰 교차 사용한다. */
+
+/** 왼쪽에서 진입 */
+export const fadeLeft: Variants = {
+  hidden: { opacity: 0, x: -72 },
+  show: { opacity: 1, x: 0, transition: tEnter },
+};
+
+/** 오른쪽에서 진입 */
+export const fadeRight: Variants = {
+  hidden: { opacity: 0, x: 72 },
+  show: { opacity: 1, x: 0, transition: tEnter },
+};
+
+/** 살짝 기울며 떠오르는 진입 (왼쪽 아래 축) */
+export const riseTilt: Variants = {
+  hidden: { opacity: 0, y: 84, rotate: 2.4, transformOrigin: '0% 100%' },
+  show: { opacity: 1, y: 0, rotate: 0, transition: { duration: 1.15, ease: easeEnter } },
+};
+
+/** 살짝 기울며 떠오르는 진입 (오른쪽 아래 축) */
+export const riseTiltR: Variants = {
+  hidden: { opacity: 0, y: 84, rotate: -2.4, transformOrigin: '100% 100%' },
+  show: { opacity: 1, y: 0, rotate: 0, transition: { duration: 1.15, ease: easeEnter } },
+};
+
+/** 클립 리빌 — 왼쪽에서 오른쪽으로 열림 (타이포) */
+export const clipLeft: Variants = {
+  hidden: { clipPath: 'inset(0 100% 0 0)', x: -28 },
+  show: { clipPath: 'inset(0 0% 0 0)', x: 0, transition: { duration: 1.1, ease: easeEnter } },
+};
+
+/** 클립 리빌 — 오른쪽에서 왼쪽으로 열림 (타이포) */
+export const clipRight: Variants = {
+  hidden: { clipPath: 'inset(0 0 0 100%)', x: 28 },
+  show: { clipPath: 'inset(0 0 0 0%)', x: 0, transition: { duration: 1.1, ease: easeEnter } },
+};
+
+/** 이미지 마스크 — 좌→우 열림 */
+export const maskLeft: Variants = {
+  hidden: { clipPath: 'inset(0 100% 0 0)' },
+  show: { clipPath: 'inset(0 0% 0 0)', transition: { duration: 1.25, ease: easeEnter } },
+};
+
+/** 이미지 마스크 — 우→좌 열림 */
+export const maskRight: Variants = {
+  hidden: { clipPath: 'inset(0 0 0 100%)' },
+  show: { clipPath: 'inset(0 0 0 0%)', transition: { duration: 1.25, ease: easeEnter } },
+};
+
+/** 줌아웃 + 미세 회전 진입 (대형 이미지/패널) */
+export const zoomTilt: Variants = {
+  hidden: { opacity: 0, scale: 1.12, rotate: 1.6 },
+  show: { opacity: 1, scale: 1, rotate: 0, transition: { duration: 1.25, ease: easeEnter } },
+};
+
+/** 라인 드로우 — 헤어라인이 좌→우로 그어짐 */
+export const lineDraw: Variants = {
+  hidden: { scaleX: 0, transformOrigin: '0% 50%' },
+  show: { scaleX: 1, transition: { duration: 1.1, ease: easeEnter } },
+};
+
 /** 자식 스태거 컨테이너 (넉넉한 간격) */
 export const stagger: Variants = {
   hidden: {},

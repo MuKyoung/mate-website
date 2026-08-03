@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { departments, totalHeadcount } from '@/data/organization';
-import { fadeUp, stagger, inView, easeEnter } from '@/lib/motion';
+import { fadeUp, fadeLeft, fadeRight, stagger, inView, easeEnter } from '@/lib/motion';
 
 /* 부서 세그먼트 컬러 — 화이트 / 블루 / 뉴트럴 */
 const segmentColors = ['#ffffff', '#3182f6', 'rgba(255,255,255,0.25)'];
@@ -11,7 +11,7 @@ export default function OrgChart() {
   return (
     <div>
       {/* ── 상단 요약 행 ── */}
-      <motion.div {...inView} variants={fadeUp}
+      <motion.div {...inView} variants={fadeLeft}
         className="flex flex-wrap items-baseline gap-x-5 gap-y-2 pb-10 border-b border-white/10">
         <p className="font-en text-5xl sm:text-6xl font-extrabold text-[#f5f6f7] font-mono-stat tracking-[-0.03em]">
           {totalHeadcount}<span className="text-2xl sm:text-3xl ml-0.5">명</span>
@@ -22,7 +22,7 @@ export default function OrgChart() {
       {/* ── 부서 3열 — 헤어라인 칼럼 ── */}
       <motion.div {...inView} variants={stagger} className="grid grid-cols-1 md:grid-cols-3">
         {departments.map((dept, i) => (
-          <motion.div key={dept.id} variants={fadeUp}
+          <motion.div key={dept.id} variants={[fadeLeft, fadeUp, fadeRight][i % 3]}
             className={[
               'py-12 border-white/10',
               i > 0 ? 'border-t md:border-t-0 md:border-l md:pl-10' : '',
@@ -49,10 +49,7 @@ export default function OrgChart() {
       </motion.div>
 
       {/* ── 인원 구성 비율 바 ── */}
-      <motion.div
-        initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: '-10%' }}
-        transition={{ duration: 1.05, ease: easeEnter }}
+      <motion.div {...inView} variants={fadeUp}
         className="pt-10 border-t border-white/10"
       >
         <div className="flex h-2">

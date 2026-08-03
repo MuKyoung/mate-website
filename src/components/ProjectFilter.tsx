@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import ProjectCard from './ProjectCard';
 import { Project } from '@/types';
 import { motion } from 'framer-motion';
-import { fadeUp, inView } from '@/lib/motion';
+import { fadeLeft, fadeRight, lineDraw, stagger, inView } from '@/lib/motion';
 
 // 카테고리 매핑
 const CATEGORY_MAP: Record<string, string> = {
@@ -55,11 +55,11 @@ export default function ProjectFilter({ projects }: ProjectFilterProps) {
   return (
     <div>
       {/* 카테고리 — 텍스트 탭 + 헤어라인 */}
-      <motion.div {...inView} variants={fadeUp} className="mb-16 sm:mb-24">
-        <p className="index-num font-en mb-8">(01) Category</p>
+      <motion.div {...inView} variants={stagger} className="mb-16 sm:mb-24">
+        <motion.p variants={fadeRight} className="index-num font-en mb-8">(01) Category</motion.p>
 
-        <div className="flex flex-wrap items-end justify-between gap-x-10 gap-y-3 border-b border-white/10">
-          <div className="flex flex-wrap items-end gap-x-6 sm:gap-x-9 gap-y-3">
+        <div className="relative flex flex-wrap items-end justify-between gap-x-10 gap-y-3">
+          <motion.div variants={fadeLeft} className="flex flex-wrap items-end gap-x-6 sm:gap-x-9 gap-y-3">
             {CATEGORY_OPTIONS.map((option) => {
               const active = selectedCategory === option.value;
               return (
@@ -79,11 +79,14 @@ export default function ProjectFilter({ projects }: ProjectFilterProps) {
                 </button>
               );
             })}
-          </div>
+          </motion.div>
 
-          <p className="index-num pb-4 ml-auto whitespace-nowrap">
+          <motion.p variants={fadeRight} className="index-num pb-4 ml-auto whitespace-nowrap">
             {selectedCategory === 'all' ? '전체' : selectedCategory} 프로젝트 {filteredProjects.length}개
-          </p>
+          </motion.p>
+          {/* 헤어라인이 좌→우로 그어짐 */}
+          <motion.span variants={lineDraw}
+            className="absolute bottom-0 left-0 right-0 h-px bg-white/10 block" />
         </div>
       </motion.div>
 

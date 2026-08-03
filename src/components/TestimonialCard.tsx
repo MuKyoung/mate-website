@@ -13,8 +13,8 @@ interface TestimonialCardProps {
 export default function TestimonialCard({ testimonial, index }: TestimonialCardProps) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 48 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={index % 2 === 0 ? { opacity: 0, x: -56 } : { opacity: 0, x: 56 }}
+      whileInView={{ opacity: 1, x: 0 }}
       viewport={{ once: true, margin: '-10%' }}
       transition={{ delay: (index % 2) * 0.1, duration: 0.95, ease: easeEnter }}
       className="border-t border-white/10 pt-8"

@@ -13,19 +13,21 @@ interface ProjectCardProps {
 }
 
 export default function ProjectCard({ project, index }: ProjectCardProps) {
+  // 열 위치에 따라 이미지 마스크가 다른 방향에서 열림 — 좌열: 아래→위, 우열: 좌→우
+  const fromSide = index % 2 === 1;
   return (
     <motion.div
-      initial={{ opacity: 0, y: 72 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={fromSide ? { opacity: 0, x: 72 } : { opacity: 0, y: 72 }}
+      whileInView={{ opacity: 1, x: 0, y: 0 }}
       viewport={{ once: true, margin: '-8%' }}
       transition={{ delay: (index % 2) * 0.12, duration: 1.05, ease: easeEnter }}
       className="group"
     >
       <Link href={`/projects/${project.id}`} className="block">
-        {/* 대형 이미지 — 마스크 리빌 + 호버 스케일 */}
+        {/* 대형 이미지 — 방향 교차 마스크 리빌 + 호버 스케일·틸트 */}
         <motion.div
-          initial={{ clipPath: 'inset(100% 0 0 0)' }}
-          whileInView={{ clipPath: 'inset(0% 0 0 0)' }}
+          initial={{ clipPath: fromSide ? 'inset(0 0 0 100%)' : 'inset(100% 0 0 0)' }}
+          whileInView={{ clipPath: fromSide ? 'inset(0 0 0 0%)' : 'inset(0% 0 0 0)' }}
           viewport={{ once: true, margin: '-8%' }}
           transition={{ delay: (index % 2) * 0.12 + 0.08, duration: 1.2, ease: easeEnter }}
           className="relative aspect-[16/11] overflow-hidden rounded-xl bg-[#1d2024] mb-6"
@@ -34,7 +36,7 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
             src={project.thumbnail}
             alt={project.title}
             fill
-            className="absolute inset-0 object-cover transition-transform duration-[1100ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.045]"
+            className="absolute inset-0 object-cover transition-transform duration-[1100ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.05] group-hover:rotate-[0.6deg]"
             placeholder={
               <div className="absolute inset-0 flex items-center justify-center text-white/20">
                 <FiImage size={36} />

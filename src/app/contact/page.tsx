@@ -8,7 +8,7 @@ import PageHeader from '@/components/PageHeader';
 import FAQAccordion from '@/components/FAQAccordion';
 import FloatingNotice from '@/components/FloatingNotice';
 import { faqs } from '@/data/faq';
-import { fadeUp, stagger, inView } from '@/lib/motion';
+import { fadeLeft, fadeRight, clipUp, clipLeft, lineDraw, stagger, inView } from '@/lib/motion';
 
 // 카카오톡 오픈채팅 URL
 const KAKAO_OPEN_CHAT_URL = 'https://open.kakao.com/o/scVFEK3h';
@@ -127,23 +127,28 @@ export default function ContactPage() {
       <section className="py-28 sm:py-40">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="mb-16 sm:mb-20">
-            <motion.div {...inView} variants={fadeUp}
-              className="flex items-center justify-between pb-6 border-b border-white/10 mb-10 sm:mb-14">
-              <p className="index-num font-en">(01) Inquiry</p>
-            </motion.div>
-            <motion.h2 {...inView} variants={fadeUp}
+            <div className="relative pb-6 mb-10 sm:mb-14">
+              <div className="flex items-center justify-between">
+                <motion.p {...inView} variants={fadeLeft} className="index-num font-en">(01) Inquiry</motion.p>
+              </div>
+              <motion.span {...inView} variants={lineDraw}
+                className="absolute bottom-0 left-0 right-0 h-px bg-white/10 block" />
+            </div>
+            <motion.h2 {...inView} variants={stagger}
               className="font-en text-[#f5f6f7] font-extrabold tracking-[-0.03em] leading-[1.04]"
               style={{ fontSize: 'clamp(2.25rem, 6vw, 4.75rem)' }}>
-              Get in Touch
+              <span className="block overflow-hidden pb-[0.12em] -mb-[0.12em]">
+                <motion.span variants={clipUp} className="block">Get in Touch</motion.span>
+              </span>
             </motion.h2>
-            <motion.p {...inView} variants={fadeUp} className="caption-kr mt-6">— 문의 양식</motion.p>
+            <motion.p {...inView} variants={fadeRight} className="caption-kr mt-6">— 문의 양식</motion.p>
           </div>
 
           <motion.div {...inView} variants={stagger}
             className="grid grid-cols-1 lg:grid-cols-12 gap-x-16 gap-y-20">
 
             {/* 문의 양식 */}
-            <motion.div variants={fadeUp} className="lg:col-span-7">
+            <motion.div variants={fadeLeft} className="lg:col-span-7">
               <form onSubmit={handleSubmit} className="space-y-7">
                 <div>
                   <label htmlFor="name" className={labelClass}>이름</label>
@@ -208,7 +213,7 @@ export default function ContactPage() {
             </motion.div>
 
             {/* 연락 수단 */}
-            <motion.div variants={fadeUp} className="lg:col-span-5">
+            <motion.div variants={fadeRight} className="lg:col-span-5">
               {/* 카카오톡 오픈채팅 */}
               <a
                 href={KAKAO_OPEN_CHAT_URL}
@@ -262,16 +267,21 @@ export default function ContactPage() {
       <section className="py-28 sm:py-40 border-t border-white/10">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="mb-16 sm:mb-20">
-            <motion.div {...inView} variants={fadeUp}
-              className="flex items-center justify-between pb-6 border-b border-white/10 mb-10 sm:mb-14">
-              <p className="index-num font-en">(03) FAQ</p>
-            </motion.div>
-            <motion.h2 {...inView} variants={fadeUp}
+            <div className="relative pb-6 mb-10 sm:mb-14">
+              <div className="flex items-center justify-between">
+                <motion.p {...inView} variants={fadeRight} className="index-num font-en">(03) FAQ</motion.p>
+              </div>
+              <motion.span {...inView} variants={lineDraw}
+                className="absolute bottom-0 left-0 right-0 h-px bg-white/10 block" />
+            </div>
+            <motion.h2 {...inView} variants={stagger}
               className="font-en text-[#f5f6f7] font-extrabold tracking-[-0.03em] leading-[1.04]"
               style={{ fontSize: 'clamp(2.25rem, 6vw, 4.75rem)' }}>
-              FAQ
+              <span className="block overflow-hidden pb-[0.12em] -mb-[0.12em]">
+                <motion.span variants={clipLeft} className="block">FAQ</motion.span>
+              </span>
             </motion.h2>
-            <motion.p {...inView} variants={fadeUp} className="caption-kr mt-6">
+            <motion.p {...inView} variants={fadeLeft} className="caption-kr mt-6">
               — 자주 묻는 질문 · 궁금한 점이 있으시면 FAQ를 확인해보세요
             </motion.p>
           </div>

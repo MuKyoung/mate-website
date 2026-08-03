@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { ProcessStep } from '@/types';
-import { fadeUp, stagger, inView } from '@/lib/motion';
+import { fadeUp, fadeLeft, fadeRight, riseTilt, stagger, inView } from '@/lib/motion';
 
 interface ProcessTimelineProps {
   steps: ProcessStep[];
@@ -15,8 +15,9 @@ export default function ProcessTimeline({ steps }: ProcessTimelineProps) {
   return (
     <motion.div {...inView} variants={stagger}
       className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-x-10 gap-y-16">
-      {sortedSteps.map((step) => (
-        <motion.div key={step.id} variants={fadeUp} className="rule-top">
+      {sortedSteps.map((step, i) => (
+        <motion.div key={step.id}
+          variants={[fadeUp, fadeLeft, fadeRight, riseTilt, fadeUp][i % 5]} className="rule-top">
           <span className="index-num-lg font-en mb-8">
             {String(step.order).padStart(2, '0')}
           </span>

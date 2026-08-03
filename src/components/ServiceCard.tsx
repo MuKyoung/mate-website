@@ -15,12 +15,15 @@ interface ServiceCardProps {
  * 서비스 리스트 로우 — 카드 박스 대신 헤어라인으로 구분되는 풀폭 행 (다크).
  */
 export default function ServiceCard({ service, index }: ServiceCardProps) {
+  // 행마다 진입 방향을 교차 — 좌 / 우 / 상승
+  const dir = index % 3;
+  const hidden = dir === 0 ? { opacity: 0, x: -80 } : dir === 1 ? { opacity: 0, x: 80 } : { opacity: 0, y: 56 };
   return (
     <motion.div
-      initial={{ opacity: 0, y: 48 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={hidden}
+      whileInView={{ opacity: 1, x: 0, y: 0 }}
       viewport={{ once: true, margin: '-10%' }}
-      transition={{ delay: index * 0.1, duration: 0.95, ease: easeEnter }}
+      transition={{ delay: index * 0.08, duration: 0.95, ease: easeEnter }}
     >
       <Link href="/services"
         className="group grid grid-cols-[auto_1fr_auto] lg:grid-cols-[5rem_1fr_1fr_auto] items-center gap-x-6 lg:gap-x-10 py-9 sm:py-12 border-t border-white/10 last:border-b transition-colors duration-300 hover:bg-white/[0.03] -mx-4 sm:-mx-6 px-4 sm:px-6">
@@ -40,9 +43,9 @@ export default function ServiceCard({ service, index }: ServiceCardProps) {
           </p>
         </div>
 
-        {/* 화살표 */}
-        <span className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border border-white/15 flex items-center justify-center text-white transition-all duration-300 group-hover:bg-white group-hover:border-white group-hover:text-[#131518]">
-          <FiArrowUpRight size={20} className="transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+        {/* 화살표 — 호버 시 45도 회전하며 채워짐 */}
+        <span className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border border-white/15 flex items-center justify-center text-white transition-all duration-300 group-hover:bg-white group-hover:border-white group-hover:text-[#131518] group-hover:rotate-45">
+          <FiArrowUpRight size={20} />
         </span>
       </Link>
     </motion.div>
