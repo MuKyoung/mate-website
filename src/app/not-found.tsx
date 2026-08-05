@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { FiArrowLeft, FiHome } from 'react-icons/fi';
 import { fadeUp, fadeRight, clipLeft, lineDraw, stagger, onMount } from '@/lib/motion';
+import { btnPrimary, displaySize, linkUnderline } from '@/lib/styles';
 
 export default function NotFound() {
   return (
@@ -29,7 +30,7 @@ export default function NotFound() {
         {/* 대형 타이틀 */}
         <motion.h1 variants={stagger}
           className="text-[#f5f6f7] font-extrabold tracking-[-0.04em] leading-[1.04] mb-6"
-          style={{ fontSize: 'clamp(2.25rem, 6vw, 4.75rem)' }}>
+          style={displaySize}>
           <span className="block overflow-hidden pb-[0.08em]">
             <motion.span variants={clipLeft} className="block">페이지를 찾을 수 없습니다</motion.span>
           </span>
@@ -40,14 +41,13 @@ export default function NotFound() {
         </motion.p>
 
         <motion.div variants={fadeUp} className="flex flex-wrap items-center gap-8">
-          <Link href="/"
-            className="group inline-flex items-center gap-2.5 h-14 px-9 rounded-full text-[15px] font-bold text-[#131518] bg-white hover:bg-[#3182f6] hover:text-white transition-colors duration-300">
+          <Link href="/" className={btnPrimary}>
             <FiHome size={16} />
             홈으로 돌아가기
           </Link>
           <button
             onClick={() => window.history.back()}
-            className="inline-flex items-center gap-1.5 text-[15px] font-semibold text-white/60 hover:text-white border-b border-white/25 hover:border-white pb-0.5 transition-colors">
+            className={`inline-flex items-center gap-1.5 ${linkUnderline}`}>
             <FiArrowLeft size={14} />
             이전 페이지
           </button>

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { FiArrowUpRight, FiArrowDown } from 'react-icons/fi';
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { easeEnter } from '@/lib/motion';
+import { arrowHover, btnPrimary, container, hairlineCell } from '@/lib/styles';
 
 /* ── 글자 단위 리빌 (Splitting.js 방식) — 미세 회전 각도 포함 ── */
 const charVariants = {
@@ -113,7 +114,7 @@ export default function Hero() {
   return (
     <section ref={ref} className="relative bg-[#131518]">
       <motion.div style={{ y, opacity }}
-        className="container mx-auto px-4 sm:px-6 min-h-[92svh] flex flex-col justify-end pt-32 pb-12 sm:pb-16">
+        className={`${container} min-h-[92svh] flex flex-col justify-end pt-32 pb-12 sm:pb-16`}>
 
         {/* 상단 메타 행 */}
         <div className="flex items-center justify-between pb-10 sm:pb-16">
@@ -183,10 +184,9 @@ export default function Hero() {
           </div>
 
           <div className="flex flex-wrap items-center gap-7">
-            <Link href="/contact"
-              className="group inline-flex items-center gap-2.5 h-14 px-9 rounded-full text-[15px] font-bold text-[#131518] bg-white hover:bg-[#3182f6] hover:text-white transition-colors duration-300">
+            <Link href="/contact" className={btnPrimary}>
               프로젝트 문의
-              <FiArrowUpRight size={17} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-300" />
+              <FiArrowUpRight size={17} className={arrowHover} />
             </Link>
             <Link href="/projects"
               className="text-[15px] font-semibold text-white/70 hover:text-white border-b border-white/25 hover:border-white pb-0.5 transition-colors">
@@ -205,17 +205,10 @@ export default function Hero() {
 
       {/* 지표 — 헤어라인 행 */}
       <div className="border-t border-white/10">
-        <div className="container mx-auto px-4 sm:px-6">
+        <div className={container}>
           <div className="grid grid-cols-2 lg:grid-cols-4">
             {stats.map((s, i) => (
-              <div key={s.label}
-                className={[
-                  'border-white/10',
-                  i % 2 === 1 ? 'border-l pl-6 sm:pl-8' : '',
-                  i >= 2 ? 'border-t' : '',
-                  i > 0 ? 'lg:border-l lg:pl-8' : 'lg:border-l-0 lg:pl-0',
-                  i >= 2 ? 'lg:border-t-0' : '',
-                ].join(' ')}>
+              <div key={s.label} className={hairlineCell(i)}>
                 <Stat {...s} />
               </div>
             ))}

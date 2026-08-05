@@ -5,12 +5,14 @@ import { notFound } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { projects } from '@/data/projects';
 import { summarizeDepartments } from '@/data/organization';
-import { FiExternalLink, FiGithub, FiArrowLeft, FiYoutube, FiImage, FiArrowUpRight } from 'react-icons/fi';
+import { FiExternalLink, FiGithub, FiArrowLeft, FiYoutube, FiImage } from 'react-icons/fi';
 import ParallaxImage from '@/components/ParallaxImage';
+import CtaSection from '@/components/ui/CtaSection';
 import {
   fadeUp, fadeLeft, fadeRight, riseTiltR, clipUp, clipLeft, clipRight,
   zoomTilt, lineDraw, stagger, inView, onMount,
 } from '@/lib/motion';
+import { btnOutline, clipWrap, container, displaySize, sectionPad } from '@/lib/styles';
 
 function getYouTubeVideoId(url: string): string | null {
   const patterns = [
@@ -36,7 +38,7 @@ export default function ProjectDetailClient({ params }: Props) {
     <>
       {/* ── 헤더 — 다크 + 하단 헤어라인 ── */}
       <section className="pt-40 sm:pt-52 pb-16 sm:pb-24 border-b border-white/10">
-        <div className="container mx-auto px-4 sm:px-6">
+        <div className={container}>
           <motion.div {...onMount} variants={fadeLeft} className="mb-12 sm:mb-16">
             <Link href="/projects"
               className="group inline-flex items-center gap-2 text-[15px] font-semibold text-white/55 hover:text-white border-b border-white/20 hover:border-white pb-0.5 transition-colors">
@@ -74,7 +76,7 @@ export default function ProjectDetailClient({ params }: Props) {
             )}
             {project.youtubeUrl && (
               <a href={project.youtubeUrl} target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-2.5 h-14 px-9 rounded-full text-[15px] font-bold text-white border border-white/20 hover:border-white transition-colors duration-300">
+                className={btnOutline}>
                 <FiYoutube size={18} className="text-[#ff0000]" />
                 YouTube
               </a>
@@ -91,8 +93,8 @@ export default function ProjectDetailClient({ params }: Props) {
       </section>
 
       {/* ── 본문 ── */}
-      <section className="py-28 sm:py-40">
-        <div className="container mx-auto px-4 sm:px-6">
+      <section className={sectionPad}>
+        <div className={container}>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-y-20 gap-x-10 lg:gap-x-16 max-w-6xl">
 
             {/* 메인 */}
@@ -128,8 +130,8 @@ export default function ProjectDetailClient({ params }: Props) {
                 </div>
                 <h2
                   className="text-[#f5f6f7] font-extrabold tracking-[-0.04em] leading-[1.04] mb-9"
-                  style={{ fontSize: 'clamp(2.25rem, 6vw, 4.75rem)' }}>
-                  <span className="block overflow-hidden pb-[0.12em] -mb-[0.12em]">
+                  style={displaySize}>
+                  <span className={clipWrap}>
                     <motion.span variants={clipLeft} className="block">프로젝트 개요</motion.span>
                   </span>
                 </h2>
@@ -149,8 +151,8 @@ export default function ProjectDetailClient({ params }: Props) {
                   </div>
                   <h2
                     className="text-[#f5f6f7] font-extrabold tracking-[-0.04em] leading-[1.04] mb-10 sm:mb-12"
-                    style={{ fontSize: 'clamp(2.25rem, 6vw, 4.75rem)' }}>
-                    <span className="block overflow-hidden pb-[0.12em] -mb-[0.12em]">
+                    style={displaySize}>
+                    <span className={clipWrap}>
                       <motion.span variants={clipRight} className="block">스크린샷</motion.span>
                     </span>
                   </h2>
@@ -214,35 +216,11 @@ export default function ProjectDetailClient({ params }: Props) {
       </section>
 
       {/* ── (03) CTA ── */}
-      <section className="py-32 sm:py-48 border-t border-white/10">
-        <div className="container mx-auto px-4 sm:px-6">
-          <motion.p {...inView} variants={fadeUp} className="index-num font-en mb-10">(03) Contact</motion.p>
-          <motion.h2 {...inView} variants={stagger}
-            className="font-en text-[#f5f6f7] font-extrabold tracking-[-0.04em] leading-[0.98] mb-8"
-            style={{ fontSize: 'clamp(2.5rem, 10vw, 9rem)' }}>
-            <span className="block overflow-hidden pb-[0.12em] -mb-[0.12em]">
-              <motion.span variants={clipLeft} className="block">Let&apos;s build</motion.span>
-            </span>
-            <span className="block overflow-hidden pb-[0.12em] -mb-[0.12em]">
-              <motion.span variants={clipUp} className="block text-[#3182f6]">together</motion.span>
-            </span>
-          </motion.h2>
-          <motion.p {...inView} variants={fadeLeft} className="caption-kr mb-14 sm:mb-20">
-            — 비슷한 프로젝트를 계획 중이신가요? 게임 · 웹 · 앱 · AR/VR, 무료 상담으로 가능성을 확인하세요
-          </motion.p>
-          <motion.div {...inView} variants={fadeRight} className="flex flex-wrap items-center gap-8">
-            <Link href="/contact"
-              className="group inline-flex items-center gap-2.5 h-14 px-9 rounded-full text-[15px] font-bold text-[#131518] bg-white hover:bg-[#3182f6] hover:text-white transition-colors duration-300">
-              문의하기
-              <FiArrowUpRight size={17} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-300" />
-            </Link>
-            <a href="mailto:hsib1212@naver.com"
-              className="text-[15px] font-semibold text-white/60 hover:text-white border-b border-white/25 hover:border-white pb-0.5 transition-colors">
-              hsib1212@naver.com
-            </a>
-          </motion.div>
-        </div>
-      </section>
+      <CtaSection
+        num="03"
+        kr="비슷한 프로젝트를 계획 중이신가요? 게임 · 웹 · 앱 · AR/VR, 무료 상담으로 가능성을 확인하세요"
+        cta="문의하기"
+      />
     </>
   );
 }

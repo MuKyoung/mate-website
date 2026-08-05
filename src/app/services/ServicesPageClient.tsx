@@ -1,16 +1,17 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import Link from 'next/link';
 import PageHeader from '@/components/PageHeader';
 import ServiceCard from '@/components/ServiceCard';
 import ProcessTimeline from '@/components/ProcessTimeline';
+import SectionHead from '@/components/ui/SectionHead';
+import CtaSection from '@/components/ui/CtaSection';
 import { services } from '@/data/services';
 import { processSteps } from '@/data/process';
-import { FiArrowUpRight } from 'react-icons/fi';
 import {
-  fadeUp, fadeLeft, fadeRight, riseTilt, clipUp, clipLeft, clipRight, lineDraw, stagger, inView,
+  fadeUp, fadeLeft, fadeRight, riseTilt, clipUp, clipRight, lineDraw, stagger, inView,
 } from '@/lib/motion';
+import { container, displaySize, sectionPad } from '@/lib/styles';
 
 /* Flow — 아이디어에서 개발까지의 세로 진행 */
 const flow = [
@@ -46,42 +47,6 @@ const howTo = [
   { num: '06', label: '프로덕션 개발' },
 ];
 
-/* 섹션 헤더 — EN 라벨 행(라인 드로우) + 대형 타이틀(홀짝 방향 교차) + KR 캡션 (page.tsx 패턴) */
-function SectionHead({ num, label, title, kr, desc }: {
-  num: string; label: string; title: React.ReactNode; kr?: string; desc?: string;
-}) {
-  const even = parseInt(num, 10) % 2 === 0;
-  return (
-    <div className="mb-16 sm:mb-20">
-      <div className="relative pb-6 mb-10 sm:mb-14">
-        <div className="flex items-center justify-between">
-          <motion.p {...inView} variants={even ? fadeRight : fadeLeft}
-            className="index-num font-en">({num}) {label}</motion.p>
-        </div>
-        {/* 헤어라인이 좌→우로 그어짐 */}
-        <motion.span {...inView} variants={lineDraw}
-          className="absolute bottom-0 left-0 right-0 h-px bg-white/10 block" />
-      </div>
-      <motion.h2 {...inView} variants={stagger}
-        className="font-en text-[#f5f6f7] font-extrabold tracking-[-0.03em] leading-[1.04]"
-        style={{ fontSize: 'clamp(2.25rem, 6vw, 4.75rem)' }}>
-        <span className="block overflow-hidden pb-[0.12em] -mb-[0.12em]">
-          <motion.span variants={even ? clipLeft : clipUp} className="block">{title}</motion.span>
-        </span>
-      </motion.h2>
-      {kr && (
-        <motion.p {...inView} variants={even ? fadeLeft : fadeRight} className="caption-kr mt-6">— {kr}</motion.p>
-      )}
-      {desc && (
-        <motion.p {...inView} variants={fadeUp}
-          className="mt-8 max-w-xl text-lg sm:text-xl text-white/55 leading-[1.7]">
-          {desc}
-        </motion.p>
-      )}
-    </div>
-  );
-}
-
 export default function ServicesPageClient() {
   return (
     <>
@@ -93,8 +58,8 @@ export default function ServicesPageClient() {
       />
 
       {/* ━━ (01) Services — 호버 리스트 ━━ */}
-      <section className="py-28 sm:py-40">
-        <div className="container mx-auto px-4 sm:px-6">
+      <section className={sectionPad}>
+        <div className={container}>
           <SectionHead num="01" label="Services" title={<>What We Offer</>} kr="제공 서비스" />
           <div>
             {services.map((service, index) => (
@@ -105,8 +70,8 @@ export default function ServicesPageClient() {
       </section>
 
       {/* ━━ (02) Process — 헤어라인 스텝 ━━ */}
-      <section className="py-28 sm:py-40">
-        <div className="container mx-auto px-4 sm:px-6">
+      <section className={sectionPad}>
+        <div className={container}>
           <SectionHead num="02" label="개발 프로세스" title={<>Process</>}
             kr="상담부터 배포까지, 체계적인 프로세스로 고품질의 결과물을 만들어갑니다." />
           <ProcessTimeline steps={processSteps} />
@@ -114,8 +79,8 @@ export default function ServicesPageClient() {
       </section>
 
       {/* ━━ (03) Flow — 아이디어에서 개발까지 ━━ */}
-      <section className="py-28 sm:py-40">
-        <div className="container mx-auto px-4 sm:px-6">
+      <section className={sectionPad}>
+        <div className={container}>
           <div className="mb-16 sm:mb-20">
             <div className="relative pb-6 mb-10 sm:mb-14">
               <div className="flex items-center justify-between">
@@ -126,7 +91,7 @@ export default function ServicesPageClient() {
             </div>
             <motion.h2 {...inView} variants={stagger}
               className="text-[#f5f6f7] font-extrabold tracking-[-0.035em] leading-[1.04]"
-              style={{ fontSize: 'clamp(2.25rem, 6vw, 4.75rem)' }}>
+              style={displaySize}>
               <span className="block overflow-hidden pb-[0.06em]">
                 <motion.span variants={clipUp} className="block">막연한 아이디어가</motion.span>
               </span>
@@ -154,8 +119,8 @@ export default function ServicesPageClient() {
       </section>
 
       {/* ━━ (04) How-To — 6단계 헤어라인 그리드 ━━ */}
-      <section className="py-28 sm:py-40">
-        <div className="container mx-auto px-4 sm:px-6">
+      <section className={sectionPad}>
+        <div className={container}>
           <SectionHead num="04" label="How to" title={<>How We Move</>} kr="6단계로 진행합니다" />
 
           <motion.div {...inView} variants={stagger}
@@ -173,36 +138,8 @@ export default function ServicesPageClient() {
       </section>
 
       {/* ━━ (05) CTA ━━ */}
-      <section className="py-32 sm:py-48 border-t border-white/10">
-        <div className="container mx-auto px-4 sm:px-6">
-          <motion.p {...inView} variants={fadeUp} className="index-num font-en mb-10">(05) Contact</motion.p>
-          <motion.h2 {...inView} variants={stagger}
-            className="font-en text-[#f5f6f7] font-extrabold tracking-[-0.04em] leading-[0.98] mb-8"
-            style={{ fontSize: 'clamp(2.5rem, 10vw, 9rem)' }}>
-            <span className="block overflow-hidden pb-[0.12em] -mb-[0.12em]">
-              <motion.span variants={clipLeft} className="block">Start your</motion.span>
-            </span>
-            <span className="block overflow-hidden pb-[0.12em] -mb-[0.12em]">
-              <motion.span variants={clipUp} className="block text-[#3182f6]">project</motion.span>
-            </span>
-          </motion.h2>
-          <motion.p {...inView} variants={fadeLeft} className="caption-kr mb-14 sm:mb-20">
-            — 당신의 멋진 상상을 현실로 만들어보세요
-          </motion.p>
-          <motion.div {...inView} variants={fadeRight}
-            className="flex flex-wrap items-center gap-8">
-            <Link href="/contact"
-              className="group inline-flex items-center gap-2.5 h-14 px-9 rounded-full text-[15px] font-bold text-[#131518] bg-white hover:bg-[#3182f6] hover:text-white transition-colors duration-300">
-              문의하기
-              <FiArrowUpRight size={17} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-300" />
-            </Link>
-            <a href="mailto:hsib1212@naver.com"
-              className="text-[15px] font-semibold text-white/60 hover:text-white border-b border-white/25 hover:border-white pb-0.5 transition-colors">
-              hsib1212@naver.com
-            </a>
-          </motion.div>
-        </div>
-      </section>
+      <CtaSection num="05" line1="Start your" line2="project"
+        kr="당신의 멋진 상상을 현실로 만들어보세요" cta="문의하기" />
     </>
   );
 }

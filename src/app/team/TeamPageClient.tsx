@@ -13,6 +13,10 @@ import type { IconType } from 'react-icons';
 import {
   fadeUp, fadeLeft, fadeRight, riseTilt, clipUp, clipLeft, clipRight, lineDraw, stagger, inView,
 } from '@/lib/motion';
+import {
+  arrowHover, btnPrimary, clipWrap, container, CONTACT_EMAIL, displaySize,
+  displaySizeLg, hairlineCell, linkUnderline, sectionPad, sectionPadLg,
+} from '@/lib/styles';
 
 /* 수상 랭크 → react-icons (UI 이모지 금지) */
 function getAwardIcon(award: Award): IconType {
@@ -56,8 +60,8 @@ function SectionHead({ num, label, title, desc }: {
       </div>
       <motion.h2 {...inView} variants={stagger}
         className="text-[#f5f6f7] font-extrabold tracking-[-0.04em] leading-[1.04]"
-        style={{ fontSize: 'clamp(2.25rem, 6vw, 4.75rem)' }}>
-        <span className="block overflow-hidden pb-[0.12em] -mb-[0.12em]">
+        style={displaySize}>
+        <span className={clipWrap}>
           <motion.span variants={clip} className="block">{title}</motion.span>
         </span>
       </motion.h2>
@@ -84,17 +88,11 @@ export default function TeamPageClient() {
 
       {/* ━━ 핵심 수치 — 헤어라인 스트립 ━━ */}
       <section className="border-b border-white/10">
-        <div className="container mx-auto px-4 sm:px-6">
+        <div className={container}>
           <motion.div {...inView} variants={stagger} className="grid grid-cols-2 lg:grid-cols-4">
             {stats.map((stat, i) => (
               <motion.div key={stat.label} variants={i % 2 === 0 ? fadeUp : riseTilt}
-                className={[
-                  'border-white/10',
-                  i % 2 === 1 ? 'border-l pl-6 sm:pl-8' : '',
-                  i >= 2 ? 'border-t' : '',
-                  i > 0 ? 'lg:border-l lg:pl-8' : 'lg:border-l-0 lg:pl-0',
-                  i >= 2 ? 'lg:border-t-0' : '',
-                ].join(' ')}>
+                className={hairlineCell(i)}>
                 <div className="flex items-baseline gap-3 py-7 sm:py-9">
                   <span className="font-en text-3xl sm:text-4xl font-extrabold text-[#f5f6f7] font-mono-stat tracking-[-0.02em]">
                     {stat.value}
@@ -108,8 +106,8 @@ export default function TeamPageClient() {
       </section>
 
       {/* ━━ (01) About — 좌 제목 / 우 본문 ━━ */}
-      <section className="py-28 sm:py-40">
-        <div className="container mx-auto px-4 sm:px-6">
+      <section className={sectionPad}>
+        <div className={container}>
           <div className="relative pb-6 mb-10 sm:mb-14">
             <motion.p {...inView} variants={fadeLeft} className="index-num font-en">(01) About</motion.p>
             <motion.span {...inView} variants={lineDraw}
@@ -119,8 +117,8 @@ export default function TeamPageClient() {
           <div className="grid lg:grid-cols-12 gap-y-14 gap-x-8">
             <motion.h2 {...inView} variants={stagger}
               className="lg:col-span-5 text-[#f5f6f7] font-extrabold tracking-[-0.04em] leading-[1.04]"
-              style={{ fontSize: 'clamp(2.25rem, 6vw, 4.75rem)' }}>
-              <span className="block overflow-hidden pb-[0.12em] -mb-[0.12em]">
+              style={displaySize}>
+              <span className={clipWrap}>
                 <motion.span variants={clipUp} className="block">Unity · 웹 · 앱까지<br />한 팀에서</motion.span>
               </span>
             </motion.h2>
@@ -151,8 +149,8 @@ export default function TeamPageClient() {
       </section>
 
       {/* ━━ (02) Vision — 대형 스테이트먼트 ━━ */}
-      <section className="py-28 sm:py-40">
-        <div className="container mx-auto px-4 sm:px-6">
+      <section className={sectionPad}>
+        <div className={container}>
           <div className="relative pb-6 mb-14 sm:mb-20">
             <motion.p {...inView} variants={fadeRight} className="index-num font-en">(02) Vision</motion.p>
             <motion.span {...inView} variants={lineDraw}
@@ -184,8 +182,8 @@ export default function TeamPageClient() {
       </section>
 
       {/* ━━ (03) Capabilities — 헤어라인 3열 ━━ */}
-      <section className="py-28 sm:py-40">
-        <div className="container mx-auto px-4 sm:px-6">
+      <section className={sectionPad}>
+        <div className={container}>
           <SectionHead num="03" label="Capabilities" title="전문 역량"
             desc="유니티 외주 개발과 강의를 통해 쌓은 실전 경험입니다." />
 
@@ -205,8 +203,8 @@ export default function TeamPageClient() {
       </section>
 
       {/* ━━ (04) Organization ━━ */}
-      <section className="py-28 sm:py-40">
-        <div className="container mx-auto px-4 sm:px-6">
+      <section className={sectionPad}>
+        <div className={container}>
           <SectionHead num="04" label="Organization" title="조직 구성"
             desc="개발 · 디자인 · 운영 세 축이 하나의 팀으로 움직입니다." />
 
@@ -215,8 +213,8 @@ export default function TeamPageClient() {
       </section>
 
       {/* ━━ (05) Awards & Exhibitions ━━ */}
-      <section className="py-28 sm:py-40">
-        <div className="container mx-auto px-4 sm:px-6">
+      <section className={sectionPad}>
+        <div className={container}>
           <SectionHead num="05" label={'Awards & Exhibitions'} title="수상 및 전시 경력" />
 
           <div className="max-w-5xl space-y-16 sm:space-y-20">
@@ -256,12 +254,12 @@ export default function TeamPageClient() {
       </section>
 
       {/* ━━ (06) CTA ━━ */}
-      <section className="py-32 sm:py-48 border-t border-white/10">
-        <div className="container mx-auto px-4 sm:px-6">
+      <section className={`${sectionPadLg} border-t border-white/10`}>
+        <div className={container}>
           <motion.p {...inView} variants={fadeUp} className="index-num font-en mb-10">(06) Contact</motion.p>
           <motion.h2 {...inView} variants={stagger}
             className="text-[#f5f6f7] font-extrabold tracking-[-0.05em] leading-[0.96] mb-8"
-            style={{ fontSize: 'clamp(2.5rem, 10vw, 9rem)' }}>
+            style={displaySizeLg}>
             <span className="block overflow-hidden pb-[0.07em]">
               <motion.span variants={clipLeft} className="block">함께 프로젝트를</motion.span>
             </span>
@@ -273,14 +271,12 @@ export default function TeamPageClient() {
             — 무료 상담으로 가능성을 확인하세요.
           </motion.p>
           <motion.div {...inView} variants={fadeRight} className="flex flex-wrap items-center gap-8">
-            <Link href="/contact"
-              className="group inline-flex items-center gap-2.5 h-14 px-9 rounded-full text-[15px] font-bold text-[#131518] bg-white hover:bg-[#3182f6] hover:text-white transition-colors duration-300">
+            <Link href="/contact" className={btnPrimary}>
               문의하기
-              <FiArrowUpRight size={17} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-300" />
+              <FiArrowUpRight size={17} className={arrowHover} />
             </Link>
-            <a href="mailto:hsib1212@naver.com"
-              className="text-[15px] font-semibold text-white/60 hover:text-white border-b border-white/25 hover:border-white pb-0.5 transition-colors">
-              hsib1212@naver.com
+            <a href={`mailto:${CONTACT_EMAIL}`} className={linkUnderline}>
+              {CONTACT_EMAIL}
             </a>
           </motion.div>
         </div>

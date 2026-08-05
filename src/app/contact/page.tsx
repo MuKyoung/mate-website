@@ -7,11 +7,13 @@ import { RiKakaoTalkFill } from 'react-icons/ri';
 import PageHeader from '@/components/PageHeader';
 import FAQAccordion from '@/components/FAQAccordion';
 import FloatingNotice from '@/components/FloatingNotice';
+import SectionHead from '@/components/ui/SectionHead';
 import { faqs } from '@/data/faq';
-import { fadeLeft, fadeRight, clipUp, clipLeft, lineDraw, stagger, inView } from '@/lib/motion';
-
-// 카카오톡 오픈채팅 URL
-const KAKAO_OPEN_CHAT_URL = 'https://open.kakao.com/o/scVFEK3h';
+import { fadeLeft, fadeRight, clipLeft, lineDraw, stagger, inView } from '@/lib/motion';
+import {
+  arrowHover, btnPrimary, clipWrap, container, displaySize, sectionPad,
+  CONTACT_EMAIL, CONTACT_PHONE, KAKAO_OPEN_CHAT_URL,
+} from '@/lib/styles';
 
 const GOOGLE_SCRIPT_URL =
   process.env.NEXT_PUBLIC_GOOGLE_SCRIPT_URL ||
@@ -124,25 +126,9 @@ export default function ContactPage() {
       />
 
       {/* ━━ (01) Inquiry — 폼 좌 / 채널 우 ━━ */}
-      <section className="py-28 sm:py-40">
-        <div className="container mx-auto px-4 sm:px-6">
-          <div className="mb-16 sm:mb-20">
-            <div className="relative pb-6 mb-10 sm:mb-14">
-              <div className="flex items-center justify-between">
-                <motion.p {...inView} variants={fadeLeft} className="index-num font-en">(01) Inquiry</motion.p>
-              </div>
-              <motion.span {...inView} variants={lineDraw}
-                className="absolute bottom-0 left-0 right-0 h-px bg-white/10 block" />
-            </div>
-            <motion.h2 {...inView} variants={stagger}
-              className="font-en text-[#f5f6f7] font-extrabold tracking-[-0.03em] leading-[1.04]"
-              style={{ fontSize: 'clamp(2.25rem, 6vw, 4.75rem)' }}>
-              <span className="block overflow-hidden pb-[0.12em] -mb-[0.12em]">
-                <motion.span variants={clipUp} className="block">Get in Touch</motion.span>
-              </span>
-            </motion.h2>
-            <motion.p {...inView} variants={fadeRight} className="caption-kr mt-6">— 문의 양식</motion.p>
-          </div>
+      <section className={sectionPad}>
+        <div className={container}>
+          <SectionHead num="01" label="Inquiry" title={<>Get in Touch</>} kr="문의 양식" />
 
           <motion.div {...inView} variants={stagger}
             className="grid grid-cols-1 lg:grid-cols-12 gap-x-16 gap-y-20">
@@ -198,13 +184,13 @@ export default function ContactPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="group inline-flex items-center justify-center gap-2.5 h-14 px-9 rounded-full text-[15px] font-bold text-[#131518] bg-white hover:bg-[#3182f6] hover:text-white transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className={`${btnPrimary} justify-center disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                   {isSubmitting ? (
                     '전송 중...'
                   ) : (
                     <>
-                      <FiSend size={17} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-300" />
+                      <FiSend size={17} className={arrowHover} />
                       메시지 보내기
                     </>
                   )}
@@ -240,18 +226,18 @@ export default function ContactPage() {
               {/* 연락처 — 헤어라인 리스트 */}
               <div className="mt-14 sm:mt-16">
                 <p className="index-num font-en pb-6 border-b border-white/10">(02) Direct</p>
-                <a href="mailto:hsib1212@naver.com"
+                <a href={`mailto:${CONTACT_EMAIL}`}
                   className="group flex items-baseline justify-between gap-6 py-6 border-b border-white/10">
                   <span className="text-[13px] text-white/45 flex-shrink-0">이메일</span>
                   <span className="text-[16px] sm:text-[17px] font-semibold text-[#f5f6f7] group-hover:text-[#3182f6] transition-colors break-all text-right">
-                    hsib1212@naver.com
+                    {CONTACT_EMAIL}
                   </span>
                 </a>
-                <a href="tel:0507-1339-9141"
+                <a href={`tel:${CONTACT_PHONE}`}
                   className="group flex items-baseline justify-between gap-6 py-6 border-b border-white/10">
                   <span className="text-[13px] text-white/45 flex-shrink-0">전화</span>
                   <span className="text-[16px] sm:text-[17px] font-semibold text-[#f5f6f7] group-hover:text-[#3182f6] transition-colors text-right">
-                    0507-1339-9141
+                    {CONTACT_PHONE}
                   </span>
                 </a>
                 <p className="pt-8 text-[15px] text-white/55 leading-[1.75]">
@@ -264,8 +250,9 @@ export default function ContactPage() {
       </section>
 
       {/* ━━ (03) FAQ ━━ */}
-      <section className="py-28 sm:py-40 border-t border-white/10">
-        <div className="container mx-auto px-4 sm:px-6">
+      <section className={`${sectionPad} border-t border-white/10`}>
+        <div className={container}>
+          {/* 공유 SectionHead는 홀수 번호에 fadeLeft/clipUp을 쓰므로 이 블록은 인라인 유지 */}
           <div className="mb-16 sm:mb-20">
             <div className="relative pb-6 mb-10 sm:mb-14">
               <div className="flex items-center justify-between">
@@ -276,8 +263,8 @@ export default function ContactPage() {
             </div>
             <motion.h2 {...inView} variants={stagger}
               className="font-en text-[#f5f6f7] font-extrabold tracking-[-0.03em] leading-[1.04]"
-              style={{ fontSize: 'clamp(2.25rem, 6vw, 4.75rem)' }}>
-              <span className="block overflow-hidden pb-[0.12em] -mb-[0.12em]">
+              style={displaySize}>
+              <span className={clipWrap}>
                 <motion.span variants={clipLeft} className="block">FAQ</motion.span>
               </span>
             </motion.h2>

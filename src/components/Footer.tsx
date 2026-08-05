@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { FiMail, FiPhone, FiArrowUpRight } from 'react-icons/fi';
 import { RiKakaoTalkFill } from 'react-icons/ri';
+import { container, CONTACT_EMAIL, CONTACT_PHONE, KAKAO_OPEN_CHAT_URL } from '@/lib/styles';
 
 export default function Footer() {
   const year = new Date().getFullYear();
@@ -21,14 +22,14 @@ export default function Footer() {
 
   // 실제로 연결되는 채널만 노출한다 (미개설 SNS 링크는 두지 않음)
   const social = [
-    { icon: RiKakaoTalkFill, href: 'https://open.kakao.com/o/scVFEK3h', label: '카카오톡 오픈채팅' },
-    { icon: FiMail,          href: 'mailto:hsib1212@naver.com',        label: '이메일' },
-    { icon: FiPhone,         href: 'tel:0507-1339-9141',               label: '전화' },
+    { icon: RiKakaoTalkFill, href: KAKAO_OPEN_CHAT_URL,          label: '카카오톡 오픈채팅' },
+    { icon: FiMail,          href: `mailto:${CONTACT_EMAIL}`,    label: '이메일' },
+    { icon: FiPhone,         href: `tel:${CONTACT_PHONE}`,       label: '전화' },
   ];
 
   return (
     <footer className="relative border-t border-white/10">
-      <div className="container mx-auto px-4 sm:px-6 py-16 sm:py-24">
+      <div className={`${container} py-16 sm:py-24`}>
 
         {/* 대형 CTA 스테이트먼트 */}
         <motion.div
@@ -39,10 +40,10 @@ export default function Footer() {
         >
           <div>
             <p className="index-num mb-6">Let&apos;s work together</p>
-            <a href="mailto:hsib1212@naver.com"
+            <a href={`mailto:${CONTACT_EMAIL}`}
               className="font-en text-[#f5f6f7] font-extrabold tracking-[-0.04em] hover:text-[#3182f6] transition-colors break-all"
               style={{ fontSize: 'clamp(1.75rem, 4.5vw, 4rem)' }}>
-              hsib1212@naver.com
+              {CONTACT_EMAIL}
             </a>
           </div>
           <Link href="/contact"
@@ -108,16 +109,16 @@ export default function Footer() {
             <div className="space-y-3.5">
               <div>
                 <p className="text-[10px] text-white/30 uppercase tracking-wider mb-0.5">Email</p>
-                <a href="mailto:hsib1212@naver.com"
+                <a href={`mailto:${CONTACT_EMAIL}`}
                   className="text-sm text-white/55 hover:text-white transition-colors break-all">
-                  hsib1212@naver.com
+                  {CONTACT_EMAIL}
                 </a>
               </div>
               <div>
                 <p className="text-[10px] text-white/30 uppercase tracking-wider mb-0.5">Phone</p>
-                <a href="tel:0507-1339-9141"
+                <a href={`tel:${CONTACT_PHONE}`}
                   className="text-sm text-white/55 hover:text-white transition-colors">
-                  0507-1339-9141
+                  {CONTACT_PHONE}
                 </a>
               </div>
             </div>
@@ -133,11 +134,11 @@ export default function Footer() {
             </div>
             <div className="flex items-center gap-2">
               <dt className="text-[11px] font-semibold text-white/30">이메일</dt>
-              <dd className="text-[12px] text-white/55">hsib1212@naver.com</dd>
+              <dd className="text-[12px] text-white/55">{CONTACT_EMAIL}</dd>
             </div>
             <div className="flex items-center gap-2">
               <dt className="text-[11px] font-semibold text-white/30">대표번호</dt>
-              <dd className="text-[12px] text-white/55">0507-1339-9141</dd>
+              <dd className="text-[12px] text-white/55">{CONTACT_PHONE}</dd>
             </div>
           </dl>
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
