@@ -113,7 +113,7 @@ export default function DomainSlabs({
                           <p className="font-en type-h3 font-mono-stat mb-1.5 font-bold leading-none text-[var(--text-1)]">
                             {st.value}
                           </p>
-                          <p className="type-c2 text-white/40">{st.label}</p>
+                          <p className="type-c2 text-white/55">{st.label}</p>
                         </div>
                       ))}
                     </div>
@@ -125,7 +125,7 @@ export default function DomainSlabs({
                   </div>
                 </div>
 
-                <p className="type-c1 relative mt-8 text-white/35">— {s.note}</p>
+                <p className="type-c1 relative mt-8 text-white/50">— {s.note}</p>
               </div>
             </Link>
           </motion.div>
@@ -166,7 +166,7 @@ export default function DomainSlabs({
                       <span key={g.id}
                         className="type-c2 inline-flex items-center gap-2 rounded-[6px] border border-white/12 px-3 py-1.5 text-white/70">
                         {g.title}
-                        <span className="text-white/35">{g.status}</span>
+                        <span className="text-white/50">{g.status}</span>
                       </span>
                     ))}
                   </div>
@@ -178,13 +178,13 @@ export default function DomainSlabs({
                       <p className="font-en type-h3 font-mono-stat mb-1.5 font-bold leading-none text-[var(--text-1)]">
                         {games.length}종
                       </p>
-                      <p className="type-c2 text-white/40">제작 중인 타이틀</p>
+                      <p className="type-c2 text-white/55">제작 중인 타이틀</p>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <p className="type-c1 relative mt-8 text-white/35">— 자체 IP · 공개할 수 있는 단계가 되면 여기에 올립니다</p>
+              <p className="type-c1 relative mt-8 text-white/50">— 자체 IP · 공개할 수 있는 단계가 되면 여기에 올립니다</p>
             </div>
           </div>
         </motion.div>

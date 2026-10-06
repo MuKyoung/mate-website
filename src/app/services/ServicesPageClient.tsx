@@ -29,7 +29,7 @@ export default function ServicesPageClient() {
                 <motion.span variants={clipUp} className="block">세 영역을</motion.span>
               </span>
               <span className="block overflow-hidden pb-[0.1em] -mb-[0.1em]">
-                <motion.span variants={clipUp} className="block text-white/25">따로 맡습니다</motion.span>
+                <motion.span variants={clipUp} className="block text-white/40">따로 맡습니다</motion.span>
               </span>
             </motion.h1>
             <motion.div {...onMount} variants={fadeRight} className="lg:col-span-5 lg:pb-4">
@@ -77,7 +77,7 @@ export default function ServicesPageClient() {
                 ].join(' ')}>
                 <p className="index-num-lg font-en mb-6">0{s.order}</p>
                 <h3 className="type-b1 text-[var(--text-1)] mb-3">{s.title}</h3>
-                <p className="type-c1 text-white/45 leading-[1.8] pr-4">{s.description}</p>
+                <p className="type-c1 text-white/55 leading-[1.8] pr-4">{s.description}</p>
               </motion.div>
             ))}
           </motion.div>

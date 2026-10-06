@@ -135,7 +135,7 @@ export default function ContactPage() {
   };
 
   const inputClass =
-    'w-full h-14 px-5 bg-white/[0.04] border border-white/15 rounded-[10px] text-[16px] text-[var(--text-1)] placeholder:text-white/25 outline-none transition-colors focus:border-white/60 focus:ring-0';
+    'w-full h-14 px-5 bg-white/[0.04] border border-white/15 rounded-[10px] text-[16px] text-[var(--text-1)] placeholder:text-white/45 outline-none transition-colors focus:border-white/60 focus:ring-0';
   const labelClass = 'block text-[13px] font-semibold text-white/85 mb-2.5';
 
   return (
@@ -162,7 +162,7 @@ export default function ContactPage() {
                 {/* 어느 영역 문의인지 먼저 고르게 해서 내부 배정이 바로 되도록 한다 */}
                 <fieldset>
                   <legend className={labelClass}>
-                    문의 영역 <span className="font-normal text-white/35">(선택)</span>
+                    문의 영역 <span className="font-normal text-white/50">(선택)</span>
                   </legend>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                     {domains.map((d) => {
@@ -180,7 +180,7 @@ export default function ContactPage() {
                           <span className={`block type-b4 ${on ? 'text-[var(--text-1)]' : 'text-white/75'}`}>
                             {d.kr}
                           </span>
-                          <span className={`block type-c2 font-en ${on ? 'text-[var(--accent-strong)]' : 'text-white/35'}`}>
+                          <span className={`block type-c2 font-en ${on ? 'text-[var(--accent-strong)]' : 'text-white/50'}`}>
                             {d.en}
                           </span>
                         </button>
@@ -218,7 +218,7 @@ export default function ContactPage() {
                   <textarea
                     id="message" name="message"
                     value={formData.message} onChange={handleChange} required rows={7}
-                    className="w-full px-5 py-4 bg-white/[0.04] border border-white/15 rounded-[10px] text-[16px] leading-[1.75] text-[var(--text-1)] placeholder:text-white/25 outline-none transition-colors resize-none focus:border-white/60 focus:ring-0"
+                    className="w-full px-5 py-4 bg-white/[0.04] border border-white/15 rounded-[10px] text-[16px] leading-[1.75] text-[var(--text-1)] placeholder:text-white/45 outline-none transition-colors resize-none focus:border-white/60 focus:ring-0"
                     placeholder="만들려는 것, 생각하시는 일정과 예산 범위를 적어주시면 첫 회신에서 바로 범위 얘기를 시작할 수 있습니다."
                   />
                 </div>
@@ -235,7 +235,7 @@ export default function ContactPage() {
                 )}
 
                 {!GOOGLE_SCRIPT_URL && (
-                  <p className="type-c1 text-white/40 leading-[1.7]">
+                  <p className="type-c1 text-white/55 leading-[1.7]">
                     버튼을 누르면 위 내용이 채워진 메일 초안이 열립니다. 바로 답장이 필요하시면
                     카카오톡 오픈채팅이 가장 빠릅니다.
                   </p>
@@ -288,14 +288,14 @@ export default function ContactPage() {
                 <p className="index-num font-en pb-6 border-b border-white/10">Direct</p>
                 <a href={`mailto:${CONTACT_EMAIL}`}
                   className="group flex items-baseline justify-between gap-6 py-6 border-b border-white/10">
-                  <span className="text-[13px] text-white/45 flex-shrink-0">이메일</span>
+                  <span className="text-[13px] text-white/55 flex-shrink-0">이메일</span>
                   <span className="text-[16px] sm:text-[17px] font-semibold text-[var(--text-1)] group-hover:text-[var(--accent)] transition-colors break-all text-right">
                     {CONTACT_EMAIL}
                   </span>
                 </a>
                 <a href={`tel:${CONTACT_PHONE}`}
                   className="group flex items-baseline justify-between gap-6 py-6 border-b border-white/10">
-                  <span className="text-[13px] text-white/45 flex-shrink-0">전화</span>
+                  <span className="text-[13px] text-white/55 flex-shrink-0">전화</span>
                   <span className="text-[16px] sm:text-[17px] font-semibold text-[var(--text-1)] group-hover:text-[var(--accent)] transition-colors text-right">
                     {CONTACT_PHONE}
                   </span>

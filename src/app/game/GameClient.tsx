@@ -82,7 +82,7 @@ export default function GameClient() {
                 <p className="font-en text-[30px] sm:text-[38px] font-bold text-[var(--text-1)] font-mono-stat leading-none mb-2.5">
                   {s.value}
                 </p>
-                <p className="type-c2 text-white/45">{s.label}</p>
+                <p className="type-c2 text-white/55">{s.label}</p>
               </div>
             ))}
           </motion.div>
@@ -173,7 +173,7 @@ export default function GameClient() {
                 <h3 className="font-en text-[30px] sm:text-[40px] font-bold text-[var(--text-1)] tracking-[-0.02em] leading-none mb-4">
                   {p.name}
                 </h3>
-                <p className="type-c1 text-white/45 font-en">{p.detail}</p>
+                <p className="type-c1 text-white/55 font-en">{p.detail}</p>
               </motion.div>
             ))}
           </motion.div>
@@ -260,7 +260,7 @@ export default function GameClient() {
                     <p className="mt-2.5 type-b3 text-white/50 leading-[1.7] line-clamp-2">{p.description}</p>
                     <div className="mt-4 flex flex-wrap gap-2">
                       {p.techStack.slice(0, 4).map((t) => (
-                        <span key={t} className="type-c2 px-2.5 py-1 rounded-[5px] bg-white/[0.05] text-white/45 font-en">{t}</span>
+                        <span key={t} className="type-c2 px-2.5 py-1 rounded-[5px] bg-white/[0.05] text-white/55 font-en">{t}</span>
                       ))}
                     </div>
                   </Link>
@@ -283,9 +283,9 @@ export default function GameClient() {
               {credentials.map((a) => (
                 <motion.div key={a.id} variants={rowIn}
                   className="grid grid-cols-12 gap-x-gutter gap-y-2 py-6 sm:py-7 border-b border-white/10 items-baseline">
-                  <p className="col-span-12 sm:col-span-2 font-en type-b2 text-white/35 font-mono-stat">{a.year}</p>
+                  <p className="col-span-12 sm:col-span-2 font-en type-b2 text-white/50 font-mono-stat">{a.year}</p>
                   <h3 className="col-span-12 sm:col-span-5 type-b1 text-[var(--text-1)]">{a.title}</h3>
-                  <p className="col-span-6 sm:col-span-3 type-b3 text-white/45">{a.organization}</p>
+                  <p className="col-span-6 sm:col-span-3 type-b3 text-white/55">{a.organization}</p>
                   <p className="col-span-6 sm:col-span-2 type-b4 text-[var(--accent)] sm:text-right">{a.rank}</p>
                 </motion.div>
               ))}
@@ -316,7 +316,7 @@ export default function GameClient() {
           <motion.div {...inView} variants={fadeUp} className="flex flex-wrap items-center justify-center gap-8">
             <Link href="/contact?domain=game"
               className="group inline-flex items-center gap-2.5 h-14 px-9 rounded-pill type-b3 font-bold
-                         text-gray-50 bg-[var(--accent)] hover:bg-[var(--accent-strong)] transition-colors duration-300">
+                         text-gray-50 bg-[var(--domain-300)] hover:bg-[var(--accent)] transition-colors duration-300">
               게임 · XR 프로젝트 문의
               <FiArrowUpRight size={17} className={arrowHover} />
             </Link>

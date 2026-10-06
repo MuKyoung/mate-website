@@ -40,7 +40,7 @@ export default function Footer() {
             <Link href="/" className="inline-block mb-4 hover:opacity-75 transition-opacity">
               <Image src="/images/logo.png" alt="MATE" width={80} height={26} className="h-6 w-auto brightness-0 invert" />
             </Link>
-            <p className="text-sm text-white/45 leading-relaxed mb-5">
+            <p className="text-sm text-white/55 leading-relaxed mb-5">
               웹 · 앱, 게임 · XR, 교육 외주 개발과 자체 게임 제작 · 퍼블리싱.
             </p>
             <div className="flex gap-1">
@@ -50,7 +50,7 @@ export default function Footer() {
                   <a key={s.label} href={s.href}
                     {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
                     aria-label={s.label} title={s.label}
-                    className="w-10 h-10 flex items-center justify-center rounded-full text-white/35 hover:text-white hover:bg-white/[0.06] transition-colors duration-200">
+                    className="w-10 h-10 flex items-center justify-center rounded-full text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors duration-200">
                     <s.icon size={16} />
                   </a>
                 );
@@ -95,14 +95,14 @@ export default function Footer() {
             <h4 className="font-en text-xs font-bold text-white/85 tracking-[0.05em] uppercase mb-5">Contact</h4>
             <div className="space-y-3.5">
               <div>
-                <p className="text-[10px] text-white/30 uppercase tracking-wider mb-0.5">Email</p>
+                <p className="text-[10px] text-white/50 uppercase tracking-wider mb-0.5">Email</p>
                 <a href={`mailto:${CONTACT_EMAIL}`}
                   className="text-sm text-white/55 hover:text-white transition-colors break-all">
                   {CONTACT_EMAIL}
                 </a>
               </div>
               <div>
-                <p className="text-[10px] text-white/30 uppercase tracking-wider mb-0.5">Phone</p>
+                <p className="text-[10px] text-white/50 uppercase tracking-wider mb-0.5">Phone</p>
                 <a href={`tel:${CONTACT_PHONE}`}
                   className="text-sm text-white/55 hover:text-white transition-colors">
                   {CONTACT_PHONE}
@@ -121,13 +121,13 @@ export default function Footer() {
               ['대표번호', CONTACT_PHONE],
             ].map(([k, v]) => (
               <div key={k} className="flex items-center gap-2">
-                <dt className="text-[11px] font-semibold text-white/30">{k}</dt>
+                <dt className="text-[11px] font-semibold text-white/50">{k}</dt>
                 <dd className="text-[12px] text-white/55">{v}</dd>
               </div>
             ))}
           </dl>
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <p className="text-xs text-white/30">© {year} MATE. All rights reserved.</p>
+            <p className="text-xs text-white/50">© {year} MATE. All rights reserved.</p>
           </div>
         </div>
       </div>

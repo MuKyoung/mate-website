@@ -74,7 +74,7 @@ export default function Home() {
               </motion.span>
             </span>
             <span className="block overflow-hidden pb-[0.1em]">
-              <motion.span variants={fadeRight} className="block text-white/30">
+              <motion.span variants={fadeRight} className="block text-white/50">
                 그래서 배포 다음 달에 뭘 할지까지 계약서에 적습니다.
               </motion.span>
             </span>
@@ -120,15 +120,15 @@ export default function Home() {
             {homeCredentials.map((a) => (
               <motion.div key={a.id} variants={rowIn}
                 className="grid grid-cols-12 gap-x-gutter gap-y-1 py-6 sm:py-7 border-b border-white/10 items-baseline">
-                <p className="col-span-3 sm:col-span-2 font-en type-b2 text-white/35 font-mono-stat">{a.year}</p>
+                <p className="col-span-3 sm:col-span-2 font-en type-b2 text-white/50 font-mono-stat">{a.year}</p>
                 <h3 className="col-span-9 sm:col-span-5 type-b1 text-[var(--text-1)]">{a.title}</h3>
-                <p className="col-span-7 sm:col-span-3 type-b3 text-white/45">{a.organization}</p>
+                <p className="col-span-7 sm:col-span-3 type-b3 text-white/55">{a.organization}</p>
                 <p className="col-span-5 sm:col-span-2 type-b4 text-[var(--point)] sm:text-right">{a.rank}</p>
               </motion.div>
             ))}
           </motion.div>
 
-          <motion.p {...inView} variants={fadeUp} className="mt-8 type-c1 text-white/30">
+          <motion.p {...inView} variants={fadeUp} className="mt-8 type-c1 text-white/50">
             전시 참가 이력을 포함한 전체 목록은 팀 페이지에 있습니다.
           </motion.p>
         </div>

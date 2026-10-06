@@ -48,7 +48,7 @@
   --text-1:     var(--gray-100);
   --text-2:     rgba(244, 244, 245, 0.64);
   --text-3:     rgba(244, 244, 245, 0.55);  /* AA 충족 (4.28:1 → 5.8:1) */
-  --text-faint: rgba(244, 244, 245, 0.30);
+  --text-faint: rgba(244, 244, 245, 0.50);  /* 장식성 보조 — 캔버스 대비 4.6:1 */
 
   /* 액션 — 다크 배경이므로 호버는 밝은 쪽(primary 100)으로 */
   --accent:        var(--primary-200);
@@ -113,13 +113,13 @@
 }
 [data-domain='game'] {
   --domain-100: #a594ff;
-  --domain-200: #7c5cff;   /* 바이올렛 — 몰입 · 시네마틱 */
+  --domain-200: #9179ff;   /* 바이올렛 — 몰입 · 시네마틱 */
   --domain-300: #5b3ae0;
   --accent:        var(--domain-200);
   --accent-strong: var(--domain-100);
   --accent-link:   var(--domain-100);
-  --accent-tint:   rgba(124, 92, 255, 0.18);
-  --accent-dim:    rgba(124, 92, 255, 0.12);
+  --accent-tint:   rgba(145, 121, 255, 0.18);
+  --accent-dim:    rgba(145, 121, 255, 0.12);
   /* 게임 도메인은 바이올렛 단색으로 몰고 간다 */
   --point:      var(--domain-200);
   --point-tint: rgba(124, 92, 255, 0.14);
@@ -127,7 +127,7 @@
 [data-domain='edu'] {
   --domain-100: #e8c48d;
   --domain-200: #d9a05a;   /* 앰버 — 온기 · 가독 */
-  --domain-300: #ad7a3c;
+  --domain-300: #8a5a28;
   --accent:        var(--domain-200);
   --accent-strong: var(--domain-100);
   --accent-link:   var(--domain-100);
@@ -203,6 +203,12 @@ html[data-shell='app'] ::-webkit-scrollbar-thumb:hover { background: #afb8c1; }
   /* 밝은 배경에서는 호버가 어두운 쪽으로 간다 */
   --accent-strong: var(--domain-300, var(--primary-300));
   --accent-link:   var(--domain-300, var(--primary-300));
+
+  /* 반드시 다시 선언해야 한다 — 커스텀 속성의 var() 는 '선언한 요소'에서
+     값이 확정되므로, 바깥 [data-domain] 이 --point 를 --text-3 으로 걸어 두면
+     다크 값이 그대로 굳어 들어와 흰 배경에 흰 글자가 찍힌다. */
+  --point:      var(--text-3);
+  --point-tint: rgba(14, 17, 23, 0.06);
 }
 
 /* ── Typography — Figma 스케일과 1:1 (Pretendard / LS -0.3%) ──

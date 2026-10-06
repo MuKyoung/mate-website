@@ -110,7 +110,7 @@ function Block({ num, label, children }: { num: string; label: string; children:
 function SwatchGrid({ title, items }: { title: string; items: Swatch[] }) {
   return (
     <div className="mb-14 last:mb-0">
-      <p className="type-b4 text-white/45 mb-5 font-en uppercase tracking-[0.14em]">{title}</p>
+      <p className="type-b4 text-white/55 mb-5 font-en uppercase tracking-[0.14em]">{title}</p>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-gutter">
         {items.map((s) => (
           <div key={s.name} className="rounded-card overflow-hidden border border-white/10">
@@ -121,8 +121,8 @@ function SwatchGrid({ title, items }: { title: string; items: Swatch[] }) {
             </div>
             <div className="bg-[var(--surface)] px-4 py-3.5">
               <p className="type-b4 text-[var(--text-1)]">{s.name}</p>
-              <p className="type-c2 text-white/45 font-en mt-1">{s.hex.toUpperCase()}</p>
-              <p className="type-c2 text-white/30 font-en">RGB {rgb(s.hex)}</p>
+              <p className="type-c2 text-white/55 font-en mt-1">{s.hex.toUpperCase()}</p>
+              <p className="type-c2 text-white/50 font-en">RGB {rgb(s.hex)}</p>
             </div>
           </div>
         ))}
@@ -163,7 +163,7 @@ export default function DesignSystemPage() {
                 ['Breakpoint', 'sm 640 · md 768 · lg 1024 · xl 1280'],
               ].map(([k, v]) => (
                 <div key={k} className="flex items-baseline justify-between gap-6 py-4">
-                  <dt className="type-b4 text-white/45">{k}</dt>
+                  <dt className="type-b4 text-white/55">{k}</dt>
                   <dd className="type-b3 text-[var(--text-1)] font-en text-right">{v}</dd>
                 </div>
               ))}
@@ -175,7 +175,7 @@ export default function DesignSystemPage() {
                 <div key={i} className="bg-[var(--accent-tint)] rounded-sm" />
               ))}
             </div>
-            <p className="type-c1 text-white/30 mt-4 font-en">
+            <p className="type-c1 text-white/50 mt-4 font-en">
               grid-12 · gap var(--grid-gutter) · max-w-inner
             </p>
           </div>
@@ -207,7 +207,7 @@ export default function DesignSystemPage() {
       {/* ── Typography ── */}
       <Block num="03" label="Typography">
         <p className="type-d2 font-en text-[var(--text-1)] mb-4">Pretendard</p>
-        <p className="type-c1 text-white/40 mb-14 font-en">
+        <p className="type-c1 text-white/55 mb-14 font-en">
           Letter spacing -0.3% · 국문 · 영문 모두 Pretendard
         </p>
 
@@ -219,8 +219,8 @@ export default function DesignSystemPage() {
                          py-8 border-b border-white/10">
               <p className="lg:col-span-1 type-c1 text-[var(--point)] font-en">{t.token}</p>
               <p className={`lg:col-span-6 text-[var(--text-1)] ${t.cls}`}>{t.sample}</p>
-              <p className="lg:col-span-3 type-c1 text-white/40">{t.use}</p>
-              <p className="lg:col-span-2 type-c2 text-white/30 font-en lg:text-right">
+              <p className="lg:col-span-3 type-c1 text-white/55">{t.use}</p>
+              <p className="lg:col-span-2 type-c2 text-white/50 font-en lg:text-right">
                 FW {t.fw} · FS {t.fs} · LH {t.lh}
               </p>
             </div>
@@ -246,14 +246,14 @@ export default function DesignSystemPage() {
             <div key={d.key} data-domain={d.key}
               className="rounded-card border border-white/10 p-8">
               <p className="index-num font-en mb-6">{d.en}</p>
-              <p className="type-c2 font-en text-white/35 mb-7">
+              <p className="type-c2 font-en text-white/50 mb-7">
                 &lt;div data-domain=&quot;{d.key}&quot;&gt;
               </p>
               <div className="flex gap-2 mb-7">
                 {DOMAIN_SCALE[d.key].map((sw) => (
                   <div key={sw.name} className="flex-1">
                     <div className="h-16 rounded-[6px] mb-2" style={{ background: sw.hex }} />
-                    <p className="type-c2 text-white/40 font-en">{sw.hex.toUpperCase()}</p>
+                    <p className="type-c2 text-white/55 font-en">{sw.hex.toUpperCase()}</p>
                   </div>
                 ))}
               </div>
@@ -303,7 +303,7 @@ export default function DesignSystemPage() {
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-gutter">
           {/* Buttons */}
           <div className="rounded-card border border-white/10 p-8">
-            <p className="type-b4 text-white/45 mb-7 font-en uppercase tracking-[0.14em]">Buttons</p>
+            <p className="type-b4 text-white/55 mb-7 font-en uppercase tracking-[0.14em]">Buttons</p>
             <div className="flex flex-col items-start gap-4">
               <span className="inline-flex items-center h-14 px-9 rounded-pill type-b3 font-bold text-canvas bg-gray-50">
                 Primary
@@ -319,7 +319,7 @@ export default function DesignSystemPage() {
 
           {/* Surfaces */}
           <div className="rounded-card border border-white/10 p-8">
-            <p className="type-b4 text-white/45 mb-7 font-en uppercase tracking-[0.14em]">Surfaces</p>
+            <p className="type-b4 text-white/55 mb-7 font-en uppercase tracking-[0.14em]">Surfaces</p>
             <div className="flex flex-col gap-3">
               {[
                 ['canvas', 'var(--canvas)'],
@@ -335,7 +335,7 @@ export default function DesignSystemPage() {
 
           {/* Text hierarchy */}
           <div className="rounded-card border border-white/10 p-8">
-            <p className="type-b4 text-white/45 mb-7 font-en uppercase tracking-[0.14em]">Text</p>
+            <p className="type-b4 text-white/55 mb-7 font-en uppercase tracking-[0.14em]">Text</p>
             <div className="flex flex-col gap-3">
               <p className="type-b3 text-[var(--text-1)]">text-1 — 제목 · 본문</p>
               <p className="type-b3 text-[var(--text-2)]">text-2 — 보조 설명</p>
@@ -346,13 +346,13 @@ export default function DesignSystemPage() {
 
           {/* Radius */}
           <div className="rounded-card border border-white/10 p-8">
-            <p className="type-b4 text-white/45 mb-7 font-en uppercase tracking-[0.14em]">Radius</p>
+            <p className="type-b4 text-white/55 mb-7 font-en uppercase tracking-[0.14em]">Radius</p>
             <div className="flex items-end gap-4">
               {[['sm', 'rounded-[6px]', '6'], ['base', 'rounded-card', '10'], ['lg', 'rounded-[16px]', '16'], ['pill', 'rounded-pill', '∞']].map(
                 ([n, cls, v]) => (
                   <div key={n} className="text-center">
                     <div className={`w-14 h-14 bg-[var(--surface-2)] border border-white/15 ${cls}`} />
-                    <p className="type-c2 text-white/40 mt-2.5 font-en">{n} {v}</p>
+                    <p className="type-c2 text-white/55 mt-2.5 font-en">{n} {v}</p>
                   </div>
                 ),
               )}
@@ -361,7 +361,7 @@ export default function DesignSystemPage() {
 
           {/* States */}
           <div className="rounded-card border border-white/10 p-8">
-            <p className="type-b4 text-white/45 mb-7 font-en uppercase tracking-[0.14em]">States</p>
+            <p className="type-b4 text-white/55 mb-7 font-en uppercase tracking-[0.14em]">States</p>
             <div className="flex flex-col gap-3">
               <p className="type-b3 border-l-2 border-[var(--success)] pl-4 text-[var(--success-on-dark)]">
                 success — 전송 완료
@@ -377,15 +377,15 @@ export default function DesignSystemPage() {
 
           {/* Hairline */}
           <div className="rounded-card border border-white/10 p-8">
-            <p className="type-b4 text-white/45 mb-7 font-en uppercase tracking-[0.14em]">Hairline</p>
+            <p className="type-b4 text-white/55 mb-7 font-en uppercase tracking-[0.14em]">Hairline</p>
             <div className="flex flex-col gap-5">
               <div>
                 <div className="h-px bg-white/10 mb-2" />
-                <span className="type-c2 text-white/40 font-en">border · white 10%</span>
+                <span className="type-c2 text-white/55 font-en">border · white 10%</span>
               </div>
               <div>
                 <div className="h-px bg-white/[0.22] mb-2" />
-                <span className="type-c2 text-white/40 font-en">border-2 · white 22%</span>
+                <span className="type-c2 text-white/55 font-en">border-2 · white 22%</span>
               </div>
             </div>
           </div>

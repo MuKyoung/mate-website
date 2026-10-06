@@ -39,7 +39,7 @@ export default function FAQAccordion({ faqs }: FAQAccordionProps) {
               <motion.span
                 animate={{ rotate: isOpen ? 180 : 0 }}
                 transition={{ duration: DUR.standard, ease: easeEnter }}
-                className="flex-shrink-0 text-white/40"
+                className="flex-shrink-0 text-white/55"
               >
                 <FiChevronDown size={22} />
               </motion.span>

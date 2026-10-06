@@ -220,7 +220,7 @@ export default function ProjectDetailClient({ params }: Props) {
                         </div>
                         <span className="text-2xl font-bold text-[var(--text-1)] font-mono-stat tracking-[-0.02em] flex-shrink-0">
                           {d.count}
-                          <span className="text-[13px] font-bold text-white/30 ml-1">명</span>
+                          <span className="text-[13px] font-bold text-white/50 ml-1">명</span>
                         </span>
                       </div>
                     ))}

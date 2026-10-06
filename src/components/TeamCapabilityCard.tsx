@@ -34,7 +34,7 @@ export default function TeamCapabilityCard({ capability, index }: TeamCapability
       </p>
 
       {/* 주요 기술 — 플레인 텍스트 */}
-      <p className="text-[13px] text-white/30 leading-[1.8] mb-10">
+      <p className="text-[13px] text-white/50 leading-[1.8] mb-10">
         {capability.skills.join(' · ')}
       </p>
 
@@ -44,13 +44,13 @@ export default function TeamCapabilityCard({ capability, index }: TeamCapability
           <span className="font-en text-3xl font-bold text-[var(--text-1)] font-mono-stat tracking-[-0.02em]">
             {capability.experience}
           </span>
-          <span className="text-[13px] text-white/45">경력</span>
+          <span className="text-[13px] text-white/55">경력</span>
         </div>
         <div className="flex items-baseline gap-3 py-5 border-t border-b border-white/10">
           <span className="font-en text-3xl font-bold text-[var(--text-1)] font-mono-stat tracking-[-0.02em]">
             {capability.projects}개
           </span>
-          <span className="text-[13px] text-white/45">완료 프로젝트</span>
+          <span className="text-[13px] text-white/55">완료 프로젝트</span>
         </div>
       </div>
     </motion.div>

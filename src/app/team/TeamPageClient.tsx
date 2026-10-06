@@ -100,7 +100,7 @@ export default function TeamPageClient() {
                   <span className="font-en text-3xl sm:text-4xl font-bold text-[var(--text-1)] font-mono-stat tracking-[-0.02em]">
                     {stat.value}
                   </span>
-                  <span className="text-[13px] text-white/45">{stat.label}</span>
+                  <span className="text-[13px] text-white/55">{stat.label}</span>
                 </div>
               </motion.div>
             ))}
@@ -170,7 +170,7 @@ export default function TeamPageClient() {
               </motion.span>
             </span>
             <span className="block overflow-hidden pb-[0.08em]">
-              <motion.span variants={fadeRight} className="block text-white/30">끝까지 함께하는 개발 파트너</motion.span>
+              <motion.span variants={fadeRight} className="block text-white/50">끝까지 함께하는 개발 파트너</motion.span>
             </span>
           </motion.h2>
 
@@ -234,14 +234,14 @@ export default function TeamPageClient() {
                     return (
                       <motion.div key={award.id} variants={rowDir}
                         className="flex items-start gap-4 py-5 border-t border-white/10 last:border-b">
-                        <Icon size={17} className="flex-shrink-0 mt-1 text-white/30" />
+                        <Icon size={17} className="flex-shrink-0 mt-1 text-white/50" />
                         <div className="min-w-0 flex-1 sm:flex sm:items-baseline sm:justify-between sm:gap-8">
                           <div className="min-w-0">
                             <p className="text-[17px] font-bold text-[var(--text-1)] leading-snug">{award.title}</p>
                             <p className="text-[15px] text-white/55 mt-1">{award.organization}</p>
                           </div>
                           <div className="flex flex-wrap items-center gap-2.5 mt-3 sm:mt-0 flex-shrink-0">
-                            <span className="text-[13px] text-white/30">
+                            <span className="text-[13px] text-white/50">
                               {award.type === 'exhibition' ? '전시회' : '수상'}
                             </span>
                             {award.rank && <span className="tag">{award.rank}</span>}

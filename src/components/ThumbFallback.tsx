@@ -14,7 +14,7 @@ export default function ThumbFallback({ label }: { label?: string }) {
       }}
     >
       {label && (
-        <span className="px-4 text-center type-c2 font-en uppercase tracking-[0.2em] text-white/25">
+        <span className="px-4 text-center type-c2 font-en uppercase tracking-[0.2em] text-white/60">
           {label}
         </span>
       )}

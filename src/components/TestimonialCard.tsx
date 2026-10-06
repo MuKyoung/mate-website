@@ -31,7 +31,7 @@ export default function TestimonialCard({ testimonial, index, lead = false }: Te
       </p>
       <p className="index-num">
         {testimonial.role}
-        {testimonial.company && <span className="text-white/30">— {testimonial.company}</span>}
+        {testimonial.company && <span className="text-white/50">— {testimonial.company}</span>}
       </p>
     </motion.div>
   );

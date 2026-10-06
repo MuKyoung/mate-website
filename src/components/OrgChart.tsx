@@ -16,7 +16,7 @@ export default function OrgChart() {
         <p className="font-en text-5xl sm:text-6xl font-bold text-[var(--text-1)] font-mono-stat tracking-[-0.02em]">
           {totalHeadcount}<span className="text-2xl sm:text-3xl ml-0.5">명</span>
         </p>
-        <p className="text-[15px] text-white/45">하나의 팀, 세 개의 축</p>
+        <p className="text-[15px] text-white/55">하나의 팀, 세 개의 축</p>
       </motion.div>
 
       {/* ── 부서 3열 — 헤어라인 칼럼 ── */}
@@ -31,7 +31,7 @@ export default function OrgChart() {
             <p className="index-num font-en mb-8">{dept.label}</p>
             <p className="font-en text-5xl sm:text-6xl font-bold text-[var(--text-1)] font-mono-stat tracking-[-0.02em] mb-6">
               {dept.headcount}
-              <span className="text-xl sm:text-2xl font-bold text-white/30 ml-1">명</span>
+              <span className="text-xl sm:text-2xl font-bold text-white/50 ml-1">명</span>
             </p>
             <h3 className="text-[20px] font-bold text-white tracking-[-0.02em] mb-3">{dept.name}</h3>
             <p className="text-[15px] text-white/55 leading-[1.75] mb-8">{dept.description}</p>
@@ -39,7 +39,7 @@ export default function OrgChart() {
             {/* 담당 영역 — 헤어라인 리스트 */}
             <ul>
               {dept.focus.map((f) => (
-                <li key={f} className="py-2.5 text-[13px] text-white/45 border-t border-white/10 last:border-b">
+                <li key={f} className="py-2.5 text-[13px] text-white/55 border-t border-white/10 last:border-b">
                   {f}
                 </li>
               ))}

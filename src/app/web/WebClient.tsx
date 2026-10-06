@@ -61,10 +61,10 @@ export default function WebClient() {
       <section className="pt-36 sm:pt-44 pb-20 sm:pb-28">
         <div className={container}>
           <motion.div {...onMount} variants={fadeLeft} className="flex items-center gap-3 mb-10">
-            <Link href="/services" className="type-c1 text-white/35 hover:text-white/70 transition-colors font-en">
+            <Link href="/services" className="type-c1 text-white/50 hover:text-white/70 transition-colors font-en">
               Services
             </Link>
-            <span className="type-c1 text-white/20">/</span>
+            <span className="type-c1 text-white/50">/</span>
             <span className="type-c1 text-[var(--accent)] font-en">{d.en}</span>
           </motion.div>
 
@@ -77,7 +77,7 @@ export default function WebClient() {
                   <motion.span variants={clipUp} className="block">Web &amp; App</motion.span>
                 </span>
                 <span className="block overflow-hidden pb-[0.1em] -mb-[0.1em]">
-                  <motion.span variants={clipUp} className="block text-white/25">Development</motion.span>
+                  <motion.span variants={clipUp} className="block text-white/40">Development</motion.span>
                 </span>
               </motion.h1>
             </div>
@@ -99,7 +99,7 @@ export default function WebClient() {
                 <p className="font-en text-[38px] sm:text-[46px] font-bold text-[var(--text-1)] font-mono-stat tracking-[-0.02em] leading-none mb-3">
                   {s.value}
                 </p>
-                <p className="type-c1 text-white/40">{s.label}</p>
+                <p className="type-c1 text-white/55">{s.label}</p>
               </motion.div>
             ))}
           </motion.div>
@@ -152,7 +152,7 @@ export default function WebClient() {
                     aria-expanded={isOpen}
                     className="w-full group flex items-start gap-6 sm:gap-10 py-8 sm:py-11 text-left">
                     <span className={`type-c1 font-en pt-2 w-[70px] shrink-0 transition-colors
-                                      ${isOpen ? 'text-[var(--accent)]' : 'text-white/30'}`}>
+                                      ${isOpen ? 'text-[var(--accent)]' : 'text-white/50'}`}>
                       {s.step}
                     </span>
                     <span className="flex-1 min-w-0">
@@ -162,11 +162,11 @@ export default function WebClient() {
                           style={{ fontSize: 'clamp(1.75rem, 3.6vw, 2.75rem)' }}>
                           {s.en}
                         </span>
-                        <span className="type-b3 text-white/40">{s.kr}</span>
+                        <span className="type-b3 text-white/55">{s.kr}</span>
                       </span>
                     </span>
                     <span className={`w-10 h-10 shrink-0 rounded-full border flex items-center justify-center transition-colors
-                                      ${isOpen ? 'border-[var(--accent)] text-[var(--accent)]' : 'border-white/15 text-white/40 group-hover:border-white/40'}`}>
+                                      ${isOpen ? 'border-[var(--accent)] text-[var(--accent)]' : 'border-white/15 text-white/55 group-hover:border-white/40'}`}>
                       {isOpen ? <FiMinus size={16} /> : <FiPlus size={16} />}
                     </span>
                   </button>
@@ -297,7 +297,7 @@ export default function WebClient() {
                       {p.title}
                     </h3>
                     <p className="lg:col-span-7 type-b3 text-white/55 leading-[1.8]">{p.description}</p>
-                    <p className="lg:col-span-2 type-c1 text-white/30 font-mono-stat lg:text-right whitespace-nowrap">
+                    <p className="lg:col-span-2 type-c1 text-white/50 font-mono-stat lg:text-right whitespace-nowrap">
                       {p.durationMonths}개월
                     </p>
                   </Link>
@@ -305,7 +305,7 @@ export default function WebClient() {
               ))}
             </motion.div>
 
-            <motion.p {...inView} variants={fadeUp} className="mt-8 type-c1 text-white/30">
+            <motion.p {...inView} variants={fadeUp} className="mt-8 type-c1 text-white/50">
               세 건 모두 React · Next.js 프론트에 Flutter 앱, Python 백엔드, AWS 배포 구성입니다.
             </motion.p>
           </div>
