@@ -69,37 +69,11 @@ const slides = [
 
 const ROTATE_MS = 6000;
 
-function Stat({ to, suffix, label }: { to: number; suffix: string; label: string }) {
-  const ref = useRef<HTMLSpanElement>(null);
-  const seen = useInView(ref, { once: true });
-  useEffect(() => {
-    if (!seen) return;
-    const ctrl = animate(0, to, {
-      duration: 1.4, ease: easeEnter,
-      onUpdate(v) { if (ref.current) ref.current.textContent = Math.round(v) + suffix; },
-    });
-    return () => ctrl.stop();
-  }, [seen, to, suffix]);
-  return (
-    <div className="flex items-baseline gap-3 py-7 sm:py-9">
-      <span ref={ref}
-        className="font-en text-3xl sm:text-4xl font-extrabold text-[var(--text-1)] font-mono-stat tracking-[-0.02em]">
-        0{suffix}
-      </span>
-      <span className="text-[13px] text-white/45">{label}</span>
-    </div>
-  );
-}
 
 /* 도메인 카드가 쓰는 것과 같은 출처에서 합을 낸다 — 두 자리의 숫자가 어긋나지 않도록 */
 const TOTAL = teamCapabilities.capabilities.reduce((n, c) => n + c.projects, 0);
 
-const stats = [
-  { to: TOTAL, suffix: '+', label: '누적 프로젝트' },
-  { to: projects.length, suffix: '건', label: '포트폴리오 공개' },
-  { to: 5, suffix: '년', label: '팀 운영' },
-  { to: teamCapabilities.stats.teamMembers, suffix: '명', label: '개발 4 · 디자인 2 · 운영 1' },
-];
+
 
 export default function Hero() {
   const ref = useRef<HTMLDivElement>(null);
@@ -216,16 +190,18 @@ export default function Hero() {
         </motion.div>
       </motion.div>
 
-      {/* 지표 — 헤어라인 행 */}
+      {/* 규모 — 숫자를 칸으로 자르지 않고 한 문장으로 */}
       <div className="border-t border-white/10">
-        <div className={container}>
-          <div className="grid grid-cols-2 lg:grid-cols-4">
-            {stats.map((s, i) => (
-              <div key={s.label} className={hairlineCell(i)}>
-                <Stat {...s} />
-              </div>
-            ))}
-          </div>
+        <div className={`${container} py-8 sm:py-10`}>
+          <p className="max-w-3xl text-[15px] leading-[1.9] text-white/55 sm:text-[17px]">
+            개발 4 · 디자인 2 · 운영 1, {teamCapabilities.stats.teamMembers}명이{' '}
+            {teamCapabilities.stats.yearsExperience}년째 하고 있습니다.
+            지금까지 {TOTAL}건을 넘겼고 그중{' '}
+            <Link href="/projects" className="text-[var(--text-1)] underline decoration-white/25 underline-offset-4 transition-colors hover:decoration-[var(--point)]">
+              {projects.length}건을 공개
+            </Link>
+            했습니다.
+          </p>
         </div>
       </div>
     </section>

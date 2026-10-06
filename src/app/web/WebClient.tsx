@@ -200,7 +200,7 @@ export default function WebClient() {
       <section className="py-24 sm:py-36 border-t border-white/10">
         <div className={container}>
           <div className="flex flex-wrap items-baseline justify-between gap-x-10 gap-y-4 mb-12 sm:mb-16">
-            <motion.p {...inView} variants={fadeLeft} className="index-num font-en">(02) Stack</motion.p>
+            <motion.p {...inView} variants={fadeLeft} className="index-num font-en">Stack</motion.p>
             <motion.p {...inView} variants={fadeRight} className="type-b3 text-white/50 max-w-lg leading-[1.85]">
               3년 뒤 다른 개발자가 열었을 때 읽히는 스택만 넣습니다.
               새 프레임워크는 저희 사이드 프로젝트에서 먼저 써 봅니다.
@@ -267,7 +267,7 @@ export default function WebClient() {
           <div className={container}>
             <div className="grid lg:grid-cols-12 gap-x-gutter gap-y-6 mb-16 sm:mb-20">
               <div className="lg:col-span-7">
-                <motion.p {...inView} variants={fadeLeft} className="index-num font-en mb-7">(04) Work</motion.p>
+                <motion.p {...inView} variants={fadeLeft} className="index-num font-en mb-7">Work</motion.p>
                 <motion.h2 {...inView} variants={fadeUp} className="type-d2 font-en text-[var(--text-1)]">
                   Built for Web
                 </motion.h2>
@@ -317,7 +317,7 @@ export default function WebClient() {
         <div className={container}>
           <div className="grid lg:grid-cols-12 gap-x-gutter gap-y-10 items-end">
             <div className="lg:col-span-7">
-              <motion.p {...inView} variants={fadeLeft} className="index-num font-en mb-9">(05) Contact</motion.p>
+              <motion.p {...inView} variants={fadeLeft} className="index-num font-en mb-9">Contact</motion.p>
               <motion.h2 {...inView} variants={stagger}
                 className="font-extrabold text-[var(--text-1)] tracking-[-0.03em] leading-[1.14] mb-8"
                 style={{ fontSize: 'clamp(2rem, 4.6vw, 3.5rem)' }}>

@@ -31,7 +31,7 @@ export default function CtaSection({ num, line1, line2, kr, cta = '프로젝트 
     <section className={`${sectionPadLg} border-t border-white/10`}>
       <div className={container}>
         <motion.p {...inView} variants={fadeUp} className="index-num font-en mb-10">
-          ({num}) Contact
+          Contact
         </motion.p>
 
         <motion.h2 {...inView} variants={stagger}

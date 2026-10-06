@@ -237,7 +237,7 @@ export default function EducationClient() {
               {/* ── 01 커리큘럼 ── */}
               <section id="curriculum" className="scroll-mt-28 pt-4 pb-20 sm:pb-28">
                 <motion.div {...inView} variants={fadeUp} className="mb-10 sm:mb-14">
-                  <p className="index-num font-en mb-5">(01) Curriculum</p>
+                  <p className="index-num font-en mb-5">Curriculum</p>
                   <h2 className="type-h1 text-[var(--text-1)] mb-5">표준 커리큘럼</h2>
                   <p className="type-b3 text-[var(--text-2)] leading-[1.9] max-w-2xl">
                     아래 세 과정은 <strong className="font-bold text-[var(--text-1)]">표준안</strong>입니다.
@@ -252,7 +252,7 @@ export default function EducationClient() {
               {/* ── 02 교육 대상 ── */}
               <section id="audience" className="scroll-mt-28 pb-20 sm:pb-28 border-t border-[var(--border)] pt-16 sm:pt-20">
                 <motion.div {...inView} variants={fadeUp} className="mb-10 sm:mb-14">
-                  <p className="index-num font-en mb-5">(02) Audience</p>
+                  <p className="index-num font-en mb-5">Audience</p>
                   <h2 className="type-h1 text-[var(--text-1)]">어디서 진행했나</h2>
                 </motion.div>
                 <motion.div {...inView} variants={staggerTight} className="grid sm:grid-cols-3 gap-gutter">
@@ -278,7 +278,7 @@ export default function EducationClient() {
               {/* ── 03 운영 방식 ── */}
               <section id="format" className="scroll-mt-28 pb-20 sm:pb-28 border-t border-[var(--border)] pt-16 sm:pt-20">
                 <motion.div {...inView} variants={fadeUp} className="mb-10 sm:mb-14">
-                  <p className="index-num font-en mb-5">(03) Format</p>
+                  <p className="index-num font-en mb-5">Format</p>
                   <h2 className="type-h1 text-[var(--text-1)]">진행 조건</h2>
                 </motion.div>
                 <motion.dl {...inView} variants={staggerRows} className="border-t border-[var(--border)]">
@@ -295,7 +295,7 @@ export default function EducationClient() {
               {/* ── 04 진행 이력 ── */}
               <section id="record" className="scroll-mt-28 border-t border-[var(--border)] pt-16 sm:pt-20">
                 <motion.div {...inView} variants={fadeUp} className="mb-10 sm:mb-14">
-                  <p className="index-num font-en mb-5">(04) Record</p>
+                  <p className="index-num font-en mb-5">Record</p>
                   <h2 className="type-h1 text-[var(--text-1)] mb-5">기관과 함께한 기록</h2>
                   <p className="type-b3 text-[var(--text-2)] leading-[1.9] max-w-2xl">
                     강의와 별개로, 교육·연구 기관과 진행한 사업과 수상 이력입니다.

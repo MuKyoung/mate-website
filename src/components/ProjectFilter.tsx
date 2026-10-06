@@ -57,7 +57,7 @@ export default function ProjectFilter({ projects }: ProjectFilterProps) {
     <div>
       {/* 카테고리 — 텍스트 탭 + 헤어라인 */}
       <motion.div {...inView} variants={stagger} className="mb-16 sm:mb-24">
-        <motion.p variants={fadeRight} className="index-num font-en mb-8">(01) Category</motion.p>
+        <motion.p variants={fadeRight} className="index-num font-en mb-8">Category</motion.p>
 
         <div className="relative flex flex-wrap items-end justify-between gap-x-10 gap-y-3">
           <motion.div variants={fadeLeft} className="flex flex-wrap items-end gap-x-6 sm:gap-x-9 gap-y-3">

@@ -100,7 +100,7 @@ function Block({ num, label, children }: { num: string; label: string; children:
   return (
     <section className={`${sectionPad} border-t border-white/10`}>
       <div className={container}>
-        <p className="index-num font-en mb-12 sm:mb-16">({num}) {label}</p>
+        <p className="index-num font-en mb-12 sm:mb-16">{label}</p>
         {children}
       </div>
     </section>
@@ -137,7 +137,7 @@ export default function DesignSystemPage() {
   return (
     <div className="pt-40 sm:pt-52">
       <div className={container}>
-        <p className="index-num font-en mb-10">(00) Design System</p>
+        <p className="index-num font-en mb-10">Design System</p>
         <h1
           className="type-d1 font-en text-[var(--text-1)] mb-8"
           style={{ fontSize: 'clamp(2.5rem, 9vw, 8rem)' }}>

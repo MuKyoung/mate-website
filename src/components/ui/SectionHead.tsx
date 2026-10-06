@@ -9,10 +9,10 @@ import {
 import { arrowHover, clipWrap, displaySize, linkMore } from '@/lib/styles';
 
 interface SectionHeadProps {
-  /** 섹션 번호 — 홀짝에 따라 진입 방향이 교차된다 */
+  /** 섹션 번호 — 진입 방향을 교차시키는 데만 쓰고 화면에 찍지 않는다 */
   num: string;
-  /** 영문 라벨 */
-  label: string;
+  /** 라벨. 비우면 라벨 줄 없이 헤어라인만 남는다 */
+  label?: string;
   title: React.ReactNode;
   /** 국문 캡션 (— 프리픽스 자동) */
   kr?: string;
@@ -37,10 +37,12 @@ export default function SectionHead({
     <div className="mb-16 sm:mb-20">
       <div className="relative pb-6 mb-10 sm:mb-14">
         <div className="flex items-center justify-between gap-6">
-          <motion.p {...inView} variants={even ? fadeRight : fadeLeft}
-            className="index-num font-en">
-            ({num}) {label}
-          </motion.p>
+          {/* (01)(02)… 로 번호를 매기면 여섯 섹션이 한 틀에서 찍혀 나온 것처럼 보인다 */}
+          {label ? (
+            <motion.p {...inView} variants={even ? fadeRight : fadeLeft} className="index-num font-en">
+              {label}
+            </motion.p>
+          ) : <span />}
           {href && more && (
             <motion.div {...inView} variants={even ? fadeLeft : fadeRight}>
               <Link href={href} className={linkMore}>

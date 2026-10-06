@@ -109,7 +109,7 @@ export default function GameClient() {
         <div className={`${container} mb-12 sm:mb-16`}>
           <div className="flex flex-wrap items-end justify-between gap-8">
             <div>
-              <motion.p {...inView} variants={fadeLeft} className="index-num font-en mb-7">(01) What We Make</motion.p>
+              <motion.p {...inView} variants={fadeLeft} className="index-num font-en mb-7">What We Make</motion.p>
               <motion.h2 {...inView} variants={fadeUp} className="type-d2 font-en text-[var(--text-1)]">
                 만드는 것들
               </motion.h2>
@@ -159,7 +159,7 @@ export default function GameClient() {
       {/* ━━━━━━ PLATFORMS ━━━━━━ */}
       <section className="py-24 sm:py-36 border-t border-white/10">
         <div className={container}>
-          <motion.p {...inView} variants={fadeLeft} className="index-num font-en mb-7">(02) Platforms</motion.p>
+          <motion.p {...inView} variants={fadeLeft} className="index-num font-en mb-7">Platforms</motion.p>
           <motion.h2 {...inView} variants={fadeUp} className="type-d2 font-en text-[var(--text-1)] mb-16 sm:mb-20">
             빌드가 올라가는 곳
           </motion.h2>
@@ -185,7 +185,7 @@ export default function GameClient() {
         <div className={container}>
           <div className="grid lg:grid-cols-12 gap-x-gutter gap-y-14">
             <div className="lg:col-span-4">
-              <motion.p {...inView} variants={fadeLeft} className="index-num font-en mb-7">(03) Pipeline</motion.p>
+              <motion.p {...inView} variants={fadeLeft} className="index-num font-en mb-7">Pipeline</motion.p>
               <motion.h2 {...inView} variants={fadeUp} className="type-d2 font-en text-[var(--text-1)] mb-7">
                 만드는 순서
               </motion.h2>
@@ -218,7 +218,7 @@ export default function GameClient() {
         <div className={container}>
           <div className="flex flex-wrap items-end justify-between gap-6 mb-16 sm:mb-20">
             <div>
-              <motion.p {...inView} variants={fadeLeft} className="index-num font-en mb-7">(04) Selected Work</motion.p>
+              <motion.p {...inView} variants={fadeLeft} className="index-num font-en mb-7">Selected Work</motion.p>
               <motion.h2 {...inView} variants={fadeUp} className="type-d2 font-en text-[var(--text-1)]">
                 Shipped Titles
               </motion.h2>
@@ -275,7 +275,7 @@ export default function GameClient() {
       {credentials.length > 0 && (
         <section className="py-24 sm:py-36 border-t border-white/10">
           <div className={container}>
-            <motion.p {...inView} variants={fadeLeft} className="index-num font-en mb-7">(05) Credentials</motion.p>
+            <motion.p {...inView} variants={fadeLeft} className="index-num font-en mb-7">Credentials</motion.p>
             <motion.h2 {...inView} variants={fadeUp} className="type-d2 font-en text-[var(--text-1)] mb-16 sm:mb-20">
               밖에서 받은 평가
             </motion.h2>
@@ -299,7 +299,7 @@ export default function GameClient() {
         <div className="absolute inset-0 pointer-events-none"
           style={{ background: 'radial-gradient(90% 100% at 50% 100%, var(--accent-tint) 0%, transparent 70%)' }} />
         <div className={`relative ${container} text-center`}>
-          <motion.p {...inView} variants={fadeUp} className="index-num font-en justify-center mb-10">(06) Contact</motion.p>
+          <motion.p {...inView} variants={fadeUp} className="index-num font-en justify-center mb-10">Contact</motion.p>
           <motion.h2 {...inView} variants={stagger}
             className="font-extrabold text-[var(--text-1)] tracking-[-0.03em] leading-[1.12] mb-10"
             style={{ fontSize: 'clamp(2.125rem, 5.4vw, 4.5rem)' }}>

@@ -56,7 +56,7 @@ function SectionHead({ num, label, title, desc }: {
     <div className="mb-16 sm:mb-20">
       <div className="relative pb-6 mb-10 sm:mb-14">
         <motion.p {...inView} variants={even ? fadeRight : fadeLeft} className="index-num font-en">
-          ({num}) {label}
+          {label}
         </motion.p>
         <motion.span {...inView} variants={lineDraw}
           className="absolute bottom-0 left-0 right-0 h-px bg-white/10 block" />
@@ -112,7 +112,7 @@ export default function TeamPageClient() {
       <section className={sectionPad}>
         <div className={container}>
           <div className="relative pb-6 mb-10 sm:mb-14">
-            <motion.p {...inView} variants={fadeLeft} className="index-num font-en">(01) About</motion.p>
+            <motion.p {...inView} variants={fadeLeft} className="index-num font-en">About</motion.p>
             <motion.span {...inView} variants={lineDraw}
               className="absolute bottom-0 left-0 right-0 h-px bg-white/10 block" />
           </div>
@@ -155,7 +155,7 @@ export default function TeamPageClient() {
       <section className={sectionPad}>
         <div className={container}>
           <div className="relative pb-6 mb-14 sm:mb-20">
-            <motion.p {...inView} variants={fadeRight} className="index-num font-en">(02) Vision</motion.p>
+            <motion.p {...inView} variants={fadeRight} className="index-num font-en">Vision</motion.p>
             <motion.span {...inView} variants={lineDraw}
               className="absolute bottom-0 left-0 right-0 h-px bg-white/10 block" />
           </div>
@@ -259,7 +259,7 @@ export default function TeamPageClient() {
       {/* ━━ (06) CTA ━━ */}
       <section className={`${sectionPadLg} border-t border-white/10`}>
         <div className={container}>
-          <motion.p {...inView} variants={fadeUp} className="index-num font-en mb-10">(06) Contact</motion.p>
+          <motion.p {...inView} variants={fadeUp} className="index-num font-en mb-10">Contact</motion.p>
           <motion.h2 {...inView} variants={stagger}
             className="text-[var(--text-1)] font-extrabold tracking-[-0.03em] leading-[1.1] mb-8"
             style={displaySizeLg}>

@@ -316,7 +316,7 @@ export default function ContactPage() {
           <div className="mb-16 sm:mb-20">
             <div className="relative pb-6 mb-10 sm:mb-14">
               <div className="flex items-center justify-between">
-                <motion.p {...inView} variants={fadeRight} className="index-num font-en">(03) FAQ</motion.p>
+                <motion.p {...inView} variants={fadeRight} className="index-num font-en">FAQ</motion.p>
               </div>
               <motion.span {...inView} variants={lineDraw}
                 className="absolute bottom-0 left-0 right-0 h-px bg-white/10 block" />

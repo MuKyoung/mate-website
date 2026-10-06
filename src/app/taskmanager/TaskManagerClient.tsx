@@ -15,10 +15,11 @@ import {
 import { NewTaskDialog, TaskPanel, type Draft } from './TaskPanel';
 import Timeline from './Timeline';
 import Calendar from './Calendar';
+import Roadmap from './Roadmap';
 import Docs from './Docs';
 import { useDocStore } from './docStore';
 
-type View = 'board' | 'list' | 'timeline' | 'calendar';
+type View = 'board' | 'list' | 'timeline' | 'calendar' | 'roadmap';
 type Section = 'tasks' | 'docs';
 
 const VIEWS: { id: View; label: string; key: string }[] = [
@@ -26,6 +27,7 @@ const VIEWS: { id: View; label: string; key: string }[] = [
   { id: 'list', label: '목록', key: 'l' },
   { id: 'timeline', label: '타임라인', key: 't' },
   { id: 'calendar', label: '캘린더', key: 'c' },
+  { id: 'roadmap', label: '로드맵', key: 'r' },
 ];
 type Scope = { kind: 'all' } | { kind: 'mine' } | { kind: 'domain'; id: DomainKey };
 
@@ -381,11 +383,13 @@ export default function TaskManagerClient() {
             )}
             {section === 'tasks' && (
               <button onClick={() => { setCreatingDue(null); setCreating('todo'); }}
-                className={ghBtnPrimary}>
+                aria-label="새 작업"
+                className={`${ghBtnPrimary} max-[430px]:px-2`}>
                 <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden>
                   <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
                 </svg>
-                새 작업
+                {/* 뷰가 다섯 개가 되면서 좁은 화면에서는 글자까지 들어갈 자리가 없다 */}
+                <span className="max-[430px]:sr-only">새 작업</span>
               </button>
             )}
           </div>
@@ -463,6 +467,11 @@ export default function TaskManagerClient() {
         {section === 'tasks' && view === 'calendar' && (
           <Calendar tasks={visible} onOpen={setOpenId} onCreateAt={createAt}
             onReschedule={(id, due) => store.update(id, { due })} />
+        )}
+
+        {/* ── 로드맵 ── */}
+        {section === 'tasks' && view === 'roadmap' && (
+          <Roadmap tasks={visible} onOpen={setOpenId} />
         )}
 
         {/* ── 보드 ── */}

@@ -140,7 +140,7 @@ export default function ProjectDetailClient({ params }: Props) {
               {overview && (
               <motion.div {...inView} variants={stagger}>
                 <div className="relative pb-6 mb-10 sm:mb-14">
-                  <motion.p variants={fadeLeft} className="index-num font-en">({overviewNum}) Overview</motion.p>
+                  <motion.p variants={fadeLeft} className="index-num font-en">Overview</motion.p>
                   {/* 헤어라인이 좌→우로 그어짐 */}
                   <motion.span variants={lineDraw}
                     className="absolute bottom-0 left-0 right-0 h-px bg-white/10 block" />
@@ -162,7 +162,7 @@ export default function ProjectDetailClient({ params }: Props) {
               {gallery.length > 0 && (
                 <motion.div {...inView} variants={stagger}>
                   <div className="relative pb-6 mb-10 sm:mb-14">
-                    <motion.p variants={fadeRight} className="index-num font-en">({galleryNum}) Gallery</motion.p>
+                    <motion.p variants={fadeRight} className="index-num font-en">Gallery</motion.p>
                     {/* 헤어라인이 좌→우로 그어짐 */}
                     <motion.span variants={lineDraw}
                       className="absolute bottom-0 left-0 right-0 h-px bg-white/10 block" />
