@@ -55,28 +55,74 @@ export function useFocusTrap<T extends HTMLElement>(active = true) {
 /* ── 색 매핑 — 도구 전용. 마케팅 사이트 토큰과 공유하지 않는다 ── */
 
 export const PRIORITY_STYLE: Record<Priority, { dot: string; text: string; chip: string }> = {
-  urgent: { dot: 'bg-rose-500', text: 'text-rose-600', chip: 'bg-rose-50 text-rose-700 ring-rose-200' },
-  high: { dot: 'bg-amber-500', text: 'text-amber-600', chip: 'bg-amber-50 text-amber-700 ring-amber-200' },
-  normal: { dot: 'bg-slate-400', text: 'text-slate-500', chip: 'bg-slate-100 text-slate-600 ring-slate-200' },
-  low: { dot: 'bg-slate-300', text: 'text-slate-500', chip: 'bg-slate-50 text-slate-500 ring-slate-200' },
+  urgent: { dot: 'bg-gh-danger', text: 'text-gh-danger-fg', chip: 'border-gh-danger-border text-gh-danger-fg' },
+  high: { dot: 'bg-gh-attention', text: 'text-gh-attention-fg', chip: 'border-gh-attention-border text-gh-attention-fg' },
+  normal: { dot: 'bg-gh-neutral', text: 'text-gh-fg-muted', chip: 'border-gh-border text-gh-fg-muted' },
+  low: { dot: 'bg-gh-border-strong', text: 'text-gh-fg-muted', chip: 'border-gh-border text-gh-fg-subtle' },
 };
 
 export const DOMAIN_STYLE: Record<DomainKey, string> = {
-  web: 'bg-blue-50 text-blue-700 ring-blue-200',
-  game: 'bg-violet-50 text-violet-700 ring-violet-200',
-  edu: 'bg-amber-50 text-amber-700 ring-amber-200',
-  ops: 'bg-slate-100 text-slate-600 ring-slate-200',
+  web: 'border-gh-accent-border text-gh-accent-fg',
+  game: 'border-gh-done-border text-gh-done-fg',
+  edu: 'border-gh-attention-border text-gh-attention-fg',
+  ops: 'border-gh-border text-gh-fg-muted',
+};
+
+/** 상태 — GitHub 의 Open/Merged 배지처럼 꽉 채우고 흰 글자를 올린다 */
+export const STATUS_STYLE: Record<Status, { fill: string; dot: string }> = {
+  // fill 은 흰 글자를 올리므로 4.5:1 을 넘는 색만 쓴다 (#6e7781 은 4.0:1 로 모자람).
+  // dot 은 글자가 아니라 라벨 옆 표식이라 원래 색조를 그대로 둔다.
+  backlog: { fill: 'bg-gh-fg-muted', dot: 'bg-gh-neutral' },
+  todo: { fill: 'bg-gh-accent', dot: 'bg-gh-accent' },
+  doing: { fill: 'bg-gh-attention-fg', dot: 'bg-gh-attention' },
+  review: { fill: 'bg-gh-done', dot: 'bg-gh-done' },
+  done: { fill: 'bg-gh-success-hover', dot: 'bg-gh-success' },
 };
 
 const AVATAR_TONE = [
-  'bg-blue-100 text-blue-700',
-  'bg-violet-100 text-violet-700',
-  'bg-emerald-100 text-emerald-700',
-  'bg-amber-100 text-amber-700',
-  'bg-rose-100 text-rose-700',
-  'bg-cyan-100 text-cyan-700',
-  'bg-indigo-100 text-indigo-700',
+  'bg-gh-accent-subtle text-gh-accent-fg',
+  'bg-gh-done-subtle text-gh-done-fg',
+  'bg-gh-success-subtle text-gh-success-fg',
+  'bg-gh-attention-subtle text-gh-attention-fg',
+  'bg-gh-danger-subtle text-gh-danger-fg',
+  'bg-[#dbf4ff] text-[#0550ae]',
+  'bg-[#e6e1ff] text-[#4c3ba6]',
 ];
+
+/* ── 버튼·폼 레시피 ───────────────────────────────────
+   GitHub 버튼은 높이 32px, 반경 6px, 1px 테두리에 아주 연한 바탕이다.
+   눌리는 느낌은 그림자가 아니라 바탕색 한 단계로만 준다. */
+
+export const ghBtn =
+  'inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-gh-border ' +
+  'bg-gh-canvas-subtle px-3 text-[14px] font-medium text-gh-fg ' +
+  'transition-colors duration-150 hover:bg-gh-canvas-mute active:bg-gh-border ' +
+  'disabled:cursor-not-allowed disabled:opacity-50';
+
+/** 주 동작 — GitHub 의 New 버튼처럼 초록 */
+export const ghBtnPrimary =
+  'inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-[#1f883d26] ' +
+  'bg-gh-success px-3 text-[14px] font-medium text-white ' +
+  'transition-colors duration-150 hover:bg-gh-success-hover active:shadow-gh-inset';
+
+export const ghBtnDanger =
+  'inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-gh-border ' +
+  'bg-gh-canvas-subtle px-3 text-[14px] font-medium text-gh-danger-fg ' +
+  'transition-colors duration-150 hover:border-gh-danger hover:bg-gh-danger hover:text-white';
+
+/** 아이콘만 있는 투명 버튼 */
+export const ghBtnGhost =
+  'inline-flex h-7 w-7 items-center justify-center rounded-md text-gh-fg-muted ' +
+  'transition-colors duration-150 hover:bg-gh-canvas-mute hover:text-gh-fg';
+
+export const ghField =
+  'h-8 rounded-md border border-gh-border bg-gh-canvas px-2 text-[14px] text-gh-fg outline-none ' +
+  'transition-shadow duration-150 focus:border-gh-accent focus:shadow-[0_0_0_3px_rgba(9,105,218,0.1)]';
+
+/** 숫자 배지 — GitHub 의 Counter */
+export const ghCounter =
+  'inline-flex min-w-[20px] items-center justify-center rounded-full bg-gh-neutral-muted ' +
+  'px-[6px] text-[12px] font-medium tabular-nums text-gh-fg-muted';
 
 /* ── 조각 ─────────────────────────────────────────── */
 
@@ -85,7 +131,7 @@ export function Avatar({ id, size = 24 }: { id: string | null; size?: number }) 
   if (!m) {
     return (
       <span
-        className="inline-flex items-center justify-center rounded-full border border-dashed border-slate-300 text-slate-500"
+        className="inline-flex items-center justify-center rounded-full border border-dashed border-gh-border-strong text-gh-fg-muted"
         style={{ width: size, height: size, fontSize: size * 0.42 }}
         title="미배정"
       >
@@ -96,7 +142,7 @@ export function Avatar({ id, size = 24 }: { id: string | null; size?: number }) 
   const tone = AVATAR_TONE[Number(m.id.replace(/\D/g, '')) % AVATAR_TONE.length];
   return (
     <span
-      className={`inline-flex items-center justify-center rounded-full font-semibold ${tone}`}
+      className={`inline-flex items-center justify-center rounded-full font-semibold ring-1 ring-inset ring-gh-fg/[0.08] ${tone}`}
       style={{ width: size, height: size, fontSize: size * 0.4 }}
       title={`${m.name} · ${m.role}`}
     >
@@ -108,8 +154,8 @@ export function Avatar({ id, size = 24 }: { id: string | null; size?: number }) 
 export function Chip({ className = '', children }: { className?: string; children: React.ReactNode }) {
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[12px] font-semibold
-                  ring-1 ring-inset whitespace-nowrap ${className}`}
+      className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full border
+                  px-2 py-0 text-[12px] font-medium leading-[18px] ${className}`}
     >
       {children}
     </span>
@@ -131,12 +177,12 @@ export function DueBadge({ due, done }: { due: string | null; done: boolean }) {
   const text =
     days === 0 ? '오늘' : days === 1 ? '내일' : days < 0 ? `${-days}일 지남` : `${days}일 남음`;
   const tone = done
-    ? 'text-slate-500'
+    ? 'text-gh-fg-muted'
     : days < 0
-      ? 'text-rose-600 font-semibold'
+      ? 'text-gh-danger-fg font-semibold'
       : days <= 3
-        ? 'text-amber-600 font-semibold'
-        : 'text-slate-500';
+        ? 'text-gh-attention-fg font-semibold'
+        : 'text-gh-fg-muted';
 
   return (
     <span className={`inline-flex items-center gap-1 text-[12px] tabular-nums ${tone}`}>
@@ -183,10 +229,10 @@ function StatusMenu({ task, onMove }: { task: Task; onMove(s: Status): void }) {
         aria-label="상태 바꾸기"
         aria-haspopup="menu"
         aria-expanded={open}
-        className={`flex h-6 w-6 items-center justify-center rounded text-slate-500 transition
-                    hover:bg-slate-100 hover:text-slate-700
-                    focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
-                    ${open ? 'bg-slate-100 text-slate-700' : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 max-[1023px]:opacity-100'}`}
+        className={`flex h-6 w-6 items-center justify-center rounded text-gh-fg-muted transition
+                    hover:bg-gh-canvas-mute hover:text-gh-fg
+                    focus:outline-none focus-visible:ring-2 focus-visible:ring-gh-accent
+                    ${open ? 'bg-gh-canvas-mute text-gh-fg' : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 max-[1023px]:opacity-100'}`}
       >
         <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden>
           <circle cx="8" cy="3.5" r="1.3" fill="currentColor" />
@@ -197,16 +243,16 @@ function StatusMenu({ task, onMove }: { task: Task; onMove(s: Status): void }) {
 
       {open && (
         <div role="menu"
-          className="absolute right-0 top-7 z-30 w-[132px] overflow-hidden rounded-md border border-slate-200 bg-white py-1 shadow-lg">
+          className="absolute right-0 top-7 z-30 w-[136px] overflow-hidden rounded-xl border border-gh-border bg-gh-canvas py-1 shadow-gh-lg">
           {STATUSES.map((st) => (
             <button key={st.id} role="menuitem"
               onClick={() => { onMove(st.id); setOpen(false); }}
               disabled={st.id === task.status}
               className={`flex w-full items-center gap-2 px-2.5 py-1.5 text-left text-[13.5px] transition
                           ${st.id === task.status
-                            ? 'cursor-default font-semibold text-slate-900'
-                            : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}`}>
-              <span className={`h-1.5 w-1.5 rounded-full ${st.id === task.status ? 'bg-blue-600' : 'bg-slate-300'}`} />
+                            ? 'cursor-default font-semibold text-gh-fg'
+                            : 'text-gh-fg-muted hover:bg-gh-canvas-subtle hover:text-gh-fg'}`}>
+              <span className={`h-2 w-2 rounded-full ${STATUS_STYLE[st.id].dot}`} />
               {st.label}
             </button>
           ))}
@@ -255,23 +301,22 @@ export function TaskCard({ task, onOpen, onDragStart, onDragEnd, dragging, onMov
       tabIndex={0}
       role="button"
       aria-label={`${task.key} ${task.title}`}
-      className={`group relative cursor-pointer rounded-lg border border-slate-200 bg-white p-3.5
-                  ${mine ? 'border-l-[3px] border-l-blue-500' : ''}
-                  shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition
-                  hover:border-slate-300 hover:shadow-[0_2px_8px_rgba(15,23,42,0.08)]
-                  focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1
+      className={`group relative cursor-pointer rounded-md border border-gh-border bg-gh-canvas p-3.5
+                  ${mine ? 'border-l-[3px] border-l-gh-accent' : ''}
+                  transition-colors duration-150
+                  hover:border-gh-border-strong hover:bg-gh-canvas-subtle
                   ${dragging ? 'opacity-40' : 'active:cursor-grabbing'}`}
     >
       <div className="mb-2 flex items-center gap-1.5">
         <PriorityDot p={task.priority} />
-        <span className="font-mono text-[12px] font-medium text-slate-500 tabular-nums">{task.key}</span>
+        <span className="gh-mono text-[12px] font-medium tabular-nums text-gh-fg-muted">{task.key}</span>
         <Chip className={`ml-auto ${DOMAIN_STYLE[task.domain]}`}>{domainShort(task.domain)}</Chip>
         <StatusMenu task={task} onMove={onMove} />
       </div>
 
       <p
         className={`mb-2.5 text-[14.5px] font-medium leading-[1.45] ${
-          done ? 'text-slate-500 line-through' : 'text-slate-800'
+          done ? 'text-gh-fg-muted line-through' : 'text-gh-fg'
         }`}
       >
         {task.title}
@@ -280,7 +325,7 @@ export function TaskCard({ task, onOpen, onDragStart, onDragEnd, dragging, onMov
       {task.labels.length > 0 && (
         <div className="mb-2.5 flex flex-wrap gap-1">
           {task.labels.map((l) => (
-            <span key={l} className="rounded bg-slate-100 px-1.5 py-0.5 text-[11.5px] text-slate-500">
+            <span key={l} className="rounded-full border border-gh-border bg-gh-canvas-subtle px-2 py-0 text-[11.5px] leading-[18px] text-gh-fg-muted">
               {l}
             </span>
           ))}

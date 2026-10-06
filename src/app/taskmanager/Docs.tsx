@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { DOC_TEMPLATES, MEMBERS, memberById, type Doc } from './types';
 import type { DocStore } from './docStore';
 import Markdown, { extractHeadings } from './Markdown';
-import { Avatar, useFocusTrap } from './ui';
+import { Avatar, ghBtn, ghBtnPrimary, ghField, useFocusTrap } from './ui';
 
 /* ── 문서 트리 ────────────────────────────────────── */
 
@@ -40,13 +40,13 @@ function TreeItem({
     <li>
       <div
         className={`group flex items-center gap-0.5 rounded-md pr-1 transition ${
-          active ? 'bg-slate-100' : 'hover:bg-slate-50'}`}
+          active ? 'bg-gh-canvas-mute' : 'hover:bg-gh-canvas-subtle'}`}
         style={{ paddingLeft: depth * 12 }}
       >
         {hasKids ? (
           <button onClick={() => onToggle(node.id)}
             aria-label={expanded ? '접기' : '펼치기'} aria-expanded={expanded}
-            className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-slate-500 transition hover:bg-slate-200 hover:text-slate-700">
+            className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-gh-fg-muted transition hover:bg-gh-border hover:text-gh-fg">
             <svg width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden
               className={`transition-transform ${expanded ? 'rotate-90' : ''}`}>
               <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -57,8 +57,8 @@ function TreeItem({
         )}
         <button onClick={() => onSelect(node.id)}
           className={`flex min-w-0 flex-1 items-center gap-1.5 py-[5px] text-left text-[13.5px] transition ${
-            active ? 'font-semibold text-slate-900' : 'text-slate-600 hover:text-slate-900'}`}>
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden className="shrink-0 text-slate-500">
+            active ? 'font-semibold text-gh-fg' : 'text-gh-fg-muted hover:text-gh-fg'}`}>
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden className="shrink-0 text-gh-fg-muted">
             <path d="M4 2h5l3 3v9H4V2z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
             <path d="M9 2v3h3" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
           </svg>
@@ -102,49 +102,49 @@ function NewDocDialog({
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/40 p-4 pt-[8vh] backdrop-blur-[2px]"
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-gh-fg/40 p-4 pt-[8vh] backdrop-blur-[2px]"
       onClick={onClose}>
       <div ref={trapRef} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="새 문서"
-        className="w-full max-w-xl rounded-xl border border-slate-200 bg-white shadow-xl">
-        <div className="border-b border-slate-200 px-5 py-4">
-          <h2 className="text-[16px] font-semibold text-slate-900">새 문서</h2>
+        className="w-full max-w-xl rounded-xl border border-gh-border bg-gh-canvas shadow-gh-lg">
+        <div className="border-b border-gh-border px-5 py-4">
+          <h2 className="text-[16px] font-semibold text-gh-fg">새 문서</h2>
           {parentTitle && (
-            <p className="mt-0.5 text-[13px] text-slate-500">{parentTitle} 아래에 만듭니다</p>
+            <p className="mt-0.5 text-[13px] text-gh-fg-muted">{parentTitle} 아래에 만듭니다</p>
           )}
         </div>
 
         <div className="px-5 py-5">
-          <p className="mb-1.5 text-[12px] font-semibold uppercase tracking-wide text-slate-500">양식</p>
+          <p className="mb-1.5 text-[12px] font-semibold uppercase tracking-wide text-gh-fg-muted">양식</p>
           <div className="mb-5 grid gap-2 sm:grid-cols-2">
             {DOC_TEMPLATES.map((t) => (
               <button key={t.id} onClick={() => setPicked(t.id)}
                 aria-pressed={picked === t.id}
-                className={`rounded-lg border p-3 text-left transition ${
+                className={`rounded-md border p-3 text-left transition ${
                   picked === t.id
-                    ? 'border-blue-500 bg-blue-50/60 ring-1 ring-blue-500/20'
-                    : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'}`}>
-                <p className="text-[14px] font-semibold text-slate-800">{t.name}</p>
-                <p className="mt-0.5 text-[12.5px] leading-snug text-slate-500">{t.hint}</p>
+                    ? 'border-gh-accent bg-gh-accent-subtle/60 ring-1 ring-gh-accent/20'
+                    : 'border-gh-border bg-gh-canvas hover:border-gh-border-strong hover:bg-gh-canvas-subtle'}`}>
+                <p className="text-[14px] font-semibold text-gh-fg">{t.name}</p>
+                <p className="mt-0.5 text-[12.5px] leading-snug text-gh-fg-muted">{t.hint}</p>
               </button>
             ))}
           </div>
 
-          <label className="mb-1.5 block text-[12px] font-semibold uppercase tracking-wide text-slate-500" htmlFor="doc-title">
+          <label className="mb-1.5 block text-[12px] font-semibold uppercase tracking-wide text-gh-fg-muted" htmlFor="doc-title">
             제목
           </label>
           <input id="doc-title" value={title} onChange={(e) => setTitle(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter' && title.trim()) onCreate(picked, title.trim()); }}
             placeholder="검색해서 찾을 수 있는 이름으로"
-            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-[14.5px] text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" />
+            className="w-full rounded-md border border-gh-border-strong bg-gh-canvas px-3 py-2 text-[14.5px] text-gh-fg outline-none transition focus:border-gh-accent focus:ring-2 focus:ring-gh-accent/20" />
         </div>
 
-        <div className="flex items-center justify-end gap-2 border-t border-slate-200 bg-slate-50 px-5 py-3.5">
+        <div className="flex items-center justify-end gap-2 border-t border-gh-border bg-gh-canvas-subtle px-5 py-3.5">
           <button onClick={onClose}
-            className="rounded-md px-3.5 py-2 text-[14px] font-medium text-slate-600 transition hover:bg-slate-200/60">
+            className="rounded-md px-3.5 py-2 text-[14px] font-medium text-gh-fg-muted transition hover:bg-gh-border/60">
             취소
           </button>
           <button onClick={() => title.trim() && onCreate(picked, title.trim())} disabled={!title.trim()}
-            className="rounded-md bg-blue-600 px-4 py-2 text-[14px] font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40">
+            className={ghBtnPrimary}>
             만들기
           </button>
         </div>
@@ -283,7 +283,7 @@ export default function Docs({ store, me, onTaskClick }: {
   };
 
   if (!store.ready) {
-    return <div className="flex flex-1 items-center justify-center text-[14px] text-slate-500">불러오는 중…</div>;
+    return <div className="flex flex-1 items-center justify-center text-[14px] text-gh-fg-muted">불러오는 중…</div>;
   }
 
   const author = memberById(doc?.author ?? null);
@@ -292,14 +292,14 @@ export default function Docs({ store, me, onTaskClick }: {
     <div className="flex min-h-0 flex-1">
 
       {/* 문서 트리 */}
-      <aside className="hidden w-[244px] shrink-0 flex-col border-r border-slate-200 bg-white md:flex">
-        <div className="flex items-center gap-2 border-b border-slate-200 px-3 py-2.5">
+      <aside className="hidden w-[244px] shrink-0 flex-col border-r border-gh-border bg-gh-canvas md:flex">
+        <div className="flex items-center gap-2 border-b border-gh-border px-3 py-2.5">
           <input value={query} onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Escape') { setQuery(''); e.currentTarget.blur(); } }}
             placeholder="문서 검색" aria-label="문서 검색"
-            className="min-w-0 flex-1 rounded-md border border-slate-200 bg-slate-50 px-2 py-1.5 text-[13.5px] text-slate-700 placeholder:text-slate-500 outline-none transition focus:border-blue-500 focus:bg-white" />
+            className={`min-w-0 flex-1 ${ghField} bg-gh-canvas-subtle placeholder:text-gh-fg-subtle focus:bg-gh-canvas`} />
           <button onClick={() => setCreatingUnder(null)} aria-label="새 문서"
-            className="shrink-0 rounded-md bg-blue-600 p-1.5 text-white transition hover:bg-blue-700">
+            className={`${ghBtnPrimary} shrink-0 px-2`}>
             <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden>
               <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
             </svg>
@@ -309,14 +309,14 @@ export default function Docs({ store, me, onTaskClick }: {
         <nav className="flex-1 overflow-y-auto p-2">
           {searchHits ? (
             searchHits.length === 0 ? (
-              <p className="px-2 py-6 text-center text-[13px] text-slate-500">찾는 문서가 없습니다.</p>
+              <p className="px-2 py-6 text-center text-[13px] text-gh-fg-muted">찾는 문서가 없습니다.</p>
             ) : (
               <ul className="space-y-0.5">
                 {searchHits.map((d) => (
                   <li key={d.id}>
                     <button onClick={() => { setActiveId(d.id); setQuery(''); }}
                       className={`w-full truncate rounded-md px-2 py-[6px] text-left text-[13.5px] transition ${
-                        d.id === activeId ? 'bg-slate-100 font-semibold text-slate-900' : 'text-slate-600 hover:bg-slate-50'}`}>
+                        d.id === activeId ? 'bg-gh-canvas-mute font-semibold text-gh-fg' : 'text-gh-fg-muted hover:bg-gh-canvas-subtle'}`}>
                       {d.title}
                     </button>
                   </li>
@@ -338,9 +338,9 @@ export default function Docs({ store, me, onTaskClick }: {
       {!doc ? (
         <div className="flex flex-1 items-center justify-center p-8 text-center">
           <div>
-            <p className="text-[14.5px] text-slate-500">문서가 없습니다.</p>
+            <p className="text-[14.5px] text-gh-fg-muted">문서가 없습니다.</p>
             <button onClick={() => setCreatingUnder(null)}
-              className="mt-3 rounded-md bg-blue-600 px-4 py-2 text-[14px] font-semibold text-white transition hover:bg-blue-700">
+              className={`mt-3 ${ghBtnPrimary}`}>
               첫 문서 만들기
             </button>
           </div>
@@ -348,23 +348,23 @@ export default function Docs({ store, me, onTaskClick }: {
       ) : (
         <div className="flex min-w-0 flex-1 flex-col">
           {/* 문서 머리 */}
-          <div className="shrink-0 border-b border-slate-200 bg-white px-5 py-3">
+          <div className="shrink-0 border-b border-gh-border bg-gh-canvas px-5 py-3">
             {/* 트리가 숨는 구간에서의 이동 수단 */}
             <div className="mb-2 md:hidden">
               <label className="sr-only" htmlFor="doc-pick">문서 선택</label>
               <select id="doc-pick" aria-label="문서 선택" value={doc.id}
                 onChange={(e) => setActiveId(e.target.value)}
-                className="w-full rounded-md border border-slate-200 bg-white px-2 py-1.5 text-[13.5px] text-slate-700 outline-none transition focus:border-blue-500">
+                className="w-full rounded-md border border-gh-border bg-gh-canvas px-2 py-1.5 text-[13.5px] text-gh-fg outline-none transition focus:border-gh-accent">
                 {flat.map((f) => <option key={f.id} value={f.id}>{f.label}</option>)}
               </select>
             </div>
 
-            <nav aria-label="문서 경로" className="mb-2 hidden flex-wrap items-center gap-1 text-[12.5px] text-slate-500 md:flex">
+            <nav aria-label="문서 경로" className="mb-2 hidden flex-wrap items-center gap-1 text-[12.5px] text-gh-fg-muted md:flex">
               {breadcrumb.map((b, i) => (
                 <span key={b.id} className="flex items-center gap-1">
-                  {i > 0 && <span className="text-slate-300">/</span>}
+                  {i > 0 && <span className="text-gh-fg-subtle">/</span>}
                   <button onClick={() => setActiveId(b.id)}
-                    className={i === breadcrumb.length - 1 ? 'text-slate-600' : 'transition hover:text-slate-700'}>
+                    className={i === breadcrumb.length - 1 ? 'text-gh-fg-muted' : 'transition hover:text-gh-fg'}>
                     {b.title}
                   </button>
                 </span>
@@ -372,28 +372,27 @@ export default function Docs({ store, me, onTaskClick }: {
             </nav>
 
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="mr-auto min-w-0 truncate text-[21px] font-semibold tracking-tight text-slate-900">
+              <h1 className="mr-auto min-w-0 truncate text-[21px] font-semibold tracking-tight text-gh-fg">
                 {doc.title}
               </h1>
               <button onClick={() => setCreatingUnder(doc.id)}
-                className="rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-[13.5px] font-medium text-slate-600 transition hover:bg-slate-50">
+                className={ghBtn}>
                 하위 문서
               </button>
               <button onClick={() => setEditing(!editing)}
-                className={`rounded-md px-3 py-1.5 text-[13.5px] font-semibold transition ${
-                  editing ? 'bg-blue-600 text-white hover:bg-blue-700' : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}>
+                className={editing ? ghBtnPrimary : ghBtn}>
                 {editing ? '편집 끝내기' : '편집'}
               </button>
             </div>
 
-            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12.5px] text-slate-500">
+            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12.5px] text-gh-fg-muted">
               <span className="inline-flex items-center gap-1.5">
                 <Avatar id={doc.author} size={16} />
                 {author?.name ?? '알 수 없음'}
               </span>
               <span className="tabular-nums">마지막 수정 {doc.updatedAt.slice(0, 10)}</span>
               {doc.labels.map((l) => (
-                <span key={l} className="rounded bg-slate-100 px-1.5 py-0.5 text-[11.5px] text-slate-500">{l}</span>
+                <span key={l} className="rounded bg-gh-canvas-mute px-1.5 py-0.5 text-[11.5px] text-gh-fg-muted">{l}</span>
               ))}
             </div>
           </div>
@@ -402,56 +401,56 @@ export default function Docs({ store, me, onTaskClick }: {
           <div className="min-h-0 flex-1 overflow-y-auto">
             {editing ? (
               <div className="mx-auto max-w-[900px] p-5">
-                <label className="mb-1.5 block text-[12px] font-semibold uppercase tracking-wide text-slate-500" htmlFor="doc-edit-title">
+                <label className="mb-1.5 block text-[12px] font-semibold uppercase tracking-wide text-gh-fg-muted" htmlFor="doc-edit-title">
                   제목
                 </label>
                 <input id="doc-edit-title" value={doc.title}
                   onChange={(e) => store.update(doc.id, { title: e.target.value })}
-                  className="mb-4 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-[16px] font-semibold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" />
+                  className="mb-4 w-full rounded-md border border-gh-border-strong bg-gh-canvas px-3 py-2 text-[16px] font-semibold text-gh-fg outline-none transition focus:border-gh-accent focus:ring-2 focus:ring-gh-accent/20" />
 
                 <div className="mb-1.5 flex flex-wrap items-center gap-1">
-                  <label className="mr-2 text-[12px] font-semibold uppercase tracking-wide text-slate-500" htmlFor="doc-edit-body">
+                  <label className="mr-2 text-[12px] font-semibold uppercase tracking-wide text-gh-fg-muted" htmlFor="doc-edit-body">
                     본문
                   </label>
                   {TOOLS.map((t) => (
                     <button key={t.label} type="button" title={t.title} onClick={() => applyTool(t)}
-                      className="rounded border border-slate-200 bg-white px-2 py-1 text-[12.5px] font-medium text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900">
+                      className="rounded border border-gh-border bg-gh-canvas px-2 py-1 text-[12.5px] font-medium text-gh-fg-muted transition hover:border-gh-border-strong hover:bg-gh-canvas-subtle hover:text-gh-fg">
                       {t.label}
                     </button>
                   ))}
-                  <span className="ml-auto inline-flex items-center gap-1 text-[12.5px] text-slate-500">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  <span className="ml-auto inline-flex items-center gap-1 text-[12.5px] text-gh-fg-muted">
+                    <span className="h-2 w-2 rounded-full bg-gh-success" />
                     자동 저장됨
                   </span>
                 </div>
                 <textarea id="doc-edit-body" ref={bodyRef} value={doc.body}
                   onChange={(e) => store.update(doc.id, { body: e.target.value })}
                   spellCheck={false}
-                  className="min-h-[52vh] w-full resize-y rounded-md border border-slate-300 bg-white p-3.5 font-mono text-[13.5px] leading-[1.75] text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" />
+                  className="min-h-[52vh] w-full resize-y rounded-md border border-gh-border bg-gh-canvas p-3.5 gh-mono text-[13px] leading-[1.6] text-gh-fg outline-none transition-shadow duration-150 focus:border-gh-accent focus:shadow-[0_0_0_3px_rgba(9,105,218,0.1)]" />
 
-                <p className="mt-2 text-[12.5px] leading-relaxed text-slate-500">
-                  본문에 <code className="rounded bg-slate-100 px-1">MATE-104</code> 처럼 적으면
+                <p className="mt-2 text-[12.5px] leading-relaxed text-gh-fg-muted">
+                  본문에 <code className="rounded bg-gh-canvas-mute px-1">MATE-104</code> 처럼 적으면
                   그 작업으로 가는 링크가 됩니다.
                 </p>
 
-                <div className="mt-6 border-t border-slate-200 pt-5">
+                <div className="mt-6 border-t border-gh-border pt-5">
                   {confirming ? (
                     <div className="flex items-center gap-2">
-                      <span className="mr-auto text-[13.5px] text-slate-600">
+                      <span className="mr-auto text-[13.5px] text-gh-fg-muted">
                         이 문서와 하위 문서를 모두 지울까요?
                       </span>
                       <button onClick={() => setConfirming(false)}
-                        className="rounded-md px-3 py-1.5 text-[13.5px] font-medium text-slate-600 transition hover:bg-slate-100">
+                        className={ghBtn}>
                         취소
                       </button>
                       <button onClick={() => { store.remove(doc.id); setActiveId(null); }}
-                        className="rounded-md bg-rose-600 px-3 py-1.5 text-[13.5px] font-semibold text-white transition hover:bg-rose-700">
+                        className="inline-flex h-8 items-center rounded-md border border-[#cf222e26] bg-gh-danger px-3 text-[14px] font-medium text-white transition-colors duration-150 hover:bg-gh-danger-hover">
                         삭제
                       </button>
                     </div>
                   ) : (
                     <button onClick={() => setConfirming(true)}
-                      className="text-[13.5px] font-medium text-slate-500 transition hover:text-rose-600">
+                      className="text-[14px] font-medium text-gh-danger-fg transition hover:underline">
                       문서 삭제
                     </button>
                   )}
@@ -459,21 +458,19 @@ export default function Docs({ store, me, onTaskClick }: {
               </div>
             ) : (
               <div className="mx-auto flex max-w-[1100px] gap-8 p-5 lg:p-8">
-                <article className="min-w-0 flex-1">
+                <article className="min-w-0 flex-1 rounded-md border border-gh-border bg-gh-canvas px-6 py-5 lg:px-8 lg:py-7">
                   <Markdown source={doc.body} onTaskClick={onTaskClick} />
                 </article>
 
                 {headings.length > 1 && (
                   <nav aria-label="목차" className="hidden w-[180px] shrink-0 xl:block">
                     <div className="sticky top-0">
-                      <p className="mb-2 text-[11.5px] font-semibold uppercase tracking-wider text-slate-500">
-                        이 문서에서
-                      </p>
-                      <ul className="space-y-1 border-l border-slate-200">
+                      <p className="mb-2 text-[12px] font-semibold text-gh-fg-muted">이 문서에서</p>
+                      <ul className="space-y-1 border-l border-gh-border">
                         {headings.map((h) => (
                           <li key={h.id}>
                             <a href={`#${h.id}`}
-                              className="-ml-px block border-l border-transparent py-0.5 text-[13px] leading-snug text-slate-500 transition hover:border-slate-400 hover:text-slate-800"
+                              className="-ml-px block border-l border-transparent py-0.5 text-[13px] leading-snug text-gh-fg-muted transition hover:border-gh-border-strong hover:text-gh-fg"
                               style={{ paddingLeft: 10 + (h.level - 1) * 10 }}>
                               {h.text}
                             </a>

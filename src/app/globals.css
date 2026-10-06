@@ -141,19 +141,46 @@
    /taskmanager 는 마케팅 사이트와 다른 제품이다.
    다크 캔버스·필름 그레인·관성 스크롤을 모두 끄고 자체 셸에 맡긴다. */
 html[data-shell='app'] {
-  background: #f6f7f9;
+  background: #ffffff;
   scroll-behavior: auto;
+  /* 라틴은 GitHub 의 시스템 스택 그대로, 한글은 Pretendard 로 떨어뜨린다.
+     Mona Sans 는 GitHub 사유 서체라 쓰지 않고, 대부분의 방문자가 실제로
+     보게 되는 폴백 스택을 그대로 재현한다. */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans',
+    'Pretendard Variable', Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic',
+    Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
-html[data-shell='app'] body { background: #f6f7f9; color: #0f172a; overflow: hidden; }
+html[data-shell='app'] body {
+  background: #ffffff;
+  color: #1f2328;
+  overflow: hidden;
+  font-family: inherit;
+  letter-spacing: 0;
+}
 html[data-shell='app'] body > main { min-height: 0; }
 html[data-shell='app'] body::after { display: none; }
-html[data-shell='app'] ::selection { background: #1d4ed8; color: #fff; }
+html[data-shell='app'] ::selection { background: #0969da; color: #fff; }
+
+/* 숫자·식별자는 등폭으로 — 작업 키와 날짜가 세로로 맞는다 */
+html[data-shell='app'] .gh-mono {
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas,
+    'Liberation Mono', monospace;
+}
+
+/* GitHub 은 포커스를 파란 윤곽선 하나로 통일한다 */
+html[data-shell='app'] :focus-visible {
+  outline: 2px solid #0969da;
+  outline-offset: -1px;
+  box-shadow: none;
+}
+
 html[data-shell='app'] ::-webkit-scrollbar { width: 10px; height: 10px; }
 html[data-shell='app'] ::-webkit-scrollbar-track { background: transparent; }
 html[data-shell='app'] ::-webkit-scrollbar-thumb {
-  background: #cbd5e1; border-radius: 9999px; border: 2px solid #f6f7f9;
+  background: #d1d9e0; border-radius: 9999px; border: 2px solid #ffffff;
 }
-html[data-shell='app'] ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+html[data-shell='app'] ::-webkit-scrollbar-thumb:hover { background: #afb8c1; }
 
 /* ── Light Surface ───────────────────────────────────
    다크가 기본인 사이트에서 한 도메인만 밝게 뒤집을 때 쓴다.

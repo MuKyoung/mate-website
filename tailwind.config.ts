@@ -80,6 +80,34 @@ const config: Config = {
         },
         success: { DEFAULT: "var(--success)", tint: "var(--success-tint)" },
         danger: { DEFAULT: "var(--danger)", tint: "var(--danger-tint)" },
+
+        // ── GitHub Primer (light) — /taskmanager 전용 ──────────
+        // 사내 도구는 마케팅 사이트와 완전히 다른 체계를 쓴다.
+        // 고정 HEX 인 이유: 테마 토글이 없는 라이트 전용 화면이고,
+        // GitHub 색을 그대로 쓰는 것이 목적이라 파생값을 두지 않는다.
+        gh: {
+          canvas: { DEFAULT: "#ffffff", subtle: "#f6f8fa", mute: "#eaeef2" },
+          border: { DEFAULT: "#d1d9e0", muted: "#e4e8ec", strong: "#afb8c1" },
+          fg: { DEFAULT: "#1f2328", muted: "#59636e", subtle: "#818b98", on: "#ffffff" },
+          accent: {
+            DEFAULT: "#0969da", hover: "#0860ca", active: "#0757ba",
+            fg: "#0969da", subtle: "#ddf4ff", border: "#54aeff",
+          },
+          success: {
+            DEFAULT: "#1f883d", hover: "#1a7f37", fg: "#1a7f37",
+            subtle: "#dafbe1", border: "#4ac26b",
+          },
+          done: { DEFAULT: "#8250df", fg: "#8250df", subtle: "#fbefff", border: "#c297ff" },
+          danger: {
+            DEFAULT: "#cf222e", hover: "#a40e26", fg: "#cf222e",
+            subtle: "#ffebe9", border: "#ff818a",
+          },
+          attention: {
+            DEFAULT: "#bf8700", fg: "#9a6700",
+            subtle: "#fff8c5", border: "#d4a72c",
+          },
+          neutral: { DEFAULT: "#6e7781", muted: "#818b9826" },
+        },
       },
 
       // ── Typography — Figma 스케일과 1:1 (LS -0.3%) ────────────
@@ -106,6 +134,11 @@ const config: Config = {
       boxShadow: {
         card: "none",
         "card-hover": "0 12px 32px rgba(0, 0, 0, 0.35)",
+        // GitHub 은 그림자를 아끼고 1px 테두리로 면을 나눈다. 띄우는 건 오버레이뿐.
+        "gh-sm": "0 1px 3px rgba(31, 35, 40, 0.06)",
+        "gh-md": "0 3px 8px rgba(31, 35, 40, 0.15)",
+        "gh-lg": "0 8px 24px rgba(31, 35, 40, 0.12)",
+        "gh-inset": "inset 0 1px 0 0 rgba(0, 33, 85, 0.2)",
       },
 
       // 12칼럼 그리드 / gutter 16px
