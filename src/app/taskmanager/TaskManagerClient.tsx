@@ -27,6 +27,16 @@ const VIEWS: { id: View; label: string; key: string }[] = [
 type Scope = { kind: 'all' } | { kind: 'mine' } | { kind: 'domain'; id: DomainKey };
 
 const ME_KEY = 'mate.taskmanager.me';
+const PREF_KEY = 'mate.taskmanager.prefs.v1';
+
+type Prefs = { section: Section; view: View; scope: Scope; priority: Priority | 'all'; hideDone: boolean };
+
+function readPrefs(): Partial<Prefs> | null {
+  try {
+    const raw = window.localStorage.getItem(PREF_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
 
 export default function TaskManagerClient() {
   const store = useTaskStore();
@@ -44,21 +54,54 @@ export default function TaskManagerClient() {
   const [creating, setCreating] = useState<Status | null>(null);
   const [creatingDue, setCreatingDue] = useState<string | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
+  const [sort, setSort] = useState<{ by: 'title' | 'status' | 'priority' | 'domain' | 'due' | 'assignee'; dir: 1 | -1 } | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
   const [dropAt, setDropAt] = useState<{ status: Status; beforeId: string | null } | null>(null);
 
   const searchRef = useRef<HTMLInputElement>(null);
+  const storeRef = useRef(store);
+  storeRef.current = store;
+
+  const [prefsLoaded, setPrefsLoaded] = useState(false);
 
   useEffect(() => {
     try {
       const saved = window.localStorage.getItem(ME_KEY);
       if (saved && MEMBERS.some((m) => m.id === saved)) setMe(saved);
     } catch { /* 저장이 막힌 환경 */ }
+
+    // 마지막으로 보던 화면으로 돌아온다
+    const p = readPrefs();
+    if (p) {
+      if (p.section) setSection(p.section);
+      if (p.view) setView(p.view);
+      if (p.scope) setScope(p.scope);
+      if (p.priority) setPriorityFilter(p.priority);
+      if (typeof p.hideDone === 'boolean') setHideDone(p.hideDone);
+    }
+    setPrefsLoaded(true);
   }, []);
+
+  useEffect(() => {
+    if (!prefsLoaded) return;
+    try {
+      window.localStorage.setItem(PREF_KEY, JSON.stringify(
+        { section, view, scope, priority: priorityFilter, hideDone } satisfies Prefs));
+    } catch { /* noop */ }
+  }, [prefsLoaded, section, view, scope, priorityFilter, hideDone]);
 
   const pickMe = (id: string) => {
     setMe(id);
     try { window.localStorage.setItem(ME_KEY, id); } catch { /* noop */ }
   };
+
+  /* 되돌릴 수 있는 동작이 생기면 알리고, 잠시 뒤 거둔다 */
+  useEffect(() => {
+    if (!store.undoLabel) return;
+    setToast(store.undoLabel);
+    const t = setTimeout(() => setToast(null), 7000);
+    return () => clearTimeout(t);
+  }, [store.undoLabel]);
 
   /* ── 단축키 — 입력 중에는 가로채지 않는다 ── */
   useEffect(() => {
@@ -72,6 +115,12 @@ export default function TaskManagerClient() {
       const v = VIEWS.find((x) => x.key === e.key);
       if (v) { setSection('tasks'); setView(v.id); }
       if (e.key === 'd') setSection('docs');
+      // Ctrl/Cmd 조합은 위에서 걸러지므로 되돌리기는 여기서 따로 받는다
+      if (e.key === 'z' && storeRef.current.undoLabel) {
+        e.preventDefault();
+        storeRef.current.undo();
+        setToast(null);
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -94,6 +143,32 @@ export default function TaskManagerClient() {
       })
       .sort((a, b) => a.order - b.order);
   }, [store.tasks, scope, me, priorityFilter, hideDone, query]);
+
+  /** 목록 뷰 정렬 — 머리글을 누르면 그 열 기준으로 선다 */
+  const sorted = useMemo(() => {
+    if (!sort) return visible;
+    const rank = { urgent: 0, high: 1, normal: 2, low: 3 } as Record<Priority, number>;
+    const statusRank = Object.fromEntries(STATUSES.map((s2, i) => [s2.id, i])) as Record<Status, number>;
+    const key = (t: Task) => {
+      switch (sort.by) {
+        case 'title': return t.title;
+        case 'status': return statusRank[t.status];
+        case 'priority': return rank[t.priority];
+        case 'domain': return t.domain;
+        // 마감일 없는 것은 항상 뒤로
+        case 'due': return t.due ?? '9999-12-31';
+        case 'assignee': return t.assignee ?? 'zzz';
+      }
+    };
+    return [...visible].sort((a, b) => {
+      const x = key(a), y = key(b);
+      if (x === y) return 0;
+      return (x < y ? -1 : 1) * sort.dir;
+    });
+  }, [visible, sort]);
+
+  const toggleSort = (by: NonNullable<typeof sort>['by']) =>
+    setSort((prev) => (prev?.by === by ? (prev.dir === 1 ? { by, dir: -1 } : null) : { by, dir: 1 }));
 
   const byStatus = useMemo(() => {
     const map = {} as Record<Status, Task[]>;
@@ -347,7 +422,14 @@ export default function TaskManagerClient() {
         )}
 
         {/* ── 문서 ── */}
-        {section === 'docs' && <Docs store={docStore} me={me} />}
+        {section === 'docs' && (
+          <Docs store={docStore} me={me}
+            onTaskClick={(key) => {
+              const hit = store.tasks.find((t) => t.key === key);
+              if (hit) { setSection('tasks'); setOpenId(hit.id); }
+              else setToast(`${key} 작업을 찾을 수 없습니다`);
+            }} />
+        )}
 
         {/* ── 타임라인 ── */}
         {section === 'tasks' && view === 'timeline' && (
@@ -356,7 +438,8 @@ export default function TaskManagerClient() {
 
         {/* ── 캘린더 ── */}
         {section === 'tasks' && view === 'calendar' && (
-          <Calendar tasks={visible} onOpen={setOpenId} onCreateAt={createAt} />
+          <Calendar tasks={visible} onOpen={setOpenId} onCreateAt={createAt}
+            onReschedule={(id, due) => store.update(id, { due })} />
         )}
 
         {/* ── 보드 ── */}
@@ -398,6 +481,8 @@ export default function TaskManagerClient() {
                             <span className="pointer-events-none absolute -top-[5px] left-0 right-0 h-0.5 rounded-full bg-blue-500" />
                           )}
                           <TaskCard task={t} dragging={dragId === t.id}
+                            mine={t.assignee === me}
+                            onMove={(st) => store.move(t.id, st, null)}
                             onOpen={() => setOpenId(t.id)}
                             onDragStart={(e) => {
                               e.dataTransfer.effectAllowed = 'move';
@@ -418,9 +503,10 @@ export default function TaskManagerClient() {
                       </div>
 
                       {items.length === 0 && !active && (
-                        <p className="px-1 pb-4 text-center text-[12px] leading-relaxed text-slate-400">
+                        <button onClick={() => setCreating(s.id)}
+                          className="w-full rounded-md border border-dashed border-slate-300 px-1 py-5 text-center text-[12px] leading-relaxed text-slate-400 transition hover:border-slate-400 hover:bg-white hover:text-slate-600">
                           {s.hint}
-                        </p>
+                        </button>
                       )}
                     </div>
                   </section>
@@ -435,16 +521,30 @@ export default function TaskManagerClient() {
               <table className="w-full border-collapse text-[13px]">
                 <thead>
                   <tr className="border-b border-slate-200 bg-slate-50 text-left text-[11px] uppercase tracking-wide text-slate-400">
-                    <th className="px-3 py-2.5 font-semibold">작업</th>
-                    <th className="w-[92px] px-3 py-2.5 font-semibold">상태</th>
-                    <th className="w-[84px] px-3 py-2.5 font-semibold">우선순위</th>
-                    <th className="w-[96px] px-3 py-2.5 font-semibold">영역</th>
-                    <th className="w-[96px] px-3 py-2.5 font-semibold">마감</th>
-                    <th className="w-[56px] px-3 py-2.5 text-center font-semibold">담당</th>
+                    {([
+                      ['title', '작업', ''],
+                      ['status', '상태', 'w-[92px]'],
+                      ['priority', '우선순위', 'w-[84px]'],
+                      ['domain', '영역', 'w-[96px]'],
+                      ['due', '마감', 'w-[96px]'],
+                      ['assignee', '담당', 'w-[56px] text-center'],
+                    ] as const).map(([by, label, cls]) => (
+                      <th key={by} className={`px-3 py-2.5 font-semibold ${cls}`}
+                        aria-sort={sort?.by === by ? (sort.dir === 1 ? 'ascending' : 'descending') : 'none'}>
+                        <button onClick={() => toggleSort(by)}
+                          className="inline-flex items-center gap-1 transition hover:text-slate-700">
+                          {label}
+                          <span className={`text-[9px] leading-none transition ${
+                            sort?.by === by ? 'text-blue-600' : 'text-slate-300'}`}>
+                            {sort?.by === by && sort.dir === -1 ? '▼' : '▲'}
+                          </span>
+                        </button>
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {visible.map((t) => (
+                  {sorted.map((t) => (
                     <tr key={t.id} onClick={() => setOpenId(t.id)} tabIndex={0}
                       onKeyDown={(e) => { if (e.key === 'Enter') setOpenId(t.id); }}
                       className="cursor-pointer border-b border-slate-100 transition last:border-0 hover:bg-slate-50
@@ -481,9 +581,15 @@ export default function TaskManagerClient() {
               </table>
 
               {visible.length === 0 && (
-                <p className="px-4 py-14 text-center text-[13px] text-slate-400">
-                  조건에 맞는 작업이 없습니다.
-                </p>
+                <div className="px-4 py-14 text-center">
+                  <p className="text-[13px] text-slate-500">
+                    {filtersOn ? '조건에 맞는 작업이 없습니다.' : '아직 작업이 없습니다.'}
+                  </p>
+                  <button onClick={() => (filtersOn ? clearFilters() : setCreating('todo'))}
+                    className="mt-3 rounded-md border border-slate-200 bg-white px-3.5 py-2 text-[12.5px] font-medium text-slate-700 transition hover:bg-slate-50">
+                    {filtersOn ? '필터 초기화' : '첫 작업 만들기'}
+                  </button>
+                </div>
               )}
             </div>
           </div>
@@ -495,6 +601,24 @@ export default function TaskManagerClient() {
           onUpdate={(patch) => store.update(open.id, patch)}
           onRemove={() => { store.remove(open.id); setOpenId(null); }}
           onClose={() => setOpenId(null)} />
+      )}
+
+      {toast && (
+        <div role="status" aria-live="polite"
+          className="fixed bottom-5 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-lg border border-slate-700 bg-slate-900 px-4 py-2.5 text-[13px] text-white shadow-xl">
+          <span className="max-w-[320px] truncate">{toast}</span>
+          <button onClick={() => { store.undo(); setToast(null); }}
+            className="shrink-0 rounded px-2 py-1 text-[12.5px] font-semibold text-blue-300 transition hover:bg-white/10 hover:text-blue-200">
+            실행 취소
+            <kbd className="ml-1.5 rounded border border-white/20 px-1 text-[10px] font-medium text-white/50">Z</kbd>
+          </button>
+          <button onClick={() => setToast(null)} aria-label="알림 닫기"
+            className="shrink-0 rounded p-1 text-white/40 transition hover:bg-white/10 hover:text-white">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden>
+              <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
       )}
 
       {creating && (

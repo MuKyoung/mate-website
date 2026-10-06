@@ -39,7 +39,24 @@ export function extractHeadings(src: string): Heading[] {
 
 /* ── 인라인 ───────────────────────────────────────── */
 
-const INLINE = /(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`|\[[^\]]+\]\([^)]+\))/g;
+const INLINE = /(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`|\[[^\]]+\]\([^)]+\)|MATE-\d+)/g;
+
+/** 문서 안의 MATE-### 를 눌러 작업을 열 수 있게 하는 콜백.
+    inline() 이 여러 블록에서 불리므로 인자로 넘기는 대신 컨텍스트로 둔다. */
+const TaskLinkContext = React.createContext<((key: string) => void) | null>(null);
+
+function TaskChip({ taskKey }: { taskKey: string }) {
+  const onTask = React.useContext(TaskLinkContext);
+  if (!onTask) {
+    return <code className="rounded bg-slate-100 px-1 font-mono text-[0.86em] text-slate-600">{taskKey}</code>;
+  }
+  return (
+    <button onClick={() => onTask(taskKey)}
+      className="mx-[1px] rounded border border-blue-200 bg-blue-50 px-1.5 py-[1px] align-baseline font-mono text-[0.84em] font-medium text-blue-700 transition hover:bg-blue-100">
+      {taskKey}
+    </button>
+  );
+}
 
 function inline(text: string, keyPrefix: string): React.ReactNode[] {
   return text.split(INLINE).filter(Boolean).map((part, i) => {
@@ -56,6 +73,9 @@ function inline(text: string, keyPrefix: string): React.ReactNode[] {
     }
     if (part.startsWith('*') && part.endsWith('*')) {
       return <em key={k} className="italic">{part.slice(1, -1)}</em>;
+    }
+    if (/^MATE-\d+$/.test(part)) {
+      return <TaskChip key={k} taskKey={part} />;
     }
     const link = /^\[([^\]]+)\]\(([^)]+)\)$/.exec(part);
     if (link) {
@@ -75,7 +95,13 @@ function inline(text: string, keyPrefix: string): React.ReactNode[] {
 
 /* ── 블록 ─────────────────────────────────────────── */
 
-export default function Markdown({ source }: { source: string }) {
+export default function Markdown({
+  source, onTaskClick,
+}: {
+  source: string;
+  /** 본문의 MATE-### 칩을 눌렀을 때 */
+  onTaskClick?: (key: string) => void;
+}) {
   const lines = source.split('\n');
   const out: React.ReactNode[] = [];
   let i = 0;
@@ -235,8 +261,9 @@ export default function Markdown({ source }: { source: string }) {
     }
   }
 
-  if (out.length === 0) {
-    return <p className="py-10 text-center text-[13px] text-slate-400">내용이 비어 있습니다. 편집을 눌러 작성하세요.</p>;
-  }
-  return <>{out}</>;
+  const body = out.length === 0
+    ? <p className="py-10 text-center text-[13px] text-slate-400">내용이 비어 있습니다. 편집을 눌러 작성하세요.</p>
+    : <>{out}</>;
+
+  return <TaskLinkContext.Provider value={onTaskClick ?? null}>{body}</TaskLinkContext.Provider>;
 }

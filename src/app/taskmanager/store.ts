@@ -99,6 +99,9 @@ export interface Store {
   /** 드래그로 상태·순서를 함께 바꾼다 */
   move(id: string, status: Status, beforeId: string | null): void;
   reset(): void;
+  /** 되돌릴 수 있는 마지막 동작의 설명 — 없으면 null */
+  undoLabel: string | null;
+  undo(): void;
 }
 
 export function useTaskStore(): Store {
@@ -106,6 +109,13 @@ export function useTaskStore(): Store {
   const [ready, setReady] = useState(false);
   const [persistent, setPersistent] = useState(true);
   const seq = useRef(0);
+
+  /* 되돌리기 — 지우거나 옮기는 동작 직전의 전체 상태를 쌓아 둔다.
+     양이 적은 데이터라 스냅샷이 가장 단순하고 틀릴 여지가 없다. */
+  const [history, setHistory] = useState<{ label: string; tasks: Task[] }[]>([]);
+  const pushHistory = useCallback((label: string, snapshot: Task[]) => {
+    setHistory((prev) => [...prev.slice(-19), { label, tasks: snapshot }]);
+  }, []);
 
   useEffect(() => {
     const loaded = read() ?? seed();
@@ -184,16 +194,21 @@ export function useTaskStore(): Store {
 
   const remove = useCallback<Store['remove']>((id) => {
     setTasks((prev) => {
+      const gone = prev.find((t) => t.id === id);
+      pushHistory(`'${gone?.title ?? '작업'}' 삭제`, prev);
       const next = prev.filter((t) => t.id !== id);
       write(next);
       return next;
     });
-  }, []);
+  }, [pushHistory]);
 
   const move = useCallback<Store['move']>((id, status, beforeId) => {
     setTasks((prev) => {
       const moving = prev.find((t) => t.id === id);
       if (!moving) return prev;
+      if (moving.status !== status) {
+        pushHistory(`'${moving.title}' 상태 변경`, prev);
+      }
 
       // 목적지 칼럼을 현재 순서대로 세운 뒤, 놓을 자리에 끼워 넣고 다시 번호를 매긴다
       const column = prev
@@ -214,6 +229,16 @@ export function useTaskStore(): Store {
       write(next);
       return next;
     });
+  }, [pushHistory]);
+
+  const undo = useCallback(() => {
+    setHistory((prev) => {
+      const last = prev[prev.length - 1];
+      if (!last) return prev;
+      setTasks(last.tasks);
+      write(last.tasks);
+      return prev.slice(0, -1);
+    });
   }, []);
 
   const reset = useCallback(() => {
@@ -221,5 +246,9 @@ export function useTaskStore(): Store {
     commit(fresh);
   }, [commit]);
 
-  return { tasks, ready, persistent, create, update, remove, move, reset };
+  return {
+    tasks, ready, persistent, create, update, remove, move, reset,
+    undoLabel: history.length ? history[history.length - 1].label : null,
+    undo,
+  };
 }

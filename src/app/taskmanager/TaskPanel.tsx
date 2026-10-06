@@ -5,7 +5,7 @@ import {
   DOMAINS, MEMBERS, PRIORITIES, STATUSES,
   type DomainKey, type Priority, type Status, type Task,
 } from './types';
-import { Avatar, Chip, DOMAIN_STYLE, PriorityDot } from './ui';
+import { Avatar, Chip, DOMAIN_STYLE, PriorityDot, useFocusTrap } from './ui';
 
 /* ── 폼 입력 ──────────────────────────────────────── */
 
@@ -143,6 +143,7 @@ export function NewTaskDialog({
 }) {
   const [draft, setDraft] = useState<Draft>(() => ({ ...emptyDraft(defaultStatus), due: defaultDue ?? null }));
   const titleRef = useRef<HTMLInputElement>(null);
+  const trapRef = useFocusTrap<HTMLFormElement>();
 
   useEffect(() => { titleRef.current?.focus(); }, []);
   useEffect(() => {
@@ -160,7 +161,7 @@ export function NewTaskDialog({
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/40 p-4 pt-[8vh] backdrop-blur-[2px]"
       onClick={onClose}>
-      <form onSubmit={submit} onClick={(e) => e.stopPropagation()}
+      <form ref={trapRef} onSubmit={submit} onClick={(e) => e.stopPropagation()}
         role="dialog" aria-modal="true" aria-label="새 작업"
         className="w-full max-w-lg rounded-xl border border-slate-200 bg-white shadow-xl">
         <div className="border-b border-slate-200 px-5 py-4">
@@ -212,6 +213,7 @@ export function TaskPanel({
   onClose(): void;
 }) {
   const [confirming, setConfirming] = useState(false);
+  const trapRef = useFocusTrap<HTMLElement>();
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -236,7 +238,7 @@ export function TaskPanel({
   return (
     <>
       <div className="fixed inset-0 z-40 bg-slate-900/20 lg:bg-transparent" onClick={onClose} aria-hidden />
-      <aside role="dialog" aria-modal="true" aria-label={`${task.key} 상세`}
+      <aside ref={trapRef} role="dialog" aria-modal="true" aria-label={`${task.key} 상세`}
         className="fixed right-0 top-0 z-40 flex h-full w-full max-w-[420px] flex-col border-l border-slate-200 bg-white shadow-2xl lg:shadow-xl">
 
         <header className="flex items-center gap-2 border-b border-slate-200 px-5 py-3.5">

@@ -1,6 +1,56 @@
 'use client';
 
-import { memberById, domainShort, type DomainKey, type Priority, type Task } from './types';
+import { useEffect, useRef, useState } from 'react';
+import { STATUSES, memberById, domainShort, type DomainKey, type Priority, type Status, type Task } from './types';
+
+/**
+ * 대화상자·패널 안에 초점을 가둔다.
+ *
+ * 가두지 않으면 Tab 이 뒤쪽 화면으로 빠져나가 키보드만 쓰는 사람이
+ * 열려 있는 대화상자를 잃어버린다. 닫을 때는 열기 전 요소로 되돌린다.
+ */
+export function useFocusTrap<T extends HTMLElement>(active = true) {
+  const ref = useRef<T>(null);
+
+  useEffect(() => {
+    if (!active) return;
+    const root = ref.current;
+    if (!root) return;
+
+    const prev = document.activeElement as HTMLElement | null;
+    const SELECTOR =
+      'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+
+    const focusables = () =>
+      Array.from(root.querySelectorAll<HTMLElement>(SELECTOR)).filter((el) => el.offsetParent !== null);
+
+    // 이미 안쪽에 초점이 있으면 건드리지 않는다 (자동 포커스한 입력란을 빼앗지 않기 위해)
+    if (!root.contains(document.activeElement)) focusables()[0]?.focus();
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+      const list = focusables();
+      if (list.length === 0) return;
+      const first = list[0];
+      const last = list[list.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+
+    root.addEventListener('keydown', onKey);
+    return () => {
+      root.removeEventListener('keydown', onKey);
+      prev?.focus?.();
+    };
+  }, [active]);
+
+  return ref;
+}
 
 /* ── 색 매핑 — 도구 전용. 마케팅 사이트 토큰과 공유하지 않는다 ── */
 
@@ -101,16 +151,86 @@ export function DueBadge({ due, done }: { due: string | null; done: boolean }) {
 
 /* ── 보드 카드 ────────────────────────────────────── */
 
+/**
+ * 카드에서 바로 상태를 바꾸는 메뉴.
+ *
+ * HTML5 드래그는 터치 기기에서 아예 동작하지 않는다. 메뉴가 없으면
+ * 휴대폰으로는 보드가 읽기 전용이 되므로, 드래그와 같은 일을 하는
+ * 손가락용 경로를 따로 둔다.
+ */
+function StatusMenu({ task, onMove }: { task: Task; onMove(s: Status): void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('mousedown', onDown);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative" onClick={(e) => e.stopPropagation()}>
+      <button
+        onClick={() => setOpen(!open)}
+        aria-label="상태 바꾸기"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className={`flex h-6 w-6 items-center justify-center rounded text-slate-400 transition
+                    hover:bg-slate-100 hover:text-slate-700
+                    focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
+                    ${open ? 'bg-slate-100 text-slate-700' : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 max-[1023px]:opacity-100'}`}
+      >
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden>
+          <circle cx="8" cy="3.5" r="1.3" fill="currentColor" />
+          <circle cx="8" cy="8" r="1.3" fill="currentColor" />
+          <circle cx="8" cy="12.5" r="1.3" fill="currentColor" />
+        </svg>
+      </button>
+
+      {open && (
+        <div role="menu"
+          className="absolute right-0 top-7 z-30 w-[132px] overflow-hidden rounded-md border border-slate-200 bg-white py-1 shadow-lg">
+          {STATUSES.map((st) => (
+            <button key={st.id} role="menuitem"
+              onClick={() => { onMove(st.id); setOpen(false); }}
+              disabled={st.id === task.status}
+              className={`flex w-full items-center gap-2 px-2.5 py-1.5 text-left text-[12.5px] transition
+                          ${st.id === task.status
+                            ? 'cursor-default font-semibold text-slate-900'
+                            : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}`}>
+              <span className={`h-1.5 w-1.5 rounded-full ${st.id === task.status ? 'bg-blue-600' : 'bg-slate-300'}`} />
+              {st.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface CardProps {
   task: Task;
   onOpen(): void;
   onDragStart(e: React.DragEvent): void;
   onDragEnd(): void;
   dragging: boolean;
+  /** 카드 메뉴와 ←/→ 키로 상태를 옮긴다 */
+  onMove(s: Status): void;
+  /** 내 작업이면 왼쪽에 표시선을 둔다 */
+  mine?: boolean;
 }
 
-export function TaskCard({ task, onOpen, onDragStart, onDragEnd, dragging }: CardProps) {
+export function TaskCard({ task, onOpen, onDragStart, onDragEnd, dragging, onMove, mine }: CardProps) {
   const done = task.status === 'done';
+  const idx = STATUSES.findIndex((s) => s.id === task.status);
   return (
     <article
       draggable
@@ -122,11 +242,21 @@ export function TaskCard({ task, onOpen, onDragStart, onDragEnd, dragging }: Car
           e.preventDefault();
           onOpen();
         }
+        // 드래그 없이도 칼럼을 옮길 수 있어야 한다
+        if (e.key === 'ArrowRight' && idx < STATUSES.length - 1) {
+          e.preventDefault();
+          onMove(STATUSES[idx + 1].id);
+        }
+        if (e.key === 'ArrowLeft' && idx > 0) {
+          e.preventDefault();
+          onMove(STATUSES[idx - 1].id);
+        }
       }}
       tabIndex={0}
       role="button"
       aria-label={`${task.key} ${task.title}`}
-      className={`group cursor-pointer rounded-lg border border-slate-200 bg-white p-3
+      className={`group relative cursor-pointer rounded-lg border border-slate-200 bg-white p-3
+                  ${mine ? 'border-l-[3px] border-l-blue-500' : ''}
                   shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition
                   hover:border-slate-300 hover:shadow-[0_2px_8px_rgba(15,23,42,0.08)]
                   focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1
@@ -136,6 +266,7 @@ export function TaskCard({ task, onOpen, onDragStart, onDragEnd, dragging }: Car
         <PriorityDot p={task.priority} />
         <span className="font-mono text-[11px] font-medium text-slate-400 tabular-nums">{task.key}</span>
         <Chip className={`ml-auto ${DOMAIN_STYLE[task.domain]}`}>{domainShort(task.domain)}</Chip>
+        <StatusMenu task={task} onMove={onMove} />
       </div>
 
       <p

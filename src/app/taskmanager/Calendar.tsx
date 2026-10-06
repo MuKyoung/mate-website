@@ -24,12 +24,16 @@ const iso = (d: Date) => {
  * 빈 날짜를 누르면 그 날이 마감인 새 작업을 만든다.
  */
 export default function Calendar({
-  tasks, onOpen, onCreateAt,
+  tasks, onOpen, onCreateAt, onReschedule,
 }: {
   tasks: Task[];
   onOpen(id: string): void;
   onCreateAt(dueISO: string): void;
+  /** 다른 날로 끌어다 놓으면 마감일을 옮긴다 */
+  onReschedule(id: string, dueISO: string): void;
 }) {
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [overKey, setOverKey] = useState<string | null>(null);
   const [cursor, setCursor] = useState(() => {
     const d = new Date();
     return new Date(d.getFullYear(), d.getMonth(), 1);
@@ -86,7 +90,9 @@ export default function Calendar({
           className="rounded-md border border-slate-200 bg-white px-2.5 py-1 text-[12.5px] font-medium text-slate-600 transition hover:bg-slate-50">
           이번 달
         </button>
-        <span className="ml-auto text-[11.5px] text-slate-400">빈 칸을 누르면 그 날이 마감인 작업을 만듭니다</span>
+        <span className="ml-auto text-[11.5px] text-slate-400">
+          빈 칸을 누르면 새 작업 · 항목을 끌면 마감일이 바뀝니다
+        </span>
       </div>
 
       <div className="min-h-0 flex-1 overflow-auto p-4">
@@ -113,11 +119,26 @@ export default function Calendar({
               return (
                 <div key={key}
                   onClick={(e) => { if (e.target === e.currentTarget) onCreateAt(key); }}
+                  onDragOver={(e) => {
+                    // 드롭을 허용하려면 매 dragover 마다 필요하다
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    if (overKey !== key) setOverKey(key);
+                  }}
+                  onDragLeave={() => setOverKey((k) => (k === key ? null : k))}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const id = e.dataTransfer.getData('text/plain') || dragId;
+                    if (id) onReschedule(id, key);
+                    setDragId(null);
+                    setOverKey(null);
+                  }}
                   className={`group min-h-[112px] cursor-pointer border-b border-r border-slate-100 p-1.5 transition
-                              last:border-r-0 hover:bg-slate-50/70
+                              last:border-r-0
                               ${i % 7 === 6 ? 'border-r-0' : ''}
                               ${i >= 35 ? 'border-b-0' : ''}
-                              ${outside ? 'bg-slate-50/40' : ''}`}>
+                              ${outside ? 'bg-slate-50/40' : ''}
+                              ${overKey === key ? 'bg-blue-50 ring-1 ring-inset ring-blue-300' : 'hover:bg-slate-50/70'}`}>
                   <div className="mb-1 flex items-center justify-between px-0.5">
                     <span className={`text-[11.5px] tabular-nums ${
                       isToday ? 'flex h-[19px] w-[19px] items-center justify-center rounded-full bg-blue-600 font-semibold text-white'
@@ -141,9 +162,17 @@ export default function Calendar({
                       const overdue = !done && key < todayKey;
                       return (
                         <button key={t.id} onClick={(e) => { e.stopPropagation(); onOpen(t.id); }}
-                          title={t.title}
+                          title={`${t.title} — 다른 날로 끌어다 놓으면 마감일이 바뀝니다`}
+                          draggable
+                          onDragStart={(e) => {
+                            e.stopPropagation();
+                            e.dataTransfer.effectAllowed = 'move';
+                            e.dataTransfer.setData('text/plain', t.id);
+                            setDragId(t.id);
+                          }}
+                          onDragEnd={() => { setDragId(null); setOverKey(null); }}
                           className={`flex w-full items-center gap-1 rounded px-1 py-[3px] text-left text-[11px] transition
-                                      hover:bg-slate-100 ${done ? 'opacity-50' : ''}`}>
+                                      hover:bg-slate-100 ${done ? 'opacity-50' : ''} ${dragId === t.id ? 'opacity-40' : ''}`}>
                           <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${DOT[t.domain]}`} />
                           <span className={`truncate ${
                             done ? 'text-slate-400 line-through' : overdue ? 'font-medium text-rose-600' : 'text-slate-700'}`}>

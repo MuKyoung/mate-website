@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { DOC_TEMPLATES, MEMBERS, memberById, type Doc } from './types';
 import type { DocStore } from './docStore';
 import Markdown, { extractHeadings } from './Markdown';
-import { Avatar } from './ui';
+import { Avatar, useFocusTrap } from './ui';
 
 /* ── 문서 트리 ────────────────────────────────────── */
 
@@ -88,6 +88,7 @@ function NewDocDialog({
 }) {
   const [picked, setPicked] = useState('meeting');
   const [title, setTitle] = useState('');
+  const trapRef = useFocusTrap<HTMLDivElement>();
 
   useEffect(() => {
     const t = DOC_TEMPLATES.find((x) => x.id === picked);
@@ -103,7 +104,7 @@ function NewDocDialog({
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/40 p-4 pt-[8vh] backdrop-blur-[2px]"
       onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="새 문서"
+      <div ref={trapRef} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="새 문서"
         className="w-full max-w-xl rounded-xl border border-slate-200 bg-white shadow-xl">
         <div className="border-b border-slate-200 px-5 py-4">
           <h2 className="text-[15px] font-semibold text-slate-900">새 문서</h2>
@@ -154,7 +155,26 @@ function NewDocDialog({
 
 /* ── 본체 ─────────────────────────────────────────── */
 
-export default function Docs({ store, me }: { store: DocStore; me: string }) {
+/** 편집기 서식 버튼 — 마크다운을 몰라도 쓸 수 있어야 한다 */
+const TOOLS: { label: string; title: string; wrap?: [string, string]; line?: string; block?: string }[] = [
+  { label: 'H2', title: '제목', line: '## ' },
+  { label: 'H3', title: '작은 제목', line: '### ' },
+  { label: 'B', title: '굵게', wrap: ['**', '**'] },
+  { label: '목록', title: '목록', line: '- ' },
+  { label: '체크', title: '체크박스', line: '- [ ] ' },
+  { label: '패널', title: '강조 패널', line: '> ' },
+  { label: '표', title: '표', block: '| 항목 | 내용 |\n| --- | --- |\n|  |  |' },
+  { label: '코드', title: '코드 블록', block: '```\n\n```' },
+  { label: '구분', title: '구분선', block: '---' },
+];
+
+export default function Docs({ store, me, onTaskClick }: {
+  store: DocStore;
+  me: string;
+  /** 본문의 MATE-### 를 눌렀을 때 — 해당 작업을 연다 */
+  onTaskClick?(key: string): void;
+}) {
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [openSet, setOpenSet] = useState<Set<string>>(new Set());
   const [editing, setEditing] = useState(false);
@@ -230,6 +250,37 @@ export default function Docs({ store, me }: { store: DocStore; me: string }) {
   };
 
   useEffect(() => { setEditing(false); setConfirming(false); }, [activeId]);
+
+  const applyTool = (tool: (typeof TOOLS)[number]) => {
+    const el = bodyRef.current;
+    if (!el || !doc) return;
+    const { selectionStart: a, selectionEnd: b, value } = el;
+    let next: string;
+    let caret: number;
+
+    if (tool.wrap) {
+      const [l, r] = tool.wrap;
+      next = value.slice(0, a) + l + value.slice(a, b) + r + value.slice(b);
+      caret = b + l.length + (a === b ? 0 : r.length);
+    } else if (tool.line) {
+      // 선택한 모든 줄의 머리에 붙인다
+      const lineStart = value.lastIndexOf('\n', a - 1) + 1;
+      const target = value.slice(lineStart, b);
+      const prefixed = target.split('\n').map((ln) => tool.line + ln).join('\n');
+      next = value.slice(0, lineStart) + prefixed + value.slice(b);
+      caret = lineStart + prefixed.length;
+    } else {
+      const pad = a > 0 && value[a - 1] !== '\n' ? '\n' : '';
+      next = value.slice(0, a) + pad + tool.block + '\n' + value.slice(b);
+      caret = a + pad.length + (tool.block ?? '').length + 1;
+    }
+
+    store.update(doc.id, { body: next });
+    requestAnimationFrame(() => {
+      el.focus();
+      el.setSelectionRange(caret, caret);
+    });
+  };
 
   if (!store.ready) {
     return <div className="flex flex-1 items-center justify-center text-[13px] text-slate-400">불러오는 중…</div>;
@@ -358,22 +409,29 @@ export default function Docs({ store, me }: { store: DocStore; me: string }) {
                   onChange={(e) => store.update(doc.id, { title: e.target.value })}
                   className="mb-4 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-[15px] font-semibold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" />
 
-                <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-400" htmlFor="doc-edit-body">
-                  본문
-                </label>
-                <textarea id="doc-edit-body" value={doc.body}
+                <div className="mb-1.5 flex flex-wrap items-center gap-1">
+                  <label className="mr-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400" htmlFor="doc-edit-body">
+                    본문
+                  </label>
+                  {TOOLS.map((t) => (
+                    <button key={t.label} type="button" title={t.title} onClick={() => applyTool(t)}
+                      className="rounded border border-slate-200 bg-white px-2 py-1 text-[11.5px] font-medium text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900">
+                      {t.label}
+                    </button>
+                  ))}
+                  <span className="ml-auto inline-flex items-center gap-1 text-[11.5px] text-slate-400">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                    자동 저장됨
+                  </span>
+                </div>
+                <textarea id="doc-edit-body" ref={bodyRef} value={doc.body}
                   onChange={(e) => store.update(doc.id, { body: e.target.value })}
                   spellCheck={false}
                   className="min-h-[52vh] w-full resize-y rounded-md border border-slate-300 bg-white p-3.5 font-mono text-[12.5px] leading-[1.75] text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" />
 
                 <p className="mt-2 text-[11.5px] leading-relaxed text-slate-400">
-                  <code className="rounded bg-slate-100 px-1">## 제목</code>{' · '}
-                  <code className="rounded bg-slate-100 px-1">- 목록</code>{' · '}
-                  <code className="rounded bg-slate-100 px-1">- [ ] 체크</code>{' · '}
-                  <code className="rounded bg-slate-100 px-1">&gt; 강조 패널</code>{' · '}
-                  <code className="rounded bg-slate-100 px-1">| 표 |</code>{' · '}
-                  <code className="rounded bg-slate-100 px-1">**굵게**</code>
-                  {' — 입력하는 대로 저장됩니다.'}
+                  본문에 <code className="rounded bg-slate-100 px-1">MATE-104</code> 처럼 적으면
+                  그 작업으로 가는 링크가 됩니다.
                 </p>
 
                 <div className="mt-6 border-t border-slate-200 pt-5">
@@ -402,7 +460,7 @@ export default function Docs({ store, me }: { store: DocStore; me: string }) {
             ) : (
               <div className="mx-auto flex max-w-[1100px] gap-8 p-5 lg:p-8">
                 <article className="min-w-0 flex-1">
-                  <Markdown source={doc.body} />
+                  <Markdown source={doc.body} onTaskClick={onTaskClick} />
                 </article>
 
                 {headings.length > 1 && (
