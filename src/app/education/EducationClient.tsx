@@ -325,7 +325,7 @@ export default function EducationClient() {
           <div className="grid lg:grid-cols-12 gap-x-gutter gap-y-10 items-end">
             <div className="lg:col-span-7">
               <motion.p {...inView} variants={fadeLeft} className="type-c1 font-en uppercase tracking-[0.14em] text-white/40 mb-9">
-                (05) Contact
+                Contact
               </motion.p>
               <motion.h2 {...inView} variants={stagger}
                 className="font-extrabold text-white tracking-[-0.035em] leading-[1.15] mb-8"

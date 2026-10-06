@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { FiArrowUpRight } from 'react-icons/fi';
-import Hero from '@/components/Hero';
+import DomainSlabs from '@/components/DomainSlabs';
 import ProjectCard from '@/components/ProjectCard';
 import SectionHead from '@/components/ui/SectionHead';
 import CtaSection from '@/components/ui/CtaSection';
@@ -37,56 +37,8 @@ export default function Home() {
 
   return (
     <>
-      <Hero />
-
-      {/* ━━ (01) Domains — 세 영역으로 갈라지는 진입점 ━━ */}
-      <section className={sectionPad}>
-        <div className={container}>
-          <SectionHead num="01" label="Domains" href="/services" more="서비스 전체"
-            title={<>어느 쪽이 필요하신가요</>} kr="영역마다 다루는 범위도 진행 방식도 다릅니다" />
-
-          <motion.div {...inView} variants={stagger}
-            className="grid grid-cols-1 lg:grid-cols-3 border-t border-white/10">
-            {domains.map((d, i) => (
-              <motion.div key={d.key} data-domain={d.key}
-                variants={[fadeUp, riseTilt, fadeRight][i % 3]}
-                className={[
-                  'group relative border-b border-white/10',
-                  i > 0 ? 'lg:border-l lg:border-white/10' : '',
-                ].join(' ')}>
-                <Link href={`/${d.slug}`} className="block h-full p-8 sm:p-10 lg:p-11 lg:pt-14">
-                  {/* 호버 시 도메인 액센트가 위에서 그어진다 */}
-                  <span className="absolute top-0 left-0 right-0 h-[2px] scale-x-0 origin-left
-                                   group-hover:scale-x-100 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
-                    style={{ background: 'var(--accent)' }} />
-
-                  <h3 className="font-en font-extrabold text-[var(--text-1)] tracking-[-0.035em] leading-[1.0] mb-3
-                                 transition-colors duration-300 group-hover:text-[var(--accent)]"
-                    style={{ fontSize: 'clamp(1.75rem, 2.6vw, 2.375rem)' }}>
-                    {d.en}
-                  </h3>
-                  <p className="type-b3 text-white/45 mb-7">{d.kr}</p>
-
-                  <p className="type-h3 text-[var(--text-1)] leading-[1.45] mb-9">{d.trigger}</p>
-
-                  <div className="flex flex-wrap gap-2 mb-10">
-                    {d.tags.map((t) => (
-                      <span key={t} className="type-c2 px-3 py-1.5 rounded-[6px] bg-white/[0.05] text-white/55 font-en">
-                        {t}
-                      </span>
-                    ))}
-                  </div>
-
-                  <span className="inline-flex items-center gap-1.5 type-b4 text-white/70 group-hover:text-[var(--accent)] transition-colors">
-                    자세히 보기
-                    <FiArrowUpRight size={15} className={arrowHover} />
-                  </span>
-                </Link>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
+      <DomainSlabs eager className="pb-0"
+        heading="MATE — 웹 · 앱, 게임 · XR, 교육을 각각 전담하는 외주 개발 팀" />
 
       {/* ━━ (02) Work — 비대칭 2열 ━━ */}
       <section className={sectionPad}>

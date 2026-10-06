@@ -129,7 +129,7 @@ export default function WebClient() {
           <div className="grid lg:grid-cols-12 gap-x-gutter gap-y-6 mb-16 sm:mb-20">
             <div className="lg:col-span-7">
               <motion.p {...inView} variants={fadeLeft} className="index-num font-en mb-7">
-                (01) Scope
+                Scope
               </motion.p>
               <motion.h2 {...inView} variants={fadeUp} className="type-d2 font-en text-[var(--text-1)]">
                 어디서부터 어디까지
@@ -237,7 +237,7 @@ export default function WebClient() {
             </motion.p>
             <div className="lg:col-span-7 lg:order-2 lg:text-right">
               <motion.p {...inView} variants={fadeRight} className="index-num font-en mb-7 lg:justify-end">
-                (03) Deliverables
+                Deliverables
               </motion.p>
               <motion.h2 {...inView} variants={fadeUp} className="type-d2 font-en text-[var(--text-1)]">
                 넘겨드리는 네 가지
