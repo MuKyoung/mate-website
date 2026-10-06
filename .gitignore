@@ -38,3 +38,4 @@ next-env.d.ts
 # 디자인 검증용 캡처 (로컬 전용)
 .refs/
 .preview/
+.preview2/

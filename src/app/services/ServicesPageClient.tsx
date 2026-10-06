@@ -45,13 +45,13 @@ export default function ServicesPageClient() {
           </motion.p>
           <div className="grid lg:grid-cols-12 gap-x-gutter gap-y-10 items-end">
             <motion.h1 {...onMount} variants={stagger}
-              className="lg:col-span-7 font-en font-extrabold text-[var(--text-1)] tracking-[-0.045em] leading-[0.94]"
-              style={{ fontSize: 'clamp(2.75rem, 8vw, 7rem)' }}>
+              className="lg:col-span-7 font-extrabold text-[var(--text-1)] tracking-[-0.035em] leading-[1.06]"
+              style={{ fontSize: 'clamp(2.25rem, 6.2vw, 5.25rem)' }}>
               <span className="block overflow-hidden pb-[0.1em] -mb-[0.1em]">
-                <motion.span variants={clipUp} className="block">Three</motion.span>
+                <motion.span variants={clipUp} className="block">세 영역을</motion.span>
               </span>
               <span className="block overflow-hidden pb-[0.1em] -mb-[0.1em]">
-                <motion.span variants={clipUp} className="block text-white/25">Domains</motion.span>
+                <motion.span variants={clipUp} className="block text-white/25">따로 맡습니다</motion.span>
               </span>
             </motion.h1>
             <motion.div {...onMount} variants={fadeRight} className="lg:col-span-5 lg:pb-4">
@@ -184,8 +184,8 @@ export default function ServicesPageClient() {
         </div>
       </section>
 
-      <CtaSection num="05" line1="Same door," line2="three rooms."
-        kr="어느 영역이든 들어오는 문은 하나입니다" />
+      <CtaSection num="05" line1="어느 영역이든" line2="창구는 하나입니다"
+        kr="어디로 가야 할지 모르겠으면 그냥 적어 보내주셔도 됩니다" />
     </>
   );
 }

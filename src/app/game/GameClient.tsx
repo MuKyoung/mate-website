@@ -301,17 +301,17 @@ export default function GameClient() {
         <div className={`relative ${container} text-center`}>
           <motion.p {...inView} variants={fadeUp} className="index-num font-en justify-center mb-10">(06) Contact</motion.p>
           <motion.h2 {...inView} variants={stagger}
-            className="font-en font-extrabold text-[var(--text-1)] tracking-[-0.045em] leading-[0.96] mb-10"
-            style={{ fontSize: 'clamp(2.5rem, 8vw, 6.5rem)' }}>
+            className="font-extrabold text-[var(--text-1)] tracking-[-0.03em] leading-[1.12] mb-10"
+            style={{ fontSize: 'clamp(2.125rem, 5.4vw, 4.5rem)' }}>
             <span className="block overflow-hidden pb-[0.1em] -mb-[0.1em]">
-              <motion.span variants={clipUp} className="block">Let&rsquo;s make it</motion.span>
+              <motion.span variants={clipUp} className="block">장면 한 컷이면</motion.span>
             </span>
             <span className="block overflow-hidden pb-[0.1em] -mb-[0.1em]">
-              <motion.span variants={clipUp} className="block text-[var(--accent)]">playable.</motion.span>
+              <motion.span variants={clipUp} className="block text-[var(--accent)]">시작할 수 있습니다</motion.span>
             </span>
           </motion.h2>
           <motion.p {...inView} variants={fadeUp} className="caption-kr mb-14 max-w-xl mx-auto">
-            — 기획서가 없어도 됩니다. 만들고 싶은 장면 한 컷이면 시작할 수 있습니다.
+            — 기획서가 없어도 됩니다. 만들고 싶은 화면을 말로 설명해 주셔도 됩니다.
           </motion.p>
           <motion.div {...inView} variants={fadeUp} className="flex flex-wrap items-center justify-center gap-8">
             <Link href="/contact?domain=game"

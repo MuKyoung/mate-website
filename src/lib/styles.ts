@@ -31,7 +31,7 @@ export const typeC2 = 'type-c2';
 
 /** 대형 타이포 크기 — D2 / D1 티어와 동일한 clamp (style prop용) */
 export const displaySize = { fontSize: 'clamp(2.25rem, 6vw, 4.75rem)' } as const;
-export const displaySizeLg = { fontSize: 'clamp(2.5rem, 10vw, 9rem)' } as const;
+export const displaySizeLg = { fontSize: 'clamp(2.25rem, 7vw, 6.5rem)' } as const;
 
 /* ── Buttons ──────────────────────────────────────────── */
 
@@ -69,11 +69,11 @@ export const arrowHover =
 /* ── Layout — Grid System (inner 1500 / gutter 16 / 12col) ── */
 
 /** 섹션 세로 여백 */
-export const sectionPad = 'py-28 sm:py-40';
+export const sectionPad = 'py-24 sm:py-32';
 /** 앞 섹션과 한 덩어리로 읽혀야 하는 구간 — 호흡을 좁혀 스크롤 리듬을 만든다 */
 export const sectionPadTight = 'py-16 sm:py-24';
 /** CTA 섹션 세로 여백 (더 넉넉하게) */
-export const sectionPadLg = 'py-32 sm:py-48';
+export const sectionPadLg = 'py-28 sm:py-40';
 /** 컨테이너 — inner 1500px 기준 */
 export const container = 'container mx-auto px-4 sm:px-6';
 

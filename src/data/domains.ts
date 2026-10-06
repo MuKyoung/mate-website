@@ -18,9 +18,8 @@ export const gameCredentials = awards
   .filter((a) => /게임|G-STAR|메타버스|인디/.test(`${a.title}${a.organization}`))
   .sort((a, b) => b.year - a.year);
 
-/** 홈에 올릴 대표 이력 — 심사를 거친 수상·선정 위주로 고른다 (전체 목록은 /team) */
-export const homeCredentials = awards
-  .filter((a) => a.type === 'award')
+/** 홈에 올릴 대표 이력 — 최근 것부터 6건 (전체 목록은 /team) */
+export const homeCredentials = [...awards]
   .sort((a, b) => b.year - a.year)
   .slice(0, 6);
 

@@ -106,7 +106,7 @@ export default function Markdown({
   const out: React.ReactNode[] = [];
   let i = 0;
 
-  const H = ['', 'text-[22px] mt-8 mb-3', 'text-[17px] mt-7 mb-2.5', 'text-[15px] mt-6 mb-2', 'text-[13.5px] mt-5 mb-1.5'];
+  const H = ['', 'text-[24px] mt-8 mb-3', 'text-[18px] mt-7 mb-2.5', 'text-[16px] mt-6 mb-2', 'text-[14.5px] mt-5 mb-1.5'];
 
   while (i < lines.length) {
     const line = lines[i];
@@ -120,8 +120,8 @@ export default function Markdown({
       i += 1;
       out.push(
         <pre key={`c${i}`} className="my-4 overflow-x-auto rounded-md border border-slate-200 bg-slate-50 p-3.5">
-          {lang && <span className="mb-2 block text-[10.5px] font-semibold uppercase tracking-wide text-slate-400">{lang}</span>}
-          <code className="font-mono text-[12.5px] leading-[1.7] text-slate-700">{buf.join('\n')}</code>
+          {lang && <span className="mb-2 block text-[11.5px] font-semibold uppercase tracking-wide text-slate-500">{lang}</span>}
+          <code className="font-mono text-[13.5px] leading-[1.7] text-slate-700">{buf.join('\n')}</code>
         </pre>,
       );
       continue;
@@ -159,7 +159,7 @@ export default function Markdown({
       while (i < lines.length && lines[i].trim().startsWith('|')) { body.push(cells(lines[i])); i += 1; }
       out.push(
         <div key={`t${i}`} className="my-4 overflow-x-auto rounded-md border border-slate-200">
-          <table className="w-full border-collapse text-[13px]">
+          <table className="w-full border-collapse text-[14px]">
             <thead>
               <tr className="bg-slate-50">
                 {head.map((c, n) => (
@@ -195,7 +195,7 @@ export default function Markdown({
       }
       out.push(
         <blockquote key={`q${i}`}
-          className="my-4 rounded-r-md border-l-[3px] border-blue-400 bg-blue-50/60 px-4 py-3 text-[13.5px] leading-[1.75] text-slate-700">
+          className="my-4 rounded-r-md border-l-[3px] border-blue-400 bg-blue-50/60 px-4 py-3 text-[14.5px] leading-[1.75] text-slate-700">
           {buf.map((b, n) => <p key={n} className={n ? 'mt-1.5' : ''}>{inline(b, `q${i}-${n}`)}</p>)}
         </blockquote>,
       );
@@ -212,8 +212,8 @@ export default function Markdown({
       }
       const Tag = ordered ? 'ol' : 'ul';
       out.push(
-        <Tag key={`l${i}`} className={`my-3 space-y-1.5 pl-5 text-[13.5px] leading-[1.75] text-slate-700 ${
-          ordered ? 'list-decimal' : 'list-disc'} marker:text-slate-400`}>
+        <Tag key={`l${i}`} className={`my-3 space-y-1.5 pl-5 text-[14.5px] leading-[1.75] text-slate-700 ${
+          ordered ? 'list-decimal' : 'list-disc'} marker:text-slate-500`}>
           {items.map((it, n) => {
             const box = /^\[([ xX])\]\s*(.*)$/.exec(it);
             if (box) {
@@ -228,7 +228,7 @@ export default function Markdown({
                       </svg>
                     )}
                   </span>
-                  <span className={checked ? 'text-slate-400 line-through' : ''}>{inline(box[2], `li${i}-${n}`)}</span>
+                  <span className={checked ? 'text-slate-500 line-through' : ''}>{inline(box[2], `li${i}-${n}`)}</span>
                 </li>
               );
             }
@@ -254,7 +254,7 @@ export default function Markdown({
     }
     if (buf.length) {
       out.push(
-        <p key={`p${i}`} className="my-3 text-[13.5px] leading-[1.8] text-slate-700">
+        <p key={`p${i}`} className="my-3 text-[14.5px] leading-[1.8] text-slate-700">
           {inline(buf.join(' '), `p${i}`)}
         </p>,
       );
@@ -262,7 +262,7 @@ export default function Markdown({
   }
 
   const body = out.length === 0
-    ? <p className="py-10 text-center text-[13px] text-slate-400">내용이 비어 있습니다. 편집을 눌러 작성하세요.</p>
+    ? <p className="py-10 text-center text-[14px] text-slate-500">내용이 비어 있습니다. 편집을 눌러 작성하세요.</p>
     : <>{out}</>;
 
   return <TaskLinkContext.Provider value={onTaskClick ?? null}>{body}</TaskLinkContext.Provider>;

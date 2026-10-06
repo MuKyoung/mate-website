@@ -83,14 +83,14 @@ export default function Calendar({
             <path d="M6.5 4l4 4-4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
-        <h2 className="ml-1 text-[14px] font-semibold tabular-nums text-slate-900">
+        <h2 className="ml-1 text-[15px] font-semibold tabular-nums text-slate-900">
           {cursor.getFullYear()}년 {cursor.getMonth() + 1}월
         </h2>
         <button onClick={toThisMonth}
-          className="rounded-md border border-slate-200 bg-white px-2.5 py-1 text-[12.5px] font-medium text-slate-600 transition hover:bg-slate-50">
+          className="rounded-md border border-slate-200 bg-white px-2.5 py-1 text-[13.5px] font-medium text-slate-600 transition hover:bg-slate-50">
           이번 달
         </button>
-        <span className="ml-auto text-[11.5px] text-slate-400">
+        <span className="ml-auto text-[12.5px] text-slate-500">
           빈 칸을 누르면 새 작업 · 항목을 끌면 마감일이 바뀝니다
         </span>
       </div>
@@ -100,7 +100,7 @@ export default function Calendar({
           {/* 요일 머리 */}
           <div className="grid grid-cols-7 border-b border-slate-200 bg-slate-50">
             {WEEKDAY.map((w, i) => (
-              <div key={w} className={`px-2 py-2 text-center text-[11.5px] font-semibold ${
+              <div key={w} className={`px-2 py-2 text-center text-[12.5px] font-semibold ${
                 i === 0 ? 'text-rose-500' : i === 6 ? 'text-blue-500' : 'text-slate-500'}`}>
                 {w}
               </div>
@@ -133,14 +133,14 @@ export default function Calendar({
                     setDragId(null);
                     setOverKey(null);
                   }}
-                  className={`group min-h-[112px] cursor-pointer border-b border-r border-slate-100 p-1.5 transition
+                  className={`group min-h-[126px] cursor-pointer border-b border-r border-slate-100 p-1.5 transition
                               last:border-r-0
                               ${i % 7 === 6 ? 'border-r-0' : ''}
                               ${i >= 35 ? 'border-b-0' : ''}
                               ${outside ? 'bg-slate-50/40' : ''}
                               ${overKey === key ? 'bg-blue-50 ring-1 ring-inset ring-blue-300' : 'hover:bg-slate-50/70'}`}>
                   <div className="mb-1 flex items-center justify-between px-0.5">
-                    <span className={`text-[11.5px] tabular-nums ${
+                    <span className={`text-[12.5px] tabular-nums ${
                       isToday ? 'flex h-[19px] w-[19px] items-center justify-center rounded-full bg-blue-600 font-semibold text-white'
                         : outside ? 'text-slate-300'
                           : weekend ? (d.getDay() === 0 ? 'text-rose-400' : 'text-blue-400')
@@ -171,18 +171,18 @@ export default function Calendar({
                             setDragId(t.id);
                           }}
                           onDragEnd={() => { setDragId(null); setOverKey(null); }}
-                          className={`flex w-full items-center gap-1 rounded px-1 py-[3px] text-left text-[11px] transition
+                          className={`flex w-full items-center gap-1 rounded px-1 py-[3px] text-left text-[12px] transition
                                       hover:bg-slate-100 ${done ? 'opacity-50' : ''} ${dragId === t.id ? 'opacity-40' : ''}`}>
                           <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${DOT[t.domain]}`} />
                           <span className={`truncate ${
-                            done ? 'text-slate-400 line-through' : overdue ? 'font-medium text-rose-600' : 'text-slate-700'}`}>
+                            done ? 'text-slate-500 line-through' : overdue ? 'font-medium text-rose-600' : 'text-slate-700'}`}>
                             {t.title}
                           </span>
                         </button>
                       );
                     })}
                     {items.length > 3 && (
-                      <p className="px-1 text-[10.5px] text-slate-400">+{items.length - 3}건 더</p>
+                      <p className="px-1 text-[11.5px] text-slate-500">+{items.length - 3}건 더</p>
                     )}
                   </div>
                 </div>
@@ -194,13 +194,13 @@ export default function Calendar({
         {/* 범례 + 마감 없는 작업 */}
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 px-1">
           {(Object.keys(DOT) as DomainKey[]).map((d) => (
-            <span key={d} className="inline-flex items-center gap-1.5 text-[11.5px] text-slate-500">
+            <span key={d} className="inline-flex items-center gap-1.5 text-[12.5px] text-slate-500">
               <span className={`h-1.5 w-1.5 rounded-full ${DOT[d]}`} />
               {d === 'web' ? '웹 · 앱' : d === 'game' ? '게임 · XR' : d === 'edu' ? '교육 · 강의' : '내부 · 운영'}
             </span>
           ))}
           {undated.length > 0 && (
-            <span className="ml-auto text-[11.5px] text-slate-400">
+            <span className="ml-auto text-[12.5px] text-slate-500">
               마감일 없는 작업 {undated.length}건은 캘린더에 올라오지 않습니다
             </span>
           )}

@@ -116,7 +116,10 @@ export const staggerTight: Variants = {
 export const inView = {
   initial: 'hidden' as const,
   whileInView: 'show' as const,
-  viewport: { once: true, margin: '-12%' },
+  // rootMargin 은 네 면에 모두 걸린다. 단일 값을 쓰면 좌우 루트까지 12%씩 좁아져,
+  // fadeLeft(x:-72) 처럼 왼쪽에서 들어오는 요소가 컨테이너 가장자리에 있으면
+  // 교차 영역이 영영 생기지 않아 opacity 0 으로 남는다. 세로만 당긴다.
+  viewport: { once: true, margin: '-12% 0px' },
 };
 
 /** 마운트 즉시 재생 (히어로 등 above-the-fold) */

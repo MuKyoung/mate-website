@@ -11,8 +11,51 @@ export interface Award {
   type: AwardType; // 수상 또는 전시회 구분
 }
 
+/** 소속·제휴 — 수상과 성격이 다르므로 따로 둔다 */
+export interface Affiliation {
+  id: string;
+  name: string;
+  /** 어떤 자격인지 */
+  role: string;
+  /** 발주처가 왜 이걸 봐야 하는지 */
+  note: string;
+}
+
+export const affiliations: Affiliation[] = [
+  {
+    id: 'af-mjc',
+    name: '명지전문대학',
+    role: '가족회사',
+    note: '산학협력 과제와 현장실습을 함께 진행합니다.',
+  },
+  {
+    id: 'af-kaiga',
+    name: '한국인공지능게임협회',
+    role: '회원사',
+    note: 'AI를 게임 제작에 들이는 흐름을 협회 안에서 따라갑니다.',
+  },
+];
+
 // 연도별 수상/전시 경력
 export const awards: Award[] = [
+  // ===== 2026년 =====
+  {
+    id: 'award-2026-1',
+    year: 2026,
+    title: '인디크래프트 국내 · 커뮤니티 부문 TOP 50',
+    organization: '인디크래프트',
+    rank: 'TOP 50 선정',
+    type: 'award',
+  },
+  {
+    id: 'award-2026-2',
+    year: 2026,
+    title: 'GXG 전시',
+    organization: '인디크래프트 TOP 50 선정작',
+    rank: '전시 참가',
+    type: 'exhibition',
+  },
+
   // ===== 2025년 =====
   {
     id: 'award-2025-1',

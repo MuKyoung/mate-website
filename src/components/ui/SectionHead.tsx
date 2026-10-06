@@ -56,7 +56,7 @@ export default function SectionHead({
       </div>
 
       <motion.h2 {...inView} variants={stagger}
-        className="font-en text-[var(--text-1)] font-extrabold tracking-[-0.03em] leading-[1.04]"
+        className="text-[var(--text-1)] font-extrabold tracking-[-0.025em] leading-[1.14]"
         style={displaySize}>
         <span className={clipWrap}>
           <motion.span variants={even ? clipLeft : clipUp} className="block">{title}</motion.span>

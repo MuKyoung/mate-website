@@ -4,6 +4,7 @@ import { motion, AnimatePresence, useScroll, useTransform, useInView, animate } 
 import Link from 'next/link';
 import { FiArrowUpRight, FiArrowDown } from 'react-icons/fi';
 import { useRef, useEffect, useState, useCallback } from 'react';
+import HeroField from '@/components/HeroField';
 import { easeEnter } from '@/lib/motion';
 import { projects } from '@/data/projects';
 import { teamCapabilities } from '@/data/teamCapabilities';
@@ -53,16 +54,16 @@ function CharLine({ text, offset = 0, accent = false }: { text: string; offset?:
 /* ── 슬라이드 데이터 — EN 대형 + KR 캡션 ── */
 const slides = [
   {
-    en1: 'One Door,', en2: 'Three Rooms', accent2: true,
-    kr: '웹·앱, 게임·XR, 교육 — 세 영역을 각각 전담합니다',
+    en1: '뭘 만들지부터', en2: '같이 정합니다', accent2: true,
+    kr: '정리되지 않은 상태로 오셔도 첫 통화에서 범위부터 같이 자릅니다',
   },
   {
-    en1: 'Same Hands,', en2: 'Start to Ship', accent2: true,
-    kr: '계약 때 만난 사람이 배포까지 갑니다',
+    en1: '계약 때 만난 사람이', en2: '배포까지 갑니다', accent2: true,
+    kr: '중간에 담당자가 바뀌지 않습니다',
   },
   {
-    en1: 'Shipped,', en2: 'Not Promised', accent2: true,
-    kr: '만든 것만 올렸습니다. 포트폴리오 12건은 전부 실제 납품물입니다',
+    en1: '만든 것만', en2: '올렸습니다', accent2: true,
+    kr: '포트폴리오 12건은 전부 납품이 끝난 것입니다',
   },
 ];
 
@@ -117,9 +118,16 @@ export default function Hero() {
   const slide = slides[index];
 
   return (
-    <section ref={ref} className="relative bg-[var(--canvas)]">
+    <section ref={ref} className="relative overflow-hidden bg-[var(--canvas)]">
+      {/* 실시간으로 그려지는 지형 — 타이포 뒤에 깔리되 읽기를 방해하지 않는다 */}
+      <HeroField className="pointer-events-none absolute inset-0 h-full w-full" />
+      <div className="pointer-events-none absolute inset-0"
+        style={{ background: 'radial-gradient(58% 42% at 22% 46%, var(--canvas) 0%, transparent 76%)' }} />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40"
+        style={{ background: 'linear-gradient(180deg, transparent, var(--canvas))' }} />
+
       <motion.div style={{ y, opacity }}
-        className={`${container} min-h-[92svh] flex flex-col justify-end pt-32 pb-12 sm:pb-16`}>
+        className={`relative ${container} min-h-[92svh] flex flex-col justify-end pt-32 pb-12 sm:pb-16`}>
 
         {/* 상단 메타 행 */}
         <div className="flex items-center justify-between pb-10 sm:pb-16">
@@ -134,19 +142,19 @@ export default function Hero() {
         <div className="mb-10 sm:mb-14 grid">
           {/* 슬라이드 전환 중 높이 붕괴로 하단 요소가 점프하지 않도록 자리를 잡는 정적 복제 */}
           <div className="invisible col-start-1 row-start-1" aria-hidden="true">
-            <h1 className="font-en font-extrabold tracking-[-0.04em] leading-[1.0]"
-              style={{ fontSize: 'clamp(2.5rem, 10.5vw, 10.5rem)' }}>
-              <span className="block">Ideas to Code,</span>
-              <span className="block">Proven by Work</span>
+            <h1 className="font-extrabold tracking-[-0.035em] leading-[1.06]"
+              style={{ fontSize: 'clamp(2.25rem, 7.4vw, 7.5rem)' }}>
+              <span className="block">계약 때 만난 사람이</span>
+              <span className="block">배포까지 갑니다</span>
             </h1>
-            <p className="caption-kr mt-7 sm:mt-9">— 기획부터 배포까지, 한 팀이 끝까지 책임집니다</p>
+            <p className="caption-kr mt-7 sm:mt-9">— 중간에 담당자가 바뀌지 않습니다</p>
           </div>
 
           <div className="col-start-1 row-start-1">
             <AnimatePresence mode="wait">
               <motion.div key={index} initial="hidden" animate="show" exit="exit">
-                <h1 className="font-en text-[var(--text-1)] font-extrabold tracking-[-0.04em] leading-[1.0]"
-                  style={{ fontSize: 'clamp(2.5rem, 10.5vw, 10.5rem)' }}>
+                <h1 className="text-[var(--text-1)] font-extrabold tracking-[-0.035em] leading-[1.06]"
+                  style={{ fontSize: 'clamp(2.25rem, 7.4vw, 7.5rem)' }}>
                   <CharLine text={slide.en1} />
                   <CharLine text={slide.en2} offset={slide.en1.length + 2} accent={slide.accent2} />
                 </h1>
@@ -199,13 +207,13 @@ export default function Hero() {
             </Link>
           </div>
         </div>
-      </motion.div>
 
-      {/* 스크롤 큐 */}
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.6, duration: 0.8 }}
-        className="absolute bottom-6 left-1/2 -translate-x-1/2 hidden lg:flex flex-col items-center gap-1.5 text-white/30 pointer-events-none">
-        <span className="font-en text-[10px] font-bold tracking-[0.25em] uppercase">Scroll</span>
-        <FiArrowDown size={13} className="animate-bounce" />
+        {/* 스크롤 큐 — 지표 행과 겹치지 않도록 본문 블록 기준으로 둔다 */}
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.6, duration: 0.8 }}
+          className="pointer-events-none absolute bottom-3 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-1.5 text-white/30 lg:flex">
+          <span className="font-en text-[10px] font-bold uppercase tracking-[0.25em]">Scroll</span>
+          <FiArrowDown size={13} className="animate-bounce" />
+        </motion.div>
       </motion.div>
 
       {/* 지표 — 헤어라인 행 */}

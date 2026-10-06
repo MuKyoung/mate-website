@@ -261,7 +261,7 @@ export default function TeamPageClient() {
         <div className={container}>
           <motion.p {...inView} variants={fadeUp} className="index-num font-en mb-10">(06) Contact</motion.p>
           <motion.h2 {...inView} variants={stagger}
-            className="text-[var(--text-1)] font-extrabold tracking-[-0.05em] leading-[0.96] mb-8"
+            className="text-[var(--text-1)] font-extrabold tracking-[-0.03em] leading-[1.1] mb-8"
             style={displaySizeLg}>
             <span className="block overflow-hidden pb-[0.07em]">
               <motion.span variants={clipLeft} className="block">함께 프로젝트를</motion.span>

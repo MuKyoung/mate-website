@@ -58,7 +58,7 @@ export const PRIORITY_STYLE: Record<Priority, { dot: string; text: string; chip:
   urgent: { dot: 'bg-rose-500', text: 'text-rose-600', chip: 'bg-rose-50 text-rose-700 ring-rose-200' },
   high: { dot: 'bg-amber-500', text: 'text-amber-600', chip: 'bg-amber-50 text-amber-700 ring-amber-200' },
   normal: { dot: 'bg-slate-400', text: 'text-slate-500', chip: 'bg-slate-100 text-slate-600 ring-slate-200' },
-  low: { dot: 'bg-slate-300', text: 'text-slate-400', chip: 'bg-slate-50 text-slate-500 ring-slate-200' },
+  low: { dot: 'bg-slate-300', text: 'text-slate-500', chip: 'bg-slate-50 text-slate-500 ring-slate-200' },
 };
 
 export const DOMAIN_STYLE: Record<DomainKey, string> = {
@@ -85,7 +85,7 @@ export function Avatar({ id, size = 24 }: { id: string | null; size?: number }) 
   if (!m) {
     return (
       <span
-        className="inline-flex items-center justify-center rounded-full border border-dashed border-slate-300 text-slate-400"
+        className="inline-flex items-center justify-center rounded-full border border-dashed border-slate-300 text-slate-500"
         style={{ width: size, height: size, fontSize: size * 0.42 }}
         title="미배정"
       >
@@ -108,7 +108,7 @@ export function Avatar({ id, size = 24 }: { id: string | null; size?: number }) 
 export function Chip({ className = '', children }: { className?: string; children: React.ReactNode }) {
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-semibold
+      className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[12px] font-semibold
                   ring-1 ring-inset whitespace-nowrap ${className}`}
     >
       {children}
@@ -131,7 +131,7 @@ export function DueBadge({ due, done }: { due: string | null; done: boolean }) {
   const text =
     days === 0 ? '오늘' : days === 1 ? '내일' : days < 0 ? `${-days}일 지남` : `${days}일 남음`;
   const tone = done
-    ? 'text-slate-400'
+    ? 'text-slate-500'
     : days < 0
       ? 'text-rose-600 font-semibold'
       : days <= 3
@@ -139,7 +139,7 @@ export function DueBadge({ due, done }: { due: string | null; done: boolean }) {
         : 'text-slate-500';
 
   return (
-    <span className={`inline-flex items-center gap-1 text-[11px] tabular-nums ${tone}`}>
+    <span className={`inline-flex items-center gap-1 text-[12px] tabular-nums ${tone}`}>
       <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden>
         <rect x="2" y="3.5" width="12" height="11" rx="2" stroke="currentColor" strokeWidth="1.4" />
         <path d="M2 7h12M5.5 1.5v3M10.5 1.5v3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
@@ -183,7 +183,7 @@ function StatusMenu({ task, onMove }: { task: Task; onMove(s: Status): void }) {
         aria-label="상태 바꾸기"
         aria-haspopup="menu"
         aria-expanded={open}
-        className={`flex h-6 w-6 items-center justify-center rounded text-slate-400 transition
+        className={`flex h-6 w-6 items-center justify-center rounded text-slate-500 transition
                     hover:bg-slate-100 hover:text-slate-700
                     focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
                     ${open ? 'bg-slate-100 text-slate-700' : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 max-[1023px]:opacity-100'}`}
@@ -202,7 +202,7 @@ function StatusMenu({ task, onMove }: { task: Task; onMove(s: Status): void }) {
             <button key={st.id} role="menuitem"
               onClick={() => { onMove(st.id); setOpen(false); }}
               disabled={st.id === task.status}
-              className={`flex w-full items-center gap-2 px-2.5 py-1.5 text-left text-[12.5px] transition
+              className={`flex w-full items-center gap-2 px-2.5 py-1.5 text-left text-[13.5px] transition
                           ${st.id === task.status
                             ? 'cursor-default font-semibold text-slate-900'
                             : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}`}>
@@ -255,7 +255,7 @@ export function TaskCard({ task, onOpen, onDragStart, onDragEnd, dragging, onMov
       tabIndex={0}
       role="button"
       aria-label={`${task.key} ${task.title}`}
-      className={`group relative cursor-pointer rounded-lg border border-slate-200 bg-white p-3
+      className={`group relative cursor-pointer rounded-lg border border-slate-200 bg-white p-3.5
                   ${mine ? 'border-l-[3px] border-l-blue-500' : ''}
                   shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition
                   hover:border-slate-300 hover:shadow-[0_2px_8px_rgba(15,23,42,0.08)]
@@ -264,14 +264,14 @@ export function TaskCard({ task, onOpen, onDragStart, onDragEnd, dragging, onMov
     >
       <div className="mb-2 flex items-center gap-1.5">
         <PriorityDot p={task.priority} />
-        <span className="font-mono text-[11px] font-medium text-slate-400 tabular-nums">{task.key}</span>
+        <span className="font-mono text-[12px] font-medium text-slate-500 tabular-nums">{task.key}</span>
         <Chip className={`ml-auto ${DOMAIN_STYLE[task.domain]}`}>{domainShort(task.domain)}</Chip>
         <StatusMenu task={task} onMove={onMove} />
       </div>
 
       <p
-        className={`mb-2.5 text-[13.5px] font-medium leading-[1.45] ${
-          done ? 'text-slate-400 line-through' : 'text-slate-800'
+        className={`mb-2.5 text-[14.5px] font-medium leading-[1.45] ${
+          done ? 'text-slate-500 line-through' : 'text-slate-800'
         }`}
       >
         {task.title}
@@ -280,7 +280,7 @@ export function TaskCard({ task, onOpen, onDragStart, onDragEnd, dragging, onMov
       {task.labels.length > 0 && (
         <div className="mb-2.5 flex flex-wrap gap-1">
           {task.labels.map((l) => (
-            <span key={l} className="rounded bg-slate-100 px-1.5 py-0.5 text-[10.5px] text-slate-500">
+            <span key={l} className="rounded bg-slate-100 px-1.5 py-0.5 text-[11.5px] text-slate-500">
               {l}
             </span>
           ))}

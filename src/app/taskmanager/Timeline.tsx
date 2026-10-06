@@ -96,37 +96,37 @@ export default function Timeline({
       <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-slate-200 bg-white px-4 py-2">
         <label className="sr-only" htmlFor="tl-group">묶는 기준</label>
         <select id="tl-group" value={groupBy} onChange={(e) => setGroupBy(e.target.value as GroupBy)}
-          className="rounded-md border border-slate-200 bg-white px-2 py-1 text-[12.5px] text-slate-600 outline-none transition focus:border-blue-500">
+          className="rounded-md border border-slate-200 bg-white px-2 py-1 text-[13.5px] text-slate-600 outline-none transition focus:border-blue-500">
           <option value="domain">영역별</option>
           <option value="assignee">담당자별</option>
         </select>
         <div className="flex rounded-md border border-slate-200 bg-slate-50 p-0.5">
           {[4, 6, 10].map((w) => (
             <button key={w} onClick={() => setWeeks(w)} aria-pressed={weeks === w}
-              className={`rounded px-2.5 py-1 text-[12.5px] font-medium transition ${
+              className={`rounded px-2.5 py-1 text-[13.5px] font-medium transition ${
                 weeks === w ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>
               {w}주
             </button>
           ))}
         </div>
-        <span className="ml-auto text-[11.5px] text-slate-400">막대를 누르면 작업이 열립니다</span>
+        <span className="ml-auto text-[12.5px] text-slate-500">막대를 누르면 작업이 열립니다</span>
       </div>
 
       <div className="min-h-0 flex-1 overflow-auto">
         <div className="flex min-w-max">
           {/* 왼쪽 고정 열 */}
-          <div className="sticky left-0 z-20 w-[220px] shrink-0 border-r border-slate-200 bg-white">
+          <div className="sticky left-0 z-20 w-[252px] shrink-0 border-r border-slate-200 bg-white">
             <div className="h-[46px] border-b border-slate-200" />
             {groups.map((g) => (
               <div key={g.id}>
                 <div className="flex h-8 items-center gap-2 border-b border-slate-100 bg-slate-50 px-3">
-                  <span className="text-[11.5px] font-semibold text-slate-500">{g.label}</span>
-                  <span className="text-[11px] tabular-nums text-slate-400">{g.items.length}</span>
+                  <span className="text-[12.5px] font-semibold text-slate-500">{g.label}</span>
+                  <span className="text-[12px] tabular-nums text-slate-500">{g.items.length}</span>
                 </div>
                 {g.items.map((t) => (
                   <div key={t.id} className="flex h-[38px] items-center gap-1.5 border-b border-slate-100 px-3">
                     <PriorityDot p={t.priority} />
-                    <span className="truncate text-[12.5px] text-slate-700" title={t.title}>{t.title}</span>
+                    <span className="truncate text-[13.5px] text-slate-700" title={t.title}>{t.title}</span>
                   </div>
                 ))}
               </div>
@@ -143,17 +143,17 @@ export default function Timeline({
                 const monthStart = d.getDate() === 1 || i === 0;
                 return (
                   <div key={i} style={{ width: COL }}
-                    className={`relative flex shrink-0 flex-col items-center justify-center border-r border-slate-100 ${
+                    className={`relative flex shrink-0 flex-col items-center justify-center border-r border-slate-100 pt-4 ${
                       weekend ? 'bg-slate-50' : ''}`}>
                     {monthStart && (
-                      <span className="absolute left-1 top-0.5 whitespace-nowrap text-[10px] font-semibold text-slate-400">
+                      <span className="absolute left-1 top-[2px] whitespace-nowrap text-[11px] font-semibold text-slate-600">
                         {d.getMonth() + 1}월
                       </span>
                     )}
-                    <span className={`text-[10px] ${weekend ? 'text-slate-400' : 'text-slate-400'}`}>
+                    <span className={`text-[11px] ${weekend ? 'text-slate-500' : 'text-slate-500'}`}>
                       {WEEKDAY[d.getDay()]}
                     </span>
-                    <span className={`text-[11.5px] tabular-nums ${
+                    <span className={`text-[12.5px] tabular-nums ${
                       isToday ? 'flex h-[18px] w-[18px] items-center justify-center rounded-full bg-blue-600 font-semibold text-white'
                         : 'text-slate-600'}`}>
                       {d.getDate()}
@@ -189,7 +189,7 @@ export default function Timeline({
                         <button onClick={() => onOpen(t.id)}
                           title={`${t.title} · ${t.start ?? '시작 미정'} → ${t.due ?? '마감 미정'}`}
                           style={{ left: b.left + 3, width: b.width }}
-                          className={`absolute top-[7px] flex h-6 items-center gap-1.5 px-2 text-[11px] font-medium text-white
+                          className={`absolute top-[7px] flex h-6 items-center gap-1.5 px-2 text-[12px] font-medium text-white
                                       transition hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
                                       ${BAR[t.domain]} ${done ? 'opacity-45' : ''}
                                       ${b.cutLeft ? 'rounded-l-none' : 'rounded-l'}
@@ -209,27 +209,27 @@ export default function Timeline({
         {/* 날짜가 없는 작업 */}
         {undated.length > 0 && (
           <div className="border-t border-slate-200 bg-white p-4">
-            <p className="mb-2.5 text-[11.5px] font-semibold text-slate-500">
-              날짜 없음 <span className="tabular-nums text-slate-400">{undated.length}</span>
+            <p className="mb-2.5 text-[12.5px] font-semibold text-slate-500">
+              날짜 없음 <span className="tabular-nums text-slate-500">{undated.length}</span>
             </p>
             <div className="flex flex-wrap gap-2">
               {undated.map((t) => (
                 <button key={t.id} onClick={() => onOpen(t.id)}
-                  className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-[12.5px] text-slate-700 transition hover:border-slate-300 hover:bg-slate-50">
+                  className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-[13.5px] text-slate-700 transition hover:border-slate-300 hover:bg-slate-50">
                   <PriorityDot p={t.priority} />
-                  <span className="font-mono text-[11px] text-slate-400">{t.key}</span>
+                  <span className="font-mono text-[12px] text-slate-500">{t.key}</span>
                   <span className="max-w-[220px] truncate">{t.title}</span>
                 </button>
               ))}
             </div>
-            <p className="mt-2.5 text-[11.5px] text-slate-400">
+            <p className="mt-2.5 text-[12.5px] text-slate-500">
               작업을 열어 시작일과 마감일을 넣으면 위 타임라인에 올라옵니다.
             </p>
           </div>
         )}
 
         {groups.length === 0 && undated.length === 0 && (
-          <p className="px-4 py-16 text-center text-[13px] text-slate-400">조건에 맞는 작업이 없습니다.</p>
+          <p className="px-4 py-16 text-center text-[14px] text-slate-500">조건에 맞는 작업이 없습니다.</p>
         )}
       </div>
     </div>

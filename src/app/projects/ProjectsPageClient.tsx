@@ -36,9 +36,9 @@ export default function ProjectsPageClient({ projects }: ProjectsPageClientProps
       {/* ━━ (02) CTA ━━ */}
       <CtaSection
         num="02"
-        line1="Yours could be"
-        line2="next on this list."
-        kr={`여기 올라온 ${projects.length}건은 전부 실제 납품물입니다`}
+        line1="다음 줄에"
+        line2="들어갈 프로젝트"
+        kr={`여기 올라온 ${projects.length}건은 전부 납품이 끝난 것입니다`}
         cta="문의하기"
       />
     </>

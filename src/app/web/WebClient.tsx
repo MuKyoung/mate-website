@@ -319,17 +319,17 @@ export default function WebClient() {
             <div className="lg:col-span-7">
               <motion.p {...inView} variants={fadeLeft} className="index-num font-en mb-9">(05) Contact</motion.p>
               <motion.h2 {...inView} variants={stagger}
-                className="font-en font-extrabold text-[var(--text-1)] tracking-[-0.04em] leading-[1.0] mb-8"
-                style={{ fontSize: 'clamp(2.25rem, 6vw, 4.5rem)' }}>
+                className="font-extrabold text-[var(--text-1)] tracking-[-0.03em] leading-[1.14] mb-8"
+                style={{ fontSize: 'clamp(2rem, 4.6vw, 3.5rem)' }}>
                 <span className="block overflow-hidden pb-[0.1em] -mb-[0.1em]">
-                  <motion.span variants={clipUp} className="block">Start with</motion.span>
+                  <motion.span variants={clipUp} className="block">요구사항 정리부터</motion.span>
                 </span>
                 <span className="block overflow-hidden pb-[0.1em] -mb-[0.1em]">
-                  <motion.span variants={clipUp} className="block text-[var(--accent)]">a document.</motion.span>
+                  <motion.span variants={clipUp} className="block text-[var(--accent)]">같이 합니다</motion.span>
                 </span>
               </motion.h2>
               <motion.p {...inView} variants={fadeLeft} className="caption-kr max-w-lg">
-                — 아이디어 단계여도 좋습니다. 첫 상담에서 요구사항 정리부터 같이 시작합니다.
+                — 아이디어 단계여도 됩니다. 무엇을 만들지 문장으로 적는 데까지가 첫 상담입니다.
               </motion.p>
             </div>
             <motion.div {...inView} variants={fadeRight} className="lg:col-span-5 flex flex-wrap items-center gap-7">

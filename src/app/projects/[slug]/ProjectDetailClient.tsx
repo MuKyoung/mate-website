@@ -236,9 +236,9 @@ export default function ProjectDetailClient({ params }: Props) {
       {/* ── (03) CTA ── */}
       <CtaSection
         num={ctaNum}
-        line1="Something"
-        line2="like this?"
-        kr="비슷한 걸 만들고 계신가요? 어느 단계에 있든 첫 통화부터 시작합니다"
+        line1="비슷한 걸"
+        line2="만들고 계신가요"
+        kr="기획 단계든 중간에 멈춘 상태든 받습니다"
         cta="문의하기"
       />
     </>
