@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { Raleway } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -7,19 +6,11 @@ import FloatingContactButton from "@/components/FloatingContactButton";
 import SmoothScroll from "@/components/SmoothScroll";
 import { Analytics } from "@vercel/analytics/react";
 
-const raleway = Raleway({
-  subsets: ["latin"],
-  // 실제 사용하는 weight — 600(index-num), 700/800(디스플레이) 포함
-  weight: ["400", "500", "600", "700", "800"],
-  variable: "--font-raleway",
-  display: "swap",
-});
-
 const siteUrl = "https://devteammate.co.kr";
 
 /* 모바일 브라우저 크롬(주소창 등)을 다크 캔버스에 맞춤 */
 export const viewport: Viewport = {
-  themeColor: "#0e1117",
+  themeColor: "#101012",
 };
 
 export const metadata: Metadata = {
@@ -121,7 +112,7 @@ export default function RootLayout({
 
   return (
     <html lang="ko">
-      <body className={raleway.variable}>
+      <body>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}

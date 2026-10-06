@@ -270,7 +270,7 @@ export default function ContactPage() {
                 <div className="flex items-center justify-between gap-4 mb-5">
                   <div className="flex items-center gap-3">
                     <RiKakaoTalkFill className="text-[#3C1E1E]" size={26} />
-                    <h3 className="text-[19px] font-extrabold text-[#3C1E1E] tracking-[-0.02em]">카카오톡 문의</h3>
+                    <h3 className="text-[19px] font-bold text-[#3C1E1E] tracking-[-0.02em]">카카오톡 문의</h3>
                   </div>
                   <p className="text-[13px] font-semibold text-[#3C1E1E]/60">1:1 오픈채팅</p>
                 </div>
@@ -322,7 +322,7 @@ export default function ContactPage() {
                 className="absolute bottom-0 left-0 right-0 h-px bg-white/10 block" />
             </div>
             <motion.h2 {...inView} variants={stagger}
-              className="font-en text-[var(--text-1)] font-extrabold tracking-[-0.03em] leading-[1.04]"
+              className="font-en text-[var(--text-1)] font-bold tracking-[-0.02em] leading-[1.04]"
               style={displaySize}>
               <span className={clipWrap}>
                 <motion.span variants={clipLeft} className="block">FAQ</motion.span>

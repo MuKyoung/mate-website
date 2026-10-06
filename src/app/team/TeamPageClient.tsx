@@ -62,7 +62,7 @@ function SectionHead({ num, label, title, desc }: {
           className="absolute bottom-0 left-0 right-0 h-px bg-white/10 block" />
       </div>
       <motion.h2 {...inView} variants={stagger}
-        className="text-[var(--text-1)] font-extrabold tracking-[-0.04em] leading-[1.04]"
+        className="text-[var(--text-1)] font-bold tracking-[-0.02em] leading-[1.04]"
         style={displaySize}>
         <span className={clipWrap}>
           <motion.span variants={clip} className="block">{title}</motion.span>
@@ -97,7 +97,7 @@ export default function TeamPageClient() {
               <motion.div key={stat.label} variants={i % 2 === 0 ? fadeUp : riseTilt}
                 className={hairlineCell(i)}>
                 <div className="flex items-baseline gap-3 py-7 sm:py-9">
-                  <span className="font-en text-3xl sm:text-4xl font-extrabold text-[var(--text-1)] font-mono-stat tracking-[-0.02em]">
+                  <span className="font-en text-3xl sm:text-4xl font-bold text-[var(--text-1)] font-mono-stat tracking-[-0.02em]">
                     {stat.value}
                   </span>
                   <span className="text-[13px] text-white/45">{stat.label}</span>
@@ -119,7 +119,7 @@ export default function TeamPageClient() {
 
           <div className="grid lg:grid-cols-12 gap-y-14 gap-x-8">
             <motion.h2 {...inView} variants={stagger}
-              className="lg:col-span-5 text-[var(--text-1)] font-extrabold tracking-[-0.04em] leading-[1.04]"
+              className="lg:col-span-5 text-[var(--text-1)] font-bold tracking-[-0.02em] leading-[1.04]"
               style={displaySize}>
               <span className={clipWrap}>
                 <motion.span variants={clipUp} className="block">Unity · 웹 · 앱까지<br />한 팀에서</motion.span>
@@ -162,7 +162,7 @@ export default function TeamPageClient() {
           </div>
 
           <motion.h2 {...inView} variants={stagger}
-            className="text-[var(--text-1)] font-extrabold tracking-[-0.035em] leading-[1.1] mb-16 sm:mb-24"
+            className="text-[var(--text-1)] font-bold tracking-[-0.02em] leading-[1.1] mb-16 sm:mb-24"
             style={{ fontSize: 'clamp(2.25rem, 6vw, 4.5rem)' }}>
             <span className="block overflow-hidden pb-[0.08em]">
               <motion.span variants={clipLeft} className="block">
@@ -262,7 +262,7 @@ export default function TeamPageClient() {
         <div className={container}>
           <motion.p {...inView} variants={fadeUp} className="index-num font-en mb-10">Contact</motion.p>
           <motion.h2 {...inView} variants={stagger}
-            className="text-[var(--text-1)] font-extrabold tracking-[-0.03em] leading-[1.1] mb-8"
+            className="text-[var(--text-1)] font-bold tracking-[-0.02em] leading-[1.1] mb-8"
             style={displaySizeLg}>
             <span className="block overflow-hidden pb-[0.07em]">
               <motion.span variants={clipLeft} className="block">함께 프로젝트를</motion.span>

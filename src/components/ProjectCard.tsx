@@ -50,7 +50,7 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
 
         {/* 메타 행 — 모바일은 스택, sm부터 타이틀 좌 / 카테고리·기간 우 */}
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-6">
-          <h3 className="text-[22px] sm:text-[26px] font-extrabold text-[var(--text-1)] tracking-[-0.025em] leading-[1.2] transition-colors duration-300 group-hover:text-[var(--accent)]">
+          <h3 className="text-[22px] sm:text-[26px] font-bold text-[var(--text-1)] tracking-[-0.025em] leading-[1.2] transition-colors duration-300 group-hover:text-[var(--accent)]">
             {project.title}
           </h3>
           <p className="index-num sm:pt-2.5 sm:whitespace-nowrap sm:flex-shrink-0">

@@ -127,7 +127,7 @@ export default function EducationClient() {
             <div className="grid lg:grid-cols-12 gap-x-gutter gap-y-12">
               <div className="lg:col-span-7">
                 <motion.h1 {...onMount} variants={stagger}
-                  className="font-extrabold text-[var(--text-1)] tracking-[-0.04em] leading-[1.12] mb-9"
+                  className="font-bold text-[var(--text-1)] tracking-[-0.02em] leading-[1.12] mb-9"
                   style={{ fontSize: 'clamp(2.25rem, 5vw, 4rem)' }}>
                   <span className="block overflow-hidden pb-[0.08em] -mb-[0.08em]">
                     <motion.span variants={clipUp} className="block">현업에서 실제로</motion.span>
@@ -328,7 +328,7 @@ export default function EducationClient() {
                 Contact
               </motion.p>
               <motion.h2 {...inView} variants={stagger}
-                className="font-extrabold text-white tracking-[-0.035em] leading-[1.15] mb-8"
+                className="font-bold text-white tracking-[-0.02em] leading-[1.15] mb-8"
                 style={{ fontSize: 'clamp(1.875rem, 4.4vw, 3.25rem)' }}>
                 <span className="block overflow-hidden pb-[0.08em] -mb-[0.08em]">
                   <motion.span variants={clipUp} className="block">커리큘럼은 기관에 맞춰</motion.span>

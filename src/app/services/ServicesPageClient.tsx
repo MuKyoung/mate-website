@@ -23,7 +23,7 @@ export default function ServicesPageClient() {
           </motion.p>
           <div className="grid lg:grid-cols-12 gap-x-gutter gap-y-10 items-end">
             <motion.h1 {...onMount} variants={stagger}
-              className="lg:col-span-7 font-extrabold text-[var(--text-1)] tracking-[-0.035em] leading-[1.06]"
+              className="lg:col-span-7 font-bold text-[var(--text-1)] tracking-[-0.02em] leading-[1.06]"
               style={{ fontSize: 'clamp(2.25rem, 6.2vw, 5.25rem)' }}>
               <span className="block overflow-hidden pb-[0.1em] -mb-[0.1em]">
                 <motion.span variants={clipUp} className="block">세 영역을</motion.span>

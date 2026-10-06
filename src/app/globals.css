@@ -21,24 +21,24 @@
 
   /* gray — 쿨 뉴트럴. 50 화이트 → 600 텍스트 블랙 / 다크 캔버스 */
   --gray-50:  #ffffff;
-  --gray-100: #f5f7fa;
-  --gray-200: #dde3ed;
-  --gray-300: #b4bece;
-  --gray-400: #8792a6;
-  --gray-500: #5a6478;
-  --gray-600: #0e1117;
+  --gray-100: #f4f4f5;
+  --gray-200: #e2e2e5;
+  --gray-300: #b6b6bb;
+  --gray-400: #8a8a91;
+  --gray-500: #5e5e66;
+  --gray-600: #101012;
 
   /* point — 앰버. 한 화면에 한 번만 쓰는 강조색 */
-  --point-100: #fff3db;
-  --point-200: #ffb020;   /* 메인 포인트 컬러 */
-  --point-300: #d18a0a;
+  --point-100: #f0ddd0;
+  --point-200: #c9744e;   /* 메인 포인트 컬러 */
+  --point-300: #a4573a;
 
   /* ── 시맨틱 별칭 (다크 베이스) ───────────────────────── */
   /* 표면 */
   --canvas:     var(--gray-600);
   --background: var(--gray-600);
-  --surface:    #161b24;
-  --surface-2:  #1e2530;
+  --surface:    #17171a;
+  --surface-2:  #1f1f23;
 
   /* 경계선 — 화이트 헤어라인 */
   --border:   rgba(255, 255, 255, 0.10);
@@ -46,9 +46,9 @@
 
   /* 텍스트 위계 */
   --text-1:     var(--gray-100);
-  --text-2:     rgba(245, 247, 250, 0.64);
-  --text-3:     rgba(245, 247, 250, 0.55);  /* AA 충족 (4.28:1 → 5.8:1) */
-  --text-faint: rgba(245, 247, 250, 0.30);
+  --text-2:     rgba(244, 244, 245, 0.64);
+  --text-3:     rgba(244, 244, 245, 0.55);  /* AA 충족 (4.28:1 → 5.8:1) */
+  --text-faint: rgba(244, 244, 245, 0.30);
 
   /* 액션 — 다크 배경이므로 호버는 밝은 쪽(primary 100)으로 */
   --accent:        var(--primary-200);
@@ -59,7 +59,7 @@
 
   /* 포인트 — 앰버 강조 */
   --point:      var(--point-200);
-  --point-tint: rgba(255, 176, 32, 0.14);
+  --point-tint: rgba(201, 116, 78, 0.14);
 
   /* 시맨틱 상태 */
   --success:      #12b76a;
@@ -125,14 +125,14 @@
   --point-tint: rgba(124, 92, 255, 0.14);
 }
 [data-domain='edu'] {
-  --domain-100: #ffd98a;
-  --domain-200: #ffb020;   /* 앰버 — 온기 · 가독 */
-  --domain-300: #d18a0a;
+  --domain-100: #e8c48d;
+  --domain-200: #d9a05a;   /* 앰버 — 온기 · 가독 */
+  --domain-300: #ad7a3c;
   --accent:        var(--domain-200);
   --accent-strong: var(--domain-100);
   --accent-link:   var(--domain-100);
-  --accent-tint:   rgba(255, 176, 32, 0.16);
-  --accent-dim:    rgba(255, 176, 32, 0.10);
+  --accent-tint:   rgba(217, 160, 90, 0.16);
+  --accent-dim:    rgba(217, 160, 90, 0.10);
   /* 문서형 레이아웃 — 인덱스 라벨은 중립으로 물러나되 읽히는 밝기는 지킨다 */
   --point: var(--text-3);
 }
@@ -207,8 +207,8 @@ html[data-shell='app'] ::-webkit-scrollbar-thumb:hover { background: #afb8c1; }
 
 /* ── Typography — Figma 스케일과 1:1 (Pretendard / LS -0.3%) ──
    D1·D2는 MATE 전용 디스플레이 티어(에디토리얼 대형 영문). */
-.type-d1 { font-size: clamp(2.5rem, 10vw, 9rem);   font-weight: 800; line-height: 0.98; letter-spacing: -0.04em; }
-.type-d2 { font-size: clamp(2.25rem, 6vw, 4.75rem); font-weight: 800; line-height: 1.04; letter-spacing: -0.03em; }
+.type-d1 { font-size: clamp(2.5rem, 9vw, 7.5rem);  font-weight: 700; line-height: 1.04; letter-spacing: -0.02em; }
+.type-d2 { font-size: clamp(2.25rem, 5.4vw, 4.25rem); font-weight: 700; line-height: 1.1; letter-spacing: -0.018em; }
 .type-h1 { font-size: clamp(2rem, 4.4vw, 3.5rem);   font-weight: 700; line-height: 1.3;  letter-spacing: -0.003em; }
 .type-h2 { font-size: clamp(1.5rem, 2.6vw, 2rem);   font-weight: 700; line-height: 1.2;  letter-spacing: -0.003em; }
 .type-h3 { font-size: clamp(1.5rem, 2.6vw, 2rem);   font-weight: 500; line-height: 1.2;  letter-spacing: -0.003em; }
@@ -237,11 +237,10 @@ html {
   /* 단색 캔버스는 화면을 평평하게 만든다. 상단에 도메인 액센트를, 하단에 깊이를
      아주 옅게 깔아 공간감을 준다. html 배경이라 합성 레이어가 따로 생기지 않는다.
      오버스크롤(러버밴드) 영역도 이 값으로 덮인다. */
-  background:
-    radial-gradient(130% 62% at 50% -12%, var(--accent-dim), transparent 62%),
-    radial-gradient(90% 55% at 88% 6%, var(--point-tint), transparent 58%),
-    var(--canvas);
-  background-attachment: fixed;
+  /* 상단에 깔아 두던 액센트·포인트 발광 그라디언트를 걷어냈다.
+     화면 모서리에서 번지는 빛무리는 생성형 랜딩페이지의 가장 흔한 표시다.
+     깊이는 색이 아니라 섹션 경계의 헤어라인과 여백으로 낸다. */
+  background: var(--canvas);
 }
 
 /* Lenis 관성 스크롤이 활성일 때는 네이티브 smooth와 충돌하므로 해제 */
@@ -287,7 +286,7 @@ body::after {
   /* 콘텐츠 위, 헤더(z-50)·플로팅 버튼·포커스 링 아래 */
   z-index: 40;
   pointer-events: none;
-  opacity: 0.16;
+  opacity: 0.05;
   /* normal 로 합성하면 중간 회색이 그대로 얹혀 탁해진다.
      soft-light 는 밝은 곳은 밝게, 어두운 곳은 어둡게 흔들어 필름 입자처럼 읽힌다. */
   mix-blend-mode: soft-light;
@@ -338,9 +337,12 @@ body::after {
 .btn-primary:hover { background: var(--accent-2); transform: translateY(-1px); }
 
 
-/* 영문 디스플레이 — Raleway (레퍼런스의 EN/KR 이중 폰트 체계) */
+/* 영문 디스플레이 — 본문과 같은 가족을 쓴다.
+   Raleway 는 2010년대 템플릿에 과하게 쓰여 그 자체로 기성품 인상을 준다.
+   서체를 둘로 나누는 대신 자간과 숫자 조판만 라틴에 맞춘다. */
 .font-en {
-  font-family: var(--font-raleway), 'Pretendard Variable', Pretendard, sans-serif;
+  font-feature-settings: 'ss01', 'cv05', 'tnum';
+  letter-spacing: -0.012em;
 }
 
 /* 국문 캡션 — 영문 대형 타이포에 병기되는 가벼운 한 줄 */

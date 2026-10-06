@@ -35,7 +35,7 @@ export default function CtaSection({ num, line1, line2, kr, cta = '프로젝트 
         </motion.p>
 
         <motion.h2 {...inView} variants={stagger}
-          className="text-[var(--text-1)] font-extrabold tracking-[-0.03em] leading-[1.1] mb-8"
+          className="text-[var(--text-1)] font-bold tracking-[-0.02em] leading-[1.1] mb-8"
           style={displaySizeLg}>
           <span className={clipWrap}>
             <motion.span variants={clipLeft} className="block">{line1}</motion.span>

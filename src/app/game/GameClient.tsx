@@ -60,7 +60,7 @@ export default function GameClient() {
           </motion.p>
 
           <motion.h1 {...onMount} variants={stagger}
-            className="font-en font-extrabold text-[var(--text-1)] tracking-[-0.045em] leading-[0.92] mb-10"
+            className="font-en font-bold text-[var(--text-1)] tracking-[-0.02em] leading-[0.92] mb-10"
             style={{ fontSize: 'clamp(3rem, 11vw, 9.5rem)' }}>
             <span className="block overflow-hidden pb-[0.1em] -mb-[0.1em]">
               <motion.span variants={clipUp} className="block">PLAYABLE</motion.span>
@@ -79,7 +79,7 @@ export default function GameClient() {
             className="inline-flex flex-wrap items-center justify-center divide-x divide-white/15 border-y border-white/15">
             {d.stats.map((s) => (
               <div key={s.label} className="px-8 sm:px-12 py-6">
-                <p className="font-en text-[30px] sm:text-[38px] font-extrabold text-[var(--text-1)] font-mono-stat leading-none mb-2.5">
+                <p className="font-en text-[30px] sm:text-[38px] font-bold text-[var(--text-1)] font-mono-stat leading-none mb-2.5">
                   {s.value}
                 </p>
                 <p className="type-c2 text-white/45">{s.label}</p>
@@ -141,7 +141,7 @@ export default function GameClient() {
                          bg-[var(--surface)] p-8 sm:p-10 flex flex-col
                          hover:border-[var(--accent)] transition-colors duration-300">
               <p className="index-num-lg font-en mb-9">{c.no}</p>
-              <h3 className="font-en text-[26px] sm:text-[30px] font-extrabold text-[var(--text-1)] tracking-[-0.025em] leading-none mb-2.5">
+              <h3 className="font-en text-[26px] sm:text-[30px] font-bold text-[var(--text-1)] tracking-[-0.025em] leading-none mb-2.5">
                 {c.en}
               </h3>
               <p className="type-b3 text-[var(--accent)] mb-6">{c.kr}</p>
@@ -170,7 +170,7 @@ export default function GameClient() {
                   'py-10 sm:py-14 border-b border-white/10',
                   i > 0 ? 'sm:border-l sm:border-white/10 sm:pl-8' : '',
                 ].join(' ')}>
-                <h3 className="font-en text-[30px] sm:text-[40px] font-extrabold text-[var(--text-1)] tracking-[-0.03em] leading-none mb-4">
+                <h3 className="font-en text-[30px] sm:text-[40px] font-bold text-[var(--text-1)] tracking-[-0.02em] leading-none mb-4">
                   {p.name}
                 </h3>
                 <p className="type-c1 text-white/45 font-en">{p.detail}</p>
@@ -250,7 +250,7 @@ export default function GameClient() {
                         style={{ background: 'linear-gradient(180deg, transparent 40%, var(--accent-tint))' }} />
                     </motion.div>
                     <div className="flex items-start justify-between gap-5">
-                      <h3 className={`font-extrabold text-[var(--text-1)] tracking-[-0.025em] leading-[1.2]
+                      <h3 className={`font-bold text-[var(--text-1)] tracking-[-0.025em] leading-[1.2]
                                       transition-colors duration-300 group-hover:text-[var(--accent)]
                                       ${big ? 'text-[26px] sm:text-[34px]' : 'text-[20px] sm:text-[23px]'}`}>
                         {p.title}
@@ -301,7 +301,7 @@ export default function GameClient() {
         <div className={`relative ${container} text-center`}>
           <motion.p {...inView} variants={fadeUp} className="index-num font-en justify-center mb-10">Contact</motion.p>
           <motion.h2 {...inView} variants={stagger}
-            className="font-extrabold text-[var(--text-1)] tracking-[-0.03em] leading-[1.12] mb-10"
+            className="font-bold text-[var(--text-1)] tracking-[-0.02em] leading-[1.12] mb-10"
             style={{ fontSize: 'clamp(2.125rem, 5.4vw, 4.5rem)' }}>
             <span className="block overflow-hidden pb-[0.1em] -mb-[0.1em]">
               <motion.span variants={clipUp} className="block">장면 한 컷이면</motion.span>

@@ -63,7 +63,7 @@ export default function Home() {
 
           {/* 라인마다 다른 방향으로 열리는 스테이트먼트 */}
           <motion.p {...inView} variants={stagger}
-            className="font-extrabold text-[var(--text-1)] tracking-[-0.035em] leading-[1.22] max-w-5xl"
+            className="font-bold text-[var(--text-1)] tracking-[-0.02em] leading-[1.22] max-w-5xl"
             style={{ fontSize: 'clamp(1.625rem, 3.6vw, 3rem)' }}>
             <span className="block overflow-hidden pb-[0.1em]">
               <motion.span variants={clipUp} className="block">넘기고 나면 연락이 끊기는 외주를</motion.span>

@@ -69,7 +69,7 @@ export default function ProjectDetailClient({ params }: Props) {
           </motion.p>
 
           <motion.h1 {...onMount} variants={stagger}
-            className="text-[var(--text-1)] font-extrabold tracking-[-0.05em] leading-[0.96] mb-8 sm:mb-10 max-w-5xl"
+            className="text-[var(--text-1)] font-bold tracking-[-0.02em] leading-[0.96] mb-8 sm:mb-10 max-w-5xl"
             style={{ fontSize: 'clamp(2.5rem, 9vw, 7.5rem)' }}>
             <span className="block overflow-hidden pb-[0.07em]">
               <motion.span variants={clipUp} className="block">{project.title}</motion.span>
@@ -146,7 +146,7 @@ export default function ProjectDetailClient({ params }: Props) {
                     className="absolute bottom-0 left-0 right-0 h-px bg-white/10 block" />
                 </div>
                 <h2
-                  className="text-[var(--text-1)] font-extrabold tracking-[-0.04em] leading-[1.04] mb-9"
+                  className="text-[var(--text-1)] font-bold tracking-[-0.02em] leading-[1.04] mb-9"
                   style={displaySize}>
                   <span className={clipWrap}>
                     <motion.span variants={clipLeft} className="block">프로젝트 개요</motion.span>
@@ -168,7 +168,7 @@ export default function ProjectDetailClient({ params }: Props) {
                       className="absolute bottom-0 left-0 right-0 h-px bg-white/10 block" />
                   </div>
                   <h2
-                    className="text-[var(--text-1)] font-extrabold tracking-[-0.04em] leading-[1.04] mb-10 sm:mb-12"
+                    className="text-[var(--text-1)] font-bold tracking-[-0.02em] leading-[1.04] mb-10 sm:mb-12"
                     style={displaySize}>
                     <span className={clipWrap}>
                       <motion.span variants={clipRight} className="block">스크린샷</motion.span>
@@ -218,7 +218,7 @@ export default function ProjectDetailClient({ params }: Props) {
                           <p className="text-[16px] font-bold text-[var(--text-1)]">{d.name}</p>
                           <p className="text-[14px] text-white/55">{d.label}</p>
                         </div>
-                        <span className="text-2xl font-extrabold text-[var(--text-1)] font-mono-stat tracking-[-0.03em] flex-shrink-0">
+                        <span className="text-2xl font-bold text-[var(--text-1)] font-mono-stat tracking-[-0.02em] flex-shrink-0">
                           {d.count}
                           <span className="text-[13px] font-bold text-white/30 ml-1">명</span>
                         </span>

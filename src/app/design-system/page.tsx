@@ -208,7 +208,7 @@ export default function DesignSystemPage() {
       <Block num="03" label="Typography">
         <p className="type-d2 font-en text-[var(--text-1)] mb-4">Pretendard</p>
         <p className="type-c1 text-white/40 mb-14 font-en">
-          Letter spacing -0.3% · 국문 Pretendard / 영문 디스플레이 Raleway
+          Letter spacing -0.3% · 국문 · 영문 모두 Pretendard
         </p>
 
         <div className="border-t border-white/10">

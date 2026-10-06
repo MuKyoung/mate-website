@@ -47,7 +47,7 @@ export default function DomainSlabs({
       슬래브 제목은 영역 이름이라 페이지 전체를 대표하지 못한다.
       화면에는 띄우지 않되 문서 구조와 검색엔진에는 남긴다. */
   heading?: string;
-  /** 자체 게임 슬래브를 뒤에 붙인다 — 외주 세 영역과 성격이 달라 따로 둔다 */
+  /** 자체 게임 슬래브를 뒤에 붙인다 — 외주가 아닌 독립 사업이라 따로 둔다 */
   withGames?: boolean;
 }) {
   return (
@@ -83,7 +83,7 @@ export default function DomainSlabs({
                     <p className="index-num-lg font-en mb-5 lg:absolute lg:-top-9 lg:left-0 lg:mb-0">
                       0{i + 1}
                     </p>
-                    <h2 className="font-en mb-4 font-extrabold leading-[0.95] tracking-[-0.04em] text-[var(--text-1)]
+                    <h2 className="font-en mb-4 font-bold leading-[0.95] tracking-[-0.02em] text-[var(--text-1)]
                                    transition-colors duration-300 group-hover:text-[var(--accent)]"
                       style={{ fontSize: 'clamp(2.25rem, 5.4vw, 4.25rem)' }}>
                       {d.en}
@@ -110,7 +110,7 @@ export default function DomainSlabs({
                     <div className="space-y-4 lg:text-right">
                       {d.stats.slice(0, 2).map((st) => (
                         <div key={st.label}>
-                          <p className="font-en type-h3 font-mono-stat mb-1.5 font-extrabold leading-none text-[var(--text-1)]">
+                          <p className="font-en type-h3 font-mono-stat mb-1.5 font-bold leading-none text-[var(--text-1)]">
                             {st.value}
                           </p>
                           <p className="type-c2 text-white/40">{st.label}</p>
@@ -134,7 +134,8 @@ export default function DomainSlabs({
 
       {withGames && (
         <motion.div {...(eager ? onMount : inView)} variants={fadeUp} data-domain="game">
-          {/* 링크가 아니다 — 두 타이틀 다 제작 중이라 보낼 스토어도 상세 페이지도 아직 없다 */}
+          {/* 외주 세 영역과 나란히 두되 링크는 걸지 않는다 —
+              두 타이틀 다 제작 중이라 보낼 스토어도 상세 페이지도 아직 없다 */}
           <div className="relative overflow-hidden border-b border-white/10">
             <div className="absolute inset-0 opacity-[0.55]"
               style={{ background: 'linear-gradient(90deg, var(--accent-dim), transparent 58%)' }} />
@@ -145,7 +146,7 @@ export default function DomainSlabs({
                   <p className="index-num-lg font-en mb-5 lg:absolute lg:-top-9 lg:left-0 lg:mb-0">
                     0{domains.length + 1}
                   </p>
-                  <h2 className="font-en mb-4 font-extrabold leading-[0.95] tracking-[-0.04em] text-[var(--text-1)]"
+                  <h2 className="font-en mb-4 font-bold leading-[0.95] tracking-[-0.02em] text-[var(--text-1)]"
                     style={{ fontSize: 'clamp(2.25rem, 5.4vw, 4.25rem)' }}>
                     Original Games
                   </h2>
@@ -154,11 +155,11 @@ export default function DomainSlabs({
 
                 <div className="lg:col-span-5 lg:pl-6">
                   <p className="type-h3 mb-5 leading-[1.45] text-[var(--text-1)]">
-                    발주처 없이 저희 이름으로 내는 게임
+                    MATE 이름으로 내는 게임
                   </p>
                   <p className="type-b3 mb-7 max-w-md leading-[1.85] text-white/50">
-                    기획부터 판권까지 직접 쥐고 만듭니다. 외주로 쌓은 것을 저희 게임에 먼저 써 보고,
-                    되는 것만 고객사 프로젝트로 가져갑니다.
+                    기획과 아트, 개발, 퍼블리싱까지 팀 안에서 끝냅니다. 판권도 저희가 쥡니다.
+                    지금 두 타이틀을 만들고 있습니다.
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {games.map((g) => (
@@ -174,7 +175,7 @@ export default function DomainSlabs({
                 <div className="flex justify-between gap-6 lg:col-span-2 lg:h-full lg:flex-col lg:items-end">
                   <div className="space-y-4 lg:text-right">
                     <div>
-                      <p className="font-en type-h3 font-mono-stat mb-1.5 font-extrabold leading-none text-[var(--text-1)]">
+                      <p className="font-en type-h3 font-mono-stat mb-1.5 font-bold leading-none text-[var(--text-1)]">
                         {games.length}종
                       </p>
                       <p className="type-c2 text-white/40">제작 중인 타이틀</p>
@@ -183,7 +184,7 @@ export default function DomainSlabs({
                 </div>
               </div>
 
-              <p className="type-c1 relative mt-8 text-white/35">— 공개할 수 있는 단계가 되면 여기에 올립니다</p>
+              <p className="type-c1 relative mt-8 text-white/35">— 자체 IP · 공개할 수 있는 단계가 되면 여기에 올립니다</p>
             </div>
           </div>
         </motion.div>
