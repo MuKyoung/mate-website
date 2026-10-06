@@ -3,7 +3,7 @@ import GameClient from './GameClient';
 
 const siteUrl = 'https://devteammate.co.kr';
 const title = '게임 · XR 개발 외주';
-/* 공유 카드에는 브랜드를 붙인다 — 루트 template 은 문서 제목에만 적용되므로 */
+/* 공유 카드에는 브랜드를 붙인다 - 루트 template 은 문서 제목에만 적용되므로 */
 const ogTitle = '게임 · XR 개발 외주 | Mate 외주개발팀';
 const description =
   'Unity 기반 2D · 3D 게임과 VR · AR 콘텐츠를 만듭니다. G-STAR 전시, 한국콘텐츠진흥원 지원사업을 거친 팀이 기획부터 출시까지 맡습니다.';

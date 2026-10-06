@@ -4,7 +4,7 @@ import { container, sectionPad } from '@/lib/styles';
 
 export const metadata: Metadata = {
   title: 'Design System',
-  description: 'MATE 디자인 시스템 — 컬러 · 타이포그래피 · 그리드 · 컴포넌트 토큰 레퍼런스.',
+  description: 'MATE 디자인 시스템 · 컬러 · 타이포그래피 · 그리드 · 컴포넌트 토큰 레퍼런스.',
   robots: { index: false, follow: false },
 };
 
@@ -144,7 +144,7 @@ export default function DesignSystemPage() {
           MATE DS
         </h1>
         <p className="caption-kr max-w-2xl">
-          — 컬러 · 타이포그래피 · 그리드 · 컴포넌트를 하나의 토큰 체계로 관리합니다.
+          컬러 · 타이포그래피 · 그리드 · 컴포넌트를 하나의 토큰 체계로 관리합니다.
           모든 값의 단일 원천은 <span className="font-en text-[var(--point)]">globals.css :root</span> 입니다.
         </p>
       </div>
@@ -184,9 +184,9 @@ export default function DesignSystemPage() {
 
       {/* ── Color System ── */}
       <Block num="02" label="Color System">
-        <SwatchGrid title="Primary — 딥 인디고 / 액션" items={PRIMARY} />
-        <SwatchGrid title="Gray — 쿨 뉴트럴 / 표면·텍스트" items={GRAY} />
-        <SwatchGrid title="Point — 앰버 / 강조·활성" items={POINT} />
+        <SwatchGrid title="Primary · 딥 인디고 / 액션" items={PRIMARY} />
+        <SwatchGrid title="Gray · 쿨 뉴트럴 / 표면·텍스트" items={GRAY} />
+        <SwatchGrid title="Point · 클레이 / 강조·활성" items={POINT} />
 
         <div className="mt-16 grid sm:grid-cols-2 gap-gutter">
           <div className="rounded-card border border-white/10 p-8">
@@ -337,10 +337,10 @@ export default function DesignSystemPage() {
           <div className="rounded-card border border-white/10 p-8">
             <p className="type-b4 text-white/55 mb-7 font-en uppercase tracking-[0.14em]">Text</p>
             <div className="flex flex-col gap-3">
-              <p className="type-b3 text-[var(--text-1)]">text-1 — 제목 · 본문</p>
-              <p className="type-b3 text-[var(--text-2)]">text-2 — 보조 설명</p>
-              <p className="type-b3 text-[var(--text-3)]">text-3 — 메타 정보</p>
-              <p className="type-b3 text-[var(--text-faint)]">faint — 비활성</p>
+              <p className="type-b3 text-[var(--text-1)]">text-1: 제목 · 본문</p>
+              <p className="type-b3 text-[var(--text-2)]">text-2: 보조 설명</p>
+              <p className="type-b3 text-[var(--text-3)]">text-3: 메타 정보</p>
+              <p className="type-b3 text-[var(--text-faint)]">faint: 비활성</p>
             </div>
           </div>
 
@@ -364,13 +364,13 @@ export default function DesignSystemPage() {
             <p className="type-b4 text-white/55 mb-7 font-en uppercase tracking-[0.14em]">States</p>
             <div className="flex flex-col gap-3">
               <p className="type-b3 border-l-2 border-[var(--success)] pl-4 text-[var(--success-on-dark)]">
-                success — 전송 완료
+                success: 전송 완료
               </p>
               <p className="type-b3 border-l-2 border-[var(--danger)] pl-4 text-[var(--danger-on-dark)]">
-                danger — 오류 발생
+                danger: 오류 발생
               </p>
               <p className="type-b3 border-l-2 border-[var(--point)] pl-4 text-[var(--point)]">
-                active — 현재 위치
+                active: 현재 위치
               </p>
             </div>
           </div>

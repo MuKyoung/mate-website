@@ -1,4 +1,4 @@
-/** 작업 관리 도구 — 마케팅 사이트의 타입과 공유하지 않는 독립 모델 */
+/** 작업 관리 도구 - 마케팅 사이트의 타입과 공유하지 않는 독립 모델 */
 
 export type Status = 'backlog' | 'todo' | 'doing' | 'review' | 'done';
 export type Priority = 'urgent' | 'high' | 'normal' | 'low';
@@ -21,9 +21,9 @@ export interface Task {
   status: Status;
   priority: Priority;
   domain: DomainKey;
-  /** Member.id — 미배정이면 null */
+  /** Member.id - 미배정이면 null */
   assignee: string | null;
-  /** YYYY-MM-DD, 없으면 null — 타임라인 막대의 시작 */
+  /** YYYY-MM-DD, 없으면 null - 타임라인 막대의 시작 */
   start: string | null;
   /** YYYY-MM-DD, 없으면 null */
   due: string | null;
@@ -79,7 +79,7 @@ export const domainShort = (d: DomainKey) => DOMAINS.find((x) => x.id === d)?.sh
 export interface Doc {
   id: string;
   title: string;
-  /** 상위 문서 id — 최상위는 null */
+  /** 상위 문서 id - 최상위는 null */
   parentId: string | null;
   /** 마크다운 본문 */
   body: string;

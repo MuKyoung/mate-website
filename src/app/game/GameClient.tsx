@@ -36,16 +36,16 @@ export default function GameClient() {
   return (
     <div data-domain="game">
 
-      {/* ━━━━━━ HERO — 풀블리드 이미지 위 중앙 정렬 ━━━━━━ */}
+      {/* ━━━━━━ HERO - 풀블리드 이미지 위 중앙 정렬 ━━━━━━ */}
       <section ref={heroRef} className="relative min-h-[92vh] flex items-center justify-center overflow-hidden">
         <motion.div style={{ y: bgY, scale: bgScale }} className="absolute inset-0">
           <SafeImage src="/images/projects/영창하세요마법사님.webp" alt="" fill className="absolute inset-0" />
         </motion.div>
-        {/* 비네트 — 상하단을 캔버스로 녹여 헤더/다음 섹션과 이어 붙인다 */}
+        {/* 비네트 - 상하단을 캔버스로 녹여 헤더/다음 섹션과 이어 붙인다 */}
         <div className="absolute inset-0" style={{ background: 'var(--canvas)', opacity: 0.66 }} />
         {/* 타이포가 앉는 중앙만 한 겹 더 눌러 글자를 띄운다 */}
         <div className="absolute inset-0"
-          style={{ background: 'radial-gradient(58% 42% at 50% 42%, rgba(14,17,23,0.78) 0%, transparent 100%)' }} />
+          style={{ background: 'radial-gradient(58% 42% at 50% 42%, rgba(8,8,10,0.72) 0%, transparent 100%)' }} />
         <div className="absolute inset-0"
           style={{ background: 'radial-gradient(120% 82% at 50% 42%, transparent 0%, var(--canvas) 84%)' }} />
         <div className="absolute inset-x-0 bottom-0 h-56"
@@ -89,7 +89,7 @@ export default function GameClient() {
         </motion.div>
       </section>
 
-      {/* ━━━━━━ REEL — 썸네일 마퀴 ━━━━━━ */}
+      {/* ━━━━━━ REEL - 썸네일 마퀴 ━━━━━━ */}
       <section className="py-14 sm:py-20 overflow-hidden border-y border-white/10">
         <div className="flex gap-4 animate-marquee w-max">
           {[...reel, ...reel].map((p, i) => (
@@ -104,7 +104,7 @@ export default function GameClient() {
         </div>
       </section>
 
-      {/* ━━━━━━ CAPABILITIES — 가로 스크롤 레일 ━━━━━━ */}
+      {/* ━━━━━━ CAPABILITIES - 가로 스크롤 레일 ━━━━━━ */}
       <section className="py-24 sm:py-36">
         <div className={`${container} mb-12 sm:mb-16`}>
           <div className="flex flex-wrap items-end justify-between gap-8">
@@ -180,7 +180,7 @@ export default function GameClient() {
         </div>
       </section>
 
-      {/* ━━━━━━ PIPELINE — 좌측 라인 진행 ━━━━━━ */}
+      {/* ━━━━━━ PIPELINE - 좌측 라인 진행 ━━━━━━ */}
       <section className="py-24 sm:py-36 border-t border-white/10">
         <div className={container}>
           <div className="grid lg:grid-cols-12 gap-x-gutter gap-y-14">
@@ -213,7 +213,7 @@ export default function GameClient() {
         </div>
       </section>
 
-      {/* ━━━━━━ WORK — 비대칭 매거진 그리드 ━━━━━━ */}
+      {/* ━━━━━━ WORK - 비대칭 매거진 그리드 ━━━━━━ */}
       <section className="py-24 sm:py-36 border-t border-white/10">
         <div className={container}>
           <div className="flex flex-wrap items-end justify-between gap-6 mb-16 sm:mb-20">
@@ -271,7 +271,7 @@ export default function GameClient() {
         </div>
       </section>
 
-      {/* ━━━━━━ CREDENTIALS — 전시·수상 ━━━━━━ */}
+      {/* ━━━━━━ CREDENTIALS - 전시·수상 ━━━━━━ */}
       {credentials.length > 0 && (
         <section className="py-24 sm:py-36 border-t border-white/10">
           <div className={container}>
@@ -294,7 +294,7 @@ export default function GameClient() {
         </section>
       )}
 
-      {/* ━━━━━━ CTA — 풀블리드 컬러 밴드 ━━━━━━ */}
+      {/* ━━━━━━ CTA - 풀블리드 컬러 밴드 ━━━━━━ */}
       <section className="relative py-28 sm:py-44 overflow-hidden border-t border-white/10">
         <div className="absolute inset-0 pointer-events-none"
           style={{ background: 'radial-gradient(90% 100% at 50% 100%, var(--accent-tint) 0%, transparent 70%)' }} />
@@ -311,7 +311,7 @@ export default function GameClient() {
             </span>
           </motion.h2>
           <motion.p {...inView} variants={fadeUp} className="caption-kr mb-14 max-w-xl mx-auto">
-            — 기획서가 없어도 됩니다. 만들고 싶은 화면을 말로 설명해 주셔도 됩니다.
+            기획서가 없어도 됩니다. 만들고 싶은 화면을 말로 설명해 주셔도 됩니다.
           </motion.p>
           <motion.div {...inView} variants={fadeUp} className="flex flex-wrap items-center justify-center gap-8">
             <Link href="/contact?domain=game"

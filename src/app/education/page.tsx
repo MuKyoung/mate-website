@@ -3,7 +3,7 @@ import EducationClient from './EducationClient';
 
 const siteUrl = 'https://devteammate.co.kr';
 const title = '개발 교육 · 강의';
-/* 공유 카드에는 브랜드를 붙인다 — 루트 template 은 문서 제목에만 적용되므로 */
+/* 공유 카드에는 브랜드를 붙인다 - 루트 template 은 문서 제목에만 적용되므로 */
 const ogTitle = '개발 교육 · 강의 | Mate 외주개발팀';
 const description =
   'Unity 게임 개발, 웹 · 앱 개발, AI 활용 개발 커리큘럼. 고등학교 · 대학교 · 기관 대상으로 실무 기반 과정을 기관 목표에 맞춰 재구성해 진행합니다.';

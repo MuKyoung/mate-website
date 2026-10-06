@@ -34,9 +34,9 @@ export interface Project {
 
 export interface Testimonial {
   id: string;
-  /** 직함 — 실명 대신 노출한다 */
+  /** 직함 - 실명 대신 노출한다 */
   role: string;
-  /** 업종 — 사명 대신 노출한다 */
+  /** 업종 - 사명 대신 노출한다 */
   company?: string;
   content: string;
   projectId?: string; // 관련 프로젝트 ID
@@ -62,7 +62,7 @@ export interface ProcessStep {
 /** MATE의 3개 사업 도메인 */
 export type DomainKey = 'web' | 'game' | 'edu';
 
-/** 도메인 공통 메타 — 허브/네비/카드에서 쓰인다 */
+/** 도메인 공통 메타 - 허브/네비/카드에서 쓰인다 */
 export interface DomainMeta {
   key: DomainKey;
   /** 라우트 세그먼트 */
@@ -73,7 +73,7 @@ export interface DomainMeta {
   kr: string;
   /** 한 줄 포지셔닝 */
   lead: string;
-  /** 홈 전용 — 이 영역을 찾게 되는 상황 */
+  /** 홈 전용 - 이 영역을 찾게 되는 상황 */
   trigger: string;
   /** 허브 카드용 요약 */
   summary: string;

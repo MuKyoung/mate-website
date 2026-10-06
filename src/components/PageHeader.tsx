@@ -30,7 +30,7 @@ export default function PageHeader({ title, description, eyebrow }: PageHeaderPr
               <motion.span variants={clipUp} className="block">{title}</motion.span>
             </span>
           </motion.h1>
-          {/* 설명은 우측 칼럼 — 오른쪽에서 진입해 방향을 분리 */}
+          {/* 설명은 우측 칼럼 - 오른쪽에서 진입해 방향을 분리 */}
           <motion.p {...onMount} variants={fadeRight}
             className="lg:col-span-4 text-[16px] sm:text-lg text-white/55 leading-[1.7] lg:pb-4">
             {description}

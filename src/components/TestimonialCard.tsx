@@ -11,7 +11,7 @@ interface TestimonialCardProps {
   lead?: boolean;
 }
 
-/** 인용 행 — 박스 없이 상단 헤어라인으로 구분 */
+/** 인용 행 - 박스 없이 상단 헤어라인으로 구분 */
 export default function TestimonialCard({ testimonial, index, lead = false }: TestimonialCardProps) {
   return (
     <motion.div
@@ -31,7 +31,7 @@ export default function TestimonialCard({ testimonial, index, lead = false }: Te
       </p>
       <p className="index-num">
         {testimonial.role}
-        {testimonial.company && <span className="text-white/50">— {testimonial.company}</span>}
+        {testimonial.company && <span className="text-white/50">{testimonial.company}</span>}
       </p>
     </motion.div>
   );

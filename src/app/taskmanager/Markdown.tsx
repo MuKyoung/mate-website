@@ -9,7 +9,7 @@ import React from 'react';
  * React 엘리먼트로 바로 세우므로 dangerouslySetInnerHTML 이 아예 없고,
  * 따라서 본문에 스크립트가 섞여도 실행되지 않는다.
  *
- * 지원 범위 — 제목, 목록, 체크박스, 인용(패널), 표, 코드 블록, 구분선,
+ * 지원 범위 - 제목, 목록, 체크박스, 인용(패널), 표, 코드 블록, 구분선,
  * 인라인 굵게/기울임/코드/링크.
  */
 
@@ -19,7 +19,7 @@ export interface Heading {
   id: string;
 }
 
-/** 제목 텍스트를 앵커 id 로 — 한글을 그대로 쓰되 공백만 정리한다 */
+/** 제목 텍스트를 앵커 id 로 - 한글을 그대로 쓰되 공백만 정리한다 */
 export function slug(text: string, i: number): string {
   const base = text.trim().replace(/\s+/g, '-').replace(/[^\p{L}\p{N}-]/gu, '');
   return `h-${i}-${base.slice(0, 40) || 'section'}`;
@@ -151,7 +151,7 @@ export default function Markdown({
       continue;
     }
 
-    // 표 — 헤더 + 구분행이 있어야 표로 본다
+    // 표 - 헤더 + 구분행이 있어야 표로 본다
     if (line.trim().startsWith('|') && /^\s*\|[\s:|-]+\|\s*$/.test(lines[i + 1] ?? '')) {
       const cells = (row: string) => row.trim().replace(/^\||\|$/g, '').split('|').map((c) => c.trim());
       const head = cells(line);
@@ -187,7 +187,7 @@ export default function Markdown({
       continue;
     }
 
-    // 인용 — Confluence 의 정보 패널처럼 세운다
+    // 인용 - Confluence 의 정보 패널처럼 세운다
     if (line.trimStart().startsWith('>')) {
       const buf: string[] = [];
       while (i < lines.length && lines[i].trimStart().startsWith('>')) {
@@ -243,7 +243,7 @@ export default function Markdown({
     // 빈 줄
     if (!line.trim()) { i += 1; continue; }
 
-    // 문단 — 다음 빈 줄까지 묶는다
+    // 문단 - 다음 빈 줄까지 묶는다
     const buf: string[] = [];
     while (
       i < lines.length && lines[i].trim() &&

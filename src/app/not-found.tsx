@@ -18,10 +18,10 @@ export default function NotFound() {
           </Link>
         </motion.div>
 
-        {/* 라벨 행 — 헤어라인 라인 드로우 */}
+        {/* 라벨 행 - 헤어라인 라인 드로우 */}
         <div className="relative pb-6 mb-10 sm:mb-12">
           <motion.p variants={fadeRight} className="index-num font-en">
-            404 — Not Found
+            404 Not Found
           </motion.p>
           <motion.span variants={lineDraw}
             className="absolute bottom-0 left-0 right-0 h-px bg-white/10 block" />

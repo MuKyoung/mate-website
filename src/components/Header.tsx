@@ -16,7 +16,7 @@ const navItems = [
   { href: '/team',      label: '팀' },
 ];
 
-/** 히어로가 밝은 라우트 — 헤더를 라이트 변형으로 뒤집는다 (Figma DS header light) */
+/** 히어로가 밝은 라우트 - 헤더를 라이트 변형으로 뒤집는다 (Figma DS header light) */
 const LIGHT_ROUTES = ['/education'];
 
 export default function Header() {
@@ -42,7 +42,7 @@ export default function Header() {
 
   useEffect(() => { setMobileMenuOpen(false); }, [pathname]);
 
-  // 작업 관리 도구는 자체 셸을 쓴다 — 마케팅 헤더가 끼어들지 않게 한다
+  // 작업 관리 도구는 자체 셸을 쓴다 - 마케팅 헤더가 끼어들지 않게 한다
   if (pathname.startsWith('/taskmanager')) return null;
 
   const solid = isScrolled || isMobileMenuOpen;
@@ -68,7 +68,7 @@ export default function Header() {
     >
       <nav className="container mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
 
-        {/* 로고 — 다크 위 화이트 */}
+        {/* 로고 - 다크 위 화이트 */}
         <Link href="/" className="inline-flex items-center hover:opacity-80 transition-opacity">
           <Image
             src="/images/logo.png"

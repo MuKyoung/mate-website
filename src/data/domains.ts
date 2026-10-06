@@ -6,7 +6,7 @@ const cap = Object.fromEntries(
   teamCapabilities.capabilities.map((c) => [c.id, c]),
 ) as Record<'unity' | 'outsourcing' | 'education', (typeof teamCapabilities.capabilities)[number]>;
 
-/** 대응 플랫폼 — 지표(N종)와 목록이 따로 놀지 않도록 여기서 한 번만 정의한다 */
+/** 대응 플랫폼 - 지표(N종)와 목록이 따로 놀지 않도록 여기서 한 번만 정의한다 */
 export const gamePlatforms = [
   { name: 'PC', detail: 'Windows' },
   { name: 'Mobile', detail: 'iOS · Android' },
@@ -18,12 +18,12 @@ export const gameCredentials = awards
   .filter((a) => /게임|G-STAR|메타버스|인디/.test(`${a.title}${a.organization}`))
   .sort((a, b) => b.year - a.year);
 
-/** 홈에 올릴 대표 이력 — 최근 것부터 6건 (전체 목록은 /team) */
+/** 홈에 올릴 대표 이력 - 최근 것부터 6건 (전체 목록은 /team) */
 export const homeCredentials = [...awards]
   .sort((a, b) => b.year - a.year)
   .slice(0, 6);
 
-/** 교육·연구 기관과 맞닿은 이력 — 게임 전시·수상은 게임 도메인 몫이므로 제외한다 */
+/** 교육·연구 기관과 맞닿은 이력 - 게임 전시·수상은 게임 도메인 몫이므로 제외한다 */
 export const eduRecord = awards
   .filter((a) => /교육부|대학교|공학|교육혁신|산학협력/.test(`${a.organization}${a.title}`))
   .filter((a) => !/게임|G-STAR|인디|메타버스/.test(`${a.title}${a.organization}`))
@@ -92,10 +92,10 @@ export const domainByKey = Object.fromEntries(
 ) as Record<DomainMeta['key'], DomainMeta>;
 
 /* ═══════════════════════════════════════════════════════
-   WEB — 웹 · 앱 개발
+   WEB - 웹 · 앱 개발
    ═══════════════════════════════════════════════════════ */
 
-/** 3단계 서비스 — 아코디언으로 펼쳐지는 작업 범위 */
+/** 3단계 서비스 - 아코디언으로 펼쳐지는 작업 범위 */
 export const webScope = [
   {
     id: 'product',
@@ -139,7 +139,7 @@ export const webScope = [
   },
 ];
 
-/** 기술 스택 — 레이어별로 묶어 보여준다 */
+/** 기술 스택 - 레이어별로 묶어 보여준다 */
 export const webStack = [
   { layer: 'Frontend', items: ['HTML · CSS · JavaScript', 'React', 'Next.js', 'TypeScript'] },
   { layer: 'Mobile', items: ['Flutter'] },
@@ -147,7 +147,7 @@ export const webStack = [
   { layer: 'Infra', items: ['AWS', 'Vercel', 'GitHub'] },
 ];
 
-/** 인도물 — 계약이 끝나면 무엇이 남는가 */
+/** 인도물 - 계약이 끝나면 무엇이 남는가 */
 export const webDeliverables = [
   {
     title: '소스 코드 전체',
@@ -168,10 +168,10 @@ export const webDeliverables = [
 ];
 
 /* ═══════════════════════════════════════════════════════
-   GAME — 게임 · XR 개발
+   GAME - 게임 · XR 개발
    ═══════════════════════════════════════════════════════ */
 
-/** 제작 유형 — 가로 스크롤 카드 */
+/** 제작 유형 - 가로 스크롤 카드 */
 export const gameCapabilities = [
   {
     id: '2d',
@@ -233,11 +233,11 @@ export const gamePipeline = [
 ];
 
 /* ═══════════════════════════════════════════════════════
-   EDUCATION — 교육 · 강의
+   EDUCATION - 교육 · 강의
    ═══════════════════════════════════════════════════════ */
 
 /**
- * 커리큘럼 — 주차별 아코디언.
+ * 커리큘럼 - 주차별 아코디언.
  * 아래는 표준안이며, 실제 과정은 기관의 시수·수준·목표에 맞춰 다시 구성한다.
  */
 export const eduCourses = [
@@ -310,7 +310,7 @@ export const eduAudiences = [
 export const eduFormat = [
   { k: '진행 형태', v: '오프라인 · 온라인 · 병행 모두 가능' },
   { k: '정규 과정', v: '12주 · 주 1회 3시간이 표준 (AI 활용 과정은 8주)' },
-  { k: '최장 운영', v: '9개월 연속 — 미래산업과학고 정규 수업' },
+  { k: '최장 운영', v: '9개월 연속, 미래산업과학고 정규 수업' },
   { k: '최소 단위', v: '단기 특강 4시간부터' },
   { k: '준비물', v: '개인 노트북 · 실습 환경은 사전에 세팅해 드립니다' },
   { k: '산출물', v: '수강생마다 빌드된 결과물과 소스 코드가 남습니다' },

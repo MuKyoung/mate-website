@@ -52,7 +52,7 @@ export function useFocusTrap<T extends HTMLElement>(active = true) {
   return ref;
 }
 
-/* ── 색 매핑 — 도구 전용. 마케팅 사이트 토큰과 공유하지 않는다 ── */
+/* ── 색 매핑 - 도구 전용. 마케팅 사이트 토큰과 공유하지 않는다 ── */
 
 export const PRIORITY_STYLE: Record<Priority, { dot: string; text: string; chip: string }> = {
   urgent: { dot: 'bg-gh-danger', text: 'text-gh-danger-fg', chip: 'border-gh-danger-border text-gh-danger-fg' },
@@ -68,7 +68,7 @@ export const DOMAIN_STYLE: Record<DomainKey, string> = {
   ops: 'border-gh-border text-gh-fg-muted',
 };
 
-/** 상태 — GitHub 의 Open/Merged 배지처럼 꽉 채우고 흰 글자를 올린다 */
+/** 상태 - GitHub 의 Open/Merged 배지처럼 꽉 채우고 흰 글자를 올린다 */
 export const STATUS_STYLE: Record<Status, { fill: string; dot: string }> = {
   // fill 은 흰 글자를 올리므로 4.5:1 을 넘는 색만 쓴다 (#6e7781 은 4.0:1 로 모자람).
   // dot 은 글자가 아니라 라벨 옆 표식이라 원래 색조를 그대로 둔다.
@@ -99,7 +99,7 @@ export const ghBtn =
   'transition-colors duration-150 hover:bg-gh-canvas-mute active:bg-gh-border ' +
   'disabled:cursor-not-allowed disabled:opacity-50';
 
-/** 주 동작 — GitHub 의 New 버튼처럼 초록 */
+/** 주 동작 - GitHub 의 New 버튼처럼 초록 */
 export const ghBtnPrimary =
   'inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-[#1f883d26] ' +
   'bg-gh-success px-3 text-[14px] font-medium text-white ' +
@@ -119,7 +119,7 @@ export const ghField =
   'h-8 rounded-md border border-gh-border bg-gh-canvas px-2 text-[14px] text-gh-fg outline-none ' +
   'transition-shadow duration-150 focus:border-gh-accent focus:shadow-[0_0_0_3px_rgba(9,105,218,0.1)]';
 
-/** 숫자 배지 — GitHub 의 Counter */
+/** 숫자 배지 - GitHub 의 Counter */
 export const ghCounter =
   'inline-flex min-w-[20px] items-center justify-center rounded-full bg-gh-neutral-muted ' +
   'px-[6px] text-[12px] font-medium tabular-nums text-gh-fg-muted';
@@ -135,7 +135,7 @@ export function Avatar({ id, size = 24 }: { id: string | null; size?: number }) 
         style={{ width: size, height: size, fontSize: size * 0.42 }}
         title="미배정"
       >
-        —
+        ·
       </span>
     );
   }
@@ -166,7 +166,7 @@ export function PriorityDot({ p }: { p: Priority }) {
   return <span className={`inline-block h-2 w-2 shrink-0 rounded-full ${PRIORITY_STYLE[p].dot}`} />;
 }
 
-/** 마감일 — 지났으면 빨강, 사흘 안이면 주황 */
+/** 마감일 - 지났으면 빨강, 사흘 안이면 주황 */
 export function DueBadge({ due, done }: { due: string | null; done: boolean }) {
   if (!due) return null;
   const today = new Date();

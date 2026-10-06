@@ -108,7 +108,7 @@ export default function TaskManagerClient() {
     return () => clearTimeout(t);
   }, [store.undoLabel]);
 
-  /* ── 단축키 — 입력 중에는 가로채지 않는다 ── */
+  /* ── 단축키 - 입력 중에는 가로채지 않는다 ── */
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const el = e.target as HTMLElement | null;
@@ -149,7 +149,7 @@ export default function TaskManagerClient() {
       .sort((a, b) => a.order - b.order);
   }, [store.tasks, scope, me, priorityFilter, hideDone, query]);
 
-  /** 목록 뷰 정렬 — 머리글을 누르면 그 열 기준으로 선다 */
+  /** 목록 뷰 정렬 - 머리글을 누르면 그 열 기준으로 선다 */
   const sorted = useMemo(() => {
     if (!sort) return visible;
     const rank = { urgent: 0, high: 1, normal: 2, low: 3 } as Record<Priority, number>;
@@ -200,7 +200,7 @@ export default function TaskManagerClient() {
     setOpenId(t.id);
   }, [store]);
 
-  /** 캘린더에서 날짜를 눌러 만들 때 — 그 날을 마감일로 미리 채운다 */
+  /** 캘린더에서 날짜를 눌러 만들 때 - 그 날을 마감일로 미리 채운다 */
   const createAt = useCallback((dueISO: string) => {
     setCreatingDue(dueISO);
     setCreating('todo');
@@ -224,7 +224,7 @@ export default function TaskManagerClient() {
   const onDrop = (e: React.DragEvent, status: Status, beforeId: string | null) => {
     e.preventDefault();
     e.stopPropagation();
-    // dataTransfer 를 1순위로 읽는다 — 리렌더 타이밍과 무관하게 집은 카드를 알 수 있다
+    // dataTransfer 를 1순위로 읽는다 - 리렌더 타이밍과 무관하게 집은 카드를 알 수 있다
     const id = e.dataTransfer.getData('text/plain') || dragId;
     if (id) store.move(id, status, beforeId);
     setDragId(null);
@@ -255,7 +255,7 @@ export default function TaskManagerClient() {
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-gh-canvas-subtle text-gh-fg">
 
-      {/* ── 전역 헤더 — GitHub 은 제품 전체를 어두운 띠 하나로 묶는다 ── */}
+      {/* ── 전역 헤더 - GitHub 은 제품 전체를 어두운 띠 하나로 묶는다 ── */}
       <header className="flex h-12 shrink-0 items-center gap-3 bg-[#1f2328] px-4 text-white">
         <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-[13px] font-bold text-[#1f2328]">
           M
@@ -395,7 +395,7 @@ export default function TaskManagerClient() {
           </div>
         </header>
 
-        {/* 제목 + 필터 — 작업 섹션에서만 */}
+        {/* 제목 + 필터 - 작업 섹션에서만 */}
         {section === 'tasks' && (
         <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-gh-border bg-gh-canvas px-4 py-2.5">
           <h1 className="mr-1 text-[15px] font-semibold text-gh-fg">{scopeTitle}</h1>
@@ -505,7 +505,7 @@ export default function TaskManagerClient() {
 
                     <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-2 pb-3">
                       {items.map((t) => (
-                        /* 삽입 표시선은 absolute 로 띄운다 — 레이아웃을 밀면 드롭 직전에
+                        /* 삽입 표시선은 absolute 로 띄운다 - 레이아웃을 밀면 드롭 직전에
                            커서 아래 요소가 바뀌어 drop 이 취소된다 */
                         <div key={t.id} className="relative"
                           onDragOver={(e) => { e.stopPropagation(); onColumnDragOver(e, s.id, t.id); }}
@@ -526,7 +526,7 @@ export default function TaskManagerClient() {
                         </div>
                       ))}
 
-                      {/* 칼럼 끝에 놓을 자리 — 항상 자리를 차지해 레이아웃이 흔들리지 않는다 */}
+                      {/* 칼럼 끝에 놓을 자리 - 항상 자리를 차지해 레이아웃이 흔들리지 않는다 */}
                       <div className="relative h-6"
                         onDragOver={(e) => { e.stopPropagation(); onColumnDragOver(e, s.id, null); }}
                         onDrop={(e) => onDrop(e, s.id, null)}>
@@ -567,7 +567,7 @@ export default function TaskManagerClient() {
                         <button onClick={() => toggleSort(by)}
                           className="group/sort inline-flex items-center gap-1 transition-colors duration-150 hover:text-gh-fg">
                           {label}
-                          {/* 정렬 표시는 활성 열에서만 — 흐린 화살표를 모든 열에 두면
+                          {/* 정렬 표시는 활성 열에서만 - 흐린 화살표를 모든 열에 두면
                               글자 대비도 못 맞추고 어느 열 기준인지도 안 보인다 */}
                           <span className={`text-[10px] leading-none text-gh-accent-fg transition-opacity duration-150 ${
                             sort?.by === by ? 'opacity-100' : 'opacity-0 group-hover/sort:opacity-40'}`}>

@@ -14,7 +14,7 @@ export interface DepartmentInfo {
   focus: string[];
 }
 
-/** MATE 조직 구성 — 총 7명 (개발 4 · 디자인 2 · 운영 1) */
+/** MATE 조직 구성 - 총 7명 (개발 4 · 디자인 2 · 운영 1) */
 export const departments: DepartmentInfo[] = [
   {
     id: 'development',

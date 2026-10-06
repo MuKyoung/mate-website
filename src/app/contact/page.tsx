@@ -45,7 +45,7 @@ export default function ContactPage() {
     });
   };
 
-  /** 폼 내용을 메일 초안으로 옮긴다 — 전송 서버 없이도 문의가 실제로 도착한다 */
+  /** 폼 내용을 메일 초안으로 옮긴다 - 전송 서버 없이도 문의가 실제로 도착한다 */
   const openMailDraft = () => {
     const domainLabel = domains.find((d) => d.key === formData.domain)?.kr ?? '미지정';
     const subject = `[문의] ${formData.subject || '프로젝트 문의'}`;
@@ -148,7 +148,7 @@ export default function ContactPage() {
         description="만들려는 것과 예산 범위만 알려주시면 됩니다. 기획이 정리되지 않은 상태로 오셔도 첫 통화에서 범위부터 같이 자릅니다."
       />
 
-      {/* ━━ (01) Inquiry — 폼 좌 / 채널 우 ━━ */}
+      {/* ━━ (01) Inquiry - 폼 좌 / 채널 우 ━━ */}
       <section className={sectionPad}>
         <div className={container}>
           <SectionHead num="01" label="Inquiry" title={<>어디서부터 말씀드릴까요</>} kr="정리되지 않은 상태로 보내주셔도 됩니다" />
@@ -283,7 +283,7 @@ export default function ContactPage() {
                 </div>
               </a>
 
-              {/* 연락처 — 헤어라인 리스트 */}
+              {/* 연락처 - 헤어라인 리스트 */}
               <div className="mt-14 sm:mt-16">
                 <p className="index-num font-en pb-6 border-b border-white/10">Direct</p>
                 <a href={`mailto:${CONTACT_EMAIL}`}
@@ -329,7 +329,7 @@ export default function ContactPage() {
               </span>
             </motion.h2>
             <motion.p {...inView} variants={fadeLeft} className="caption-kr mt-6">
-              — 자주 묻는 질문 · 궁금한 점이 있으시면 FAQ를 확인해보세요
+              궁금한 점이 있으시면 먼저 읽어 보세요
             </motion.p>
           </div>
           <div className="max-w-3xl">

@@ -155,7 +155,7 @@ function NewDocDialog({
 
 /* ── 본체 ─────────────────────────────────────────── */
 
-/** 편집기 서식 버튼 — 마크다운을 몰라도 쓸 수 있어야 한다 */
+/** 편집기 서식 버튼 - 마크다운을 몰라도 쓸 수 있어야 한다 */
 const TOOLS: { label: string; title: string; wrap?: [string, string]; line?: string; block?: string }[] = [
   { label: 'H2', title: '제목', line: '## ' },
   { label: 'H3', title: '작은 제목', line: '### ' },
@@ -171,7 +171,7 @@ const TOOLS: { label: string; title: string; wrap?: [string, string]; line?: str
 export default function Docs({ store, me, onTaskClick }: {
   store: DocStore;
   me: string;
-  /** 본문의 MATE-### 를 눌렀을 때 — 해당 작업을 연다 */
+  /** 본문의 MATE-### 를 눌렀을 때 - 해당 작업을 연다 */
   onTaskClick?(key: string): void;
 }) {
   const bodyRef = useRef<HTMLTextAreaElement>(null);
@@ -184,7 +184,7 @@ export default function Docs({ store, me, onTaskClick }: {
 
   const tree = useMemo(() => buildTree(store.docs), [store.docs]);
 
-  /** 트리를 평탄화한 목록 — 좁은 화면의 선택기에 쓴다 */
+  /** 트리를 평탄화한 목록 - 좁은 화면의 선택기에 쓴다 */
   const flat = useMemo(() => {
     const out: { id: string; label: string }[] = [];
     const walk = (ns: Node[], depth: number) => {

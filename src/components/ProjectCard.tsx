@@ -13,7 +13,7 @@ interface ProjectCardProps {
 }
 
 export default function ProjectCard({ project, index }: ProjectCardProps) {
-  // 열 위치에 따라 이미지 마스크가 다른 방향에서 열림 — 좌열: 아래→위, 우열: 좌→우
+  // 열 위치에 따라 이미지 마스크가 다른 방향에서 열림 - 좌열: 아래→위, 우열: 좌→우
   const fromSide = index % 2 === 1;
   const delay = (index % 2) * 0.12;
 
@@ -36,7 +36,7 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
   return (
     <motion.div {...inView} variants={card} className="group">
       <Link href={`/projects/${project.id}`} className="block">
-        {/* 대형 이미지 — 방향 교차 마스크 리빌 + 호버 스케일·틸트 */}
+        {/* 대형 이미지 - 방향 교차 마스크 리빌 + 호버 스케일·틸트 */}
         <motion.div variants={mask}
           className="relative aspect-[16/11] overflow-hidden rounded-xl bg-[var(--surface)] mb-6">
           <SafeImage
@@ -48,7 +48,7 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
           />
         </motion.div>
 
-        {/* 메타 행 — 모바일은 스택, sm부터 타이틀 좌 / 카테고리·기간 우 */}
+        {/* 메타 행 - 모바일은 스택, sm부터 타이틀 좌 / 카테고리·기간 우 */}
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-6">
           <h3 className="text-[22px] sm:text-[26px] font-bold text-[var(--text-1)] tracking-[-0.025em] leading-[1.2] transition-colors duration-300 group-hover:text-[var(--accent)]">
             {project.title}

@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { FiMessageCircle } from 'react-icons/fi';
 
-/** Header.tsx 의 LIGHT_ROUTES 와 같은 목록 — 밝은 표면에서는 알약을 어둡게 뒤집는다 */
+/** Header.tsx 의 LIGHT_ROUTES 와 같은 목록 - 밝은 표면에서는 알약을 어둡게 뒤집는다 */
 const LIGHT_ROUTES = ['/education'];
 
 export default function FloatingContactButton() {

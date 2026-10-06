@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 import { fadeLeft, fadeRight, lineDraw, stagger, inView } from '@/lib/motion';
 
 // 카테고리 매핑
-/* 헤더 내비와 같은 3도메인 체계를 쓴다 — 한 사이트에 분류가 둘이면 안 된다 */
+/* 헤더 내비와 같은 3도메인 체계를 쓴다 - 한 사이트에 분류가 둘이면 안 된다 */
 const CATEGORY_MAP: Record<string, string> = {
   'Game Application': '게임 · XR',
   'VR Application': '게임 · XR',
@@ -55,7 +55,7 @@ export default function ProjectFilter({ projects }: ProjectFilterProps) {
 
   return (
     <div>
-      {/* 카테고리 — 텍스트 탭 + 헤어라인 */}
+      {/* 카테고리 - 텍스트 탭 + 헤어라인 */}
       <motion.div {...inView} variants={stagger} className="mb-16 sm:mb-24">
         <motion.p variants={fadeRight} className="index-num font-en mb-8">Category</motion.p>
 
@@ -91,7 +91,7 @@ export default function ProjectFilter({ projects }: ProjectFilterProps) {
         </div>
       </motion.div>
 
-      {/* 프로젝트 그리드 — 비대칭 2열 */}
+      {/* 프로젝트 그리드 - 비대칭 2열 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-20 md:gap-y-28">
         {filteredProjects.map((project, index) => (
           <div key={project.id} className={index % 2 === 1 ? 'md:mt-28' : ''}>
@@ -100,7 +100,7 @@ export default function ProjectFilter({ projects }: ProjectFilterProps) {
         ))}
       </div>
 
-      {/* 결과 없음 — 플레인 텍스트 */}
+      {/* 결과 없음 - 플레인 텍스트 */}
       {filteredProjects.length === 0 && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-28 text-center">
           <p className="index-num font-en justify-center mb-6">No results</p>

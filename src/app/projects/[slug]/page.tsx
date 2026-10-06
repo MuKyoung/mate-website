@@ -16,7 +16,7 @@ export async function generateStaticParams() {
 
 const siteUrl = 'https://devteammate.co.kr';
 
-/** 분류에 맞는 공유 카드 — 상세 페이지는 자체 카드가 없으므로 도메인 카드를 쓴다 */
+/** 분류에 맞는 공유 카드 - 상세 페이지는 자체 카드가 없으므로 도메인 카드를 쓴다 */
 function ogCardFor(category: string): string {
   if (/Web|Mobile/.test(category)) return 'og-web.jpg';
   if (/Education/.test(category)) return 'og-education.jpg';

@@ -20,7 +20,7 @@ const SECTIONS = [
 
 const record = eduRecord.slice(0, 6);
 
-/* 좌측 스티키 목차 — 현재 읽고 있는 절을 따라간다 */
+/* 좌측 스티키 목차 - 현재 읽고 있는 절을 따라간다 */
 function useScrollSpy(ids: string[]) {
   const [active, setActive] = useState(ids[0]);
   useEffect(() => {
@@ -113,7 +113,7 @@ export default function EducationClient() {
       {/* ═══ 라이트 본문 ═══ */}
       <div data-surface="light" className="bg-[var(--canvas)] text-[var(--text-1)]">
 
-        {/* ━━━━━━ HERO — 문서 표지 ━━━━━━ */}
+        {/* ━━━━━━ HERO - 문서 표지 ━━━━━━ */}
         <section className="pt-36 sm:pt-44 pb-16 sm:pb-24">
           <div className={container}>
             <motion.div {...onMount} variants={fadeLeft} className="flex items-center gap-3 mb-10">
@@ -142,7 +142,7 @@ export default function EducationClient() {
                 </motion.p>
               </div>
 
-              {/* 표지 우측 — 개요 카드 */}
+              {/* 표지 우측 - 개요 카드 */}
               <motion.div {...onMount} variants={fadeRight} className="lg:col-span-5 lg:pl-8">
                 <div className="border border-[var(--border)] rounded-card p-8 sm:p-9 bg-[var(--surface)]">
                   <p className="type-c1 font-en font-bold text-[var(--text-3)] uppercase tracking-[0.14em] mb-7">
@@ -170,14 +170,14 @@ export default function EducationClient() {
           </div>
         </section>
 
-        {/* 실제 수업 현장 — 스톡 이미지가 대신할 수 없는 자리다 */}
+        {/* 실제 수업 현장 - 스톡 이미지가 대신할 수 없는 자리다 */}
         <section className="pb-20 sm:pb-28">
           <div className={container}>
             <motion.figure {...inView} variants={fadeUp}>
               <div className="relative aspect-[4/3] sm:aspect-[2/1] overflow-hidden rounded-card bg-[var(--surface-2)]">
                 <SafeImage
                   src="/images/projects/미래산업과학고.webp"
-                  alt="미래산업과학고등학교 수업 현장 — 화면에 C# 변수 선언과 초기화 슬라이드가 떠 있다"
+                  alt="미래산업과학고등학교 수업 현장. 화면에 C# 변수 선언과 초기화 슬라이드가 떠 있다"
                   fill
                   className="absolute inset-0 object-[50%_42%]"
                 />
@@ -195,7 +195,7 @@ export default function EducationClient() {
           </div>
         </section>
 
-        {/* ━━━━━━ 본문 — 좌 스티키 목차 / 우 콘텐츠 ━━━━━━ */}
+        {/* ━━━━━━ 본문 - 좌 스티키 목차 / 우 콘텐츠 ━━━━━━ */}
         <div className={`${container} pb-24 sm:pb-32`} ref={bodyRef}>
           <div className="grid lg:grid-cols-12 gap-x-gutter">
 
@@ -319,7 +319,7 @@ export default function EducationClient() {
         </div>
       </div>
 
-      {/* ━━━━━━ CTA — 다크로 되돌아가 푸터와 이어진다 ━━━━━━ */}
+      {/* ━━━━━━ CTA - 다크로 되돌아가 푸터와 이어진다 ━━━━━━ */}
       <section className="py-28 sm:py-40 bg-[var(--gray-600)]">
         <div className={container}>
           <div className="grid lg:grid-cols-12 gap-x-gutter gap-y-10 items-end">
@@ -338,7 +338,7 @@ export default function EducationClient() {
                 </span>
               </motion.h2>
               <motion.p {...inView} variants={fadeLeft} className="text-[17px] text-white/55 leading-[1.8] max-w-lg">
-                — 대상, 시수, 목표만 알려주시면 표준 커리큘럼을 그에 맞게 재구성해 제안서로 보내드립니다.
+                대상, 시수, 목표만 알려주시면 표준 커리큘럼을 그에 맞게 재구성해 제안서로 보내드립니다.
               </motion.p>
             </div>
             <motion.div {...inView} variants={fadeRight} className="lg:col-span-5 flex flex-wrap items-center gap-7">

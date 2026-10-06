@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { departments, totalHeadcount } from '@/data/organization';
 import { fadeUp, fadeLeft, fadeRight, stagger, inView, easeEnter } from '@/lib/motion';
 
-/* 부서 세그먼트 컬러 — 화이트 / 블루 / 뉴트럴 */
+/* 부서 세그먼트 컬러 - 화이트 / 블루 / 뉴트럴 */
 const segmentColors = ['var(--gray-50)', 'var(--accent)', 'rgba(255,255,255,0.25)'];
 
 export default function OrgChart() {
@@ -19,7 +19,7 @@ export default function OrgChart() {
         <p className="text-[15px] text-white/55">하나의 팀, 세 개의 축</p>
       </motion.div>
 
-      {/* ── 부서 3열 — 헤어라인 칼럼 ── */}
+      {/* ── 부서 3열 - 헤어라인 칼럼 ── */}
       <motion.div {...inView} variants={stagger} className="grid grid-cols-1 md:grid-cols-3">
         {departments.map((dept, i) => (
           <motion.div key={dept.id} variants={[fadeLeft, fadeUp, fadeRight][i % 3]}
@@ -36,7 +36,7 @@ export default function OrgChart() {
             <h3 className="text-[20px] font-bold text-white tracking-[-0.02em] mb-3">{dept.name}</h3>
             <p className="text-[15px] text-white/55 leading-[1.75] mb-8">{dept.description}</p>
 
-            {/* 담당 영역 — 헤어라인 리스트 */}
+            {/* 담당 영역 - 헤어라인 리스트 */}
             <ul>
               {dept.focus.map((f) => (
                 <li key={f} className="py-2.5 text-[13px] text-white/55 border-t border-white/10 last:border-b">

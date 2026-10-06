@@ -11,7 +11,7 @@ export interface Award {
   type: AwardType; // 수상 또는 전시회 구분
 }
 
-/** 소속·제휴 — 수상과 성격이 다르므로 따로 둔다 */
+/** 소속·제휴 - 수상과 성격이 다르므로 따로 둔다 */
 export interface Affiliation {
   id: string;
   name: string;

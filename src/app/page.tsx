@@ -38,9 +38,9 @@ export default function Home() {
   return (
     <>
       <DomainSlabs eager withGames className="pb-0"
-        heading="MATE — 웹 · 앱, 게임 · XR, 교육 외주 개발과 자체 게임 제작 · 퍼블리싱" />
+        heading="MATE는 웹 · 앱, 게임 · XR, 교육 외주 개발과 자체 게임 제작 · 퍼블리싱을 합니다" />
 
-      {/* ━━ (02) Work — 비대칭 2열 ━━ */}
+      {/* ━━ (02) Work - 비대칭 2열 ━━ */}
       <section className={sectionPad}>
         <div className={container}>
           <SectionHead num="02" label="Selected Work" href="/projects" more="전체 포트폴리오"
@@ -83,7 +83,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ━━ (04) Rules — EN 키워드 + KR 부연 (레퍼런스 Vision 방식) ━━ */}
+      {/* ━━ (04) Rules - EN 키워드 + KR 부연 (레퍼런스 Vision 방식) ━━ */}
       <section className="pt-20 sm:pt-28 pb-24 sm:pb-32">
         <div className={container}>
           <SectionHead num="04" title={<>계약서에 적는 것</>} />
@@ -100,7 +100,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ━━ (05) 밖에서 받은 평가 — 익명 후기 하나 + 확인 가능한 심사 이력 ━━ */}
+      {/* ━━ (05) 밖에서 받은 평가 - 익명 후기 하나 + 확인 가능한 심사 이력 ━━ */}
       <section className={sectionPad}>
         <div className={container}>
           <SectionHead num="05" title={<>밖에서 받은 평가</>} />

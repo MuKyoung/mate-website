@@ -16,7 +16,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Mate — 웹 · 앱 · 게임 · XR · 교육 개발과 자체 게임 퍼블리싱",
+    default: "Mate | 웹 · 앱 · 게임 · XR · 교육 개발과 자체 게임 퍼블리싱",
     template: "%s | Mate 외주개발팀",
   },
   description: "웹 · 앱, 게임 · XR, 교육 세 영역의 외주 개발과 자체 게임 제작 · 퍼블리싱을 함께 합니다. 요구사항 정의부터 배포와 인계까지 한 팀이 맡습니다.",
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     locale: "ko_KR",
     url: siteUrl,
     siteName: "Mate 외주개발팀",
-    title: "Mate — 웹 · 앱 · 게임 · XR · 교육 개발과 자체 게임 퍼블리싱",
+    title: "Mate | 웹 · 앱 · 게임 · XR · 교육 개발과 자체 게임 퍼블리싱",
     description: "웹 · 앱, 게임 · XR, 교육 세 영역의 외주 개발과 자체 게임 제작 · 퍼블리싱을 함께 합니다. 요구사항 정의부터 배포와 인계까지 한 팀이 맡습니다.",
     images: [
       {
@@ -45,7 +45,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Mate — 웹 · 앱 · 게임 · XR · 교육 개발과 자체 게임 퍼블리싱",
+    title: "Mate | 웹 · 앱 · 게임 · XR · 교육 개발과 자체 게임 퍼블리싱",
     description: "웹 · 앱, 게임 · XR, 교육 외주 개발과 자체 게임 제작 · 퍼블리싱.",
     images: [`${siteUrl}/images/og/og-default.jpg`],
   },

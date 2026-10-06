@@ -9,12 +9,12 @@ import {
 import { arrowHover, clipWrap, displaySize, linkMore } from '@/lib/styles';
 
 interface SectionHeadProps {
-  /** 섹션 번호 — 진입 방향을 교차시키는 데만 쓰고 화면에 찍지 않는다 */
+  /** 섹션 번호 - 진입 방향을 교차시키는 데만 쓰고 화면에 찍지 않는다 */
   num: string;
   /** 라벨. 비우면 라벨 줄 없이 헤어라인만 남는다 */
   label?: string;
   title: React.ReactNode;
-  /** 국문 캡션 (— 프리픽스 자동) */
+  /** 국문 캡션 (- 프리픽스 자동) */
   kr?: string;
   /** 본문 설명 */
   desc?: string;
@@ -24,7 +24,7 @@ interface SectionHeadProps {
 }
 
 /**
- * 섹션 헤더 — 라벨 행(좌→우 라인 드로우) + 대형 타이틀 + 국문 캡션.
+ * 섹션 헤더 - 라벨 행(좌→우 라인 드로우) + 대형 타이틀 + 국문 캡션.
  * 섹션 번호의 홀짝에 따라 라벨·타이틀·캡션의 진입 방향이 뒤집혀
  * 연속된 섹션이 같은 연출을 반복하지 않는다.
  */
@@ -67,7 +67,7 @@ export default function SectionHead({
 
       {kr && (
         <motion.p {...inView} variants={even ? fadeLeft : fadeRight} className="caption-kr mt-6">
-          — {kr}
+          {kr}
         </motion.p>
       )}
       {desc && (

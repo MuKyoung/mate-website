@@ -7,12 +7,12 @@ import {
 import { Avatar, DueBadge, PriorityDot, STATUS_STYLE, ghField } from './ui';
 
 /**
- * 로드맵 — 영역 × 시간대 격자.
+ * 로드맵 - 영역 × 시간대 격자.
  *
  * 보드는 "지금 어느 단계냐", 타임라인은 "며칠에 걸쳐 있냐"를 본다.
  * 로드맵은 그 둘 다 아닌 "언제쯤 나가느냐"만 본다. 날짜를 달 단위로
  * 뭉개고 영역별로 줄을 세우면, 어느 영역이 어느 달에 비어 있는지가
- * 한 눈에 들어온다 — 일정 협의와 인력 배치는 이 그림으로 한다.
+ * 한 눈에 들어온다 - 일정 협의와 인력 배치는 이 그림으로 한다.
  */
 
 type Horizon = 'thisWeek' | 'nextWeek' | 'later' | 'none';
@@ -35,7 +35,7 @@ function weekStart(d: Date): Date {
 
 /**
  * 마감일이 속한 시간대.
- * 달 단위로 묶으면 이 팀 일감은 전부 한 칸에 몰린다 — 실제 주기가 1~2주라
+ * 달 단위로 묶으면 이 팀 일감은 전부 한 칸에 몰린다 - 실제 주기가 1~2주라
  * 주 단위로 자른다. 지난 일정은 '이번 주'로 끌어와 눈에 띄게 둔다.
  */
 function horizonOf(due: string | null, now: Date): Horizon {
@@ -98,7 +98,7 @@ export default function Roadmap({
     [tasks, now],
   );
 
-  /** 'M.D–M.D' — 어느 주를 말하는지 숫자로 못박는다 */
+  /** 'M.D–M.D' - 어느 주를 말하는지 숫자로 못박는다 */
   const weekLabel = (offset: number) => {
     const a = new Date(weekStart(now).getTime() + offset * 7 * DAY);
     const b = new Date(a.getTime() + 6 * DAY);

@@ -6,7 +6,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        // 사내 작업 관리 도구 — 색인 대상이 아니다
+        // 사내 작업 관리 도구 - 색인 대상이 아니다
         disallow: ['/taskmanager/'],
       },
     ],

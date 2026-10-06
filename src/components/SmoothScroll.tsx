@@ -49,7 +49,7 @@ export default function SmoothScroll() {
       cancelAnimationFrame(frame);
       lenis.destroy();
     };
-    // 라우트가 바뀌면 다시 평가한다 — 작업 도구로 들어갈 때 Lenis 를 걷어내야 한다
+    // 라우트가 바뀌면 다시 평가한다 - 작업 도구로 들어갈 때 Lenis 를 걷어내야 한다
   }, [pathname]);
 
   // 라우트 변경 시 즉시 최상단으로 (관성이 남아 스크롤 위치가 어긋나는 것 방지)

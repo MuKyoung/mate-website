@@ -35,7 +35,7 @@ const PROCESS = [
   { step: '05', title: '배포', desc: '최종 검수·배포·모니터링' },
 ];
 
-/* 사이트 본문과 같은 출처에서 파생한다 — 문서마다 숫자가 달라지지 않도록 */
+/* 사이트 본문과 같은 출처에서 파생한다 - 문서마다 숫자가 달라지지 않도록 */
 const TOTAL = teamCapabilities.capabilities.reduce((n, c) => n + c.projects, 0);
 
 const STATS = [
@@ -84,7 +84,7 @@ export default function CompanyProfilePage() {
 
         /* ════ PAGE 1 ════ */
 
-        /* 표지 — 좌/우 split */
+        /* 표지 - 좌/우 split */
         .p1-left {
           position: absolute;
           left: 0; top: 0; bottom: 0;
@@ -196,7 +196,7 @@ export default function CompanyProfilePage() {
           flex-shrink: 0;
         }
 
-        /* 표지 우측 — About */
+        /* 표지 우측 - About */
         .p1-badge {
           display: inline-flex;
           align-items: center;
@@ -240,7 +240,7 @@ export default function CompanyProfilePage() {
           flex: 1;
         }
 
-        /* Why choose us — 2×2 체크리스트 */
+        /* Why choose us - 2×2 체크리스트 */
         .p1-why {
           display: grid;
           grid-template-columns: 1fr 1fr;

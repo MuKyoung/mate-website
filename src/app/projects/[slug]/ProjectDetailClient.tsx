@@ -52,7 +52,7 @@ export default function ProjectDetailClient({ params }: Props) {
 
   return (
     <>
-      {/* ── 헤더 — 다크 + 하단 헤어라인 ── */}
+      {/* ── 헤더 - 다크 + 하단 헤어라인 ── */}
       <section className="pt-40 sm:pt-52 pb-16 sm:pb-24 border-b border-white/10">
         <div className={container}>
           <motion.div {...onMount} variants={fadeLeft} className="mb-12 sm:mb-16">
@@ -63,7 +63,7 @@ export default function ProjectDetailClient({ params }: Props) {
             </Link>
           </motion.div>
 
-          {/* 메타 — 카테고리 · 기간 */}
+          {/* 메타 - 카테고리 · 기간 */}
           <motion.p {...onMount} variants={fadeLeft} className="index-num mb-7">
             {project.category} · {project.durationMonths}개월
           </motion.p>
@@ -81,7 +81,7 @@ export default function ProjectDetailClient({ params }: Props) {
             {project.description}
           </motion.p>
 
-          {/* 액션 — 화이트 필 / 아웃라인 / 언더라인 링크 */}
+          {/* 액션 - 화이트 필 / 아웃라인 / 언더라인 링크 */}
           <motion.div {...onMount} variants={fadeUp} className="flex flex-wrap items-center gap-x-8 gap-y-5">
             {project.liveUrl && (
               <a href={project.liveUrl} target="_blank" rel="noopener noreferrer"
@@ -116,7 +116,7 @@ export default function ProjectDetailClient({ params }: Props) {
             {/* 메인 */}
             <div className="lg:col-span-2 space-y-24 sm:space-y-28">
 
-              {/* 영상 / 썸네일 — 대형 */}
+              {/* 영상 / 썸네일 - 대형 */}
               {project.youtubeUrl ? (
                 <motion.div {...inView} variants={zoomTilt}
                   className="relative rounded-[16px] overflow-hidden aspect-video bg-[var(--surface)]">
@@ -136,7 +136,7 @@ export default function ProjectDetailClient({ params }: Props) {
                 />
               )}
 
-              {/* Overview — 내용이 한 줄 소개와 다를 때만 */}
+              {/* Overview - 내용이 한 줄 소개와 다를 때만 */}
               {overview && (
               <motion.div {...inView} variants={stagger}>
                 <div className="relative pb-6 mb-10 sm:mb-14">
@@ -158,7 +158,7 @@ export default function ProjectDetailClient({ params }: Props) {
               </motion.div>
               )}
 
-              {/* Gallery — 대표 이미지와 다른 컷이 있을 때만 */}
+              {/* Gallery - 대표 이미지와 다른 컷이 있을 때만 */}
               {gallery.length > 0 && (
                 <motion.div {...inView} variants={stagger}>
                   <div className="relative pb-6 mb-10 sm:mb-14">
@@ -190,7 +190,7 @@ export default function ProjectDetailClient({ params }: Props) {
               )}
             </div>
 
-            {/* 사이드바 — 룰탑 블록 */}
+            {/* 사이드바 - 룰탑 블록 */}
             <div className="lg:col-span-1 space-y-16">
 
               {/* 기술 스택 */}
@@ -203,7 +203,7 @@ export default function ProjectDetailClient({ params }: Props) {
                 </div>
               </motion.div>
 
-              {/* 참여 조직 — 실명 대신 부서 구성만 표시 */}
+              {/* 참여 조직 - 실명 대신 부서 구성만 표시 */}
               {team.length > 0 && (
                 <motion.div {...inView} variants={riseTiltR} className="rule-top">
                   <p className="index-num font-en mb-3">Team</p>

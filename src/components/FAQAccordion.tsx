@@ -10,7 +10,7 @@ interface FAQAccordionProps {
   faqs: FAQ[];
 }
 
-// 헤어라인 아코디언 — 카드 박스 없이 border-t로 구분되는 풀폭 행.
+// 헤어라인 아코디언 - 카드 박스 없이 border-t로 구분되는 풀폭 행.
 export default function FAQAccordion({ faqs }: FAQAccordionProps) {
   const [openId, setOpenId] = useState<string | null>(null);
 

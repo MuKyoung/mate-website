@@ -10,7 +10,7 @@ import type { Task, Status } from './types';
  * 따라서 데이터는 브라우저의 localStorage 에 남고 **기기 밖으로 나가지 않는다.**
  * 같은 탭을 여러 개 열어 두면 storage 이벤트로 서로 동기화된다.
  *
- * 여러 사람이 같은 보드를 보려면 원격 저장소가 필요하다 —
+ * 여러 사람이 같은 보드를 보려면 원격 저장소가 필요하다 -
  * 아래 read/write 두 지점만 교체하면 되도록 입출력을 한곳에 모아 두었다.
  */
 
@@ -26,15 +26,15 @@ function todayISO(offsetDays = 0): string {
 function seed(): Task[] {
   const now = new Date().toISOString();
   const base = [
-    { t: '논디 — 첨삭 응답 지연 개선', d: 'RAG 검색 단계에서 평균 4초. 임베딩 캐시를 붙여 2초 아래로 내린다.', s: 'doing', p: 'high', dom: 'web', a: 'm4', from: -4, due: 3, l: ['성능'] },
-    { t: '큐어팜 — 예약 취소 플로우', d: '취소 정책과 환불 조건을 화면에 노출하고 확인 단계를 한 번 더 둔다.', s: 'todo', p: 'normal', dom: 'web', a: 'm4', from: 1, due: 7, l: ['기능'] },
-    { t: 'Chatudy — 발송 실패 재시도', d: 'LINE API 5xx 응답 시 지수 백오프로 3회까지 재시도.', s: 'review', p: 'normal', dom: 'web', a: 'm2', from: -2, due: 1, l: ['안정성'] },
-    { t: '꼬꼬지생 — 스테이지 7 밸런싱', d: '테스터 피드백상 난이도가 급격히 뛴다. 적 배치와 체력 수치를 조정한다.', s: 'doing', p: 'normal', dom: 'game', a: 'm1', from: -1, due: 5, l: ['밸런싱'] },
-    { t: 'VR 키오스크 — Quest 3 대응', d: '컨트롤러 입력 매핑 변경분 반영하고 실기기 테스트.', s: 'todo', p: 'high', dom: 'game', a: 'm3', from: 0, due: 4, l: ['XR'] },
-    { t: '영창하세요 마법사님 — 빌드 용량 축소', d: '텍스처 아틀라스 재구성. 현재 1.8GB에서 1.2GB 목표.', s: 'backlog', p: 'low', dom: 'game', a: 'm1', from: null, due: null, l: ['최적화'] },
-    { t: '21세기 표류기 — 튜토리얼 재작성', d: '첫 3분 이탈률이 높다. 손 조작 안내를 단계별로 쪼갠다.', s: 'todo', p: 'high', dom: 'game', a: 'm3', from: 2, due: 6, l: ['UX'] },
-    { t: '미래산업과학고 — 2학기 커리큘럼 확정', d: '10~12주차 개인 프로젝트 주제 목록과 평가 기준을 정리한다.', s: 'doing', p: 'urgent', dom: 'edu', a: 'm7', from: -6, due: 2, l: ['커리큘럼'] },
-    { t: 'AI 활용 과정 — 실습 환경 사전 세팅', d: '수강생 노트북에서 바로 돌아가도록 설치 스크립트와 체크리스트를 만든다.', s: 'todo', p: 'normal', dom: 'edu', a: 'm2', from: 4, due: 9, l: ['교육운영'] },
+    { t: '논디: 첨삭 응답 지연 개선', d: 'RAG 검색 단계에서 평균 4초. 임베딩 캐시를 붙여 2초 아래로 내린다.', s: 'doing', p: 'high', dom: 'web', a: 'm4', from: -4, due: 3, l: ['성능'] },
+    { t: '큐어팜: 예약 취소 플로우', d: '취소 정책과 환불 조건을 화면에 노출하고 확인 단계를 한 번 더 둔다.', s: 'todo', p: 'normal', dom: 'web', a: 'm4', from: 1, due: 7, l: ['기능'] },
+    { t: 'Chatudy: 발송 실패 재시도', d: 'LINE API 5xx 응답 시 지수 백오프로 3회까지 재시도.', s: 'review', p: 'normal', dom: 'web', a: 'm2', from: -2, due: 1, l: ['안정성'] },
+    { t: '꼬꼬지생: 스테이지 7 밸런싱', d: '테스터 피드백상 난이도가 급격히 뛴다. 적 배치와 체력 수치를 조정한다.', s: 'doing', p: 'normal', dom: 'game', a: 'm1', from: -1, due: 5, l: ['밸런싱'] },
+    { t: 'VR 키오스크: Quest 3 대응', d: '컨트롤러 입력 매핑 변경분 반영하고 실기기 테스트.', s: 'todo', p: 'high', dom: 'game', a: 'm3', from: 0, due: 4, l: ['XR'] },
+    { t: '영창하세요 마법사님: 빌드 용량 축소', d: '텍스처 아틀라스 재구성. 현재 1.8GB에서 1.2GB 목표.', s: 'backlog', p: 'low', dom: 'game', a: 'm1', from: null, due: null, l: ['최적화'] },
+    { t: '21세기 표류기: 튜토리얼 재작성', d: '첫 3분 이탈률이 높다. 손 조작 안내를 단계별로 쪼갠다.', s: 'todo', p: 'high', dom: 'game', a: 'm3', from: 2, due: 6, l: ['UX'] },
+    { t: '미래산업과학고: 2학기 커리큘럼 확정', d: '10~12주차 개인 프로젝트 주제 목록과 평가 기준을 정리한다.', s: 'doing', p: 'urgent', dom: 'edu', a: 'm7', from: -6, due: 2, l: ['커리큘럼'] },
+    { t: 'AI 활용 과정: 실습 환경 사전 세팅', d: '수강생 노트북에서 바로 돌아가도록 설치 스크립트와 체크리스트를 만든다.', s: 'todo', p: 'normal', dom: 'edu', a: 'm2', from: 4, due: 9, l: ['교육운영'] },
     { t: '대학 특강 제안서 초안', d: '시수·정원·산출물 항목을 기관 양식에 맞춰 채운다.', s: 'review', p: 'high', dom: 'edu', a: 'm7', from: -3, due: 1, l: ['제안'] },
     { t: '포트폴리오 화면 캡처 확보', d: '논디·Chatudy·큐어팜·피오크래프트 4건. 발주처 공개 가능 범위부터 확인.', s: 'todo', p: 'urgent', dom: 'ops', a: 'm5', from: 0, due: 2, l: ['웹사이트'] },
     { t: '사업자 정보 푸터 반영', d: '사업자등록번호·주소·대표자. 발주처 견적 등록에 필요하다.', s: 'todo', p: 'high', dom: 'ops', a: 'm7', from: 1, due: 3, l: ['웹사이트'] },
@@ -72,7 +72,7 @@ function read(): Task[] | null {
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return null;
-    // start 는 뒤에 추가된 필드다 — 옛 저장본을 열어도 깨지지 않게 메운다
+    // start 는 뒤에 추가된 필드다 - 옛 저장본을 열어도 깨지지 않게 메운다
     return (parsed as Task[]).map((t) => ({ ...t, start: t.start ?? null }));
   } catch {
     // 시크릿 모드·사이트 데이터 차단 환경에서는 읽기가 던질 수 있다
@@ -91,7 +91,7 @@ function write(tasks: Task[]) {
 export interface Store {
   tasks: Task[];
   ready: boolean;
-  /** 저장이 막힌 환경인지 — 배너로 알려 준다 */
+  /** 저장이 막힌 환경인지 - 배너로 알려 준다 */
   persistent: boolean;
   create(input: Partial<Task> & { title: string }): Task;
   update(id: string, patch: Partial<Task>): void;
@@ -99,7 +99,7 @@ export interface Store {
   /** 드래그로 상태·순서를 함께 바꾼다 */
   move(id: string, status: Status, beforeId: string | null): void;
   reset(): void;
-  /** 되돌릴 수 있는 마지막 동작의 설명 — 없으면 null */
+  /** 되돌릴 수 있는 마지막 동작의 설명 - 없으면 null */
   undoLabel: string | null;
   undo(): void;
 }
@@ -110,7 +110,7 @@ export function useTaskStore(): Store {
   const [persistent, setPersistent] = useState(true);
   const seq = useRef(0);
 
-  /* 되돌리기 — 지우거나 옮기는 동작 직전의 전체 상태를 쌓아 둔다.
+  /* 되돌리기 - 지우거나 옮기는 동작 직전의 전체 상태를 쌓아 둔다.
      양이 적은 데이터라 스냅샷이 가장 단순하고 틀릴 여지가 없다. */
   const [history, setHistory] = useState<{ label: string; tasks: Task[] }[]>([]);
   const pushHistory = useCallback((label: string, snapshot: Task[]) => {

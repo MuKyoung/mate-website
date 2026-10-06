@@ -18,7 +18,7 @@ interface TeamCapabilityCardProps {
   index: number;
 }
 
-/* 플레인 칼럼 — 박스/칩 없이 인덱스 · 타이포 · 헤어라인만으로 구성 */
+/* 플레인 칼럼 - 박스/칩 없이 인덱스 · 타이포 · 헤어라인만으로 구성 */
 export default function TeamCapabilityCard({ capability, index }: TeamCapabilityCardProps) {
   return (
     <motion.div {...inView}
@@ -33,12 +33,12 @@ export default function TeamCapabilityCard({ capability, index }: TeamCapability
         {capability.description}
       </p>
 
-      {/* 주요 기술 — 플레인 텍스트 */}
+      {/* 주요 기술 - 플레인 텍스트 */}
       <p className="text-[13px] text-white/50 leading-[1.8] mb-10">
         {capability.skills.join(' · ')}
       </p>
 
-      {/* 지표 — 헤어라인 행 */}
+      {/* 지표 - 헤어라인 행 */}
       <div>
         <div className="flex items-baseline gap-3 py-5 border-t border-white/10">
           <span className="font-en text-3xl font-bold text-[var(--text-1)] font-mono-stat tracking-[-0.02em]">

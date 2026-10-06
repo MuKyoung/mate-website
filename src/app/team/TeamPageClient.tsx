@@ -45,7 +45,7 @@ const whyChooseUs = [
   { title: '전부 인계',           desc: '소스 코드와 문서, 인프라 계정 소유권까지 넘겨드립니다' },
 ];
 
-/* 섹션 헤더 — 라벨 행(라인 드로우) + 대형 타이틀 (홈과 동일 패턴, 섹션별 방향 교차) */
+/* 섹션 헤더 - 라벨 행(라인 드로우) + 대형 타이틀 (홈과 동일 패턴, 섹션별 방향 교차) */
 function SectionHead({ num, label, title, desc }: {
   num: string; label: string; title: React.ReactNode; desc?: string;
 }) {
@@ -89,7 +89,7 @@ export default function TeamPageClient() {
         description="개발 4 · 디자인 2 · 운영 1, 일곱 명이 하나의 팀으로 움직입니다. 웹 · 앱, 게임 · XR, 교육 세 영역을 각각 전담합니다."
       />
 
-      {/* ━━ 핵심 수치 — 헤어라인 스트립 ━━ */}
+      {/* ━━ 핵심 수치 - 헤어라인 스트립 ━━ */}
       <section className="border-b border-white/10">
         <div className={container}>
           <motion.div {...inView} variants={stagger} className="grid grid-cols-2 lg:grid-cols-4">
@@ -108,7 +108,7 @@ export default function TeamPageClient() {
         </div>
       </section>
 
-      {/* ━━ (01) About — 좌 제목 / 우 본문 ━━ */}
+      {/* ━━ (01) About - 좌 제목 / 우 본문 ━━ */}
       <section className={sectionPad}>
         <div className={container}>
           <div className="relative pb-6 mb-10 sm:mb-14">
@@ -152,7 +152,7 @@ export default function TeamPageClient() {
         </div>
       </section>
 
-      {/* ━━ (02) Vision — 대형 스테이트먼트 ━━ */}
+      {/* ━━ (02) Vision - 대형 스테이트먼트 ━━ */}
       <section className={sectionPad}>
         <div className={container}>
           <div className="relative pb-6 mb-14 sm:mb-20">
@@ -185,7 +185,7 @@ export default function TeamPageClient() {
         </div>
       </section>
 
-      {/* ━━ (03) Capabilities — 헤어라인 3열 ━━ */}
+      {/* ━━ (03) Capabilities - 헤어라인 3열 ━━ */}
       <section className={sectionPad}>
         <div className={container}>
           <SectionHead num="03" label="Capabilities" title="전문 역량"
@@ -272,7 +272,7 @@ export default function TeamPageClient() {
             </span>
           </motion.h2>
           <motion.p {...inView} variants={fadeLeft} className="caption-kr mb-14 sm:mb-20">
-            — 무료 상담으로 가능성을 확인하세요.
+            무료 상담으로 가능성을 확인하세요.
           </motion.p>
           <motion.div {...inView} variants={fadeRight} className="flex flex-wrap items-center gap-8">
             <Link href="/contact" className={btnPrimary}>

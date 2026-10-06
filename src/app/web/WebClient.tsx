@@ -12,7 +12,7 @@ import { arrowHover, btnPrimary, container, linkUnderline, CONTACT_EMAIL } from 
 const d = domainByKey.web;
 const work = projects.filter((p) => p.category === 'Web Application');
 
-/* 히어로 우측 — 화면 설계도를 추상화한 와이어프레임.
+/* 히어로 우측 - 화면 설계도를 추상화한 와이어프레임.
    실제 스크린샷 대신 구조만 남겨 '설계한다'는 도메인 성격을 드러낸다. */
 function Wireframe() {
   const bar = (w: string, o = 0.14) => (
@@ -57,7 +57,7 @@ export default function WebClient() {
   return (
     <div data-domain="web">
 
-      {/* ━━━━━━ HERO — 8/4 비대칭. 좌 타이포 / 우 지표 ━━━━━━ */}
+      {/* ━━━━━━ HERO - 8/4 비대칭. 좌 타이포 / 우 지표 ━━━━━━ */}
       <section className="pt-36 sm:pt-44 pb-20 sm:pb-28">
         <div className={container}>
           <motion.div {...onMount} variants={fadeLeft} className="flex items-center gap-3 mb-10">
@@ -87,7 +87,7 @@ export default function WebClient() {
             </motion.div>
           </div>
 
-          {/* 지표 행 — 헤어라인 그리드를 드러낸다 */}
+          {/* 지표 행 - 헤어라인 그리드를 드러낸다 */}
           <motion.div {...onMount} variants={lineDraw}
             className="h-px bg-white/10 mt-16 mb-0 origin-left" />
           <motion.div {...inView} variants={staggerTight}
@@ -104,7 +104,7 @@ export default function WebClient() {
             ))}
           </motion.div>
 
-          {/* 와이어프레임 — 12칼럼 중 7칼럼 오프셋 배치 */}
+          {/* 와이어프레임 - 12칼럼 중 7칼럼 오프셋 배치 */}
           <motion.div {...inView} variants={fadeUp} className="mt-16 sm:mt-24 grid lg:grid-cols-12 gap-x-gutter items-center">
             <div className="lg:col-span-7">
               <Wireframe />
@@ -123,7 +123,7 @@ export default function WebClient() {
         </div>
       </section>
 
-      {/* ━━━━━━ SCOPE — 아코디언 3단 ━━━━━━ */}
+      {/* ━━━━━━ SCOPE - 아코디언 3단 ━━━━━━ */}
       <section className="py-24 sm:py-36 border-t border-white/10">
         <div className={container}>
           <div className="grid lg:grid-cols-12 gap-x-gutter gap-y-6 mb-16 sm:mb-20">
@@ -137,7 +137,7 @@ export default function WebClient() {
             </div>
             <motion.p {...inView} variants={fadeRight}
               className="lg:col-span-5 lg:self-end lg:pb-3 type-b3 text-white/50 leading-[1.85]">
-              맡기는 범위는 프로젝트마다 다릅니다. 설계만, 구현만, 혹은 전부 —
+              맡기는 범위는 프로젝트마다 다릅니다. 설계만, 구현만, 혹은 전부.
               어느 지점에서 들어와도 이어받을 수 있도록 단계를 나눠 두었습니다.
             </motion.p>
           </div>
@@ -196,7 +196,7 @@ export default function WebClient() {
         </div>
       </section>
 
-      {/* ━━━━━━ STACK — 레이어 테이블 ━━━━━━ */}
+      {/* ━━━━━━ STACK - 레이어 테이블 ━━━━━━ */}
       <section className="py-24 sm:py-36 border-t border-white/10">
         <div className={container}>
           <div className="flex flex-wrap items-baseline justify-between gap-x-10 gap-y-4 mb-12 sm:mb-16">
@@ -227,7 +227,7 @@ export default function WebClient() {
         </div>
       </section>
 
-      {/* ━━━━━━ DELIVERABLES — 2x2 ━━━━━━ */}
+      {/* ━━━━━━ DELIVERABLES - 2x2 ━━━━━━ */}
       <section className="py-24 sm:py-36 border-t border-white/10">
         <div className={container}>
           <div className="grid lg:grid-cols-12 gap-x-gutter gap-y-6 mb-16 sm:mb-20">
@@ -261,7 +261,7 @@ export default function WebClient() {
         </div>
       </section>
 
-      {/* ━━━━━━ WORK — 공개 가능한 화면 캡처가 없어 정보 중심으로 세운다 ━━━━━━ */}
+      {/* ━━━━━━ WORK - 공개 가능한 화면 캡처가 없어 정보 중심으로 세운다 ━━━━━━ */}
       {work.length > 0 && (
         <section className="py-24 sm:py-36 border-t border-white/10">
           <div className={container}>
@@ -329,7 +329,7 @@ export default function WebClient() {
                 </span>
               </motion.h2>
               <motion.p {...inView} variants={fadeLeft} className="caption-kr max-w-lg">
-                — 아이디어 단계여도 됩니다. 무엇을 만들지 문장으로 적는 데까지가 첫 상담입니다.
+                아이디어 단계여도 됩니다. 무엇을 만들지 문장으로 적는 데까지가 첫 상담입니다.
               </motion.p>
             </div>
             <motion.div {...inView} variants={fadeRight} className="lg:col-span-5 flex flex-wrap items-center gap-7">

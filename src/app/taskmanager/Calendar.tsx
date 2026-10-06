@@ -43,7 +43,7 @@ export default function Calendar({
 
   const cells = useMemo(() => {
     const first = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
-    // 그 주 일요일부터 시작해 6주(42칸)를 채운다 — 달마다 높이가 변하지 않는다
+    // 그 주 일요일부터 시작해 6주(42칸)를 채운다 - 달마다 높이가 변하지 않는다
     const gridStart = new Date(first.getTime() - first.getDay() * DAY);
     return Array.from({ length: 42 }, (_, i) => new Date(gridStart.getTime() + i * DAY));
   }, [cursor]);
@@ -163,7 +163,7 @@ export default function Calendar({
                       const overdue = !done && key < todayKey;
                       return (
                         <button key={t.id} onClick={(e) => { e.stopPropagation(); onOpen(t.id); }}
-                          title={`${t.title} — 다른 날로 끌어다 놓으면 마감일이 바뀝니다`}
+                          title={`${t.title} · 다른 날로 끌어다 놓으면 마감일이 바뀝니다`}
                           draggable
                           onDragStart={(e) => {
                             e.stopPropagation();
