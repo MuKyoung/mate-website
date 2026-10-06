@@ -25,10 +25,10 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Mate — 웹 · 앱 · 게임 · XR · 교육 외주 개발 팀",
+    default: "Mate — 웹 · 앱 · 게임 · XR · 교육 개발과 자체 게임 퍼블리싱",
     template: "%s | Mate 외주개발팀",
   },
-  description: "웹 · 앱, 게임 · XR, 교육 — 세 영역을 각각 전담하는 외주 개발 팀입니다. 요구사항 정의부터 배포와 인계까지 한 팀이 맡습니다.",
+  description: "웹 · 앱, 게임 · XR, 교육 세 영역의 외주 개발과 자체 게임 제작 · 퍼블리싱을 함께 합니다. 요구사항 정의부터 배포와 인계까지 한 팀이 맡습니다.",
   keywords: "외주개발, 외주 개발, 유니티, Unity, 게임 개발, AR/VR, 웹개발, 앱개발, React, Next.js, Flutter, 개발 강의, 유니티 강의, 외주 팀, 유니티 외주, 웹 외주, 앱 외주, 게임 외주, 2D 게임 개발, 3D 게임 개발",
   authors: [{ name: "Mate Team" }],
   creator: "Mate 외주개발팀",
@@ -41,8 +41,8 @@ export const metadata: Metadata = {
     locale: "ko_KR",
     url: siteUrl,
     siteName: "Mate 외주개발팀",
-    title: "Mate — 웹 · 앱 · 게임 · XR · 교육 외주 개발 팀",
-    description: "웹 · 앱, 게임 · XR, 교육 — 세 영역을 각각 전담하는 외주 개발 팀입니다. 요구사항 정의부터 배포와 인계까지 한 팀이 맡습니다.",
+    title: "Mate — 웹 · 앱 · 게임 · XR · 교육 개발과 자체 게임 퍼블리싱",
+    description: "웹 · 앱, 게임 · XR, 교육 세 영역의 외주 개발과 자체 게임 제작 · 퍼블리싱을 함께 합니다. 요구사항 정의부터 배포와 인계까지 한 팀이 맡습니다.",
     images: [
       {
         url: `${siteUrl}/images/og/og-default.jpg`,
@@ -54,8 +54,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Mate — 웹 · 앱 · 게임 · XR · 교육 외주 개발 팀",
-    description: "웹 · 앱, 게임 · XR, 교육 — 세 영역을 각각 전담하는 외주 개발 팀.",
+    title: "Mate — 웹 · 앱 · 게임 · XR · 교육 개발과 자체 게임 퍼블리싱",
+    description: "웹 · 앱, 게임 · XR, 교육 외주 개발과 자체 게임 제작 · 퍼블리싱.",
     images: [`${siteUrl}/images/og/og-default.jpg`],
   },
   robots: {
@@ -85,7 +85,7 @@ export default function RootLayout({
     "@type": "Organization",
     "name": "Mate",
     "alternateName": "Mate 외주개발팀",
-    "description": "웹 · 앱, 게임 · XR, 교육 — 세 영역을 각각 전담하는 외주 개발 팀.",
+    "description": "웹 · 앱, 게임 · XR, 교육 외주 개발과 자체 게임 제작 · 퍼블리싱.",
     "url": siteUrl,
     "logo": `${siteUrl}/images/logo.png`,
     "contactPoint": {
@@ -108,7 +108,7 @@ export default function RootLayout({
     "@type": "WebSite",
     "name": "Mate 외주개발팀",
     "url": siteUrl,
-    "description": "웹 · 앱, 게임 · XR, 교육 — 세 영역을 각각 전담하는 외주 개발 팀.",
+    "description": "웹 · 앱, 게임 · XR, 교육 외주 개발과 자체 게임 제작 · 퍼블리싱.",
     "potentialAction": {
       "@type": "SearchAction",
       "target": {

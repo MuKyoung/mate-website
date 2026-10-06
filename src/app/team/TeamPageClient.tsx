@@ -129,7 +129,8 @@ export default function TeamPageClient() {
             <motion.div {...inView} variants={stagger} className="lg:col-span-6 lg:col-start-7">
               <motion.p variants={fadeRight}
                 className="text-xl sm:text-2xl font-semibold text-[var(--text-1)] leading-[1.5] mb-8">
-                MATE는 웹 · 앱, 게임 · XR, 교육 세 영역을 각각 전담하는 외주 개발 팀입니다.
+                MATE는 웹 · 앱, 게임 · XR, 교육 세 영역의 외주 개발과
+                자체 게임 제작 · 퍼블리싱을 함께 합니다.
               </motion.p>
               <motion.p variants={fadeUp} className="text-[17px] text-white/55 leading-[1.75] mb-16">
                 5년간 쌓은 외주 경험을 바탕으로,

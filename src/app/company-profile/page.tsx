@@ -526,8 +526,8 @@ export default function CompanyProfilePage() {
               </h1>
               <p className="p1-sub">
                 웹 · 앱, 게임 · XR, 교육.<br />
-                세 영역을 각각 전담하는 팀으로<br />
-                검증된 풀스택 외주개발팀.
+                세 영역의 외주 개발과<br />
+                자체 게임 제작 · 퍼블리싱.
               </p>
             </div>
 
@@ -572,7 +572,7 @@ export default function CompanyProfilePage() {
             <p className="p1-about-body">
               MATE는 <strong>웹 · 앱</strong>, <strong>게임 · XR</strong>, <strong>교육</strong> 세 영역을
               각각 전담하는 외주 개발 팀입니다. 2020년부터 시작해 AR·VR 시뮬레이션, 웹·모바일 앱까지
-              영역을 넓혀 왔습니다.<br /><br />
+              영역을 넓혀 왔습니다. 지금은 <strong>자체 게임</strong>도 만들어 직접 퍼블리싱합니다.<br /><br />
               단순 기능 구현을 넘어 <strong>기획·디자인·개발·배포</strong> 전 과정을 함께하는
               파트너십을 지향합니다. 저장소를 열어 두고 진행하며, 완료 시 소스 코드와 문서,
               인프라 계정 소유권까지 넘겨드립니다.

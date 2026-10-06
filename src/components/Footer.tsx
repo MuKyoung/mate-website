@@ -41,7 +41,7 @@ export default function Footer() {
               <Image src="/images/logo.png" alt="MATE" width={80} height={26} className="h-6 w-auto brightness-0 invert" />
             </Link>
             <p className="text-sm text-white/45 leading-relaxed mb-5">
-              웹 · 앱, 게임 · XR, 교육 — 세 영역을 각각 전담하는 외주 개발 팀.
+              웹 · 앱, 게임 · XR, 교육 외주 개발과 자체 게임 제작 · 퍼블리싱.
             </p>
             <div className="flex gap-1">
               {social.map((s) => {

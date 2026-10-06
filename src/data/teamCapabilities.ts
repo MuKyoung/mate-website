@@ -211,7 +211,7 @@ export const awards: Award[] = [
 // 팀 전체 역량 데이터
 export const teamCapabilities = {
   title: 'MATE 팀의 역량',
-  description: '웹 · 앱, 게임 · XR, 교육 — 세 영역을 각각 전담하는 외주 개발 팀.',
+  description: '웹 · 앱, 게임 · XR, 교육 외주 개발과 자체 게임 제작 · 퍼블리싱.',
   capabilities: [
     {
       id: 'unity',

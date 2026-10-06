@@ -37,8 +37,8 @@ export default function Home() {
 
   return (
     <>
-      <DomainSlabs eager className="pb-0"
-        heading="MATE — 웹 · 앱, 게임 · XR, 교육을 각각 전담하는 외주 개발 팀" />
+      <DomainSlabs eager withGames className="pb-0"
+        heading="MATE — 웹 · 앱, 게임 · XR, 교육 외주 개발과 자체 게임 제작 · 퍼블리싱" />
 
       {/* ━━ (02) Work — 비대칭 2열 ━━ */}
       <section className={sectionPad}>
