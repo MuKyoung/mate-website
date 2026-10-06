@@ -1,14 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { FiSend, FiArrowRight } from 'react-icons/fi';
 import { RiKakaoTalkFill } from 'react-icons/ri';
 import PageHeader from '@/components/PageHeader';
 import FAQAccordion from '@/components/FAQAccordion';
-import FloatingNotice from '@/components/FloatingNotice';
 import SectionHead from '@/components/ui/SectionHead';
 import { faqs } from '@/data/faq';
+import { domains } from '@/data/domains';
 import { fadeLeft, fadeRight, clipLeft, lineDraw, stagger, inView } from '@/lib/motion';
 import {
   arrowHover, btnPrimary, clipWrap, container, displaySize, sectionPad,
@@ -21,6 +21,7 @@ const GOOGLE_SCRIPT_URL =
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
+    domain: '',
     name: '',
     email: '',
     subject: '',
@@ -30,6 +31,13 @@ export default function ContactPage() {
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get('domain');
+    if (q && domains.some((d) => d.key === q)) {
+      setFormData((prev) => ({ ...prev, domain: q }));
+    }
+  }, []);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({
       ...formData,
@@ -37,16 +45,31 @@ export default function ContactPage() {
     });
   };
 
+  /** 폼 내용을 메일 초안으로 옮긴다 — 전송 서버 없이도 문의가 실제로 도착한다 */
+  const openMailDraft = () => {
+    const domainLabel = domains.find((d) => d.key === formData.domain)?.kr ?? '미지정';
+    const subject = `[문의] ${formData.subject || '프로젝트 문의'}`;
+    const body = [
+      `문의 영역: ${domainLabel}`,
+      `이름: ${formData.name}`,
+      `회신 이메일: ${formData.email}`,
+      '',
+      formData.message,
+    ].join('\n');
+    window.location.href =
+      `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
 
+    // 전송 엔드포인트가 설정돼 있지 않으면 메일 초안으로 넘긴다
     if (!GOOGLE_SCRIPT_URL) {
-      setSubmitStatus('error');
-      setErrorMessage('연동 URL이 설정되어 있지 않습니다. NEXT_PUBLIC_GOOGLE_SCRIPT_URL 환경 변수를 확인해주세요.');
-      setIsSubmitting(false);
+      openMailDraft();
       return;
     }
+
+    setIsSubmitting(true);
 
     try {
       const iframe = document.createElement('iframe');
@@ -60,6 +83,7 @@ export default function ContactPage() {
       form.target = 'hidden_iframe';
 
       Object.entries({
+        domain: domains.find((d) => d.key === formData.domain)?.kr ?? '미지정',
         name: formData.name,
         email: formData.email,
         subject: formData.subject,
@@ -99,7 +123,7 @@ export default function ContactPage() {
 
       setSubmitStatus('success');
       setErrorMessage(null);
-      setFormData({ name: '', email: '', subject: '', message: '' });
+      setFormData({ domain: '', name: '', email: '', subject: '', message: '' });
       setTimeout(() => setSubmitStatus('idle'), 5000);
     } catch (err) {
       console.error(err);
@@ -111,24 +135,23 @@ export default function ContactPage() {
   };
 
   const inputClass =
-    'w-full h-14 px-5 bg-white/[0.04] border border-white/15 rounded-[10px] text-[16px] text-[#f5f6f7] placeholder:text-white/25 outline-none transition-colors focus:border-white/60 focus:ring-0';
+    'w-full h-14 px-5 bg-white/[0.04] border border-white/15 rounded-[10px] text-[16px] text-[var(--text-1)] placeholder:text-white/25 outline-none transition-colors focus:border-white/60 focus:ring-0';
   const labelClass = 'block text-[13px] font-semibold text-white/85 mb-2.5';
 
   return (
     <>
-      <FloatingNotice message="현재 '메시지 보내기' 기능의 서버 오류가 있습니다. 카카오톡 1대1 오픈채팅방을 이용해주시면 감사하겠습니다." />
 
       {/* ── 페이지 헤더 ── */}
       <PageHeader
         eyebrow="Contact Us"
         title="프로젝트 문의"
-        description="협업, 외주, 프로젝트에 대해 궁금한 점이 있으시면 언제든지 문의해주세요."
+        description="만들려는 것과 예산 범위만 알려주시면 됩니다. 기획이 정리되지 않은 상태로 오셔도 첫 통화에서 범위부터 같이 자릅니다."
       />
 
       {/* ━━ (01) Inquiry — 폼 좌 / 채널 우 ━━ */}
       <section className={sectionPad}>
         <div className={container}>
-          <SectionHead num="01" label="Inquiry" title={<>Get in Touch</>} kr="문의 양식" />
+          <SectionHead num="01" label="Inquiry" title={<>어디서부터 말씀드릴까요</>} kr="정리되지 않은 상태로 보내주셔도 됩니다" />
 
           <motion.div {...inView} variants={stagger}
             className="grid grid-cols-1 lg:grid-cols-12 gap-x-16 gap-y-20">
@@ -136,12 +159,42 @@ export default function ContactPage() {
             {/* 문의 양식 */}
             <motion.div variants={fadeLeft} className="lg:col-span-7">
               <form onSubmit={handleSubmit} className="space-y-7">
+                {/* 어느 영역 문의인지 먼저 고르게 해서 내부 배정이 바로 되도록 한다 */}
+                <fieldset>
+                  <legend className={labelClass}>
+                    문의 영역 <span className="font-normal text-white/35">(선택)</span>
+                  </legend>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    {domains.map((d) => {
+                      const on = formData.domain === d.key;
+                      return (
+                        <button
+                          key={d.key} type="button" data-domain={d.key}
+                          aria-pressed={on}
+                          onClick={() => setFormData((prev) => ({ ...prev, domain: on ? '' : d.key }))}
+                          className={`h-14 px-4 rounded-[10px] border text-left transition-colors ${
+                            on
+                              ? 'border-[var(--accent)] bg-[var(--accent-tint)]'
+                              : 'border-white/15 bg-white/[0.04] hover:border-white/35'
+                          }`}>
+                          <span className={`block type-b4 ${on ? 'text-[var(--text-1)]' : 'text-white/75'}`}>
+                            {d.kr}
+                          </span>
+                          <span className={`block type-c2 font-en ${on ? 'text-[var(--accent-strong)]' : 'text-white/35'}`}>
+                            {d.en}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </fieldset>
+
                 <div>
                   <label htmlFor="name" className={labelClass}>이름</label>
                   <input
                     type="text" id="name" name="name"
                     value={formData.name} onChange={handleChange} required
-                    className={inputClass} placeholder="이름을 입력하세요"
+                    className={inputClass} placeholder="홍길동"
                   />
                 </div>
                 <div>
@@ -149,7 +202,7 @@ export default function ContactPage() {
                   <input
                     type="email" id="email" name="email"
                     value={formData.email} onChange={handleChange} required
-                    className={inputClass} placeholder="이메일을 입력하세요"
+                    className={inputClass} placeholder="회신받으실 주소"
                   />
                 </div>
                 <div>
@@ -157,7 +210,7 @@ export default function ContactPage() {
                   <input
                     type="text" id="subject" name="subject"
                     value={formData.subject} onChange={handleChange} required
-                    className={inputClass} placeholder="문의 제목을 입력하세요"
+                    className={inputClass} placeholder="예) 사내 교육용 VR 콘텐츠 제작 문의"
                   />
                 </div>
                 <div>
@@ -165,19 +218,26 @@ export default function ContactPage() {
                   <textarea
                     id="message" name="message"
                     value={formData.message} onChange={handleChange} required rows={7}
-                    className="w-full px-5 py-4 bg-white/[0.04] border border-white/15 rounded-[10px] text-[16px] leading-[1.75] text-[#f5f6f7] placeholder:text-white/25 outline-none transition-colors resize-none focus:border-white/60 focus:ring-0"
-                    placeholder="문의 내용을 입력하세요"
+                    className="w-full px-5 py-4 bg-white/[0.04] border border-white/15 rounded-[10px] text-[16px] leading-[1.75] text-[var(--text-1)] placeholder:text-white/25 outline-none transition-colors resize-none focus:border-white/60 focus:ring-0"
+                    placeholder="만들려는 것, 생각하시는 일정과 예산 범위를 적어주시면 첫 회신에서 바로 범위 얘기를 시작할 수 있습니다."
                   />
                 </div>
 
                 {submitStatus === 'success' && (
-                  <p className="border-l-2 border-[#12b76a] pl-4 text-[15px] font-medium text-[#4ade80]">
+                  <p className="border-l-2 border-[var(--success)] pl-4 text-[15px] font-medium text-[var(--success-on-dark)]">
                     메시지가 성공적으로 전송되었습니다.
                   </p>
                 )}
                 {submitStatus === 'error' && (
-                  <p className="border-l-2 border-[#f04438] pl-4 text-[15px] font-medium text-[#f87171]">
+                  <p className="border-l-2 border-[var(--danger)] pl-4 text-[15px] font-medium text-[var(--danger-on-dark)]">
                     {errorMessage || '오류가 발생했습니다. 다시 시도해주세요.'}
+                  </p>
+                )}
+
+                {!GOOGLE_SCRIPT_URL && (
+                  <p className="type-c1 text-white/40 leading-[1.7]">
+                    버튼을 누르면 위 내용이 채워진 메일 초안이 열립니다. 바로 답장이 필요하시면
+                    카카오톡 오픈채팅이 가장 빠릅니다.
                   </p>
                 )}
 
@@ -191,7 +251,7 @@ export default function ContactPage() {
                   ) : (
                     <>
                       <FiSend size={17} className={arrowHover} />
-                      메시지 보내기
+                      {GOOGLE_SCRIPT_URL ? '메시지 보내기' : '메일로 보내기'}
                     </>
                   )}
                 </button>
@@ -215,7 +275,7 @@ export default function ContactPage() {
                   <p className="text-[13px] font-semibold text-[#3C1E1E]/60">1:1 오픈채팅</p>
                 </div>
                 <p className="text-[#3C1E1E]/70 text-[15px] mb-8 leading-[1.75]">
-                  빠른 상담 — <span className="font-semibold text-[#3C1E1E]">평일 10:00–18:00</span> 실시간 응대
+                  가장 빠른 창구입니다
                 </p>
                 <div className="inline-flex items-center gap-2.5 h-12 px-6 rounded-[10px] bg-[#3C1E1E] text-[#FEE500] text-[15px] font-bold group-hover:bg-[#2D1616] transition-colors duration-300">
                   <span>채팅 시작하기</span>
@@ -225,23 +285,23 @@ export default function ContactPage() {
 
               {/* 연락처 — 헤어라인 리스트 */}
               <div className="mt-14 sm:mt-16">
-                <p className="index-num font-en pb-6 border-b border-white/10">(02) Direct</p>
+                <p className="index-num font-en pb-6 border-b border-white/10">Direct</p>
                 <a href={`mailto:${CONTACT_EMAIL}`}
                   className="group flex items-baseline justify-between gap-6 py-6 border-b border-white/10">
                   <span className="text-[13px] text-white/45 flex-shrink-0">이메일</span>
-                  <span className="text-[16px] sm:text-[17px] font-semibold text-[#f5f6f7] group-hover:text-[#3182f6] transition-colors break-all text-right">
+                  <span className="text-[16px] sm:text-[17px] font-semibold text-[var(--text-1)] group-hover:text-[var(--accent)] transition-colors break-all text-right">
                     {CONTACT_EMAIL}
                   </span>
                 </a>
                 <a href={`tel:${CONTACT_PHONE}`}
                   className="group flex items-baseline justify-between gap-6 py-6 border-b border-white/10">
                   <span className="text-[13px] text-white/45 flex-shrink-0">전화</span>
-                  <span className="text-[16px] sm:text-[17px] font-semibold text-[#f5f6f7] group-hover:text-[#3182f6] transition-colors text-right">
+                  <span className="text-[16px] sm:text-[17px] font-semibold text-[var(--text-1)] group-hover:text-[var(--accent)] transition-colors text-right">
                     {CONTACT_PHONE}
                   </span>
                 </a>
                 <p className="pt-8 text-[15px] text-white/55 leading-[1.75]">
-                  <span className="font-semibold text-[#f5f6f7]">빠른 답변</span>을 원하시면 카카오톡 오픈채팅을 이용해주세요.
+                  <span className="font-semibold text-[var(--text-1)]">빠른 답변</span>을 원하시면 카카오톡 오픈채팅을 이용해주세요.
                 </p>
               </div>
             </motion.div>
@@ -262,7 +322,7 @@ export default function ContactPage() {
                 className="absolute bottom-0 left-0 right-0 h-px bg-white/10 block" />
             </div>
             <motion.h2 {...inView} variants={stagger}
-              className="font-en text-[#f5f6f7] font-extrabold tracking-[-0.03em] leading-[1.04]"
+              className="font-en text-[var(--text-1)] font-extrabold tracking-[-0.03em] leading-[1.04]"
               style={displaySize}>
               <span className={clipWrap}>
                 <motion.span variants={clipLeft} className="block">FAQ</motion.span>

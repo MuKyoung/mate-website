@@ -1,20 +1,10 @@
-'use client';
-
-import { motion } from 'framer-motion';
-import { easeEnter } from '@/lib/motion';
-
 /**
  * 라우트 전환 연출.
- * template.tsx는 페이지 이동마다 새로 마운트되므로 진입 애니메이션이 매번 재생된다.
+ *
+ * framer-motion 으로 처리하면 하이드레이션이 끝날 때까지 본문이 opacity 0 으로 덮여
+ * 느린 회선에서 빈 화면이 먼저 보인다. CSS 애니메이션은 JS 없이도 돌기 때문에
+ * 본문이 즉시 그려지고, 전역 prefers-reduced-motion 규칙에도 그대로 걸린다.
  */
 export default function Template({ children }: { children: React.ReactNode }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: easeEnter }}
-    >
-      {children}
-    </motion.div>
-  );
+  return <div className="route-enter">{children}</div>;
 }

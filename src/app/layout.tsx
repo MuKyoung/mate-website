@@ -19,16 +19,16 @@ const siteUrl = "https://devteammate.co.kr";
 
 /* 모바일 브라우저 크롬(주소창 등)을 다크 캔버스에 맞춤 */
 export const viewport: Viewport = {
-  themeColor: "#131518",
+  themeColor: "#0e1117",
 };
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Mate - 게임·웹·앱 외주 개발 전문팀",
+    default: "Mate — 웹 · 앱 · 게임 · XR · 교육 외주 개발 팀",
     template: "%s | Mate 외주개발팀",
   },
-  description: "Unity 게임·AR/VR·웹·앱 개발 및 개발 강의에 특화된 전문 외주개발팀입니다. 5년 경력, 30개 이상의 프로젝트로 검증된 풀스택 개발 파트너입니다.",
+  description: "웹 · 앱, 게임 · XR, 교육 — 세 영역을 각각 전담하는 외주 개발 팀입니다. 요구사항 정의부터 배포와 인계까지 한 팀이 맡습니다.",
   keywords: "외주개발, 외주 개발, 유니티, Unity, 게임 개발, AR/VR, 웹개발, 앱개발, React, Next.js, Flutter, 개발 강의, 유니티 강의, 외주 팀, 유니티 외주, 웹 외주, 앱 외주, 게임 외주, 2D 게임 개발, 3D 게임 개발",
   authors: [{ name: "Mate Team" }],
   creator: "Mate 외주개발팀",
@@ -41,11 +41,11 @@ export const metadata: Metadata = {
     locale: "ko_KR",
     url: siteUrl,
     siteName: "Mate 외주개발팀",
-    title: "Mate - 게임·웹·앱 외주 개발 전문팀",
-    description: "Unity 게임·AR/VR·웹·앱 개발 및 개발 강의에 특화된 전문 외주개발팀입니다. 5년 경력, 30개 이상의 프로젝트로 검증된 풀스택 개발 파트너입니다.",
+    title: "Mate — 웹 · 앱 · 게임 · XR · 교육 외주 개발 팀",
+    description: "웹 · 앱, 게임 · XR, 교육 — 세 영역을 각각 전담하는 외주 개발 팀입니다. 요구사항 정의부터 배포와 인계까지 한 팀이 맡습니다.",
     images: [
       {
-        url: `${siteUrl}/images/og-image.jpg`,
+        url: `${siteUrl}/images/og/og-default.jpg`,
         width: 1200,
         height: 630,
         alt: "Mate 외주개발팀",
@@ -54,9 +54,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Mate - 게임·웹·앱 외주 개발 전문팀",
-    description: "Unity 게임·AR/VR·웹·앱 개발 및 개발 강의 전문팀.",
-    images: [`${siteUrl}/images/og-image.jpg`],
+    title: "Mate — 웹 · 앱 · 게임 · XR · 교육 외주 개발 팀",
+    description: "웹 · 앱, 게임 · XR, 교육 — 세 영역을 각각 전담하는 외주 개발 팀.",
+    images: [`${siteUrl}/images/og/og-default.jpg`],
   },
   robots: {
     index: true,
@@ -85,7 +85,7 @@ export default function RootLayout({
     "@type": "Organization",
     "name": "Mate",
     "alternateName": "Mate 외주개발팀",
-    "description": "유니티 외주 개발과 개발 강의에 특화된 전문 개발 팀입니다",
+    "description": "웹 · 앱, 게임 · XR, 교육 — 세 영역을 각각 전담하는 외주 개발 팀.",
     "url": siteUrl,
     "logo": `${siteUrl}/images/logo.png`,
     "contactPoint": {
@@ -108,7 +108,7 @@ export default function RootLayout({
     "@type": "WebSite",
     "name": "Mate 외주개발팀",
     "url": siteUrl,
-    "description": "유니티 외주 개발과 개발 강의에 특화된 전문 개발 팀",
+    "description": "웹 · 앱, 게임 · XR, 교육 — 세 영역을 각각 전담하는 외주 개발 팀.",
     "potentialAction": {
       "@type": "SearchAction",
       "target": {

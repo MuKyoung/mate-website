@@ -33,7 +33,7 @@ export default function FAQAccordion({ faqs }: FAQAccordionProps) {
               aria-expanded={isOpen}
               className="group w-full py-7 text-left flex items-center justify-between gap-6"
             >
-              <span className="text-[17px] sm:text-[19px] font-bold text-[#f5f6f7] tracking-[-0.02em] leading-[1.4] transition-colors duration-300 group-hover:text-[#3182f6]">
+              <span className="text-[17px] sm:text-[19px] font-bold text-[var(--text-1)] tracking-[-0.02em] leading-[1.4] transition-colors duration-300 group-hover:text-[var(--accent)]">
                 {faq.question}
               </span>
               <motion.span

@@ -7,21 +7,22 @@ import { motion } from 'framer-motion';
 import { fadeLeft, fadeRight, lineDraw, stagger, inView } from '@/lib/motion';
 
 // 카테고리 매핑
+/* 헤더 내비와 같은 3도메인 체계를 쓴다 — 한 사이트에 분류가 둘이면 안 된다 */
 const CATEGORY_MAP: Record<string, string> = {
-  'Game Application': '유니티',
-  'VR Application': '유니티',
-  'AR Application': '유니티',
-  'Web Application': '웹/앱',
-  'Mobile Application': '웹/앱',
-  'Education Content': '강의',
+  'Game Application': '게임 · XR',
+  'VR Application': '게임 · XR',
+  'AR Application': '게임 · XR',
+  'Web Application': '웹 · 앱',
+  'Mobile Application': '웹 · 앱',
+  'Education Content': '교육',
 };
 
 // 카테고리 옵션
 const CATEGORY_OPTIONS = [
   { value: 'all', label: '전체' },
-  { value: '유니티', label: '유니티' },
-  { value: '웹/앱', label: '웹 / 앱' },
-  { value: '강의', label: '강의' },
+  { value: '웹 · 앱', label: '웹 · 앱' },
+  { value: '게임 · XR', label: '게임 · XR' },
+  { value: '교육', label: '교육' },
 ];
 
 interface ProjectFilterProps {
@@ -69,7 +70,7 @@ export default function ProjectFilter({ projects }: ProjectFilterProps) {
                   className={`pb-4 -mb-px border-b-2 text-[15px] font-semibold transition-colors ${
                     active
                       ? 'border-white text-white'
-                      : 'border-transparent text-white/30 hover:text-white'
+                      : 'border-transparent text-white/45 hover:text-white'
                   }`}
                 >
                   {option.label}
@@ -103,7 +104,7 @@ export default function ProjectFilter({ projects }: ProjectFilterProps) {
       {filteredProjects.length === 0 && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-28 text-center">
           <p className="index-num font-en justify-center mb-6">No results</p>
-          <h3 className="text-[24px] sm:text-[28px] font-extrabold text-[#f5f6f7] tracking-[-0.025em] leading-[1.2] mb-4">
+          <h3 className="text-[24px] sm:text-[28px] font-extrabold text-[var(--text-1)] tracking-[-0.025em] leading-[1.2] mb-4">
             해당 카테고리의 프로젝트가 없습니다
           </h3>
           <p className="text-[16px] text-white/45 leading-[1.75]">다른 카테고리를 선택해 보세요</p>

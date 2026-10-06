@@ -12,10 +12,10 @@ import {
 interface CtaSectionProps {
   /** 섹션 번호 라벨 (예: '06') */
   num: string;
-  /** 대형 영문 헤딩 1행 */
-  line1?: string;
-  /** 대형 영문 헤딩 2행 — 블루 강조 */
-  line2?: string;
+  /** 대형 영문 헤딩 1행 — 페이지마다 다르게 넘긴다 */
+  line1: string;
+  /** 대형 영문 헤딩 2행 — 액센트 강조 */
+  line2: string;
   /** 국문 캡션 (— 프리픽스 자동) */
   kr: string;
   /** 버튼 문구 */
@@ -26,13 +26,7 @@ interface CtaSectionProps {
  * 페이지 하단 공통 CTA — 대형 영문 스테이트먼트 + 국문 캡션 + 화이트 필 버튼 + 이메일.
  * 모든 페이지가 같은 마무리를 갖도록 하나로 관리한다.
  */
-export default function CtaSection({
-  num,
-  line1 = "Let's build",
-  line2 = 'together',
-  kr,
-  cta = '프로젝트 문의',
-}: CtaSectionProps) {
+export default function CtaSection({ num, line1, line2, kr, cta = '프로젝트 문의' }: CtaSectionProps) {
   return (
     <section className={`${sectionPadLg} border-t border-white/10`}>
       <div className={container}>
@@ -41,13 +35,13 @@ export default function CtaSection({
         </motion.p>
 
         <motion.h2 {...inView} variants={stagger}
-          className="font-en text-[#f5f6f7] font-extrabold tracking-[-0.04em] leading-[0.98] mb-8"
+          className="font-en text-[var(--text-1)] font-extrabold tracking-[-0.04em] leading-[0.98] mb-8"
           style={displaySizeLg}>
           <span className={clipWrap}>
             <motion.span variants={clipLeft} className="block">{line1}</motion.span>
           </span>
           <span className={clipWrap}>
-            <motion.span variants={clipUp} className="block text-[#3182f6]">{line2}</motion.span>
+            <motion.span variants={clipUp} className="block text-[var(--point)]">{line2}</motion.span>
           </span>
         </motion.h2>
 

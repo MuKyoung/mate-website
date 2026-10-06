@@ -7,31 +7,49 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const routes: MetadataRoute.Sitemap = [
     {
-      url: baseUrl,
+      url: `${baseUrl}/`,
       lastModified: currentDate,
       changeFrequency: 'weekly',
       priority: 1,
     },
     {
-      url: `${baseUrl}/services`,
+      url: `${baseUrl}/web/`,
+      lastModified: currentDate,
+      changeFrequency: 'monthly',
+      priority: 0.95,
+    },
+    {
+      url: `${baseUrl}/game/`,
+      lastModified: currentDate,
+      changeFrequency: 'monthly',
+      priority: 0.95,
+    },
+    {
+      url: `${baseUrl}/education/`,
+      lastModified: currentDate,
+      changeFrequency: 'monthly',
+      priority: 0.95,
+    },
+    {
+      url: `${baseUrl}/services/`,
       lastModified: currentDate,
       changeFrequency: 'monthly',
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/team`,
+      url: `${baseUrl}/team/`,
       lastModified: currentDate,
       changeFrequency: 'monthly',
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/projects`,
+      url: `${baseUrl}/projects/`,
       lastModified: currentDate,
       changeFrequency: 'weekly',
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/contact`,
+      url: `${baseUrl}/contact/`,
       lastModified: currentDate,
       changeFrequency: 'monthly',
       priority: 0.8,
@@ -41,7 +59,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // 프로젝트 개별 페이지 추가
   projects.forEach((project) => {
     routes.push({
-      url: `${baseUrl}/projects/${project.id}`,
+      url: `${baseUrl}/projects/${project.id}/`,
       lastModified: currentDate,
       changeFrequency: 'monthly',
       priority: 0.7,

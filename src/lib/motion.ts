@@ -18,12 +18,6 @@ export const fadeUp: Variants = {
   show: { opacity: 1, y: 0, transition: tEnter },
 };
 
-/** 더 강한 리빌 (히어로/대형 블록) */
-export const revealUp: Variants = {
-  hidden: { opacity: 0, y: 100 },
-  show: { opacity: 1, y: 0, transition: { duration: 1.2, ease: easeEnter } },
-};
-
 /** 클립 리빌 — 아래에서 위로 마스크가 열림 (대형 타이포) */
 export const clipUp: Variants = {
   hidden: { clipPath: 'inset(105% 0 0 0)', y: 40 },
@@ -37,18 +31,6 @@ export const clipUp: Variants = {
 export const maskUp: Variants = {
   hidden: { clipPath: 'inset(100% 0 0 0)' },
   show: { clipPath: 'inset(0% 0 0 0)', transition: { duration: 1.3, ease: easeEnter } },
-};
-
-/** 스케일 인 — 큰 이미지/패널이 밀려 들어오는 느낌 */
-export const scaleIn: Variants = {
-  hidden: { opacity: 0, scale: 1.08, y: 40 },
-  show: { opacity: 1, scale: 1, y: 0, transition: { duration: 1.2, ease: easeEnter } },
-};
-
-/** 단순 페이드 */
-export const fade: Variants = {
-  hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { duration: DUR.slow, ease: easeEnter } },
 };
 
 /* ── 방향·각도 변주 — 균일한 상승 일변도를 깨는 어휘 ──
@@ -90,18 +72,6 @@ export const clipRight: Variants = {
   show: { clipPath: 'inset(0 0 0 0%)', x: 0, transition: { duration: 1.1, ease: easeEnter } },
 };
 
-/** 이미지 마스크 — 좌→우 열림 */
-export const maskLeft: Variants = {
-  hidden: { clipPath: 'inset(0 100% 0 0)' },
-  show: { clipPath: 'inset(0 0% 0 0)', transition: { duration: 1.25, ease: easeEnter } },
-};
-
-/** 이미지 마스크 — 우→좌 열림 */
-export const maskRight: Variants = {
-  hidden: { clipPath: 'inset(0 0 0 100%)' },
-  show: { clipPath: 'inset(0 0 0 0%)', transition: { duration: 1.25, ease: easeEnter } },
-};
-
 /** 줌아웃 + 미세 회전 진입 (대형 이미지/패널) */
 export const zoomTilt: Variants = {
   hidden: { opacity: 0, scale: 1.12, rotate: 1.6 },
@@ -114,6 +84,22 @@ export const lineDraw: Variants = {
   show: { scaleX: 1, transition: { duration: 1.1, ease: easeEnter } },
 };
 
+/* ── 표·목록 전용 ────────────────────────────────────
+   행 하나하나가 크게 떠오르면 마지막 행이 자리를 잡을 때까지 읽기를 시작할 수 없다.
+   밀도 높은 데이터에는 짧고 얕은 진입을 쓴다. */
+
+/** 표의 한 행 — 얕게, 짧게 */
+export const rowIn: Variants = {
+  hidden: { opacity: 0, y: 12 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.42, ease: easeEnter } },
+};
+
+/** 행 단위 스태거 — 8행짜리 표도 0.3초 안에 다 선다 */
+export const staggerRows: Variants = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.035 } },
+};
+
 /** 자식 스태거 컨테이너 (넉넉한 간격) */
 export const stagger: Variants = {
   hidden: {},
@@ -124,12 +110,6 @@ export const stagger: Variants = {
 export const staggerTight: Variants = {
   hidden: {},
   show: { transition: { staggerChildren: 0.09 } },
-};
-
-/** 글자 단위 리빌 컨테이너 */
-export const staggerChars: Variants = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.04 } },
 };
 
 /** whileInView 공통 props — once, 뷰포트 진입 시 */

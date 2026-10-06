@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { FiImage } from 'react-icons/fi';
+import ThumbFallback from '@/components/ThumbFallback';
 
 interface SafeImageProps {
   src: string | undefined;
@@ -31,11 +31,7 @@ export default function SafeImage({
   if (!src || imageError) {
     return (
       <div className={className}>
-        {placeholder || (
-          <div className="w-full h-full flex items-center justify-center bg-[#1d2024] text-white/20">
-            <FiImage size={36} />
-          </div>
-        )}
+        {placeholder || <div className="relative w-full h-full"><ThumbFallback /></div>}
       </div>
     );
   }
@@ -43,7 +39,7 @@ export default function SafeImage({
   return (
     <div className={`relative ${fill ? 'w-full h-full' : ''} ${className}`}>
       {imageLoading && (
-        <div className="absolute inset-0 bg-[#1d2024] animate-pulse z-10" />
+        <div className="absolute inset-0 bg-[var(--surface)] animate-pulse z-10" />
       )}
       {fill ? (
         <Image

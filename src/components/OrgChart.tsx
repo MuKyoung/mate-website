@@ -5,7 +5,7 @@ import { departments, totalHeadcount } from '@/data/organization';
 import { fadeUp, fadeLeft, fadeRight, stagger, inView, easeEnter } from '@/lib/motion';
 
 /* 부서 세그먼트 컬러 — 화이트 / 블루 / 뉴트럴 */
-const segmentColors = ['#ffffff', '#3182f6', 'rgba(255,255,255,0.25)'];
+const segmentColors = ['var(--gray-50)', 'var(--accent)', 'rgba(255,255,255,0.25)'];
 
 export default function OrgChart() {
   return (
@@ -13,7 +13,7 @@ export default function OrgChart() {
       {/* ── 상단 요약 행 ── */}
       <motion.div {...inView} variants={fadeLeft}
         className="flex flex-wrap items-baseline gap-x-5 gap-y-2 pb-10 border-b border-white/10">
-        <p className="font-en text-5xl sm:text-6xl font-extrabold text-[#f5f6f7] font-mono-stat tracking-[-0.03em]">
+        <p className="font-en text-5xl sm:text-6xl font-extrabold text-[var(--text-1)] font-mono-stat tracking-[-0.03em]">
           {totalHeadcount}<span className="text-2xl sm:text-3xl ml-0.5">명</span>
         </p>
         <p className="text-[15px] text-white/45">하나의 팀, 세 개의 축</p>
@@ -29,7 +29,7 @@ export default function OrgChart() {
               i < departments.length - 1 ? 'md:pr-10' : '',
             ].join(' ')}>
             <p className="index-num font-en mb-8">{dept.label}</p>
-            <p className="font-en text-5xl sm:text-6xl font-extrabold text-[#f5f6f7] font-mono-stat tracking-[-0.03em] mb-6">
+            <p className="font-en text-5xl sm:text-6xl font-extrabold text-[var(--text-1)] font-mono-stat tracking-[-0.03em] mb-6">
               {dept.headcount}
               <span className="text-xl sm:text-2xl font-bold text-white/30 ml-1">명</span>
             </p>

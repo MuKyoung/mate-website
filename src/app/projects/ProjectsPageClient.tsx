@@ -2,7 +2,6 @@
 
 import PageHeader from '@/components/PageHeader';
 import ProjectFilter from '@/components/ProjectFilter';
-import FloatingNotice from '@/components/FloatingNotice';
 import CtaSection from '@/components/ui/CtaSection';
 import { Project } from '@/types';
 import { container, sectionPad } from '@/lib/styles';
@@ -12,12 +11,19 @@ interface ProjectsPageClientProps {
 }
 
 export default function ProjectsPageClient({ projects }: ProjectsPageClientProps) {
+  // 설명 문구의 숫자가 목록과 어긋나지 않도록 실제 데이터에서 센다
+  const count = (re: RegExp) => projects.filter((p) => re.test(p.category)).length;
+  const gameCount = count(/Game|VR/);
+  const webCount = count(/Web/);
+  const eduCount = count(/Education/);
+  const months = projects.map((p) => p.durationMonths);
+
   return (
     <>
       <PageHeader
         eyebrow="Portfolio"
         title="프로젝트 포트폴리오"
-        description="다양한 산업 분야에서 성공적으로 완료한 프로젝트들을 소개합니다. Unity 게임 · AR/VR · 웹 · 앱 · 강의까지, 검증된 결과물을 확인하세요."
+        description={`게임 · VR ${gameCount}건, 웹 · 앱 ${webCount}건, 강의 ${eduCount}건. 기간은 ${Math.min(...months)}개월에서 ${Math.max(...months)}개월까지였고, 전부 납품이 끝난 것들입니다.`}
       />
 
       {/* ━━ (01) Work — 텍스트 탭 필터 + 비대칭 2열 그리드 ━━ */}
@@ -30,11 +36,11 @@ export default function ProjectsPageClient({ projects }: ProjectsPageClientProps
       {/* ━━ (02) CTA ━━ */}
       <CtaSection
         num="02"
-        kr="비슷한 프로젝트를 계획 중이신가요? 게임 · 웹 · 앱 · AR/VR, 무료 상담으로 가능성을 확인하세요"
+        line1="Yours could be"
+        line2="next on this list."
+        kr={`여기 올라온 ${projects.length}건은 전부 실제 납품물입니다`}
         cta="문의하기"
       />
-
-      <FloatingNotice message="정보를 추가 중입니다" />
     </>
   );
 }

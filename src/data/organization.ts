@@ -21,7 +21,7 @@ export const departments: DepartmentInfo[] = [
     name: '개발',
     label: 'Development',
     headcount: 4,
-    description: 'Unity 게임 · AR/VR · 웹 · 앱까지 클라이언트와 서버를 모두 담당합니다.',
+    description: '웹 · 앱, 게임 · XR 양쪽에서 클라이언트와 서버를 모두 담당합니다.',
     focus: ['Unity 클라이언트', '웹 · 앱', '서버 · 인프라', 'AR / VR'],
   },
   {

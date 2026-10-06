@@ -5,8 +5,9 @@ import { notFound } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { projects } from '@/data/projects';
 import { summarizeDepartments } from '@/data/organization';
-import { FiExternalLink, FiGithub, FiArrowLeft, FiYoutube, FiImage } from 'react-icons/fi';
+import { FiExternalLink, FiGithub, FiArrowLeft, FiYoutube } from 'react-icons/fi';
 import ParallaxImage from '@/components/ParallaxImage';
+import ThumbFallback from '@/components/ThumbFallback';
 import CtaSection from '@/components/ui/CtaSection';
 import {
   fadeUp, fadeLeft, fadeRight, riseTiltR, clipUp, clipLeft, clipRight,
@@ -34,6 +35,21 @@ export default function ProjectDetailClient({ params }: Props) {
 
   const team = summarizeDepartments(project.teamMembers);
 
+  /* 개요가 한 줄 소개를 그대로 복제한 경우가 있다.
+     같은 문장을 제목 아래에서 또 읽히게 두면 섹션만 있고 내용은 없는 화면이 된다. */
+  const overview =
+    project.longDescription.trim() !== project.description.trim() ? project.longDescription : null;
+
+  /* 갤러리가 대표 이미지 하나만 담고 있으면 위에서 이미 본 그림이다. */
+  const gallery = project.images.filter((img) => img !== project.thumbnail);
+
+  // 실제로 그려지는 섹션에만 번호를 매긴다
+  let n = 0;
+  const num = () => String(++n).padStart(2, '0');
+  const overviewNum = overview ? num() : null;
+  const galleryNum = gallery.length > 0 ? num() : null;
+  const ctaNum = num();
+
   return (
     <>
       {/* ── 헤더 — 다크 + 하단 헤어라인 ── */}
@@ -53,7 +69,7 @@ export default function ProjectDetailClient({ params }: Props) {
           </motion.p>
 
           <motion.h1 {...onMount} variants={stagger}
-            className="text-[#f5f6f7] font-extrabold tracking-[-0.05em] leading-[0.96] mb-8 sm:mb-10 max-w-5xl"
+            className="text-[var(--text-1)] font-extrabold tracking-[-0.05em] leading-[0.96] mb-8 sm:mb-10 max-w-5xl"
             style={{ fontSize: 'clamp(2.5rem, 9vw, 7.5rem)' }}>
             <span className="block overflow-hidden pb-[0.07em]">
               <motion.span variants={clipUp} className="block">{project.title}</motion.span>
@@ -69,7 +85,7 @@ export default function ProjectDetailClient({ params }: Props) {
           <motion.div {...onMount} variants={fadeUp} className="flex flex-wrap items-center gap-x-8 gap-y-5">
             {project.liveUrl && (
               <a href={project.liveUrl} target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-2.5 h-14 px-9 rounded-full text-[15px] font-bold text-[#131518] bg-white hover:bg-[#3182f6] hover:text-white transition-colors duration-300">
+                className="inline-flex items-center gap-2.5 h-14 px-9 rounded-full text-[15px] font-bold text-[var(--canvas)] bg-white hover:bg-[var(--accent)] hover:text-white transition-colors duration-300">
                 <FiExternalLink size={17} />
                 라이브 데모
               </a>
@@ -103,7 +119,7 @@ export default function ProjectDetailClient({ params }: Props) {
               {/* 영상 / 썸네일 — 대형 */}
               {project.youtubeUrl ? (
                 <motion.div {...inView} variants={zoomTilt}
-                  className="relative rounded-[16px] overflow-hidden aspect-video bg-[#1d2024]">
+                  className="relative rounded-[16px] overflow-hidden aspect-video bg-[var(--surface)]">
                   <iframe
                     src={`https://www.youtube.com/embed/${getYouTubeVideoId(project.youtubeUrl)}?rel=0`}
                     title={project.title}
@@ -116,55 +132,57 @@ export default function ProjectDetailClient({ params }: Props) {
                   alt={project.title}
                   className="aspect-[16/9]"
                   rounded="rounded-[16px]"
-                  placeholder={<div className="absolute inset-0 flex items-center justify-center text-white/20"><FiImage size={64} /></div>}
+                  placeholder={<ThumbFallback label={project.category} />}
                 />
               )}
 
-              {/* (01) Overview */}
+              {/* Overview — 내용이 한 줄 소개와 다를 때만 */}
+              {overview && (
               <motion.div {...inView} variants={stagger}>
                 <div className="relative pb-6 mb-10 sm:mb-14">
-                  <motion.p variants={fadeLeft} className="index-num font-en">(01) Overview</motion.p>
+                  <motion.p variants={fadeLeft} className="index-num font-en">({overviewNum}) Overview</motion.p>
                   {/* 헤어라인이 좌→우로 그어짐 */}
                   <motion.span variants={lineDraw}
                     className="absolute bottom-0 left-0 right-0 h-px bg-white/10 block" />
                 </div>
                 <h2
-                  className="text-[#f5f6f7] font-extrabold tracking-[-0.04em] leading-[1.04] mb-9"
+                  className="text-[var(--text-1)] font-extrabold tracking-[-0.04em] leading-[1.04] mb-9"
                   style={displaySize}>
                   <span className={clipWrap}>
                     <motion.span variants={clipLeft} className="block">프로젝트 개요</motion.span>
                   </span>
                 </h2>
                 <motion.p variants={fadeUp} className="text-[17px] text-white/55 leading-[1.85] whitespace-pre-line">
-                  {project.longDescription}
+                  {overview}
                 </motion.p>
               </motion.div>
+              )}
 
-              {/* (02) Gallery */}
-              {project.images && project.images.length > 0 && (
+              {/* Gallery — 대표 이미지와 다른 컷이 있을 때만 */}
+              {gallery.length > 0 && (
                 <motion.div {...inView} variants={stagger}>
                   <div className="relative pb-6 mb-10 sm:mb-14">
-                    <motion.p variants={fadeRight} className="index-num font-en">(02) Gallery</motion.p>
+                    <motion.p variants={fadeRight} className="index-num font-en">({galleryNum}) Gallery</motion.p>
                     {/* 헤어라인이 좌→우로 그어짐 */}
                     <motion.span variants={lineDraw}
                       className="absolute bottom-0 left-0 right-0 h-px bg-white/10 block" />
                   </div>
                   <h2
-                    className="text-[#f5f6f7] font-extrabold tracking-[-0.04em] leading-[1.04] mb-10 sm:mb-12"
+                    className="text-[var(--text-1)] font-extrabold tracking-[-0.04em] leading-[1.04] mb-10 sm:mb-12"
                     style={displaySize}>
                     <span className={clipWrap}>
                       <motion.span variants={clipRight} className="block">스크린샷</motion.span>
                     </span>
                   </h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-                    {project.images.map((img, i) => (
+                    {gallery.map((img, i) => (
                       <ParallaxImage
                         key={i}
                         src={img}
                         alt={`${project.title} ${i + 1}`}
                         className="aspect-[16/9]"
                         rounded="rounded-xl"
-                        placeholder={<div className="absolute inset-0 flex items-center justify-center text-white/20"><FiImage size={40} /></div>}
+                        placeholder={<ThumbFallback label={project.category} />}
                       />
                     ))}
                   </div>
@@ -189,7 +207,7 @@ export default function ProjectDetailClient({ params }: Props) {
               {team.length > 0 && (
                 <motion.div {...inView} variants={riseTiltR} className="rule-top">
                   <p className="index-num font-en mb-3">Team</p>
-                  <p className="text-[17px] font-bold text-[#f5f6f7] mb-5">
+                  <p className="text-[17px] font-bold text-[var(--text-1)] mb-5">
                     참여 인원 {project.teamMembers.length}명
                   </p>
                   <div>
@@ -197,10 +215,10 @@ export default function ProjectDetailClient({ params }: Props) {
                       <div key={d.id}
                         className="flex items-center justify-between gap-4 py-5 border-b border-white/10">
                         <div className="min-w-0">
-                          <p className="text-[16px] font-bold text-[#f5f6f7]">{d.name}</p>
+                          <p className="text-[16px] font-bold text-[var(--text-1)]">{d.name}</p>
                           <p className="text-[14px] text-white/55">{d.label}</p>
                         </div>
-                        <span className="text-2xl font-extrabold text-[#f5f6f7] font-mono-stat tracking-[-0.03em] flex-shrink-0">
+                        <span className="text-2xl font-extrabold text-[var(--text-1)] font-mono-stat tracking-[-0.03em] flex-shrink-0">
                           {d.count}
                           <span className="text-[13px] font-bold text-white/30 ml-1">명</span>
                         </span>
@@ -217,8 +235,10 @@ export default function ProjectDetailClient({ params }: Props) {
 
       {/* ── (03) CTA ── */}
       <CtaSection
-        num="03"
-        kr="비슷한 프로젝트를 계획 중이신가요? 게임 · 웹 · 앱 · AR/VR, 무료 상담으로 가능성을 확인하세요"
+        num={ctaNum}
+        line1="Something"
+        line2="like this?"
+        kr="비슷한 걸 만들고 계신가요? 어느 단계에 있든 첫 통화부터 시작합니다"
         cta="문의하기"
       />
     </>

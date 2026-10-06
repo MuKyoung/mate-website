@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { FiArrowUpRight, FiArrowDown } from 'react-icons/fi';
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { easeEnter } from '@/lib/motion';
+import { projects } from '@/data/projects';
+import { teamCapabilities } from '@/data/teamCapabilities';
 import { arrowHover, btnPrimary, container, hairlineCell } from '@/lib/styles';
 
 /* ── 글자 단위 리빌 (Splitting.js 방식) — 미세 회전 각도 포함 ── */
@@ -38,7 +40,7 @@ function CharLine({ text, offset = 0, accent = false }: { text: string; offset?:
         });
         charIndex++; // 공백 몫
         return (
-          <span key={wi} className={`inline-block whitespace-nowrap ${accent ? 'text-[#3182f6]' : ''}`}>
+          <span key={wi} className={`inline-block whitespace-nowrap ${accent ? 'text-[var(--point)]' : ''}`}>
             {chars}
             {wi < words.length - 1 && <span className="inline-block">&nbsp;</span>}
           </span>
@@ -51,16 +53,16 @@ function CharLine({ text, offset = 0, accent = false }: { text: string; offset?:
 /* ── 슬라이드 데이터 — EN 대형 + KR 캡션 ── */
 const slides = [
   {
-    en1: 'Ideas to Code,', en2: 'Code to Life', accent2: true,
-    kr: '상상을 현실로 만드는 외주개발 스튜디오',
+    en1: 'One Door,', en2: 'Three Rooms', accent2: true,
+    kr: '웹·앱, 게임·XR, 교육 — 세 영역을 각각 전담합니다',
   },
   {
-    en1: 'One Team,', en2: 'Full Cycle', accent2: true,
-    kr: '기획부터 배포까지, 한 팀이 끝까지 책임집니다',
+    en1: 'Same Hands,', en2: 'Start to Ship', accent2: true,
+    kr: '계약 때 만난 사람이 배포까지 갑니다',
   },
   {
-    en1: 'Quality,', en2: 'Proven by Work', accent2: true,
-    kr: '5년간 30개 이상의 프로젝트로 증명한 품질',
+    en1: 'Shipped,', en2: 'Not Promised', accent2: true,
+    kr: '만든 것만 올렸습니다. 포트폴리오 12건은 전부 실제 납품물입니다',
   },
 ];
 
@@ -80,7 +82,7 @@ function Stat({ to, suffix, label }: { to: number; suffix: string; label: string
   return (
     <div className="flex items-baseline gap-3 py-7 sm:py-9">
       <span ref={ref}
-        className="font-en text-3xl sm:text-4xl font-extrabold text-[#f5f6f7] font-mono-stat tracking-[-0.02em]">
+        className="font-en text-3xl sm:text-4xl font-extrabold text-[var(--text-1)] font-mono-stat tracking-[-0.02em]">
         0{suffix}
       </span>
       <span className="text-[13px] text-white/45">{label}</span>
@@ -88,11 +90,14 @@ function Stat({ to, suffix, label }: { to: number; suffix: string; label: string
   );
 }
 
+/* 도메인 카드가 쓰는 것과 같은 출처에서 합을 낸다 — 두 자리의 숫자가 어긋나지 않도록 */
+const TOTAL = teamCapabilities.capabilities.reduce((n, c) => n + c.projects, 0);
+
 const stats = [
-  { to: 30, suffix: '+', label: '완료 프로젝트' },
-  { to: 5, suffix: '년', label: '개발 경력' },
-  { to: 100, suffix: '%', label: '성공률' },
-  { to: 7, suffix: '명', label: '전문 인력' },
+  { to: TOTAL, suffix: '+', label: '누적 프로젝트' },
+  { to: projects.length, suffix: '건', label: '포트폴리오 공개' },
+  { to: 5, suffix: '년', label: '팀 운영' },
+  { to: teamCapabilities.stats.teamMembers, suffix: '명', label: '개발 4 · 디자인 2 · 운영 1' },
 ];
 
 export default function Hero() {
@@ -112,7 +117,7 @@ export default function Hero() {
   const slide = slides[index];
 
   return (
-    <section ref={ref} className="relative bg-[#131518]">
+    <section ref={ref} className="relative bg-[var(--canvas)]">
       <motion.div style={{ y, opacity }}
         className={`${container} min-h-[92svh] flex flex-col justify-end pt-32 pb-12 sm:pb-16`}>
 
@@ -120,7 +125,7 @@ export default function Hero() {
         <div className="flex items-center justify-between pb-10 sm:pb-16">
           <p className="index-num">Game · Web · App Studio</p>
           <p className="index-num">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#3182f6] inline-block" />
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--point)] inline-block" />
             상담 가능
           </p>
         </div>
@@ -140,7 +145,7 @@ export default function Hero() {
           <div className="col-start-1 row-start-1">
             <AnimatePresence mode="wait">
               <motion.div key={index} initial="hidden" animate="show" exit="exit">
-                <h1 className="font-en text-[#f5f6f7] font-extrabold tracking-[-0.04em] leading-[1.0]"
+                <h1 className="font-en text-[var(--text-1)] font-extrabold tracking-[-0.04em] leading-[1.0]"
                   style={{ fontSize: 'clamp(2.5rem, 10.5vw, 10.5rem)' }}>
                   <CharLine text={slide.en1} />
                   <CharLine text={slide.en2} offset={slide.en1.length + 2} accent={slide.accent2} />
@@ -166,7 +171,7 @@ export default function Hero() {
               <button key={i} onClick={() => goTo(i)} aria-label={`슬라이드 ${i + 1}`}
                 className="group flex items-center gap-2.5 py-3 -my-3">
                 <span className={`font-en text-[13px] font-bold tabular-nums transition-colors duration-300 ${
-                  i === index ? 'text-[#f5f6f7]' : 'text-white/30 group-hover:text-white/60'
+                  i === index ? 'text-[var(--text-1)]' : 'text-white/30 group-hover:text-white/60'
                 }`}>
                   0{i + 1}
                 </span>
@@ -176,7 +181,7 @@ export default function Hero() {
                       key={`bar-${index}`}
                       initial={{ scaleX: 0 }} animate={{ scaleX: 1 }}
                       transition={{ duration: ROTATE_MS / 1000, ease: 'linear' }}
-                      className="absolute inset-0 bg-[#f5f6f7] origin-left" />
+                      className="absolute inset-0 bg-[var(--text-1)] origin-left" />
                   )}
                 </span>
               </button>

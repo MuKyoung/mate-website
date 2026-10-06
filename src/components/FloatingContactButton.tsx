@@ -5,10 +5,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { FiMessageCircle } from 'react-icons/fi';
 
+/** Header.tsx 의 LIGHT_ROUTES 와 같은 목록 — 밝은 표면에서는 알약을 어둡게 뒤집는다 */
+const LIGHT_ROUTES = ['/education'];
+
 export default function FloatingContactButton() {
   const pathname = usePathname();
 
   if (pathname === '/contact' || pathname === '/contact/') return null;
+  if (pathname.startsWith('/taskmanager')) return null;
+
+  const light = LIGHT_ROUTES.some((r) => pathname.startsWith(r));
 
   return (
     <AnimatePresence>
@@ -22,7 +28,11 @@ export default function FloatingContactButton() {
         <motion.div whileTap={{ scale: 0.97 }}>
           <Link
             href="/contact"
-            className="flex items-center gap-2 px-5 py-3 sm:px-6 sm:py-3.5 rounded-full font-bold text-[#131518] bg-white hover:bg-[#3182f6] hover:text-white shadow-[0_10px_28px_rgba(0,0,0,0.35)] transition-colors duration-300"
+            className={`flex items-center gap-2 px-5 py-3 sm:px-6 sm:py-3.5 rounded-full font-bold
+                        shadow-[0_10px_28px_rgba(0,0,0,0.35)] transition-colors duration-300
+                        hover:bg-[var(--accent)] hover:text-white ${
+                          light ? 'bg-[var(--gray-600)] text-white' : 'bg-white text-[var(--canvas)]'
+                        }`}
           >
             <FiMessageCircle size={18} />
             <span className="hidden sm:inline text-sm">문의하기</span>

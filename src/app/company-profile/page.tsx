@@ -1,13 +1,15 @@
 'use client';
 
 import Image from 'next/image';
+import { projects } from '@/data/projects';
+import { teamCapabilities } from '@/data/teamCapabilities';
 import { useEffect } from 'react';
 
 /* ─────────────────────────────────────────── 데이터 */
 const SERVICES = [
   {
     no: '01',
-    title: 'Unity 게임 · AR/VR 개발',
+    title: '게임 · XR 개발',
     desc: '2D/3D 게임, AR·VR 콘텐츠, 시뮬레이션, 모바일 게임 등 Unity 기반 모든 형태의 인터랙티브 콘텐츠를 기획부터 배포까지 외주 개발합니다.',
     stack: ['Unity', 'C#', 'AR Foundation', 'VR SDK', '2D/3D Physics'],
   },
@@ -33,11 +35,14 @@ const PROCESS = [
   { step: '05', title: '배포', desc: '최종 검수·배포·모니터링' },
 ];
 
+/* 사이트 본문과 같은 출처에서 파생한다 — 문서마다 숫자가 달라지지 않도록 */
+const TOTAL = teamCapabilities.capabilities.reduce((n, c) => n + c.projects, 0);
+
 const STATS = [
-  { v: '30+', l: '완료 프로젝트' },
-  { v: '5년', l: '개발 경력' },
-  { v: '100%', l: '프로젝트 성공률' },
-  { v: '7명', l: '전문 인력' },
+  { v: `${TOTAL}+`, l: '누적 프로젝트' },
+  { v: `${projects.length}건`, l: '포트폴리오 공개' },
+  { v: '5년', l: '팀 운영' },
+  { v: `${teamCapabilities.stats.teamMembers}명`, l: '전문 인력' },
 ];
 
 /* ─────────────────────────────────────────── 컴포넌트 */
@@ -520,8 +525,8 @@ export default function CompanyProfilePage() {
                 <span className="p1-headline-dim">외주개발<br />전문팀</span>
               </h1>
               <p className="p1-sub">
-                Unity 게임·AR/VR부터 웹/앱까지.<br />
-                5년 경력, 30개 이상 프로젝트로<br />
+                웹 · 앱, 게임 · XR, 교육.<br />
+                세 영역을 각각 전담하는 팀으로<br />
                 검증된 풀스택 외주개발팀.
               </p>
             </div>
@@ -565,19 +570,19 @@ export default function CompanyProfilePage() {
               아이디어를 완성도 높은<br />결과물로 만들어 드립니다
             </h2>
             <p className="p1-about-body">
-              MATE는 <strong>Unity 게임·AR/VR</strong>, <strong>웹/앱 개발</strong>, <strong>개발 강의</strong>에 특화된
-              외주개발 전문팀입니다. 2020년부터 시작해 AR·VR 시뮬레이션, 웹·모바일 앱까지
-              영역을 넓혀 총 30개 이상의 프로젝트를 성공적으로 완수했습니다.<br /><br />
+              MATE는 <strong>웹 · 앱</strong>, <strong>게임 · XR</strong>, <strong>교육</strong> 세 영역을
+              각각 전담하는 외주 개발 팀입니다. 2020년부터 시작해 AR·VR 시뮬레이션, 웹·모바일 앱까지
+              영역을 넓혀 왔습니다.<br /><br />
               단순 기능 구현을 넘어 <strong>기획·디자인·개발·배포</strong> 전 과정을 함께하는
-              파트너십을 지향하며, 납기 준수와 품질 보증을 최우선 가치로 삼아
-              100% 프로젝트 성공률을 유지하고 있습니다.
+              파트너십을 지향합니다. 저장소를 열어 두고 진행하며, 완료 시 소스 코드와 문서,
+              인프라 계정 소유권까지 넘겨드립니다.
             </p>
 
             {/* Why choose us */}
             <p className="p1-section-label" style={{ marginTop: '4mm' }}>Why MATE</p>
             <div className="p1-why">
               {[
-                { t: '검증된 실무 경험', d: '5년 이상, 30개+ 프로젝트 완수' },
+                { t: '검증된 실무 경험', d: '2020년부터 세 영역에서 축적한 납품 경험' },
                 { t: '풀사이클 개발', d: '기획·개발·배포 전 과정 원스톱' },
                 { t: '투명한 소통', d: '주간 진행 공유, 실시간 소통' },
                 { t: '품질 보증', d: '철저한 테스트·코드 리뷰' },

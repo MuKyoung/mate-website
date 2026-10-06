@@ -6,7 +6,7 @@ import SafeImage from '@/components/SafeImage';
 import { easeEnter } from '@/lib/motion';
 
 interface ParallaxImageProps {
-  src: string;
+  src: string | undefined;
   alt: string;
   /** 컨테이너 높이/비율 클래스 (예: 'aspect-[16/10]', 'h-[70vh]') */
   className?: string;
@@ -33,23 +33,33 @@ export default function ParallaxImage({
   const y = useTransform(scrollYProgress, [0, 1], [-strength, strength]);
 
   return (
+    /* 관측 대상은 클립되지 않은 바깥 요소다.
+       닫힌 클립은 면적이 0이라 IntersectionObserver가 교차를 보고하지 못하고,
+       클립된 요소를 직접 관측하면 리빌이 영영 발화하지 않는다. */
     <motion.div
       ref={ref}
-      initial={{ clipPath: 'inset(100% 0 0 0)' }}
-      whileInView={{ clipPath: 'inset(0% 0 0 0)' }}
+      initial="hidden"
+      whileInView="show"
       viewport={{ once: true, margin: '-10%' }}
-      transition={{ duration: 1.3, ease: easeEnter }}
-      className={`relative overflow-hidden bg-[#1d2024] ${rounded} ${className}`}
+      className={`relative ${rounded} ${className}`}
     >
-      {/* 블리드를 이동량(px)만큼 확보해 어떤 컨테이너 크기에서도 빈 공간이 드러나지 않게 한다 */}
-      <motion.div style={{ y, top: -strength, bottom: -strength }} className="absolute inset-x-0">
-        <SafeImage
-          src={src}
-          alt={alt}
-          fill
-          className="absolute inset-0 object-cover"
-          placeholder={placeholder}
-        />
+      <motion.div
+        variants={{
+          hidden: { clipPath: 'inset(100% 0 0 0)' },
+          show: { clipPath: 'inset(0% 0 0 0)', transition: { duration: 1.3, ease: easeEnter } },
+        }}
+        className={`absolute inset-0 overflow-hidden bg-[var(--surface)] ${rounded}`}
+      >
+        {/* 블리드를 이동량(px)만큼 확보해 어떤 컨테이너 크기에서도 빈 공간이 드러나지 않게 한다 */}
+        <motion.div style={{ y, top: -strength, bottom: -strength }} className="absolute inset-x-0">
+          <SafeImage
+            src={src}
+            alt={alt}
+            fill
+            className="absolute inset-0 object-cover"
+            placeholder={placeholder}
+          />
+        </motion.div>
       </motion.div>
     </motion.div>
   );

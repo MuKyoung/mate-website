@@ -24,8 +24,8 @@ export default function PageHeader({ title, description, eyebrow }: PageHeaderPr
         )}
         <div className="grid lg:grid-cols-12 gap-y-8 gap-x-8 items-end">
           <motion.h1 {...onMount} variants={stagger}
-            className="lg:col-span-8 font-en text-[#f5f6f7] font-extrabold tracking-[-0.045em] leading-[0.98]"
-            style={{ fontSize: 'clamp(2.5rem, 9vw, 8rem)' }}>
+            className="lg:col-span-8 text-[var(--text-1)] font-extrabold tracking-[-0.035em] leading-[1.06]"
+            style={{ fontSize: 'clamp(2.25rem, 6.4vw, 5rem)' }}>
             <span className="block overflow-hidden pb-[0.12em] -mb-[0.12em]">
               <motion.span variants={clipUp} className="block">{title}</motion.span>
             </span>

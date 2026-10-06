@@ -6,6 +6,7 @@ import PageHeader from '@/components/PageHeader';
 import TeamCapabilityCard from '@/components/TeamCapabilityCard';
 import OrgChart from '@/components/OrgChart';
 import { teamCapabilities, awards, type Award } from '@/data/teamCapabilities';
+import { projects } from '@/data/projects';
 import {
   FiArrowUpRight, FiStar, FiFileText, FiBookmark, FiGrid,
 } from 'react-icons/fi';
@@ -28,18 +29,20 @@ function getAwardIcon(award: Award): IconType {
   return FiBookmark;
 }
 
+const TOTAL = teamCapabilities.capabilities.reduce((n, c) => n + c.projects, 0);
+
 const stats = [
-  { value: '30+', label: '완료 프로젝트' },
-  { value: '5년', label: '외주 개발 경력' },
-  { value: '7명', label: '전문 인력' },
-  { value: '100%', label: '성공률' },
+  { value: `${TOTAL}+`, label: '누적 프로젝트' },
+  { value: `${projects.length}건`, label: '포트폴리오 공개' },
+  { value: '5년', label: '팀 운영' },
+  { value: `${teamCapabilities.stats.teamMembers}명`, label: '개발 4 · 디자인 2 · 운영 1' },
 ];
 
 const whyChooseUs = [
-  { title: '검증된 경험',        desc: '5년 이상의 유니티 외주 개발 경험, 30개 이상 프로젝트 완수' },
-  { title: '전문 팀 구성',        desc: '클라이언트 · 서버 · UI/UX 각 분야 전문가로 구성' },
-  { title: '투명한 커뮤니케이션', desc: '프로젝트 전 과정에서 지속적인 소통과 진행 상황 공유' },
-  { title: '품질 보증',           desc: '철저한 테스트와 코드 리뷰로 높은 품질의 결과물 제공' },
+  { title: '열린 저장소',        desc: '개발 중에도 GitHub을 열어 둡니다. 진행률을 물어보실 필요가 없습니다' },
+  { title: '담당자 고정',        desc: '계약 때 만난 사람이 배포까지 갑니다. 중간에 팀이 바뀌지 않습니다' },
+  { title: '한 팀 전담',          desc: '기획 · 개발 · 디자인 · 운영을 외부에 다시 넘기지 않습니다' },
+  { title: '전부 인계',           desc: '소스 코드와 문서, 인프라 계정 소유권까지 넘겨드립니다' },
 ];
 
 /* 섹션 헤더 — 라벨 행(라인 드로우) + 대형 타이틀 (홈과 동일 패턴, 섹션별 방향 교차) */
@@ -59,7 +62,7 @@ function SectionHead({ num, label, title, desc }: {
           className="absolute bottom-0 left-0 right-0 h-px bg-white/10 block" />
       </div>
       <motion.h2 {...inView} variants={stagger}
-        className="text-[#f5f6f7] font-extrabold tracking-[-0.04em] leading-[1.04]"
+        className="text-[var(--text-1)] font-extrabold tracking-[-0.04em] leading-[1.04]"
         style={displaySize}>
         <span className={clipWrap}>
           <motion.span variants={clip} className="block">{title}</motion.span>
@@ -83,7 +86,7 @@ export default function TeamPageClient() {
       <PageHeader
         eyebrow="About Team"
         title="MATE 팀 소개"
-        description="Unity 게임 · AR/VR · 웹/앱 개발 및 개발 강의에 특화된 전문 외주개발팀입니다. 5년 이상의 경험과 30개 이상의 완료 프로젝트를 보유하고 있습니다."
+        description="개발 4 · 디자인 2 · 운영 1, 일곱 명이 하나의 팀으로 움직입니다. 웹 · 앱, 게임 · XR, 교육 세 영역을 각각 전담합니다."
       />
 
       {/* ━━ 핵심 수치 — 헤어라인 스트립 ━━ */}
@@ -94,7 +97,7 @@ export default function TeamPageClient() {
               <motion.div key={stat.label} variants={i % 2 === 0 ? fadeUp : riseTilt}
                 className={hairlineCell(i)}>
                 <div className="flex items-baseline gap-3 py-7 sm:py-9">
-                  <span className="font-en text-3xl sm:text-4xl font-extrabold text-[#f5f6f7] font-mono-stat tracking-[-0.02em]">
+                  <span className="font-en text-3xl sm:text-4xl font-extrabold text-[var(--text-1)] font-mono-stat tracking-[-0.02em]">
                     {stat.value}
                   </span>
                   <span className="text-[13px] text-white/45">{stat.label}</span>
@@ -116,7 +119,7 @@ export default function TeamPageClient() {
 
           <div className="grid lg:grid-cols-12 gap-y-14 gap-x-8">
             <motion.h2 {...inView} variants={stagger}
-              className="lg:col-span-5 text-[#f5f6f7] font-extrabold tracking-[-0.04em] leading-[1.04]"
+              className="lg:col-span-5 text-[var(--text-1)] font-extrabold tracking-[-0.04em] leading-[1.04]"
               style={displaySize}>
               <span className={clipWrap}>
                 <motion.span variants={clipUp} className="block">Unity · 웹 · 앱까지<br />한 팀에서</motion.span>
@@ -125,11 +128,11 @@ export default function TeamPageClient() {
 
             <motion.div {...inView} variants={stagger} className="lg:col-span-6 lg:col-start-7">
               <motion.p variants={fadeRight}
-                className="text-xl sm:text-2xl font-semibold text-[#f5f6f7] leading-[1.5] mb-8">
-                MATE는 Unity 게임 · AR/VR · 웹/앱 개발 및 개발 강의에 특화된 전문 외주개발팀입니다.
+                className="text-xl sm:text-2xl font-semibold text-[var(--text-1)] leading-[1.5] mb-8">
+                MATE는 웹 · 앱, 게임 · XR, 교육 세 영역을 각각 전담하는 외주 개발 팀입니다.
               </motion.p>
               <motion.p variants={fadeUp} className="text-[17px] text-white/55 leading-[1.75] mb-16">
-                5년 이상의 외주 개발 경험과 30개 이상의 완료 프로젝트를 바탕으로,
+                5년간 쌓은 외주 경험을 바탕으로,
                 개발 4명 · 디자인 2명 · 운영 1명, 총 7명이 하나의 팀으로 움직입니다.
                 여러 회사에 나눠 맡기지 않아도, 필요한 개발을 한 팀에서 해결할 수 있습니다.
               </motion.p>
@@ -138,7 +141,7 @@ export default function TeamPageClient() {
                 {whyChooseUs.map((item, i) => (
                   <motion.div key={item.title} variants={i % 2 === 0 ? fadeLeft : fadeRight}
                     className="grid sm:grid-cols-[11rem_1fr] gap-x-8 gap-y-2 py-7 border-t border-white/10 last:border-b">
-                    <p className="text-[17px] font-bold text-[#f5f6f7]">{item.title}</p>
+                    <p className="text-[17px] font-bold text-[var(--text-1)]">{item.title}</p>
                     <p className="text-[15px] text-white/55 leading-[1.75]">{item.desc}</p>
                   </motion.div>
                 ))}
@@ -158,11 +161,11 @@ export default function TeamPageClient() {
           </div>
 
           <motion.h2 {...inView} variants={stagger}
-            className="text-[#f5f6f7] font-extrabold tracking-[-0.035em] leading-[1.1] mb-16 sm:mb-24"
+            className="text-[var(--text-1)] font-extrabold tracking-[-0.035em] leading-[1.1] mb-16 sm:mb-24"
             style={{ fontSize: 'clamp(2.25rem, 6vw, 4.5rem)' }}>
             <span className="block overflow-hidden pb-[0.08em]">
               <motion.span variants={clipLeft} className="block">
-                MATE <span className="text-[#3182f6]">=</span> 기획 + 개발 + 배포
+                MATE <span className="text-[var(--point)]">=</span> 기획 + 개발 + 배포
               </motion.span>
             </span>
             <span className="block overflow-hidden pb-[0.08em]">
@@ -233,7 +236,7 @@ export default function TeamPageClient() {
                         <Icon size={17} className="flex-shrink-0 mt-1 text-white/30" />
                         <div className="min-w-0 flex-1 sm:flex sm:items-baseline sm:justify-between sm:gap-8">
                           <div className="min-w-0">
-                            <p className="text-[17px] font-bold text-[#f5f6f7] leading-snug">{award.title}</p>
+                            <p className="text-[17px] font-bold text-[var(--text-1)] leading-snug">{award.title}</p>
                             <p className="text-[15px] text-white/55 mt-1">{award.organization}</p>
                           </div>
                           <div className="flex flex-wrap items-center gap-2.5 mt-3 sm:mt-0 flex-shrink-0">
@@ -258,13 +261,13 @@ export default function TeamPageClient() {
         <div className={container}>
           <motion.p {...inView} variants={fadeUp} className="index-num font-en mb-10">(06) Contact</motion.p>
           <motion.h2 {...inView} variants={stagger}
-            className="text-[#f5f6f7] font-extrabold tracking-[-0.05em] leading-[0.96] mb-8"
+            className="text-[var(--text-1)] font-extrabold tracking-[-0.05em] leading-[0.96] mb-8"
             style={displaySizeLg}>
             <span className="block overflow-hidden pb-[0.07em]">
               <motion.span variants={clipLeft} className="block">함께 프로젝트를</motion.span>
             </span>
             <span className="block overflow-hidden pb-[0.07em]">
-              <motion.span variants={clipUp} className="block text-[#3182f6]">시작해볼까요?</motion.span>
+              <motion.span variants={clipUp} className="block text-[var(--point)]">시작해볼까요?</motion.span>
             </span>
           </motion.h2>
           <motion.p {...inView} variants={fadeLeft} className="caption-kr mb-14 sm:mb-20">
