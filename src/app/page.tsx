@@ -107,8 +107,7 @@ export default function Home() {
             {affiliations.map((a) => (
               <motion.div key={a.id} variants={rowIn} className="bg-[var(--canvas)] p-7 sm:p-9">
                 <p className="type-c1 text-[var(--point)] mb-3">{a.role}</p>
-                <h3 className="type-h2 text-[var(--text-1)] mb-3">{a.name}</h3>
-                <p className="type-b3 text-white/50 leading-[1.8]">{a.note}</p>
+                <h3 className="type-h2 text-[var(--text-1)]">{a.name}</h3>
               </motion.div>
             ))}
           </motion.div>

@@ -17,22 +17,23 @@ export interface Affiliation {
   name: string;
   /** 어떤 자격인지 */
   role: string;
-  /** 발주처가 왜 이걸 봐야 하는지 */
-  note: string;
 }
 
+/**
+ * 소속. 이름과 관계만 적는다.
+ * 상대 기관과 무엇을 함께 하는지는 회사가 알려 준 적이 없다. 설명을 지어
+ * 붙이면 남의 기관에 대해 사실이 아닌 말을 하게 된다.
+ */
 export const affiliations: Affiliation[] = [
   {
     id: 'af-mjc',
     name: '명지전문대학',
     role: '가족회사',
-    note: '산학협력 과제와 현장실습을 함께 진행합니다.',
   },
   {
     id: 'af-kaiga',
     name: '한국인공지능게임협회',
     role: '회원사',
-    note: 'AI를 게임 제작에 들이는 흐름을 협회 안에서 따라갑니다.',
   },
 ];
 

@@ -50,9 +50,6 @@ export default function GameClient() {
           style={{ background: 'radial-gradient(120% 82% at 50% 42%, transparent 0%, var(--canvas) 84%)' }} />
         <div className="absolute inset-x-0 bottom-0 h-56"
           style={{ background: 'linear-gradient(180deg, transparent, var(--canvas))' }} />
-        {/* 바이올렛 글로우 */}
-        <div className="absolute left-1/2 top-[40%] -translate-x-1/2 -translate-y-1/2 w-[min(620px,90vw)] aspect-square rounded-full pointer-events-none"
-          style={{ background: 'radial-gradient(circle, var(--accent-dim) 0%, transparent 66%)' }} />
 
         <motion.div style={{ y: titleY }} className={`relative ${container} text-center`}>
           <motion.p {...onMount} variants={fadeUp} className="index-num font-en justify-center mb-9">
@@ -296,8 +293,6 @@ export default function GameClient() {
 
       {/* ━━━━━━ CTA - 풀블리드 컬러 밴드 ━━━━━━ */}
       <section className="relative py-28 sm:py-44 overflow-hidden border-t border-white/10">
-        <div className="absolute inset-0 pointer-events-none"
-          style={{ background: 'radial-gradient(90% 100% at 50% 100%, var(--accent-tint) 0%, transparent 70%)' }} />
         <div className={`relative ${container} text-center`}>
           <motion.p {...inView} variants={fadeUp} className="index-num font-en justify-center mb-10">Contact</motion.p>
           <motion.h2 {...inView} variants={stagger}

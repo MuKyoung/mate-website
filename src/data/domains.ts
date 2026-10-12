@@ -194,7 +194,7 @@ export const gameCapabilities = [
     no: '03',
     en: 'VR Simulation',
     kr: 'VR 시뮬레이션',
-    desc: '교육·훈련용 시뮬레이션이 가장 많습니다. 키오스크 조작, 중고차 점검, 생존 훈련 등을 만들었습니다.',
+    desc: '키오스크 조작, 중고차 구매 안내 같은 교육·훈련용 시뮬레이션을 만들었습니다.',
     tags: ['Meta Quest', 'XR Toolkit', '교육용', '훈련용'],
   },
   {
