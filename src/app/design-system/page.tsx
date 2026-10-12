@@ -38,9 +38,31 @@ const NEUTRAL = [
   { token: '--canvas', name: 'canvas', note: '바탕' },
 ];
 
+/** 종이와 먹 - 읽는 면에 쓰는 따뜻한 무채색 */
+const PAPER = [
+  { token: '--paper', name: 'paper', note: '읽는 면' },
+  { token: '--paper-2', name: 'paper 2', note: '종이 위의 면' },
+  { token: '--ink', name: 'ink', note: '종이 위 글자' },
+];
+
+/** 면의 쓰임 - 섹션이 무슨 일을 하느냐에 따라 바탕을 고른다 */
+const SURFACES = [
+  ['파란 면', '말하는 곳', '오프닝, 자체 게임, 문의. 흰 글자와 흰 로고를 올립니다.'],
+  ['종이 면', '읽는 곳', '소개, 하는 일, 일하는 방식. 순백 대신 따뜻한 종이색을, 순흑 대신 먹색을 씁니다.'],
+  ['검은 면', '보는 곳', '작업 그림을 거는 자리. 그림이 가장 또렷하게 보입니다.'],
+] as const;
+
+/** 제목 서체 (Hahmlet) 의 네 단계 */
+const DISPLAY = [
+  { token: 'XL', cls: 'font-display display-xl', sample: '멈추지 않게', use: '오프닝 문장' },
+  { token: 'L', cls: 'font-display display-l', sample: '맡아서 만들고,', use: '섹션 제목' },
+  { token: 'M', cls: 'font-display display-m', sample: '배포한 뒤에도 지켜봅니다', use: '줄 제목' },
+  { token: 'S', cls: 'font-display display-s', sample: '개발 전문성', use: '작은 제목 · 이름' },
+];
+
 const TYPE = [
-  { token: 'D1', cls: 'type-d1', sample: '멈추지 않게', use: '오프닝 · 마무리 문장' },
-  { token: 'D2', cls: 'type-d2', sample: '일하는 방식', use: '섹션 제목' },
+  { token: 'D1', cls: 'type-d1', sample: '멈추지 않게', use: '안쪽 페이지의 큰 제목' },
+  { token: 'D2', cls: 'type-d2', sample: '일하는 방식', use: '안쪽 페이지의 섹션 제목' },
   { token: 'H1', cls: 'type-h1', sample: '타이틀 및 제목', use: '페이지 제목' },
   { token: 'H2', cls: 'type-h2', sample: '보조 타이틀 및 강조', use: '블록 제목' },
   { token: 'H3', cls: 'type-h3', sample: '보조 타이틀 및 강조', use: '가벼운 블록 제목' },
@@ -54,6 +76,7 @@ const TYPE = [
 
 /** 말투 - 사이트 문구를 쓸 때 지키는 것 */
 const VOICE = [
+  ['사람이 말하듯 씁니다', '문장을 짧게 끊고 저희라고 말합니다. 버튼도 "프로젝트 이야기하기"처럼 말로 씁니다. 다만 듣기 좋으라고 내용을 보태지는 않습니다.'],
   ['한 일과 하는 일을 사실로 말합니다', '회사가 정하지 않은 약속이나 내력을 듣기 좋게 지어 넣지 않습니다.'],
   ['숫자는 데이터에서 가져옵니다', '납품 건수와 기간은 포트폴리오와 역량 데이터에서 계산합니다. 강의는 납품으로 세지 않습니다.'],
   ['두 사업을 나란히 씁니다', '자체 게임은 외주에서 나온 부산물이 아닙니다. SI와 퍼블리싱을 같은 무게로 적습니다.'],
@@ -142,11 +165,10 @@ export default function BrandGuidePage() {
   return (
     <div>
       {/* 가이드의 표지도 가이드를 따른다 - 대표 색상 면에 흰 글자 */}
-      <div className="bg-[var(--brand-fill)] pb-16 pt-36 sm:pb-20 sm:pt-44">
+      <div className="surface-blue pb-16 pt-36 sm:pb-20 sm:pt-44">
         <div className={container}>
           <p className="mb-8 text-[12px] font-semibold uppercase tracking-[0.14em] text-white/80">Brand Guide</p>
-          <h1 className="font-bold leading-[1.06] tracking-[-0.025em] text-white"
-            style={{ fontSize: 'clamp(2.5rem, 7.2vw, 6.5rem)' }}>
+          <h1 className="font-display text-white" style={{ fontSize: 'clamp(2.5rem, 7.2vw, 6.5rem)', lineHeight: 1.14 }}>
             멈추지 않게<br />만듭니다
           </h1>
           <p className="mt-8 max-w-xl text-[17px] leading-[1.8] text-white/90">
@@ -264,6 +286,32 @@ export default function BrandGuidePage() {
           </div>
         </div>
 
+        <div className="mt-14 grid gap-x-gutter gap-y-10 lg:grid-cols-12">
+          <div className="lg:col-span-5">
+            <SubTitle>종이와 먹</SubTitle>
+            <div className="grid grid-cols-3 gap-gutter">
+              {PAPER.map((s) => <Swatch key={s.token} {...s} />)}
+            </div>
+            <p className="type-c1 mt-4 leading-[1.8] text-white/60">
+              파랑 옆에 순백과 차가운 회색을 두면 흔한 테크 사이트 배색이 됩니다. 읽는 면에는 종이색과 먹색을 씁니다.
+            </p>
+          </div>
+          <div className="lg:col-span-6 lg:col-start-7">
+            <SubTitle>면의 쓰임</SubTitle>
+            <dl className="border-t border-[var(--border)]">
+              {SURFACES.map(([name, role, note]) => (
+                <div key={name} className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-x-4 border-b border-[var(--border)] py-5">
+                  <dt className="type-b4 text-[var(--text-1)]">{name}</dt>
+                  <dd>
+                    <p className="type-b3 text-[var(--text-1)]">{role}</p>
+                    <p className="type-c1 mt-1 leading-[1.8] text-white/60">{note}</p>
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        </div>
+
         <div className="mt-14">
           <SubTitle>영역 색</SubTitle>
           <p className="type-b3 mb-7 max-w-2xl leading-[1.85] text-white/70">
@@ -287,10 +335,24 @@ export default function BrandGuidePage() {
       </Block>
 
       {/* ── 04 글자 ── */}
-      <Block label="04 Typography" title="Pretendard"
-        lead="국문과 영문 모두 한 가족으로 씁니다. 굵기는 700 · 500 · 400 셋만 씁니다. 큰 글자도 700을 넘기지 않고, 자간은 조금만 좁힙니다.">
+      <Block label="04 Typography" title="제목과 본문"
+        lead="제목은 Hahmlet, 본문과 화면 요소는 Pretendard입니다. 한 서체로 제목까지 쓰면 어느 사이트와도 구분되지 않아 둘로 나눴습니다. 제목 서체는 홈에 먼저 적용했습니다.">
+        <SubTitle>제목 · Hahmlet</SubTitle>
         <div className="border-t border-[var(--border)]">
-          {TYPE.map((t) => <TypeRow key={t.token} {...t} />)}
+          {DISPLAY.map((t) => <TypeRow key={t.token} {...t} />)}
+        </div>
+        <p className="type-c1 mt-4 max-w-2xl leading-[1.8] text-white/60">
+          굵기는 700(작은 단계는 600). 자간은 -0.03em 안쪽으로만 좁힙니다. 더 좁히면 획이 굵어 글자가 서로 붙습니다.
+        </p>
+
+        <div className="mt-14">
+          <SubTitle>본문과 화면 요소 · Pretendard</SubTitle>
+          <div className="border-t border-[var(--border)]">
+            {TYPE.map((t) => <TypeRow key={t.token} {...t} />)}
+          </div>
+          <p className="type-c1 mt-4 max-w-2xl leading-[1.8] text-white/60">
+            굵기는 700 · 500 · 400 셋만 씁니다.
+          </p>
         </div>
       </Block>
 
@@ -310,12 +372,19 @@ export default function BrandGuidePage() {
             <p className="type-c1 mt-5 leading-[1.7] text-white/60">올리면 MATE Blue로 바뀝니다.</p>
           </div>
 
-          <div className="rounded-card bg-[var(--brand-fill)] p-8">
+          <div className="surface-blue rounded-card p-8">
             <p className="type-b4 mb-5 text-white/75">버튼 · 파란 면</p>
-            <span className="type-b3 inline-flex h-14 items-center rounded-pill bg-white px-9 font-bold text-[var(--brand-fill)]">
-              프로젝트 문의
-            </span>
-            <p className="type-c1 mt-5 leading-[1.7] text-white/85">흰 버튼에 글자는 MATE Blue.</p>
+            <span tabIndex={0} className="btn-sweep btn-on-blue cursor-pointer">프로젝트 이야기하기</span>
+            <p className="type-c1 mt-5 leading-[1.7] text-white/85">올리면 먹색이 아래에서 차오릅니다.</p>
+          </div>
+
+          <div data-surface="paper" className="surface-paper rounded-card p-8">
+            <p className="type-b4 mb-5 text-[var(--text-3)]">버튼과 링크 · 종이 면</p>
+            <span tabIndex={0} className="btn-sweep btn-on-paper cursor-pointer">프로젝트 이야기하기</span>
+            <p className="mt-6 text-[15px] font-semibold">
+              <span tabIndex={0} className="link-draw cursor-pointer">팀 소개 보기</span>
+            </p>
+            <p className="type-c1 mt-5 leading-[1.7] text-[var(--text-3)]">버튼은 파랑이 차오르고, 링크는 밑줄이 왼쪽에서 그어집니다.</p>
           </div>
 
           <div className="rounded-card border border-[var(--border)] p-8">

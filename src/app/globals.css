@@ -1,9 +1,17 @@
+/* ── 폰트 ─────────────────────────────────────────────
+   @import 는 반드시 파일 맨 위에 둔다. 다른 규칙 뒤에 오면 브라우저가 통째로
+   무시한다. 예전에는 @tailwind 아래에 있어서 Pretendard 가 한 번도 내려받아지지
+   않았고, 사이트 전체가 기기마다 다른 기본 글꼴로 보이고 있었다.
+
+   본문 - Pretendard. 화면에 쓰인 글자 조각만 받는 dynamic subset.
+   제목 - Hahmlet. 본문과 같은 서체로 제목까지 쓰면 어느 템플릿과도 구분되지 않는다.
+          획이 단단한 세리프를 제목에만 쓴다. 구글 폰트도 글자 범위별로 잘라 준다. */
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
+@import url('https://fonts.googleapis.com/css2?family=Hahmlet:wght@500..800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* ── 폰트 (Pretendard Variable) ───────────────────────── */
-@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
 
 /* ═══════════════════════════════════════════════════════
    MATE DESIGN SYSTEM - 토큰 단일 원천
@@ -36,6 +44,13 @@
   --gray-400: #8a8a91;
   --gray-500: #5e5e66;
   --gray-600: #08080a;
+
+  /* 종이와 먹 - 읽는 면에 쓰는 따뜻한 오프화이트와 그 위의 글자색.
+     순백과 순흑, 차가운 회색을 파랑 옆에 두면 흔한 테크 사이트 배색이 된다.
+     꼬꼬지생 같은 저희 그림이 원래 종이 빛이라 이쪽이 그림과도 맞는다. */
+  --paper:   #f7f3ea;
+  --paper-2: #e9e3d6;
+  --ink:     #16150f;
 
   /* point - 따로 두지 않는다. 강조도 대표 색상으로 한다.
      앰버, 클레이, 버밀리언을 차례로 써 봤지만 모두 로고에 근거가 없는 색이었다.
@@ -225,6 +240,35 @@ html[data-shell='app'] ::-webkit-scrollbar-thumb:hover { background: #afb8c1; }
   --point-tint: rgba(14, 17, 23, 0.06);
 }
 
+/* ── Paper Surface ───────────────────────────────────
+   읽는 면. 홈에서 먼저 쓴다. 표면과 글자 토큰만 바꾸므로 토큰으로 색을 받는
+   소재(라벨, 경계선, 링크)는 그대로 따라온다.
+   종이 위에서는 로고 원색을 글자로 쓸 수 있다 (6.4:1). */
+[data-surface='paper'] {
+  --canvas:     var(--paper);
+  --background: var(--paper);
+  --surface:    var(--paper-2);
+  --surface-2:  #ddd6c7;
+
+  --border:   rgba(22, 21, 15, 0.16);
+  --border-2: rgba(22, 21, 15, 0.34);
+
+  --text-1:     var(--ink);
+  --text-2:     rgba(22, 21, 15, 0.76);  /* 7.5:1 */
+  --text-3:     rgba(22, 21, 15, 0.66);  /* 5.4:1 */
+  --text-faint: rgba(22, 21, 15, 0.66);
+
+  --accent:        var(--primary-400);
+  --accent-strong: var(--primary-500);
+  --accent-link:   var(--primary-400);
+  --accent-tint:   rgba(38, 68, 203, 0.10);
+  --accent-dim:    rgba(38, 68, 203, 0.06);
+  --point:      var(--primary-400);
+  --point-tint: rgba(38, 68, 203, 0.10);
+
+  color: var(--ink);
+}
+
 /* ── Typography - Figma 스케일과 1:1 (Pretendard / LS -0.3%) ──
    D1·D2는 MATE 전용 디스플레이 티어(에디토리얼 대형 영문). */
 .type-d1 { font-size: clamp(2.5rem, 9vw, 7.5rem);  font-weight: 700; line-height: 1.04; letter-spacing: -0.02em; }
@@ -309,6 +353,87 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .wall-up, .wall-left { animation: none; }
 }
+
+/* ── 면의 결 ─────────────────────────────────────────
+   종이 면과 파란 면에 아주 옅은 결을 깐다. 글자 위에 얹는 필름 그레인이 아니라
+   면 자체의 배경이라 글자는 흐려지지 않는다. 결만큼 면이 3% 쯤 어두워지므로
+   --paper 는 그만큼 밝게 잡아 두었다. 검은 면에는 깔지 않는다. */
+.surface-paper {
+  background-color: var(--paper);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.055 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 240px 240px;
+}
+.surface-blue {
+  background-color: var(--brand-fill);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.11 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 240px 240px;
+}
+
+/* ── 제목 서체 ───────────────────────────────────────
+   Hahmlet 은 글자 사이가 넉넉하게 잡혀 있어 자간을 조금 좁혀야 낱말이 한 덩어리로
+   읽힌다. 다만 획이 굵어 -0.03em 을 넘기면 '듭니' 같은 글자가 서로 붙는다.
+   행간은 받침과 윗줄이 닿지 않는 데까지만 줄인다. */
+.font-display {
+  font-family: 'Hahmlet', 'Pretendard Variable', Pretendard, 'Apple SD Gothic Neo', serif;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  font-feature-settings: 'kern';
+}
+.display-xl { font-size: clamp(3.25rem, 9.4vw, 9.75rem); line-height: 1.12; letter-spacing: -0.03em; }
+.display-l  { font-size: clamp(2.125rem, 5.1vw, 4.5rem);  line-height: 1.2;  letter-spacing: -0.03em; }
+.display-m  { font-size: clamp(1.5rem, 2.7vw, 2.375rem);  line-height: 1.34; letter-spacing: -0.028em; font-weight: 600; }
+.display-s  { font-size: clamp(1.1875rem, 1.7vw, 1.5rem);  line-height: 1.4;  letter-spacing: -0.025em; font-weight: 600; }
+
+/* ── 버튼 - 색이 아래에서 차오른다 ────────────────────
+   올리면 색만 바뀌는 대신 다른 색이 밑에서 밀고 올라온다.
+   색은 변수 네 개로 받는다 (아래 두 벌). */
+.btn-sweep {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  height: 58px;
+  padding: 0 30px;
+  border-radius: 9999px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--btn-fg);
+  background: var(--btn-bg);
+  transition: color 0.35s ease;
+}
+.btn-sweep::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--btn-fill);
+  transform: translateY(101%);
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.btn-sweep:hover, .btn-sweep:focus-visible { color: var(--btn-fg-on); }
+.btn-sweep:hover::before, .btn-sweep:focus-visible::before { transform: translateY(0); }
+/* 파란 면 위 - 흰 버튼에 먹색이 차오른다 */
+.btn-on-blue  { --btn-bg: #ffffff; --btn-fg: var(--primary-400); --btn-fill: var(--ink); --btn-fg-on: #ffffff; }
+/* 종이 면 위 - 먹색 버튼에 파랑이 차오른다 */
+.btn-on-paper { --btn-bg: var(--ink); --btn-fg: var(--paper); --btn-fill: var(--primary-400); --btn-fg-on: #ffffff; }
+
+/* ── 글자 링크 - 밑줄이 왼쪽에서 그어진다 ─────────────
+   옅은 밑줄을 깔아 두고, 올리면 진한 줄이 그 위로 지나간다. */
+.link-draw {
+  padding-bottom: 3px;
+  background-image: linear-gradient(currentColor, currentColor), linear-gradient(currentColor, currentColor);
+  background-image:
+    linear-gradient(currentColor, currentColor),
+    linear-gradient(color-mix(in srgb, currentColor 34%, transparent), color-mix(in srgb, currentColor 34%, transparent));
+  background-repeat: no-repeat;
+  background-position: 0 100%, 0 100%;
+  background-size: 0% 1.5px, 100% 1.5px;
+  transition: background-size 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.link-draw:hover, .link-draw:focus-visible, .group:hover .link-draw { background-size: 100% 1.5px, 100% 1.5px; }
 
 @layer utilities {
   .text-balance { text-wrap: balance; }

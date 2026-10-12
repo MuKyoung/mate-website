@@ -47,13 +47,16 @@ export default function Header() {
 
   const solid = isScrolled || isMobileMenuOpen;
   const hidden = isHidden && !isMobileMenuOpen;
-  const light = LIGHT_ROUTES.some((r) => pathname.startsWith(r));
-  // 홈 첫 화면에서는 헤더가 대표 색상 면 위에 얹힌다. 흐린 글자(white/55)는
-  // 파랑 위에서 3.4:1 밖에 안 나오므로 이때만 진하게 쓴다 (white/85 = 5.9:1).
-  const onBrand = pathname === '/' && !solid;
+  const home = pathname === '/';
+  // 홈은 첫 화면만 파란 면이고 그 아래는 대부분 종이 면이다.
+  //  - 맨 위: 대표 색상 면 위에 얹힌다. 흐린 글자(white/55)는 파랑 위에서 3.4:1 밖에
+  //    안 나오므로 이때만 진하게 쓴다 (white/85 = 5.9:1).
+  //  - 내려간 뒤: 붙는 헤더가 종이 색을 따른다.
+  const onBrand = home && !solid;
+  const light = LIGHT_ROUTES.some((r) => pathname.startsWith(r)) || (home && solid);
 
   // 라이트 라우트에서는 표면·텍스트·로고를 모두 뒤집는다
-  const surface = light ? 'rgba(255, 255, 255, 0.82)' : 'rgba(8, 8, 10, 0.72)';
+  const surface = light ? (home ? 'rgba(247, 243, 234, 0.88)' : 'rgba(255, 255, 255, 0.82)') : 'rgba(8, 8, 10, 0.72)';
   const hairline = light ? '1px solid rgba(14,17,23,0.10)' : '1px solid rgba(255,255,255,0.10)';
   const txtIdle = light ? 'text-[rgba(14,17,23,0.66)] hover:text-[var(--gray-600)]'
     : onBrand ? 'text-white/85 hover:text-white' : 'text-white/55 hover:text-white';
@@ -72,14 +75,14 @@ export default function Header() {
     >
       <nav className="container mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
 
-        {/* 로고 - 다크 위 화이트 */}
+        {/* 로고 - 어두운 바탕과 파란 면에서는 흰색, 밝은 바탕에서는 원색(파랑) 그대로 */}
         <Link href="/" className="inline-flex items-center hover:opacity-80 transition-opacity">
           <Image
             src="/images/logo.png"
             alt="MATE"
             width={88}
             height={28}
-            className={`h-7 w-auto ${light ? 'brightness-0' : 'brightness-0 invert'}`}
+            className={`h-7 w-auto ${light ? '' : 'brightness-0 invert'}`}
             priority
           />
         </Link>
@@ -161,7 +164,7 @@ export default function Header() {
             id="mobile-nav"
             className="md:hidden overflow-hidden"
             style={{
-              background: light ? 'rgba(255,255,255,0.97)' : 'rgba(8,8,10,0.95)',
+              background: light ? (home ? 'rgba(247,243,234,0.98)' : 'rgba(255,255,255,0.97)') : 'rgba(8,8,10,0.95)',
               backdropFilter: 'blur(14px)',
               borderTop: hairline,
             }}

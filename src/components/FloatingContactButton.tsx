@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { FiMessageCircle } from 'react-icons/fi';
 
-/** Header.tsx 의 LIGHT_ROUTES 와 같은 목록 - 밝은 표면에서는 알약을 어둡게 뒤집는다 */
+/** Header.tsx 의 LIGHT_ROUTES 와 같은 목록 - 밝은 표면에서는 알약을 어둡게 뒤집는다.
+    홈도 대부분 종이 면이라 어두운 알약을 쓴다. */
 const LIGHT_ROUTES = ['/education'];
 
 export default function FloatingContactButton() {
@@ -14,7 +15,7 @@ export default function FloatingContactButton() {
   if (pathname === '/contact' || pathname === '/contact/') return null;
   if (pathname.startsWith('/taskmanager')) return null;
 
-  const light = LIGHT_ROUTES.some((r) => pathname.startsWith(r));
+  const light = pathname === '/' || LIGHT_ROUTES.some((r) => pathname.startsWith(r));
 
   return (
     <AnimatePresence>
@@ -31,7 +32,8 @@ export default function FloatingContactButton() {
             className={`flex items-center gap-2 px-5 py-3 sm:px-6 sm:py-3.5 rounded-full font-bold
                         shadow-[0_10px_28px_rgba(0,0,0,0.35)] transition-colors duration-300
                         hover:bg-[var(--accent)] hover:text-white ${
-                          light ? 'bg-[var(--gray-600)] text-white' : 'bg-white text-[var(--canvas)]'
+                          // 가는 테두리: 홈의 검은 면 위에서도 알약의 윤곽이 남게 한다
+                          light ? 'border border-white/20 bg-[var(--gray-600)] text-white' : 'bg-white text-[var(--canvas)]'
                         }`}
           >
             <FiMessageCircle size={18} />

@@ -53,7 +53,7 @@ function Tile({ work, eager }: { work: Work; eager: boolean }) {
     <figure className="mb-3">
       <Image src={work.src} alt="" width={work.w} height={work.h}
         loading={eager ? 'eager' : 'lazy'}
-        className="h-auto w-full rounded-md" />
+        className="h-auto w-full rounded-[4px]" />
       <figcaption className="mt-1.5 truncate text-[12px] leading-none text-white/60">{work.title}</figcaption>
     </figure>
   );
@@ -83,7 +83,7 @@ export function WorkWall({ className = '' }: { className?: string }) {
   );
 }
 
-/** 좁은 화면 - 가로로 흐르는 한 줄 */
+/** 좁은 화면 - 가로로 흐르는 한 줄. 높이 136px (오프닝이 이 절반만큼 다음 섹션에 걸친다) */
 export function WorkRow({ className = '' }: { className?: string }) {
   return (
     <div aria-hidden className={`pointer-events-none overflow-hidden ${className}`}>
@@ -91,7 +91,7 @@ export function WorkRow({ className = '' }: { className?: string }) {
         {[0, 1].map((copy) =>
           ROW.map((w) => (
             <Image key={`${copy}-${w.slug}`} src={w.src} alt="" width={w.w} height={w.h}
-              loading="lazy" className="mr-3 h-[132px] w-auto max-w-none rounded-md" />
+              loading="lazy" className="mr-3 h-[136px] w-auto max-w-none rounded-[4px]" />
           )),
         )}
       </div>

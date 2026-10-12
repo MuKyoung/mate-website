@@ -5,15 +5,14 @@ import { motion } from 'framer-motion';
 import { FiArrowUpRight } from 'react-icons/fi';
 import SafeImage from '@/components/SafeImage';
 import { domains } from '@/data/domains';
-import { games } from '@/data/games';
 import { fadeUp, inView, onMount } from '@/lib/motion';
 import { container } from '@/lib/styles';
 
 /**
  * 영역별 슬래브 - 한 영역이 화면 한 칸을 통째로 쓴다.
  *
- * 홈과 /services 가 같은 블록을 쓴다. 홈은 이게 첫 화면이라
- * 스크롤을 기다리지 않고 바로 재생해야 하므로 `eager` 로 구분한다.
+ * /services 가 쓴다. 첫 화면에 놓을 때는 스크롤을 기다리지 않고 바로
+ * 재생해야 하므로 `eager` 로 구분한다.
  */
 
 const SLAB = {
@@ -38,7 +37,6 @@ export default function DomainSlabs({
   eager = false,
   className = 'pb-8',
   heading,
-  withGames = false,
 }: {
   /** 첫 화면에 쓸 때 - 스크롤 진입을 기다리지 않는다 */
   eager?: boolean;
@@ -47,8 +45,6 @@ export default function DomainSlabs({
       슬래브 제목은 영역 이름이라 페이지 전체를 대표하지 못한다.
       화면에는 띄우지 않되 문서 구조와 검색엔진에는 남긴다. */
   heading?: string;
-  /** 자체 게임 슬래브를 뒤에 붙인다 - 외주가 아닌 독립 사업이라 따로 둔다 */
-  withGames?: boolean;
 }) {
   return (
     <section className={className}>
@@ -131,64 +127,6 @@ export default function DomainSlabs({
           </motion.div>
         );
       })}
-
-      {withGames && (
-        <motion.div {...(eager ? onMount : inView)} variants={fadeUp} data-domain="game">
-          {/* 외주 세 영역과 나란히 두되 링크는 걸지 않는다 -
-              두 타이틀 다 제작 중이라 보낼 스토어도 상세 페이지도 아직 없다 */}
-          <div className="relative overflow-hidden border-b border-white/10">
-            <div className="absolute inset-0 opacity-[0.55]"
-              style={{ background: 'linear-gradient(90deg, var(--accent-dim), transparent 58%)' }} />
-
-            <div className={`relative ${container} pb-12 pt-16 sm:pb-16 sm:pt-20`}>
-              <div className="grid items-start gap-x-gutter gap-y-10 lg:grid-cols-12">
-                <div className="relative lg:col-span-5">
-                  <p className="index-num-lg font-en mb-5 lg:absolute lg:-top-9 lg:left-0 lg:mb-0">
-                    0{domains.length + 1}
-                  </p>
-                  <h2 className="font-en mb-4 font-bold leading-[0.95] tracking-[-0.02em] text-[var(--text-1)]"
-                    style={{ fontSize: 'clamp(2.25rem, 5.4vw, 4.25rem)' }}>
-                    Original Games
-                  </h2>
-                  <p className="type-b1 text-white/65">자체 게임 제작 · 퍼블리싱</p>
-                </div>
-
-                <div className="lg:col-span-5 lg:pl-6">
-                  <p className="type-h3 mb-5 leading-[1.45] text-[var(--text-1)]">
-                    MATE 이름으로 내는 게임
-                  </p>
-                  <p className="type-b3 mb-7 max-w-md leading-[1.85] text-white/70">
-                    기획과 아트, 개발, 퍼블리싱까지 팀 안에서 끝냅니다. 판권도 저희가 쥡니다.
-                    지금 두 타이틀을 만들고 있습니다.
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {games.map((g) => (
-                      <span key={g.id}
-                        className="type-c2 inline-flex items-center gap-2 rounded-[6px] border border-white/20 px-3 py-1.5 text-white/80">
-                        {g.title}
-                        <span className="text-white/55">{g.status}</span>
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex justify-between gap-6 lg:col-span-2 lg:h-full lg:flex-col lg:items-end">
-                  <div className="space-y-4 lg:text-right">
-                    <div>
-                      <p className="font-en type-h3 font-mono-stat mb-1.5 font-bold leading-none text-[var(--text-1)]">
-                        {games.length}종
-                      </p>
-                      <p className="type-c2 text-white/70">제작 중인 타이틀</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <p className="type-c1 relative mt-8 text-white/60">자체 IP · 공개할 수 있는 단계가 되면 여기에 올립니다</p>
-            </div>
-          </div>
-        </motion.div>
-      )}
     </section>
   );
 }
