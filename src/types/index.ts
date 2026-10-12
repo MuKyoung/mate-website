@@ -32,16 +32,6 @@ export interface Project {
   category: string;
 }
 
-export interface Testimonial {
-  id: string;
-  /** 직함 - 실명 대신 노출한다 */
-  role: string;
-  /** 업종 - 사명 대신 노출한다 */
-  company?: string;
-  content: string;
-  projectId?: string; // 관련 프로젝트 ID
-}
-
 export interface FAQ {
   id: string;
   question: string;

@@ -10,8 +10,6 @@ import {
 } from '@/lib/styles';
 
 interface CtaSectionProps {
-  /** 섹션 번호 라벨 (예: '06') */
-  num: string;
   /** 대형 헤딩 1행 - 페이지마다 다르게 넘긴다 */
   line1: string;
   /** 대형 헤딩 2행 - 액센트 강조 */
@@ -26,7 +24,7 @@ interface CtaSectionProps {
  * 페이지 하단 공통 CTA - 대형 스테이트먼트 + 국문 캡션 + 화이트 필 버튼 + 이메일.
  * 모든 페이지가 같은 마무리를 갖도록 하나로 관리한다.
  */
-export default function CtaSection({ num, line1, line2, kr, cta = '프로젝트 문의' }: CtaSectionProps) {
+export default function CtaSection({ line1, line2, kr, cta = '프로젝트 문의' }: CtaSectionProps) {
   return (
     <section className={`${sectionPadLg} border-t border-white/10`}>
       <div className={container}>

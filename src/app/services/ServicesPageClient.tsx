@@ -1,16 +1,13 @@
 'use client';
 
-import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { FiArrowUpRight } from 'react-icons/fi';
 import CtaSection from '@/components/ui/CtaSection';
 import DomainSlabs from '@/components/DomainSlabs';
-import { domains } from '@/data/domains';
 import { processSteps } from '@/data/process';
 import {
   fadeUp, fadeLeft, fadeRight, clipUp, lineDraw, stagger, staggerTight, inView, onMount,
 } from '@/lib/motion';
-import { arrowHover, container, sectionPad } from '@/lib/styles';
+import { container, sectionPad } from '@/lib/styles';
 
 export default function ServicesPageClient() {
   return (
@@ -84,7 +81,7 @@ export default function ServicesPageClient() {
         </div>
       </section>
 
-      <CtaSection num="05" line1="어느 영역이든" line2="창구는 하나입니다"
+      <CtaSection line1="어느 영역이든" line2="창구는 하나입니다"
         kr="어디로 가야 할지 모르겠으면 그냥 적어 보내주셔도 됩니다" />
     </>
   );

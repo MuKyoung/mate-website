@@ -5,8 +5,9 @@ import Link from 'next/link';
 import PageHeader from '@/components/PageHeader';
 import TeamCapabilityCard from '@/components/TeamCapabilityCard';
 import OrgChart from '@/components/OrgChart';
-import { teamCapabilities, awards, type Award } from '@/data/teamCapabilities';
+import { teamCapabilities, awards, type Award, counts } from '@/data/teamCapabilities';
 import { projects } from '@/data/projects';
+import { practices } from '@/data/practices';
 import {
   FiArrowUpRight, FiStar, FiFileText, FiBookmark, FiGrid,
 } from 'react-icons/fi';
@@ -29,20 +30,11 @@ function getAwardIcon(award: Award): IconType {
   return FiBookmark;
 }
 
-const TOTAL = teamCapabilities.capabilities.reduce((n, c) => n + c.projects, 0);
-
 const stats = [
-  { value: `${TOTAL}+`, label: '누적 프로젝트' },
+  { value: `${counts.devProjects}건`, label: '개발 프로젝트 납품' },
   { value: `${projects.length}건`, label: '포트폴리오 공개' },
-  { value: '5년', label: '팀 운영' },
+  { value: `${teamCapabilities.stats.since}`, label: '시작한 해' },
   { value: `${teamCapabilities.stats.teamMembers}명`, label: '개발 4 · 디자인 2 · 운영 1' },
-];
-
-const whyChooseUs = [
-  { title: '열린 저장소',        desc: '개발 중에도 GitHub을 열어 둡니다. 진행률을 물어보실 필요가 없습니다' },
-  { title: '담당자 고정',        desc: '계약 때 만난 사람이 배포까지 갑니다. 중간에 팀이 바뀌지 않습니다' },
-  { title: '한 팀 전담',          desc: '기획 · 개발 · 디자인 · 운영을 외부에 다시 넘기지 않습니다' },
-  { title: '전부 인계',           desc: '소스 코드와 문서, 인프라 계정 소유권까지 넘겨드립니다' },
 ];
 
 /* 섹션 헤더 - 라벨 행(라인 드로우) + 대형 타이틀 (홈과 동일 패턴, 섹션별 방향 교차) */
@@ -108,7 +100,7 @@ export default function TeamPageClient() {
         </div>
       </section>
 
-      {/* ━━ (01) About - 좌 제목 / 우 본문 ━━ */}
+      {/* ━━ About - 좌 제목 / 우 본문 ━━ */}
       <section className={sectionPad}>
         <div className={container}>
           <div className="relative pb-6 mb-10 sm:mb-14">
@@ -118,31 +110,36 @@ export default function TeamPageClient() {
           </div>
 
           <div className="grid lg:grid-cols-12 gap-y-14 gap-x-8">
+            {/* 한 줄이 '웹 ·' 에서 꺾여 가운뎃점만 줄 끝에 매달렸다. 줄을 직접 나누고
+                넓은 화면에서는 줄 안에서 꺾이지 않게 한다. */}
             <motion.h2 {...inView} variants={stagger}
-              className="lg:col-span-5 text-[var(--text-1)] font-bold tracking-[-0.02em] leading-[1.04]"
-              style={displaySize}>
+              className="lg:col-span-6 text-[var(--text-1)] font-bold tracking-[-0.018em] leading-[1.16]"
+              style={{ fontSize: 'clamp(2rem, 4.2vw, 3.5rem)' }}>
               <span className={clipWrap}>
-                <motion.span variants={clipUp} className="block">Unity · 웹 · 앱까지<br />한 팀에서</motion.span>
+                <motion.span variants={clipUp} className="block lg:whitespace-nowrap">Unity · 웹 · 앱까지</motion.span>
+              </span>
+              <span className={clipWrap}>
+                <motion.span variants={clipUp} className="block lg:whitespace-nowrap">한 팀에서</motion.span>
               </span>
             </motion.h2>
 
-            <motion.div {...inView} variants={stagger} className="lg:col-span-6 lg:col-start-7">
+            <motion.div {...inView} variants={stagger} className="lg:col-span-5 lg:col-start-8">
               <motion.p variants={fadeRight}
                 className="text-xl sm:text-2xl font-semibold text-[var(--text-1)] leading-[1.5] mb-8">
                 MATE는 웹 · 앱, 게임 · XR, 교육 세 영역의 외주 개발과
                 자체 게임 제작 · 퍼블리싱을 함께 합니다.
               </motion.p>
               <motion.p variants={fadeUp} className="text-[17px] text-white/55 leading-[1.75] mb-16">
-                5년간 쌓은 외주 경험을 바탕으로,
+                {teamCapabilities.stats.since}년부터 쌓은 외주 경험을 바탕으로,
                 개발 4명 · 디자인 2명 · 운영 1명, 총 7명이 하나의 팀으로 움직입니다.
                 여러 회사에 나눠 맡기지 않아도, 필요한 개발을 한 팀에서 해결할 수 있습니다.
               </motion.p>
 
               <div>
-                {whyChooseUs.map((item, i) => (
-                  <motion.div key={item.title} variants={i % 2 === 0 ? fadeLeft : fadeRight}
+                {practices.map((item, i) => (
+                  <motion.div key={item.short} variants={i % 2 === 0 ? fadeLeft : fadeRight}
                     className="grid sm:grid-cols-[11rem_1fr] gap-x-8 gap-y-2 py-7 border-t border-white/10 last:border-b">
-                    <p className="text-[17px] font-bold text-[var(--text-1)]">{item.title}</p>
+                    <p className="text-[17px] font-bold text-[var(--text-1)]">{item.short}</p>
                     <p className="text-[15px] text-white/55 leading-[1.75]">{item.desc}</p>
                   </motion.div>
                 ))}
@@ -152,7 +149,7 @@ export default function TeamPageClient() {
         </div>
       </section>
 
-      {/* ━━ (02) Vision - 대형 스테이트먼트 ━━ */}
+      {/* ━━ Vision - 대형 스테이트먼트 ━━ */}
       <section className={sectionPad}>
         <div className={container}>
           <div className="relative pb-6 mb-14 sm:mb-20">
@@ -185,7 +182,7 @@ export default function TeamPageClient() {
         </div>
       </section>
 
-      {/* ━━ (03) Capabilities - 헤어라인 3열 ━━ */}
+      {/* ━━ Capabilities - 헤어라인 3열 ━━ */}
       <section className={sectionPad}>
         <div className={container}>
           <SectionHead num="03" label="Capabilities" title="전문 역량"
@@ -206,7 +203,7 @@ export default function TeamPageClient() {
         </div>
       </section>
 
-      {/* ━━ (04) Organization ━━ */}
+      {/* ━━ Organization ━━ */}
       <section className={sectionPad}>
         <div className={container}>
           <SectionHead num="04" label="Organization" title="조직 구성"
@@ -216,7 +213,7 @@ export default function TeamPageClient() {
         </div>
       </section>
 
-      {/* ━━ (05) Awards & Exhibitions ━━ */}
+      {/* ━━ Awards & Exhibitions ━━ */}
       <section className={sectionPad}>
         <div className={container}>
           <SectionHead num="05" label={'Awards & Exhibitions'} title="수상 및 전시 경력" />
@@ -257,7 +254,7 @@ export default function TeamPageClient() {
         </div>
       </section>
 
-      {/* ━━ (06) CTA ━━ */}
+      {/* ━━ CTA ━━ */}
       <section className={`${sectionPadLg} border-t border-white/10`}>
         <div className={container}>
           <motion.p {...inView} variants={fadeUp} className="index-num font-en mb-10">Contact</motion.p>

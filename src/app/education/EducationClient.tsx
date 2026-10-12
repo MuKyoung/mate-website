@@ -81,7 +81,7 @@ function Course({ c, defaultOpen }: { c: (typeof eduCourses)[number]; defaultOpe
         </span>
       </button>
 
-      <motion.div initial={false} animate={{ height: open ? 'auto' : 0, opacity: open ? 1 : 0 }}
+      <motion.div initial={false} aria-hidden={!open} animate={{ height: open ? 'auto' : 0, opacity: open ? 1 : 0 }}
         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }} className="overflow-hidden">
         <div className="px-6 sm:px-9 pb-8">
           <dl className="border-t border-[var(--border)]">
@@ -137,7 +137,7 @@ export default function EducationClient() {
                   </span>
                 </motion.h1>
                 <motion.p {...onMount} variants={fadeUp} className="type-b3 text-[var(--text-2)] leading-[1.9] max-w-xl">
-                  {d.summary} 지난달 외주에서 쓴 도구와 절차를 그대로 가져옵니다.
+                  {d.summary}
                   마지막 주에는 수강생 각자의 결과물이 남습니다.
                 </motion.p>
               </div>

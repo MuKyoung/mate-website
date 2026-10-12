@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { projects } from '@/data/projects';
-import { teamCapabilities } from '@/data/teamCapabilities';
+import { teamCapabilities, counts } from '@/data/teamCapabilities';
 import { useEffect } from 'react';
 
 /* ─────────────────────────────────────────── 데이터 */
@@ -36,12 +36,11 @@ const PROCESS = [
 ];
 
 /* 사이트 본문과 같은 출처에서 파생한다 - 문서마다 숫자가 달라지지 않도록 */
-const TOTAL = teamCapabilities.capabilities.reduce((n, c) => n + c.projects, 0);
 
 const STATS = [
-  { v: `${TOTAL}+`, l: '누적 프로젝트' },
+  { v: `${counts.devProjects}건`, l: '개발 프로젝트 납품' },
   { v: `${projects.length}건`, l: '포트폴리오 공개' },
-  { v: '5년', l: '팀 운영' },
+  { v: `${teamCapabilities.stats.since}`, l: '시작한 해' },
   { v: `${teamCapabilities.stats.teamMembers}명`, l: '전문 인력' },
 ];
 
@@ -574,8 +573,8 @@ export default function CompanyProfilePage() {
               각각 전담하는 외주 개발 팀입니다. 2020년부터 시작해 AR·VR 시뮬레이션, 웹·모바일 앱까지
               영역을 넓혀 왔습니다. 지금은 <strong>자체 게임</strong>도 만들어 직접 퍼블리싱합니다.<br /><br />
               단순 기능 구현을 넘어 <strong>기획·디자인·개발·배포</strong> 전 과정을 함께하는
-              파트너십을 지향합니다. 저장소를 열어 두고 진행하며, 완료 시 소스 코드와 문서,
-              인프라 계정 소유권까지 넘겨드립니다.
+              파트너십을 지향합니다. 저장소를 열어 두고 진행하며, 완료 시 모든 소스 코드와
+              문서를 넘겨드립니다.
             </p>
 
             {/* Why choose us */}
@@ -663,7 +662,7 @@ export default function CompanyProfilePage() {
               <div className="p2-kakao-card">
                 <div>
                   <div className="p2-kakao-title">💬 카카오톡 오픈채팅</div>
-                  <div className="p2-kakao-sub">평일 10:00 – 18:00 실시간 응대</div>
+                  <div className="p2-kakao-sub">평일 10:00~18:00 실시간 응대</div>
                   <div className="p2-kakao-url">open.kakao.com/o/scVFEK3h</div>
                 </div>
               </div>

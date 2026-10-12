@@ -28,7 +28,7 @@
   --gray-500: #5e5e66;
   --gray-600: #08080a;
 
-  /* point - 앰버. 한 화면에 한 번만 쓰는 강조색 */
+  /* point - 버밀리언. 한 화면에 한 번만 쓰는 강조색 */
   --point-100: #ffd9c7;
   --point-200: #e8713c;   /* 메인 포인트 컬러 */
   --point-300: #c4531f;
@@ -57,7 +57,7 @@
   --accent-tint:   rgba(79, 127, 232, 0.16);
   --accent-dim:    rgba(79, 127, 232, 0.12);
 
-  /* 포인트 - 앰버 강조 */
+  /* 포인트 - 버밀리언 강조 */
   --point:      var(--point-200);
   --point-tint: rgba(232, 113, 60, 0.16);
 
@@ -139,7 +139,7 @@
 
 /* ── App Shell ────────────────────────────────────────
    /taskmanager 는 마케팅 사이트와 다른 제품이다.
-   다크 캔버스·필름 그레인·관성 스크롤을 모두 끄고 자체 셸에 맡긴다. */
+   다크 캔버스·관성 스크롤을 모두 끄고 자체 셸에 맡긴다. */
 html[data-shell='app'] {
   background: #ffffff;
   scroll-behavior: auto;
@@ -159,7 +159,6 @@ html[data-shell='app'] body {
   letter-spacing: 0;
 }
 html[data-shell='app'] body > main { min-height: 0; }
-html[data-shell='app'] body::after { display: none; }
 html[data-shell='app'] ::selection { background: #0969da; color: #fff; }
 
 /* 숫자·식별자는 등폭으로 - 작업 키와 날짜가 세로로 맞는다 */
@@ -338,7 +337,7 @@ body {
   color: var(--text-2);
 }
 
-/* 섹션 인덱스 라벨 - 포인트(앰버). 섹션당 1회만 노출되는 브랜드 시그니처 */
+/* 섹션 인덱스 라벨 - 포인트 색. 섹션당 1회만 노출되는 브랜드 시그니처 */
 .index-num {
   display: flex;
   align-items: center;

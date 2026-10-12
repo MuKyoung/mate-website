@@ -8,30 +8,15 @@ import DomainSlabs from '@/components/DomainSlabs';
 import ProjectCard from '@/components/ProjectCard';
 import SectionHead from '@/components/ui/SectionHead';
 import CtaSection from '@/components/ui/CtaSection';
-import { domains, homeCredentials } from '@/data/domains';
-import { affiliations } from '@/data/teamCapabilities';
+import { homeCredentials } from '@/data/domains';
+import { affiliations, teamCapabilities } from '@/data/teamCapabilities';
 import { projects } from '@/data/projects';
-import {
-  fadeUp, fadeLeft, fadeRight, riseTilt, clipUp, clipLeft, rowIn, stagger, staggerRows, inView,
-} from '@/lib/motion';
+import { practices } from '@/data/practices';
+import { fadeUp, fadeLeft, rowIn, stagger, staggerRows, inView } from '@/lib/motion';
 import { arrowHover, container, linkMore, sectionPad } from '@/lib/styles';
 
 
-/* 가치 나열 대신, 계약서에 적을 수 있는 규칙만 남긴다 */
-const values = [
-  {
-    kr: '저장소를 열어 둡니다',
-    desc: '개발 중에도 GitHub 접근 권한을 드립니다. 진행률을 물어보실 필요가 없습니다.',
-  },
-  {
-    kr: '담당자가 바뀌지 않습니다',
-    desc: '계약 때 만난 사람이 배포까지 갑니다. 인력이 빠지면 일정이 밀리는 것부터 알려드립니다.',
-  },
-  {
-    kr: '끝나면 전부 넘겨드립니다',
-    desc: '소스 코드와 문서, 인프라 계정 소유권까지. 저희 없이도 굴러가야 정상입니다.',
-  },
-];
+const { since } = teamCapabilities.stats;
 
 export default function Home() {
   const featured = projects.slice(0, 4);
@@ -44,20 +29,22 @@ export default function Home() {
       <section className="pb-20 pt-24 sm:pb-28 sm:pt-32">
         <div className={container}>
           <div className="grid gap-x-gutter gap-y-12 lg:grid-cols-12">
-            <motion.div {...inView} variants={fadeLeft} className="lg:col-span-5">
+            <motion.div {...inView} variants={fadeLeft} className="lg:col-span-6">
               <p className="index-num font-en mb-6">About</p>
-              <h2 className="type-d2 text-[var(--text-1)]">
-                맡아서 만들고,<br />저희 이름으로도 냅니다
+              <h2 className="font-bold leading-[1.16] tracking-[-0.018em] text-[var(--text-1)]"
+                style={{ fontSize: 'clamp(2rem, 4.2vw, 3.5rem)' }}>
+                <span className="block">맡아서 만들고,</span>
+                <span className="block">저희 이름으로도 냅니다</span>
               </h2>
             </motion.div>
 
-            <motion.div {...inView} variants={stagger} className="lg:col-span-6 lg:col-start-7">
+            <motion.div {...inView} variants={stagger} className="lg:col-span-5 lg:col-start-8">
               <motion.p variants={fadeUp}
                 className="mb-7 text-[19px] font-semibold leading-[1.6] text-[var(--text-1)] sm:text-[21px]">
                 MATE는 SI 개발과 자체 퍼블리싱을 함께 하는 팀입니다.
               </motion.p>
               <motion.p variants={fadeUp} className="type-b3 mb-5 leading-[1.9] text-white/72">
-                2020년부터 웹 · 앱, 게임 · XR, 교육 세 영역에서 일을 받아 왔습니다.
+                {since}년에 시작해 웹 · 앱, 게임 · XR, 교육으로 영역을 넓혀 왔습니다.
                 그와 별개로 저희 게임도 만듭니다. 지금 두 타이틀을 기획부터
                 퍼블리싱까지 직접 하고 있습니다.
               </motion.p>
@@ -78,7 +65,7 @@ export default function Home() {
 
       <DomainSlabs withGames className="pb-0" />
 
-      {/* ━━ (02) Work - 비대칭 2열 ━━ */}
+      {/* ━━ 최근 작업 - 비대칭 2열 ━━ */}
       <section className={sectionPad}>
         <div className={container}>
           <SectionHead num="02" label="Selected Work" href="/projects" more="전체 포트폴리오"
@@ -93,52 +80,24 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ━━ (03) 매니페스토 ━━ */}
-      <section className="pt-16 sm:pt-28 pb-10 sm:pb-14">
+      {/* ━━ 일하는 방식 - 착수부터 배포 뒤까지, 순서대로 ━━ */}
+      <section className={sectionPad}>
         <div className={container}>
-          <motion.p {...inView} variants={fadeUp}
-            className="index-num font-en pb-6 border-b border-white/10 mb-14 sm:mb-20">Why MATE</motion.p>
-
-          {/* 라인마다 다른 방향으로 열리는 스테이트먼트 */}
-          <motion.p {...inView} variants={stagger}
-            className="font-bold text-[var(--text-1)] tracking-[-0.02em] leading-[1.22] max-w-5xl"
-            style={{ fontSize: 'clamp(1.625rem, 3.6vw, 3rem)' }}>
-            <span className="block overflow-hidden pb-[0.1em]">
-              <motion.span variants={clipUp} className="block">넘기고 나면 연락이 끊기는 외주를</motion.span>
-            </span>
-            <span className="block overflow-hidden pb-[0.1em]">
-              <motion.span variants={clipLeft} className="block">
-저희도 <span className="text-[var(--point)]">발주처로서 겪었습니다</span>.
-              </motion.span>
-            </span>
-            <span className="block overflow-hidden pb-[0.1em]">
-              <motion.span variants={fadeRight} className="block text-white/50">
-                그래서 배포 다음 달에 뭘 할지까지 계약서에 적습니다.
-              </motion.span>
-            </span>
-          </motion.p>
-
-        </div>
-      </section>
-
-      {/* ━━ (04) Rules - EN 키워드 + KR 부연 (레퍼런스 Vision 방식) ━━ */}
-      <section className="pt-20 sm:pt-28 pb-24 sm:pb-32">
-        <div className={container}>
-          <SectionHead num="04" title={<>계약서에 적는 것</>} />
-          <motion.div {...inView} variants={staggerRows} className="border-t border-white/10">
-            {values.map((v) => (
-              <motion.div key={v.kr} variants={rowIn}
+          <SectionHead num="04" label="How we work" title={<>일하는 방식</>} />
+          <motion.ol {...inView} variants={staggerRows} className="border-t border-white/10">
+            {practices.map((v) => (
+              <motion.li key={v.title} variants={rowIn}
                 className="grid grid-cols-1 items-baseline gap-x-gutter gap-y-3 border-b border-white/10
-                           py-8 sm:py-10 lg:grid-cols-12">
-                <h3 className="type-h2 text-[var(--text-1)] lg:col-span-4">{v.kr}</h3>
-                <p className="type-b3 leading-[1.85] text-white/50 lg:col-span-7 lg:col-start-6">{v.desc}</p>
-              </motion.div>
+                           py-7 sm:py-9 lg:grid-cols-12">
+                <h3 className="type-h2 text-[var(--text-1)] lg:col-span-5">{v.title}</h3>
+                <p className="type-b3 leading-[1.85] text-white/65 lg:col-span-6 lg:col-start-7">{v.desc}</p>
+              </motion.li>
             ))}
-          </motion.div>
+          </motion.ol>
         </div>
       </section>
 
-      {/* ━━ (05) 밖에서 받은 평가 - 익명 후기 하나 + 확인 가능한 심사 이력 ━━ */}
+      {/* ━━ 밖에서 받은 평가 - 소속과 확인 가능한 심사 이력만 ━━ */}
       <section className={sectionPad}>
         <div className={container}>
           <SectionHead num="05" title={<>밖에서 받은 평가</>} />
@@ -172,9 +131,9 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ━━ (06) CTA ━━ */}
-      <CtaSection num="06" line1="아직 정리가" line2="안 되셨어도"
-        kr="첫 통화에서 만들려는 것과 예산 범위부터 듣습니다" />
+      {/* ━━ 문의 ━━ */}
+      <CtaSection line1="아직 정리가" line2="안 되셨어도"
+        kr="요구사항과 목표는 첫 상담에서 같이 정리합니다" />
     </>
   );
 }

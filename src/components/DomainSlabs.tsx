@@ -20,17 +20,17 @@ const SLAB = {
   web: {
     href: '/web',
     bg: null as string | null,
-    note: '설계 문서에서 시작해 배포까지',
+    note: '기획서 작성부터 배포 후 모니터링까지',
   },
   game: {
     href: '/game',
     bg: '/images/projects/꼬꼬지생.webp',
-    note: '두 번째 단계에서 이미 플레이 가능한 빌드',
+    note: '프로토타입부터 빠르게 만들어 확인합니다',
   },
   edu: {
     href: '/education',
     bg: '/images/projects/미래산업과학고.webp',
-    note: '기관 목표에 맞춰 커리큘럼을 다시 구성',
+    note: '교육 방향과 수준에 맞춰 커리큘럼을 조정합니다',
   },
 } as const;
 

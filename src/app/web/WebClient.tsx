@@ -171,8 +171,11 @@ export default function WebClient() {
                     </span>
                   </button>
 
+                  {/* 닫힌 패널은 높이만 0 일 뿐 DOM 에 남는다. 가려 두지 않으면
+                      스크린리더가 접힌 내용을 전부 읽는다. */}
                   <motion.div
                     initial={false}
+                    aria-hidden={!isOpen}
                     animate={{ height: isOpen ? 'auto' : 0, opacity: isOpen ? 1 : 0 }}
                     transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
                     className="overflow-hidden">

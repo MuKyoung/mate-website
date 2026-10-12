@@ -48,11 +48,11 @@ type TypeRow = {
 };
 
 const TYPE: TypeRow[] = [
-  { token: 'D1', cls: 'type-d1 font-en', sample: 'Display', use: '히어로 · CTA 스테이트먼트', fw: 800, fs: '40–144', lh: '0.98' },
-  { token: 'D2', cls: 'type-d2 font-en', sample: 'Section', use: '섹션 대형 타이틀', fw: 800, fs: '36–76', lh: '1.04' },
-  { token: 'H1', cls: 'type-h1', sample: '타이틀 및 제목', use: '페이지 제목', fw: 700, fs: '32–56', lh: '1.3' },
-  { token: 'H2', cls: 'type-h2', sample: '보조타이틀 및 강조', use: '블록 제목', fw: 700, fs: '24–32', lh: '1.2' },
-  { token: 'H3', cls: 'type-h3', sample: '보조타이틀 및 강조', use: '가벼운 블록 제목', fw: 500, fs: '24–32', lh: '1.2' },
+  { token: 'D1', cls: 'type-d1 font-en', sample: 'Display', use: '히어로 · CTA 스테이트먼트', fw: 800, fs: '40~144', lh: '0.98' },
+  { token: 'D2', cls: 'type-d2 font-en', sample: 'Section', use: '섹션 대형 타이틀', fw: 800, fs: '36~76', lh: '1.04' },
+  { token: 'H1', cls: 'type-h1', sample: '타이틀 및 제목', use: '페이지 제목', fw: 700, fs: '32~56', lh: '1.3' },
+  { token: 'H2', cls: 'type-h2', sample: '보조타이틀 및 강조', use: '블록 제목', fw: 700, fs: '24~32', lh: '1.2' },
+  { token: 'H3', cls: 'type-h3', sample: '보조타이틀 및 강조', use: '가벼운 블록 제목', fw: 500, fs: '24~32', lh: '1.2' },
   { token: 'B1', cls: 'type-b1', sample: '서브 타이틀', use: '카드 제목', fw: 700, fs: '18', lh: '1.5' },
   { token: 'B2', cls: 'type-b2', sample: '주요 콘텐츠 및 내용', use: '강조 본문', fw: 700, fs: '16', lh: '1.5' },
   { token: 'B3', cls: 'type-b3', sample: '보조 콘텐츠 및 내용', use: '기본 본문', fw: 500, fs: '16', lh: '1.5' },
@@ -96,7 +96,7 @@ function onColor(hex: string): string {
 
 /* ── 조각 ───────────────────────────────────────────── */
 
-function Block({ num, label, children }: { num: string; label: string; children: React.ReactNode }) {
+function Block({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <section className={`${sectionPad} border-t border-white/10`}>
       <div className={container}>
@@ -150,7 +150,7 @@ export default function DesignSystemPage() {
       </div>
 
       {/* ── Grid System ── */}
-      <Block num="01" label="Grid System">
+      <Block label="Grid System">
         <div className="grid lg:grid-cols-12 gap-gutter items-start">
           <div className="lg:col-span-5">
             <p className="type-h2 text-[var(--text-1)] mb-8">12 Columns</p>
@@ -183,7 +183,7 @@ export default function DesignSystemPage() {
       </Block>
 
       {/* ── Color System ── */}
-      <Block num="02" label="Color System">
+      <Block label="Color System">
         <SwatchGrid title="Primary · 딥 인디고 / 액션" items={PRIMARY} />
         <SwatchGrid title="Gray · 쿨 뉴트럴 / 표면·텍스트" items={GRAY} />
         <SwatchGrid title="Point · 클레이 / 강조·활성" items={POINT} />
@@ -205,7 +205,7 @@ export default function DesignSystemPage() {
       </Block>
 
       {/* ── Typography ── */}
-      <Block num="03" label="Typography">
+      <Block label="Typography">
         <p className="type-d2 font-en text-[var(--text-1)] mb-4">Pretendard</p>
         <p className="type-c1 text-white/55 mb-14 font-en">
           Letter spacing -0.3% · 국문 · 영문 모두 Pretendard
@@ -229,7 +229,7 @@ export default function DesignSystemPage() {
       </Block>
 
       {/* ── Domain Accents ── */}
-      <Block num="04" label="Domain Accents">
+      <Block label="Domain Accents">
         <div className="grid lg:grid-cols-12 gap-x-gutter gap-y-10 mb-14">
           <p className="lg:col-span-7 type-h2 text-[var(--text-1)]">
             사업 도메인마다 액센트만 바뀝니다
@@ -299,7 +299,7 @@ export default function DesignSystemPage() {
       </Block>
 
       {/* ── Components ── */}
-      <Block num="05" label="Components">
+      <Block label="Components">
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-gutter">
           {/* Buttons */}
           <div className="rounded-card border border-white/10 p-8">

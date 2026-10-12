@@ -241,10 +241,27 @@ export const teamCapabilities = {
       projects: 15,
     },
   ],
-      stats: {
-    totalProjects: 30,
-    yearsExperience: 5,
+  stats: {
+    /** 시작 연도. 회사소개서의 '2020년부터' 와 가장 이른 수상(2021)에 맞춘 값이다.
+        '몇 년째' 는 해가 바뀌면 틀려지므로 화면에는 연차 대신 이 연도를 쓴다. */
+    since: 2020,
     teamMembers: 7,
   },
+};
+
+const projectsOf = (id: string) =>
+  teamCapabilities.capabilities.find((c) => c.id === id)?.projects ?? 0;
+
+/**
+ * 화면에 올리는 건수는 전부 여기서 가져간다.
+ *
+ * 세 역량의 projects 를 그냥 더하면 45가 되지만, 교육의 15는 납품이 아니라
+ * 강의 횟수다. 이걸 섞어 '45건 납품' 이라고 쓰면 틀린 말이 된다.
+ */
+export const counts = {
+  /** 납품한 개발 프로젝트 = 게임 · XR + 웹 · 앱 */
+  devProjects: projectsOf('unity') + projectsOf('outsourcing'),
+  /** 진행한 강의 */
+  lectures: projectsOf('education'),
 };
 

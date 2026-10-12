@@ -6,8 +6,8 @@
  * 값을 바꾸면 사이트 전체에 일관되게 반영된다.
  *
  * 컬러 역할 분담
- *   indigo(primary 200) = 액션 · 링크 · 인터랙션
- *   amber (point 200)   = 섹션 라벨 · 강조 · 활성 상태
+ *   blue (primary 200)  = 액션 · 링크 · 인터랙션
+ *   vermilion (point 200) = 섹션 라벨 · 강조 · 활성 상태
  */
 
 /** 브랜드 상수 */
@@ -45,7 +45,7 @@ export const btnOutline =
   'inline-flex items-center gap-2.5 h-14 px-9 rounded-pill text-[15px] font-bold ' +
   'text-gray-50 border border-white/20 hover:border-white transition-colors duration-300';
 
-/** 포인트 필 버튼 - 화면당 1회, 앰버 강조 액션 */
+/** 포인트 필 버튼 - 화면당 1회, 포인트 색 강조 액션 */
 export const btnPoint =
   'group inline-flex items-center gap-2.5 h-14 px-9 rounded-pill text-[15px] font-bold ' +
   'text-primary-600 bg-point-200 hover:bg-point-100 transition-colors duration-300';
@@ -70,8 +70,6 @@ export const arrowHover =
 
 /** 섹션 세로 여백 */
 export const sectionPad = 'py-24 sm:py-32';
-/** 앞 섹션과 한 덩어리로 읽혀야 하는 구간 - 호흡을 좁혀 스크롤 리듬을 만든다 */
-export const sectionPadTight = 'py-16 sm:py-24';
 /** CTA 섹션 세로 여백 (더 넉넉하게) */
 export const sectionPadLg = 'py-28 sm:py-40';
 /** 컨테이너 - inner 1500px 기준 */

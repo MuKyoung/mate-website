@@ -43,13 +43,6 @@ export default function ProjectDetailClient({ params }: Props) {
   /* 갤러리가 대표 이미지 하나만 담고 있으면 위에서 이미 본 그림이다. */
   const gallery = project.images.filter((img) => img !== project.thumbnail);
 
-  // 실제로 그려지는 섹션에만 번호를 매긴다
-  let n = 0;
-  const num = () => String(++n).padStart(2, '0');
-  const overviewNum = overview ? num() : null;
-  const galleryNum = gallery.length > 0 ? num() : null;
-  const ctaNum = num();
-
   return (
     <>
       {/* ── 헤더 - 다크 + 하단 헤어라인 ── */}
@@ -233,9 +226,8 @@ export default function ProjectDetailClient({ params }: Props) {
         </div>
       </section>
 
-      {/* ── (03) CTA ── */}
+      {/* ── CTA ── */}
       <CtaSection
-        num={ctaNum}
         line1="비슷한 걸"
         line2="만들고 계신가요"
         kr="기획 단계든 중간에 멈춘 상태든 받습니다"
