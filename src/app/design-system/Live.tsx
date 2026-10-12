@@ -21,9 +21,10 @@ const luminance = (c: number[]) => {
   });
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 };
-const INK = [8, 8, 10];
+const INK = [8, 8, 8];
+const WHITE = [250, 250, 250];
 
-/** CSS 변수 하나를 칩으로. 자기가 놓인 스코프(data-domain 등)의 값을 읽는다. */
+/** CSS 변수 하나를 칩으로. 자기가 놓인 스코프(테마, 영역)의 값을 읽는다. */
 export function Swatch({ token, name, note, tall = false }: {
   token: string;
   name: string;
@@ -31,35 +32,33 @@ export function Swatch({ token, name, note, tall = false }: {
   tall?: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const [v, setV] = useState<{ hex: string; rgb: string; onDark: boolean } | null>(null);
+  const [v, setV] = useState<{ hex: string; onDark: boolean } | null>(null);
 
   useEffect(() => {
     if (!ref.current) return;
     const c = channels(getComputedStyle(ref.current).backgroundColor);
-    // 흰 글자와 검은 글자 중 대비가 더 큰 쪽을 얹는다. 밝기 어림으로 고르면
-    // blue 200 처럼 중간 밝기인 색에서 3.9:1 짜리 흰 글자가 올라간다.
+    // 흰 글자와 검은 글자 중 대비가 더 큰 쪽을 얹는다
     const L = luminance(c) + 0.05;
-    setV({ hex: toHex(c), rgb: c.join(' '), onDark: 1.05 / L >= L / (luminance(INK) + 0.05) });
+    setV({ hex: toHex(c), onDark: (luminance(WHITE) + 0.05) / L >= L / (luminance(INK) + 0.05) });
   }, []);
 
   return (
-    <div className="overflow-hidden rounded-card border border-[var(--border)]">
-      <div ref={ref} className={`flex items-end p-4 ${tall ? 'h-[168px]' : 'h-[112px]'}`}
-        style={{ background: `var(${token})`, color: v && !v.onDark ? toHex(INK) : '#FFFFFF' }}>
-        {note && <span className="type-c2 font-bold">{note}</span>}
+    <div className="overflow-hidden rounded-thumb border border-[var(--border)]">
+      <div ref={ref} className={`flex items-end p-4 ${tall ? 'h-[168px]' : 'h-[104px]'}`}
+        style={{ background: `var(${token})`, color: v && !v.onDark ? toHex(INK) : toHex(WHITE) }}>
+        {note && <span className="text-min font-medium">{note}</span>}
       </div>
-      <div className="bg-[var(--surface)] px-4 py-3.5">
-        <p className="type-b4 text-[var(--text-1)]">{name}</p>
-        <p className="type-c2 mt-1 text-white/60">{v ? v.hex : token}</p>
-        <p className="type-c2 text-white/55">{v ? `RGB ${v.rgb}` : ' '}</p>
+      <div className="bg-surface px-4 py-3">
+        <p className="text-sub font-medium text-[var(--text-1)]">{name}</p>
+        <p className="text-min text-[var(--text-3)]">{v ? v.hex : token}</p>
       </div>
     </div>
   );
 }
 
-/** 타입 스케일 한 줄. 견본 글자에서 크기 · 굵기 · 행간을 읽는다. */
-export function TypeRow({ token, cls, sample, use }: {
-  token: string;
+/** 글자 크기 한 줄. 견본 글자에서 크기 · 굵기 · 행간을 읽는다. */
+export function TypeRow({ name, cls, sample, use }: {
+  name: string;
   cls: string;
   sample: string;
   use: string;
@@ -76,17 +75,16 @@ export function TypeRow({ token, cls, sample, use }: {
       setSpec(`${Math.round(size)}px · ${s.fontWeight} · 행간 ${Number.isFinite(lh) ? (lh / size).toFixed(2) : s.lineHeight}`);
     };
     read();
-    // 디스플레이 단계는 화면 폭을 따라 변한다
+    // 첫 화면 문장은 화면 폭을 따라 변한다
     window.addEventListener('resize', read);
     return () => window.removeEventListener('resize', read);
   }, []);
 
   return (
-    <div className="grid grid-cols-1 items-baseline gap-x-gutter gap-y-3 border-b border-[var(--border)] py-7 lg:grid-cols-12">
-      <p className="type-c1 text-[var(--point)] lg:col-span-1">{token}</p>
-      <p ref={ref} className={`text-[var(--text-1)] lg:col-span-6 ${cls}`}>{sample}</p>
-      <p className="type-c1 text-white/60 lg:col-span-3">{use}</p>
-      <p className="type-c2 text-white/55 lg:col-span-2 lg:text-right">{spec || ' '}</p>
-    </div>
+    <li className="grid grid-cols-1 items-baseline gap-x-4 gap-y-2 px-6 py-5 wide:grid-cols-12 medium:px-7">
+      <p ref={ref} className={`min-w-0 truncate text-[var(--text-1)] wide:col-span-6 ${cls}`}>{sample}</p>
+      <p className="text-sub text-[var(--text-2)] wide:col-span-3">{name} · {use}</p>
+      <p className="text-min text-[var(--text-3)] wide:col-span-3 wide:text-right">{spec || ' '}</p>
+    </li>
   );
 }

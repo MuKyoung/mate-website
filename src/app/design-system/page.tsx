@@ -1,12 +1,13 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import { domains } from '@/data/domains';
-import { container, sectionPad } from '@/lib/styles';
+import { Badge, Card, GroupLabel, Row, Section } from '@/components/home/kit';
+import { btnOnBrand, btnOnBrandQuiet, btnOutline, btnPrimary, container } from '@/lib/styles';
 import { Swatch, TypeRow } from './Live';
 
 export const metadata: Metadata = {
   title: 'Brand Guide',
-  description: 'MATE 브랜드 가이드 · 로고, 대표 색상, 말투, 타이포그래피, 컴포넌트, 공유 이미지.',
+  description: 'MATE 브랜드 가이드 · 로고, 대표 색상, 말투, 글자, 모양, 움직임, 부품, 공유 이미지.',
   robots: { index: false, follow: false },
 };
 
@@ -14,91 +15,72 @@ export const metadata: Metadata = {
  * MATE 브랜드 가이드.
  *
  * 색과 글자 크기의 숫자는 여기에 적지 않고 화면에서 읽어 보여 준다 (./Live).
- * 이 파일에 적는 것은 숫자가 아니라 규칙이다.
+ * 이 파일에 적는 것은 숫자가 아니라 규칙이다. 이 페이지 자체도 홈과 같은 조각으로 짓는다.
  */
 
 /* ── 데이터 ─────────────────────────────────────────── */
 
+/** 말투 - 사이트 문구를 쓸 때 지키는 것 */
+const VOICE = [
+  ['쓸모 없는 글은 싣지 않습니다', '읽는 사람이 고르거나, 움직이거나, 상황을 이해하는 데 도움이 되지 않는 문장은 뺍니다.'],
+  ['한 일과 하는 일을 사실로 말합니다', '회사가 정하지 않은 약속이나 내력을 듣기 좋게 지어 넣지 않습니다.'],
+  ['숫자는 데이터에서 가져옵니다', '납품 건수와 기간은 포트폴리오와 역량 데이터에서 계산합니다. 강의는 납품으로 세지 않습니다.'],
+  ['두 사업을 나란히 씁니다', '자체 게임은 외주에서 나온 부산물이 아닙니다. SI와 퍼블리싱을 같은 무게로 적습니다.'],
+  ['안 되는 것보다 되는 방법을 말합니다', '막다른 안내로 끝내지 않습니다. 다음에 할 수 있는 일을 함께 적습니다.'],
+  ['국문 문장으로 말합니다', '영문 두 단어 슬로건을 붙이지 않습니다. 줄표를 쓰지 않고, 범위는 물결표(1~3개월)로 적습니다.'],
+] as const;
+
+const LOGO_RULES = [
+  ['바탕에 따라 색을 고릅니다', '밝은 바탕에서는 원색(파랑) 그대로, 어두운 바탕과 파란 면에서는 흰색으로 씁니다.'],
+  ['둘레를 비웁니다', '로고 둘레는 심볼의 원 지름만큼 비웁니다.'],
+  ['너무 작게 쓰지 않습니다', '화면에서는 높이 20px 아래로 줄이지 않습니다.'],
+  ['색을 바꾸지 않습니다', '파랑과 흰색 말고 다른 색으로 쓰지 않습니다.'],
+  ['모양을 바꾸지 않습니다', '비율을 늘이거나 기울이지 않고, 그림자나 윤곽선을 입히지 않습니다.'],
+  ['사진 위에 바로 올리지 않습니다', '복잡한 사진 위에서는 면을 깔고 올립니다.'],
+] as const;
+
+/** 색의 역할 - 값은 테마마다 다르고 역할은 같다 */
+const ROLES = [
+  { token: '--accent', name: '글자로 쓰는 파랑', note: '고른 탭 · 묶음 표시 · 링크' },
+  { token: '--brand-fill', name: '면으로 쓰는 파랑', note: '강조 버튼 · 떠 있는 버튼' },
+  { token: '--focus', name: '초점', note: '키보드 초점 · 입력창' },
+];
+
+const SURFACES = [
+  { token: '--canvas', name: '바탕' },
+  { token: '--surface', name: '카드' },
+  { token: '--surface-2', name: '카드 안의 면' },
+];
+
 const BLUE = [
-  { token: '--primary-100', name: 'blue 100', note: '옅은 강조' },
-  { token: '--primary-200', name: 'blue 200', note: '어두운 바탕 위 글자' },
-  { token: '--primary-300', name: 'blue 300', note: '면의 호버' },
-  { token: '--primary-400', name: 'MATE Blue', note: '로고 원색 · 면' },
+  { token: '--primary-100', name: 'blue 100' },
+  { token: '--primary-200', name: 'blue 200' },
+  { token: '--primary-300', name: 'blue 300' },
+  { token: '--primary-400', name: 'MATE Blue', note: '로고 원색' },
   { token: '--primary-500', name: 'blue 500' },
   { token: '--primary-600', name: 'blue 600' },
 ];
 
-const NEUTRAL = [
-  { token: '--gray-50', name: 'white', note: '글자' },
-  { token: '--gray-300', name: 'gray 300' },
-  { token: '--gray-400', name: 'gray 400' },
-  { token: '--gray-500', name: 'gray 500' },
-  { token: '--surface-2', name: 'surface 2' },
-  { token: '--surface', name: 'surface' },
-  { token: '--canvas', name: 'canvas', note: '바탕' },
-];
-
-/** 종이와 먹 - 읽는 면에 쓰는 따뜻한 무채색 */
-const PAPER = [
-  { token: '--paper', name: 'paper', note: '읽는 면' },
-  { token: '--paper-2', name: 'paper 2', note: '종이 위의 면' },
-  { token: '--ink', name: 'ink', note: '종이 위 글자' },
-];
-
-/** 면의 쓰임 - 섹션이 무슨 일을 하느냐에 따라 바탕을 고른다 */
-const SURFACES = [
-  ['파란 면', '말하는 곳', '오프닝, 자체 게임, 문의. 흰 글자와 흰 로고를 올립니다.'],
-  ['종이 면', '읽는 곳', '소개, 하는 일, 일하는 방식. 순백 대신 따뜻한 종이색을, 순흑 대신 먹색을 씁니다.'],
-  ['검은 면', '보는 곳', '작업 그림을 거는 자리. 그림이 가장 또렷하게 보입니다.'],
-] as const;
-
-/** 제목 서체 (Hahmlet) 의 네 단계 */
-const DISPLAY = [
-  { token: 'XL', cls: 'font-display display-xl', sample: '멈추지 않게', use: '오프닝 문장' },
-  { token: 'L', cls: 'font-display display-l', sample: '맡아서 만들고,', use: '섹션 제목' },
-  { token: 'M', cls: 'font-display display-m', sample: '배포한 뒤에도 지켜봅니다', use: '줄 제목' },
-  { token: 'S', cls: 'font-display display-s', sample: '개발 전문성', use: '작은 제목 · 이름' },
-];
-
+/** 글자 크기 아홉 단계 + 첫 화면 문장 */
 const TYPE = [
-  { token: 'D1', cls: 'type-d1', sample: '멈추지 않게', use: '안쪽 페이지의 큰 제목' },
-  { token: 'D2', cls: 'type-d2', sample: '일하는 방식', use: '안쪽 페이지의 섹션 제목' },
-  { token: 'H1', cls: 'type-h1', sample: '타이틀 및 제목', use: '페이지 제목' },
-  { token: 'H2', cls: 'type-h2', sample: '보조 타이틀 및 강조', use: '블록 제목' },
-  { token: 'H3', cls: 'type-h3', sample: '보조 타이틀 및 강조', use: '가벼운 블록 제목' },
-  { token: 'B1', cls: 'type-b1', sample: '서브 타이틀', use: '카드 제목' },
-  { token: 'B2', cls: 'type-b2', sample: '주요 콘텐츠 및 내용', use: '강조 본문' },
-  { token: 'B3', cls: 'type-b3', sample: '보조 콘텐츠 및 내용', use: '기본 본문' },
-  { token: 'B4', cls: 'type-b4', sample: '안내 문구 강조', use: '라벨 · 버튼' },
-  { token: 'C1', cls: 'type-c1', sample: '주요 콘텐츠를 세부적으로 설명', use: '캡션' },
-  { token: 'C2', cls: 'type-c2', sample: '제한적으로 사용 / 밀도 높은 UI', use: '메타 정보' },
+  { name: '첫 화면', cls: 'type-hero', sample: '멈추지 않게', use: '홈의 문장 하나' },
+  { name: '40', cls: 'text-ext font-bold', sample: '일하는 방식', use: '큰 제목' },
+  { name: '20', cls: 'text-dlg font-medium', sample: '카드의 제목', use: '카드 제목' },
+  { name: '19', cls: 'text-ttl', sample: '상단 바의 제목', use: '상단 바' },
+  { name: '18', cls: 'text-lst font-medium', sample: '목록의 주 문장', use: '목록' },
+  { name: '17', cls: 'text-tbtn', sample: '글자 버튼', use: '글자 버튼' },
+  { name: '16', cls: 'text-body', sample: '본문과 설명', use: '본문' },
+  { name: '15', cls: 'text-btn font-medium', sample: '면이 있는 버튼', use: '버튼 · 메뉴' },
+  { name: '14', cls: 'text-sub font-medium', sample: '묶음 이름', use: '묶음 이름 · 보조 값' },
+  { name: '13', cls: 'text-min', sample: '가장 작은 글자', use: '이보다 작게 쓰지 않습니다' },
 ];
 
-/** 말투 - 사이트 문구를 쓸 때 지키는 것 */
-const VOICE = [
-  ['사람이 말하듯 씁니다', '문장을 짧게 끊고 저희라고 말합니다. 버튼도 "프로젝트 이야기하기"처럼 말로 씁니다. 다만 듣기 좋으라고 내용을 보태지는 않습니다.'],
-  ['한 일과 하는 일을 사실로 말합니다', '회사가 정하지 않은 약속이나 내력을 듣기 좋게 지어 넣지 않습니다.'],
-  ['숫자는 데이터에서 가져옵니다', '납품 건수와 기간은 포트폴리오와 역량 데이터에서 계산합니다. 강의는 납품으로 세지 않습니다.'],
-  ['두 사업을 나란히 씁니다', '자체 게임은 외주에서 나온 부산물이 아닙니다. SI와 퍼블리싱을 같은 무게로 적습니다.'],
-  ['국문 문장으로 말합니다', '영문 두 단어 슬로건을 붙이지 않습니다. 영역 이름(Web & App 등)만 영문으로 씁니다.'],
-  ['대시를 쓰지 않습니다', '줄표를 쓰지 않습니다. 범위는 물결표(1~3개월)로 적습니다.'],
-] as const;
-
-const LOGO_RULES = [
-  '로고 둘레는 심볼의 원 지름만큼 비웁니다',
-  '화면에서는 높이 20px 아래로 줄이지 않습니다',
-  '파랑과 흰색 말고 다른 색으로 바꾸지 않습니다',
-  '비율을 늘이거나 기울이지 않습니다',
-  '그림자, 윤곽선, 그라디언트를 입히지 않습니다',
-  '복잡한 사진 위에 바로 올리지 않습니다. 면을 깔고 올립니다',
+const RADII = [
+  { px: '26', cls: 'rounded-block', use: '큰 면' },
+  { px: '20', cls: 'rounded-thumb', use: '카드 · 중간 그림' },
+  { px: '12', cls: 'rounded-chip', use: '작은 그림 · 꼬리표' },
+  { px: '18', cls: 'rounded-btn', use: '버튼' },
 ];
-
-const COLOR_USE = [
-  ['면에 깔 때', 'MATE Blue를 그대로 씁니다. 그 위 글자는 흰색입니다.'],
-  ['어두운 바탕 위 글자', '로고 원색은 검정 위에서 어두워 읽히지 않습니다. 한 단계 밝은 blue 200을 씁니다.'],
-  ['밝은 바탕 위 글자', 'MATE Blue를 그대로 씁니다.'],
-  ['쓰지 않는 것', '이 색으로 그라디언트나 빛 번짐을 만들지 않습니다. 평평한 면으로만 씁니다.'],
-] as const;
 
 /** 링크를 공유할 때 미리보기로 뜨는 이미지 (public/images/og). 1200×630 JPG. */
 const SHARE = [
@@ -108,52 +90,24 @@ const SHARE = [
   { file: 'og-education.jpg', name: '교육', note: '/education과 강의' },
 ];
 
-const RADII = [
-  ['6', 'rounded-[6px]'],
-  ['10', 'rounded-card'],
-  ['16', 'rounded-[16px]'],
-  ['알약', 'rounded-pill'],
-] as const;
+const pad = 'px-6 py-7 medium:px-7 medium:py-8';
+const note = 'text-sub text-[var(--text-3)]';
 
 /* ── 조각 ───────────────────────────────────────────── */
 
-function Block({ label, title, lead, children }: {
-  label: string;
-  title: string;
-  lead?: string;
-  children: React.ReactNode;
-}) {
+/** 한 테마의 면과 글자를 그 테마로 고정해 보여 준다 */
+function ThemeSample({ scope, name }: { scope: 'theme-light' | 'theme-dark'; name: string }) {
   return (
-    <section className={`${sectionPad} border-t border-[var(--border)]`}>
-      <div className={container}>
-        <p className="index-num mb-8">{label}</p>
-        <div className="mb-12 grid gap-x-gutter gap-y-5 sm:mb-16 lg:grid-cols-12">
-          <h2 className="type-d2 text-[var(--text-1)] lg:col-span-6">{title}</h2>
-          {lead && (
-            <p className="type-b3 leading-[1.85] text-white/70 lg:col-span-5 lg:col-start-8 lg:self-end">{lead}</p>
-          )}
-        </div>
-        {children}
+    <div className={`${scope} rounded-thumb border border-[var(--border)] bg-[var(--canvas)] p-4 text-[var(--text-1)]`}>
+      <p className="mb-3 text-sub font-medium">{name}</p>
+      <div className="grid grid-cols-3 gap-2">
+        {SURFACES.map((s) => <Swatch key={s.token} {...s} />)}
       </div>
-    </section>
-  );
-}
-
-function SubTitle({ children }: { children: React.ReactNode }) {
-  return <h3 className="type-b4 mb-5 text-white/60">{children}</h3>;
-}
-
-/** 로고를 정해진 바탕 위에 보여 준다. 흰 로고는 원본을 필터로 뒤집어 쓴다. */
-function LogoPlate({ name, bg, white, note }: { name: string; bg: string; white: boolean; note: string }) {
-  return (
-    <div className="overflow-hidden rounded-card border border-[var(--border)]">
-      <div className="flex h-[180px] items-center justify-center px-8" style={{ background: bg }}>
-        <Image src="/images/logo.png" alt="MATE" width={1991} height={493}
-          className={`h-10 w-auto ${white ? 'brightness-0 invert' : ''}`} />
-      </div>
-      <div className="bg-[var(--surface)] px-4 py-3.5">
-        <p className="type-b4 text-[var(--text-1)]">{name}</p>
-        <p className="type-c2 mt-1 text-white/60">{note}</p>
+      <div className="mt-3 rounded-chip bg-surface p-4">
+        <p className="text-lst font-medium text-[var(--text-1)]">주 문장</p>
+        <p className="mt-1 text-body text-[var(--text-2)]">보조 설명은 한 단 옅습니다.</p>
+        <p className="mt-1 text-sub text-[var(--text-3)]">가장 옅은 글자도 4.5:1 을 넘깁니다.</p>
+        <p className="mt-2 text-sub font-medium text-[var(--accent)]">글자로 쓰는 파랑</p>
       </div>
     </div>
   );
@@ -164,295 +118,218 @@ function LogoPlate({ name, bg, white, note }: { name: string; bg: string; white:
 export default function BrandGuidePage() {
   return (
     <div>
-      {/* 가이드의 표지도 가이드를 따른다 - 대표 색상 면에 흰 글자 */}
-      <div className="surface-blue pb-16 pt-36 sm:pb-20 sm:pt-44">
-        <div className={container}>
-          <p className="mb-8 text-[12px] font-semibold uppercase tracking-[0.14em] text-white/80">Brand Guide</p>
-          <h1 className="font-display text-white" style={{ fontSize: 'clamp(2.5rem, 7.2vw, 6.5rem)', lineHeight: 1.14 }}>
-            멈추지 않게<br />만듭니다
-          </h1>
-          <p className="mt-8 max-w-xl text-[17px] leading-[1.8] text-white/90">
-            MATE의 로고와 색, 말투를 정해 둔 문서입니다. 사이트와 소개서, 공유 이미지가 같은 얼굴을 하도록
-            이 기준을 따릅니다.
+      {/* 표지 - 가이드의 표지도 가이드를 따른다 */}
+      <section className="pt-16">
+        <div className={`${container} pt-3 medium:pt-4`}>
+          <div className="on-brand -mx-3 rounded-block px-6 py-14 medium:mx-0 medium:px-11 medium:py-20">
+            <p className="text-sub font-medium text-[var(--text-3)]">Brand Guide</p>
+            <h1 className="type-hero mt-5">멈추지 않게 만듭니다</h1>
+            <p className="mt-6 max-w-xl text-body text-[var(--text-2)]">
+              MATE의 로고와 색, 말투, 화면을 짓는 규칙을 정해 둔 문서입니다.
+              사이트와 소개서, 공유 이미지가 같은 얼굴을 하도록 이 기준을 따릅니다.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <Section id="brand" title="브랜드" summary="SI 개발과 자체 퍼블리싱을 함께 하는 팀입니다. 맡은 것을 만들고, 저희 이름으로도 냅니다.">
+        <Card>
+          <ul>
+            <Row main="멈추지 않게 만듭니다" sub="캐치프레이즈. 만드는 것과 돌아가게 하는 것은 다릅니다. 그래서 배포한 뒤까지 봅니다." />
+            <Row main="개발 전문성" sub="웹 · 앱, 게임 · XR, 교육. 기획부터 배포까지 한 팀이 합니다." />
+            <Row main="배포 안정성" sub="배포한 뒤에도 모니터링으로 안정성을 확인하고, 끝난 뒤의 유지보수를 맡습니다." />
+          </ul>
+        </Card>
+        <GroupLabel>말투</GroupLabel>
+        <Card>
+          <ul>
+            {VOICE.map(([rule, why]) => <Row key={rule} main={rule} sub={why} />)}
+          </ul>
+        </Card>
+      </Section>
+
+      <Section id="logo" title="로고" summary="심볼은 M 위에 원 두 개가 놓인 모양입니다. 심볼과 워드마크를 함께 쓰는 것이 기본이고, 자리가 좁으면 심볼만 씁니다.">
+        <div className="-mx-3 grid gap-3 medium:mx-0 wide:grid-cols-3">
+          {[
+            { scope: 'theme-light', bg: 'bg-surface', name: '밝은 바탕', hint: '원색 그대로' },
+            { scope: 'on-brand', bg: '', name: '파란 면', hint: '흰색' },
+            { scope: 'theme-dark', bg: 'bg-[var(--canvas)]', name: '어두운 바탕', hint: '흰색' },
+          ].map((p) => (
+            <div key={p.name} className="overflow-hidden rounded-block bg-surface">
+              <div className={`${p.scope} ${p.bg} flex h-[156px] items-center justify-center px-8`}>
+                <Image src="/images/logo.png" alt="MATE" width={1991} height={493} className="logo-auto h-9 w-auto" />
+              </div>
+              <div className="px-6 py-4">
+                <p className="text-sub font-medium text-[var(--text-1)]">{p.name}</p>
+                <p className="text-min text-[var(--text-3)]">{p.hint}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+        <Card>
+          <ul>
+            {LOGO_RULES.map(([rule, detail]) => <Row key={rule} main={rule} sub={detail} />)}
+          </ul>
+        </Card>
+        <Card className={pad}>
+          <div className="flex items-center gap-4">
+            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-thumb bg-[var(--primary-400)]">
+              <Image src="/images/logo-mark.png" alt="MATE 심볼" width={380} height={369} className="h-10 w-auto brightness-0 invert" />
+            </div>
+            <p className={note}>
+              앱 아이콘과 파비콘은 모서리가 둥근 파란 단색 면에 흰 심볼입니다. 심볼 폭이 전체의 3분의 2가 되게 둡니다.
+            </p>
+          </div>
+        </Card>
+      </Section>
+
+      <Section id="color" title="색" summary="대표 색상은 하나, 로고의 파랑입니다. 색은 아껴 씁니다. 면은 단색으로 두고 번지는 빛이나 그라디언트를 깔지 않습니다.">
+        <div className="-mx-3 grid grid-cols-2 gap-3 medium:mx-0 xl:grid-cols-4">
+          <Swatch token="--primary-400" name="MATE Blue" note="대표 색상 · 로고에서 잰 값" />
+          {ROLES.map((r) => <Swatch key={r.token} {...r} />)}
+        </div>
+        <Card className={pad}>
+          <p className={note}>
+            색은 쓰임으로 정합니다. 글자로 쓰는 파랑, 면으로 쓰는 파랑, 초점. 값은 테마에 따라 달라지고 쓰임은 그대로입니다.
+            큰 파란 면은 테마와 상관없이 로고 원색이고 그 위 글자는 흰색입니다.
+            색만으로 뜻을 전하지 않습니다. 고른 탭은 굵기와 밑줄로도, 상태는 글자로도 알립니다.
           </p>
-        </div>
-      </div>
+        </Card>
 
-      {/* ── 01 브랜드 ── */}
-      <Block label="01 Brand" title="무엇을 하는 회사인가"
-        lead="SI 개발과 자체 퍼블리싱을 함께 하는 팀입니다. 맡은 것을 만들고, 저희 이름으로도 냅니다.">
-        <div className="grid gap-gutter lg:grid-cols-3">
-          <div className="rounded-card border border-[var(--border)] p-8">
-            <SubTitle>캐치프레이즈</SubTitle>
-            <p className="type-h2 text-[var(--text-1)]">멈추지 않게 만듭니다</p>
-            <p className="type-b3 mt-4 leading-[1.8] text-white/70">
-              만드는 것과 돌아가게 하는 것은 다릅니다. 그래서 배포한 뒤까지 봅니다.
-            </p>
-          </div>
-          <div className="rounded-card border border-[var(--border)] p-8">
-            <SubTitle>개발 전문성</SubTitle>
-            <p className="type-b3 leading-[1.8] text-[var(--text-1)]">
-              웹 · 앱, 게임 · XR, 교육. 기획부터 배포까지 한 팀이 합니다.
-            </p>
-          </div>
-          <div className="rounded-card border border-[var(--border)] p-8">
-            <SubTitle>배포 안정성</SubTitle>
-            <p className="type-b3 leading-[1.8] text-[var(--text-1)]">
-              배포한 뒤에도 모니터링으로 안정성을 확인하고, 끝난 뒤의 유지보수를 맡습니다.
-            </p>
-          </div>
+        <GroupLabel>테마</GroupLabel>
+        <div className="-mx-3 grid gap-3 medium:mx-0 wide:grid-cols-2">
+          <ThemeSample scope="theme-light" name="밝은 화면" />
+          <ThemeSample scope="theme-dark" name="어두운 화면" />
+        </div>
+        <Card className={pad}>
+          <p className={note}>
+            테마는 기기 설정을 따르고, 상단 바의 버튼으로 바꿀 수 있습니다. 화면은 두 테마 모두에서 확인한 뒤 내보냅니다.
+            회색 단계는 참고한 가이드라인에 없어 저희가 정한 값입니다.
+          </p>
+        </Card>
+
+        <GroupLabel>파랑의 단계</GroupLabel>
+        <div className="-mx-3 grid grid-cols-3 gap-3 medium:mx-0 xl:grid-cols-6">
+          {BLUE.map((s) => <Swatch key={s.token} {...s} />)}
         </div>
 
-        <div className="mt-14">
-          <SubTitle>말투</SubTitle>
-          <dl className="border-t border-[var(--border)]">
-            {VOICE.map(([rule, why]) => (
-              <div key={rule} className="grid gap-x-gutter gap-y-2 border-b border-[var(--border)] py-6 lg:grid-cols-12">
-                <dt className="type-b1 text-[var(--text-1)] lg:col-span-5">{rule}</dt>
-                <dd className="type-b3 leading-[1.8] text-white/70 lg:col-span-6 lg:col-start-7">{why}</dd>
-              </div>
-            ))}
-          </dl>
-        </div>
-      </Block>
-
-      {/* ── 02 로고 ── */}
-      <Block label="02 Logo" title="로고"
-        lead="심볼은 M 위에 원 두 개가 놓인 모양입니다. 심볼과 워드마크를 함께 쓰는 것이 기본이고, 자리가 좁으면 심볼만 씁니다.">
-        <div className="grid gap-gutter md:grid-cols-3">
-          <LogoPlate name="기본" bg="#FFFFFF" white={false} note="밝은 바탕 · 인쇄물" />
-          <LogoPlate name="반전 · 파란 면" bg="var(--brand-fill)" white note="표지 · 오프닝 · 아이콘" />
-          <LogoPlate name="반전 · 검은 바탕" bg="var(--canvas)" white note="사이트 헤더" />
-        </div>
-
-        <div className="mt-14 grid gap-x-gutter gap-y-12 lg:grid-cols-12">
-          <div className="lg:col-span-5">
-            <SubTitle>심볼만 쓸 때</SubTitle>
-            <div className="flex items-end gap-5">
-              <div className="flex h-24 w-24 items-center justify-center rounded-[22px] bg-[var(--brand-fill)]">
-                <Image src="/images/logo-mark.png" alt="MATE 심볼" width={380} height={369}
-                  className="h-12 w-auto brightness-0 invert" />
-              </div>
-              <div className="flex h-24 w-24 items-center justify-center rounded-[22px] bg-white">
-                <Image src="/images/logo-mark.png" alt="MATE 심볼" width={380} height={369} className="h-12 w-auto" />
+        <GroupLabel>영역 색</GroupLabel>
+        <div className="-mx-3 grid gap-3 medium:mx-0">
+          {domains.map((d) => (
+            <div key={d.key} data-domain={d.key} className="rounded-block bg-surface p-4">
+              <p className="mb-3 px-2 text-sub font-medium text-[var(--text-1)]">{d.kr}</p>
+              <div className="grid grid-cols-3 gap-2">
+                <Swatch token="--domain-100" name="100" />
+                <Swatch token="--domain-200" name="200" />
+                <Swatch token="--domain-300" name="300" />
               </div>
             </div>
-            <p className="type-c1 mt-4 leading-[1.8] text-white/60">
-              앱 아이콘과 파비콘은 파란 면에 흰 심볼입니다. 심볼 폭이 전체의 3분의 2가 되게 둡니다.
-            </p>
-          </div>
-
-          <div className="lg:col-span-6 lg:col-start-7">
-            <SubTitle>지킬 것</SubTitle>
-            <ul className="border-t border-[var(--border)]">
-              {LOGO_RULES.map((rule) => (
-                <li key={rule} className="type-b3 border-b border-[var(--border)] py-4 leading-[1.7] text-[var(--text-1)]">
-                  {rule}
-                </li>
-              ))}
-            </ul>
-          </div>
+          ))}
         </div>
-      </Block>
-
-      {/* ── 03 색 ── */}
-      <Block label="03 Color" title="대표 색상은 하나입니다"
-        lead="MATE Blue는 로고 파일에서 잰 값 그대로입니다. 강조색을 따로 두지 않고, 누를 수 있는 것과 강조할 것 모두 이 색으로 합니다.">
-        <div className="grid gap-gutter lg:grid-cols-12">
-          <div className="lg:col-span-5">
-            <Swatch token="--primary-400" name="MATE Blue" note="대표 색상" tall />
-          </div>
-          <dl className="lg:col-span-6 lg:col-start-7">
-            {COLOR_USE.map(([k, v]) => (
-              <div key={k} className="border-b border-[var(--border)] py-5 first:border-t">
-                <dt className="type-b4 mb-1.5 text-white/60">{k}</dt>
-                <dd className="type-b3 leading-[1.75] text-[var(--text-1)]">{v}</dd>
-              </div>
-            ))}
-          </dl>
-        </div>
-
-        <div className="mt-14">
-          <SubTitle>파랑의 단계</SubTitle>
-          <div className="grid grid-cols-2 gap-gutter sm:grid-cols-3 xl:grid-cols-6">
-            {BLUE.map((s) => <Swatch key={s.token} {...s} />)}
-          </div>
-        </div>
-
-        <div className="mt-14">
-          <SubTitle>무채색</SubTitle>
-          <div className="grid grid-cols-2 gap-gutter sm:grid-cols-4 xl:grid-cols-7">
-            {NEUTRAL.map((s) => <Swatch key={s.token} {...s} />)}
-          </div>
-        </div>
-
-        <div className="mt-14 grid gap-x-gutter gap-y-10 lg:grid-cols-12">
-          <div className="lg:col-span-5">
-            <SubTitle>종이와 먹</SubTitle>
-            <div className="grid grid-cols-3 gap-gutter">
-              {PAPER.map((s) => <Swatch key={s.token} {...s} />)}
-            </div>
-            <p className="type-c1 mt-4 leading-[1.8] text-white/60">
-              파랑 옆에 순백과 차가운 회색을 두면 흔한 테크 사이트 배색이 됩니다. 읽는 면에는 종이색과 먹색을 씁니다.
-            </p>
-          </div>
-          <div className="lg:col-span-6 lg:col-start-7">
-            <SubTitle>면의 쓰임</SubTitle>
-            <dl className="border-t border-[var(--border)]">
-              {SURFACES.map(([name, role, note]) => (
-                <div key={name} className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-x-4 border-b border-[var(--border)] py-5">
-                  <dt className="type-b4 text-[var(--text-1)]">{name}</dt>
-                  <dd>
-                    <p className="type-b3 text-[var(--text-1)]">{role}</p>
-                    <p className="type-c1 mt-1 leading-[1.8] text-white/60">{note}</p>
-                  </dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-        </div>
-
-        <div className="mt-14">
-          <SubTitle>영역 색</SubTitle>
-          <p className="type-b3 mb-7 max-w-2xl leading-[1.85] text-white/70">
+        <Card className={pad}>
+          <p className={note}>
             게임과 교육은 그 영역 페이지 안에서만 자기 색을 씁니다. 웹 · 앱은 대표 색상을 그대로 씁니다.
-            홈과 공통 영역(헤더, 문의)에는 영역 색이 나오지 않습니다.
+            홈과 공통 영역(상단 바, 문의)에는 영역 색이 나오지 않습니다.
           </p>
-          <div className="grid gap-gutter lg:grid-cols-3">
-            {domains.map((d) => (
-              <div key={d.key} data-domain={d.key} className="rounded-card border border-[var(--border)] p-6">
-                <p className="type-b1 mb-1 text-[var(--text-1)]">{d.kr}</p>
-                <p className="type-c2 mb-6 text-white/55">data-domain=&quot;{d.key}&quot;</p>
-                <div className="grid grid-cols-3 gap-2">
-                  <Swatch token="--domain-100" name="100" />
-                  <Swatch token="--domain-200" name="200" />
-                  <Swatch token="--domain-300" name="300" />
-                </div>
+        </Card>
+      </Section>
+
+      <Section id="type" title="글자" summary="라틴과 숫자는 Roboto, 한글은 Pretendard입니다. 크기는 아홉 단계만 쓰고, 13px보다 작게 쓰지 않습니다.">
+        <Card>
+          <ul className="divide-y divide-[var(--border)]">
+            {TYPE.map((t) => <TypeRow key={t.name} {...t} />)}
+          </ul>
+        </Card>
+        <Card className={pad}>
+          <p className={note}>
+            40과 20 사이에는 단계가 없습니다. 참고한 가이드라인에도 비어 있어 중간 크기를 만들지 않았습니다.
+            40보다 큰 글자는 홈 첫 화면의 문장 하나뿐이고, 이 크기와 행간, 굵기(700 · 500 · 400)는 저희가 정한 값입니다.
+            글자는 200%까지 키워도 내용이 잘리지 않아야 합니다.
+          </p>
+        </Card>
+      </Section>
+
+      <Section id="shape" title="모양과 간격" summary="모서리는 네 가지만 씁니다. 면은 그림자가 아니라 밝기로 가릅니다.">
+        <Card className={pad}>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-6 wide:grid-cols-4">
+            {RADII.map((r) => (
+              <div key={r.px}>
+                <div className={`h-20 bg-surface-2 ${r.cls}`} />
+                <p className="mt-3 text-sub font-medium text-[var(--text-1)]">{r.px}px</p>
+                <p className="text-min text-[var(--text-3)]">{r.use}</p>
               </div>
             ))}
           </div>
+        </Card>
+        <Card>
+          <ul>
+            <Row main="좌우 여백 24px" sub="글과 누르는 것은 화면 가장자리에서 24px 이상 떨어집니다." />
+            <Row main="누르는 것 사이 8px" sub="나란히 놓인 버튼과 탭은 8px 이상 띄웁니다." />
+            <Row main="보는 곳과 다루는 곳" sub="제목과 요약은 위(넓은 화면에서는 왼쪽), 카드와 버튼은 아래(오른쪽)에 둡니다. 가장 중요한 동작은 맨 아래에 둡니다." />
+            <Row main="두 단의 비율" sub="화면 폭 600px부터 두 단으로 놓습니다. 600~960px은 42:58, 그보다 넓으면 38:62입니다." />
+            <Row main="메뉴의 자리" sub="좁은 화면에서는 엄지가 닿는 아래 탭, 840px부터는 상단 바입니다. 탭은 글자만 쓰고 다섯 개를 넘기지 않습니다." />
+          </ul>
+        </Card>
+      </Section>
+
+      <Section id="motion" title="움직임" summary="짧고 조용하게 움직입니다. 움직임은 꾸밈이 아니라 무슨 일이 일어났는지 알리는 데 씁니다.">
+        <Card>
+          <ul>
+            <Row main="100~500ms" sub="알아챌 수 있을 만큼은 길게, 다음 동작을 가로막지 않을 만큼은 짧게." />
+            <Row main="곡선 하나" sub="빠르게 붙고 천천히 멎습니다. cubic-bezier(0.22, 0.25, 0, 1)" />
+            <Row main="멀리서 날아오지 않습니다" sub="요소는 제자리 가까이에서 나타납니다. 기울이거나 튕기지 않습니다." />
+            <Row main="저절로 움직이면 멈출 수 있게" sub="5초 넘게 움직이는 것(첫 화면의 작업 벽)에는 멈춤 버튼을 둡니다. 움직임을 줄여 달라고 한 기기에서는 처음부터 서 있습니다." />
+          </ul>
+        </Card>
+      </Section>
+
+      <Section id="parts" title="부품" summary="버튼은 면이 있는 한 가지 모양만 씁니다. 강조는 면의 색으로 가릅니다.">
+        <Card className={pad}>
+          <div className="flex flex-wrap gap-2">
+            <span tabIndex={0} className={`${btnPrimary} cursor-pointer`}>프로젝트 문의</span>
+            <span tabIndex={0} className={`${btnOutline} cursor-pointer`}>포트폴리오</span>
+          </div>
+          <p className={`${note} mt-4`}>파란 면은 가장 중요한 동작, 회색 면은 그다음입니다. 모서리 18px, 글자 15px.</p>
+        </Card>
+        <div className="on-brand -mx-3 rounded-block px-6 py-7 medium:mx-0 medium:px-7 medium:py-8">
+          <div className="flex flex-wrap gap-2">
+            <span tabIndex={0} className={`${btnOnBrand} cursor-pointer`}>프로젝트 문의</span>
+            <span tabIndex={0} className={`${btnOnBrandQuiet} cursor-pointer`}>포트폴리오</span>
+          </div>
+          <p className="mt-4 text-sub text-[var(--text-3)]">파란 면 위에서는 흰 면이 강조입니다.</p>
         </div>
-      </Block>
+        <GroupLabel>목록</GroupLabel>
+        <Card>
+          <ul>
+            <Row main="누르면 넘어가는 줄" sub="주 문장은 한 줄에 들어오는 짧은 말로 씁니다." href="/design-system" />
+            <Row main="값을 보여 주는 줄" trail="값" />
+            <Row main="상태를 보여 주는 줄" trail={<Badge>제작 중</Badge>} />
+          </ul>
+        </Card>
+      </Section>
 
-      {/* ── 04 글자 ── */}
-      <Block label="04 Typography" title="제목과 본문"
-        lead="제목은 Hahmlet, 본문과 화면 요소는 Pretendard입니다. 한 서체로 제목까지 쓰면 어느 사이트와도 구분되지 않아 둘로 나눴습니다. 제목 서체는 홈에 먼저 적용했습니다.">
-        <SubTitle>제목 · Hahmlet</SubTitle>
-        <div className="border-t border-[var(--border)]">
-          {DISPLAY.map((t) => <TypeRow key={t.token} {...t} />)}
-        </div>
-        <p className="type-c1 mt-4 max-w-2xl leading-[1.8] text-white/60">
-          굵기는 700(작은 단계는 600). 자간은 -0.03em 안쪽으로만 좁힙니다. 더 좁히면 획이 굵어 글자가 서로 붙습니다.
-        </p>
-
-        <div className="mt-14">
-          <SubTitle>본문과 화면 요소 · Pretendard</SubTitle>
-          <div className="border-t border-[var(--border)]">
-            {TYPE.map((t) => <TypeRow key={t.token} {...t} />)}
-          </div>
-          <p className="type-c1 mt-4 max-w-2xl leading-[1.8] text-white/60">
-            굵기는 700 · 500 · 400 셋만 씁니다.
-          </p>
-        </div>
-      </Block>
-
-      {/* ── 05 부품 ── */}
-      <Block label="05 Components" title="버튼과 면">
-        <div className="grid gap-gutter sm:grid-cols-2 lg:grid-cols-3">
-          <div className="rounded-card border border-[var(--border)] p-8">
-            <SubTitle>버튼 · 검은 바탕</SubTitle>
-            <div className="flex flex-col items-start gap-4">
-              <span className="type-b3 inline-flex h-14 items-center rounded-pill bg-white px-9 font-bold text-[var(--canvas)]">
-                프로젝트 문의
-              </span>
-              <span className="type-b3 inline-flex h-14 items-center rounded-pill border border-white/20 px-9 font-bold text-white">
-                보조 동작
-              </span>
-            </div>
-            <p className="type-c1 mt-5 leading-[1.7] text-white/60">올리면 MATE Blue로 바뀝니다.</p>
-          </div>
-
-          <div className="surface-blue rounded-card p-8">
-            <p className="type-b4 mb-5 text-white/75">버튼 · 파란 면</p>
-            <span tabIndex={0} className="btn-sweep btn-on-blue cursor-pointer">프로젝트 이야기하기</span>
-            <p className="type-c1 mt-5 leading-[1.7] text-white/85">올리면 먹색이 아래에서 차오릅니다.</p>
-          </div>
-
-          <div data-surface="paper" className="surface-paper rounded-card p-8">
-            <p className="type-b4 mb-5 text-[var(--text-3)]">버튼과 링크 · 종이 면</p>
-            <span tabIndex={0} className="btn-sweep btn-on-paper cursor-pointer">프로젝트 이야기하기</span>
-            <p className="mt-6 text-[15px] font-semibold">
-              <span tabIndex={0} className="link-draw cursor-pointer">팀 소개 보기</span>
-            </p>
-            <p className="type-c1 mt-5 leading-[1.7] text-[var(--text-3)]">버튼은 파랑이 차오르고, 링크는 밑줄이 왼쪽에서 그어집니다.</p>
-          </div>
-
-          <div className="rounded-card border border-[var(--border)] p-8">
-            <SubTitle>글자의 밝기</SubTitle>
-            <div className="flex flex-col gap-3">
-              <p className="type-b3 text-[var(--text-1)]">text-1: 제목 · 본문</p>
-              <p className="type-b3 text-[var(--text-2)]">text-2: 보조 설명</p>
-              <p className="type-b3 text-[var(--text-3)]">text-3: 메타 정보</p>
-              <p className="type-b3 text-[var(--point)]">강조: 대표 색상</p>
-            </div>
-          </div>
-
-          <div className="rounded-card border border-[var(--border)] p-8">
-            <SubTitle>모서리</SubTitle>
-            <div className="flex items-end gap-4">
-              {RADII.map(([n, cls]) => (
-                <div key={n} className="text-center">
-                  <div className={`h-14 w-14 border border-white/15 bg-[var(--surface-2)] ${cls}`} />
-                  <p className="type-c2 mt-2.5 text-white/60">{n}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-card border border-[var(--border)] p-8">
-            <SubTitle>상태</SubTitle>
-            <div className="flex flex-col gap-3">
-              <p className="type-b3 border-l-2 border-[var(--success)] pl-4 text-[var(--success-on-dark)]">전송 완료</p>
-              <p className="type-b3 border-l-2 border-[var(--danger)] pl-4 text-[var(--danger-on-dark)]">오류 발생</p>
-              <p className="type-b3 border-l-2 border-[var(--point)] pl-4 text-[var(--point)]">현재 위치</p>
-            </div>
-          </div>
-
-          <div className="rounded-card border border-[var(--border)] p-8">
-            <SubTitle>경계선</SubTitle>
-            <div className="flex flex-col gap-5">
-              <div>
-                <div className="mb-2 h-px bg-[var(--border)]" />
-                <span className="type-c2 text-white/60">border</span>
-              </div>
-              <div>
-                <div className="mb-2 h-px bg-[var(--border-2)]" />
-                <span className="type-c2 text-white/60">border-2</span>
-              </div>
-            </div>
-            <p className="type-c1 mt-5 leading-[1.7] text-white/60">
-              면은 그림자나 빛 번짐이 아니라 가는 선과 여백으로 나눕니다.
-            </p>
-          </div>
-        </div>
-      </Block>
-
-      {/* ── 06 공유 이미지 ── */}
-      <Block label="06 Share" title="공유 이미지"
-        lead="카카오톡이나 메신저에 링크를 붙이면 뜨는 그림입니다. 표지와 같은 구성으로, 파란 면에 흰 로고와 문장 하나만 둡니다. 영역 색은 쓰지 않습니다.">
-        <div className="grid gap-gutter sm:grid-cols-2">
+      <Section id="share" title="공유 이미지" summary="카카오톡이나 메신저에 링크를 붙이면 뜨는 그림입니다. 파란 면에 흰 로고와 문장 하나만 둡니다.">
+        <div className="-mx-3 grid gap-3 medium:mx-0 wide:grid-cols-2">
           {SHARE.map((c) => (
-            <figure key={c.file} className="overflow-hidden rounded-card border border-[var(--border)]">
+            <figure key={c.file} className="rounded-block bg-surface p-3">
               <Image src={`/images/og/${c.file}`} alt={`공유 이미지 · ${c.name}`} width={1200} height={630}
-                className="h-auto w-full" />
-              <figcaption className="bg-[var(--surface)] px-4 py-3.5">
-                <p className="type-b4 text-[var(--text-1)]">{c.name}</p>
-                <p className="type-c2 mt-1 text-white/60">{c.note}</p>
+                className="h-auto w-full rounded-thumb" />
+              <figcaption className="px-3 pb-2 pt-3">
+                <p className="text-sub font-medium text-[var(--text-1)]">{c.name}</p>
+                <p className="text-min text-[var(--text-3)]">{c.note}</p>
               </figcaption>
             </figure>
           ))}
         </div>
-      </Block>
+      </Section>
+
+      {/* 출처 - 이 가이드가 기댄 자료와 그 한계 */}
+      <div className={`${container} pb-16`}>
+        <p className="max-w-3xl text-min text-[var(--text-3)]">
+          모서리와 글자 크기, 여백, 움직임의 수치는 삼성전자가 공개한 One UI 디자인 가이드라인의 원칙을 참고했습니다.
+          이 문서와 사이트는 삼성전자의 공식 산출물이 아니며, 대표 색상과 그 밖의 값은 MATE가 정했습니다.
+        </p>
+      </div>
     </div>
   );
 }

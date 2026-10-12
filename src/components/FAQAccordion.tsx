@@ -26,7 +26,7 @@ export default function FAQAccordion({ faqs }: FAQAccordionProps) {
           <motion.div
             key={faq.id}
             variants={i % 2 === 0 ? fadeLeft : fadeRight}
-            className="border-t border-white/10 last:border-b"
+            className="border-t border-[var(--border)] last:border-b"
           >
             <button
               onClick={() => toggleFAQ(faq.id)}
@@ -39,7 +39,7 @@ export default function FAQAccordion({ faqs }: FAQAccordionProps) {
               <motion.span
                 animate={{ rotate: isOpen ? 180 : 0 }}
                 transition={{ duration: DUR.standard, ease: easeEnter }}
-                className="flex-shrink-0 text-white/55"
+                className="flex-shrink-0 text-[var(--text-3)]"
               >
                 <FiChevronDown size={22} />
               </motion.span>
@@ -53,7 +53,7 @@ export default function FAQAccordion({ faqs }: FAQAccordionProps) {
                   transition={{ duration: DUR.slow, ease: easeEnter }}
                   className="overflow-hidden"
                 >
-                  <p className="text-[16px] leading-[1.8] text-white/55 pb-8 max-w-2xl">
+                  <p className="text-[16px] leading-[1.8] text-[var(--text-3)] pb-8 max-w-2xl">
                     {faq.answer}
                   </p>
                 </motion.div>

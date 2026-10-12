@@ -23,7 +23,7 @@ interface ParallaxImageProps {
  */
 export default function ParallaxImage({
   src, alt, className = 'aspect-[16/10]', strength = 80,
-  placeholder, rounded = 'rounded-xl',
+  placeholder, rounded = 'rounded-thumb',
 }: ParallaxImageProps) {
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
@@ -46,7 +46,7 @@ export default function ParallaxImage({
       <motion.div
         variants={{
           hidden: { clipPath: 'inset(100% 0 0 0)' },
-          show: { clipPath: 'inset(0% 0 0 0)', transition: { duration: 1.3, ease: easeEnter } },
+          show: { clipPath: 'inset(0% 0 0 0)', transition: { duration: 0.5, ease: easeEnter } },
         }}
         className={`absolute inset-0 overflow-hidden bg-[var(--surface)] ${rounded}`}
       >

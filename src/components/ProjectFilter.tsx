@@ -69,8 +69,8 @@ export default function ProjectFilter({ projects }: ProjectFilterProps) {
                   onClick={() => setSelectedCategory(option.value)}
                   className={`pb-4 -mb-px border-b-2 text-[15px] font-semibold transition-colors ${
                     active
-                      ? 'border-white text-white'
-                      : 'border-transparent text-white/55 hover:text-white'
+                      ? 'border-fg text-[var(--text-1)]'
+                      : 'border-transparent text-[var(--text-3)] hover:text-[var(--text-1)]'
                   }`}
                 >
                   {option.label}
@@ -87,7 +87,7 @@ export default function ProjectFilter({ projects }: ProjectFilterProps) {
           </motion.p>
           {/* 헤어라인이 좌→우로 그어짐 */}
           <motion.span variants={lineDraw}
-            className="absolute bottom-0 left-0 right-0 h-px bg-white/10 block" />
+            className="absolute bottom-0 left-0 right-0 h-px bg-[var(--border)] block" />
         </div>
       </motion.div>
 
@@ -107,7 +107,7 @@ export default function ProjectFilter({ projects }: ProjectFilterProps) {
           <h3 className="text-[24px] sm:text-[28px] font-bold text-[var(--text-1)] tracking-[-0.025em] leading-[1.2] mb-4">
             해당 카테고리의 프로젝트가 없습니다
           </h3>
-          <p className="text-[16px] text-white/55 leading-[1.75]">다른 카테고리를 선택해 보세요</p>
+          <p className="text-[16px] text-[var(--text-3)] leading-[1.75]">다른 카테고리를 선택해 보세요</p>
         </motion.div>
       )}
     </div>

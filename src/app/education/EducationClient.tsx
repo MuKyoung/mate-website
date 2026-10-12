@@ -43,7 +43,7 @@ function Course({ c, defaultOpen }: { c: (typeof eduCourses)[number]; defaultOpe
   const [open, setOpen] = useState(defaultOpen);
   return (
     <motion.article {...inView} variants={fadeUp}
-      className="border border-[var(--border)] rounded-card bg-[var(--gray-50)] overflow-hidden">
+      className="border border-[var(--border)] rounded-card bg-[var(--surface)] overflow-hidden">
       <button onClick={() => setOpen(!open)} aria-expanded={open}
         className="w-full text-left p-6 sm:p-9 group
                    sm:flex sm:items-start sm:gap-6">
@@ -52,7 +52,7 @@ function Course({ c, defaultOpen }: { c: (typeof eduCourses)[number]; defaultOpe
         <span className="flex items-center justify-between gap-4 mb-4 sm:hidden">
           <span className="type-c1 font-en font-bold text-[var(--accent-strong)]">{c.code}</span>
           <span className="flex items-center gap-3">
-            <span className="type-c2 px-3 py-1.5 rounded-[6px] bg-[var(--surface-2)] text-[var(--text-2)] whitespace-nowrap">
+            <span className="type-c2 px-3 py-1.5 rounded-chip bg-[var(--surface-2)] text-[var(--text-2)] whitespace-nowrap">
               {c.level}
             </span>
             <FiChevronDown size={20}
@@ -73,7 +73,7 @@ function Course({ c, defaultOpen }: { c: (typeof eduCourses)[number]; defaultOpe
         </span>
 
         <span className="hidden sm:flex shrink-0 flex-col items-end gap-3">
-          <span className="type-c2 px-3 py-1.5 rounded-[6px] bg-[var(--surface-2)] text-[var(--text-2)] whitespace-nowrap">
+          <span className="type-c2 px-3 py-1.5 rounded-chip bg-[var(--surface-2)] text-[var(--text-2)] whitespace-nowrap">
             {c.level}
           </span>
           <FiChevronDown size={20}
@@ -110,8 +110,8 @@ export default function EducationClient() {
   return (
     <div data-domain="edu">
 
-      {/* ═══ 라이트 본문 ═══ */}
-      <div data-surface="light" className="bg-[var(--canvas)] text-[var(--text-1)]">
+      {/* ═══ 본문 ═══ */}
+      <div className="bg-[var(--canvas)] text-[var(--text-1)]">
 
         {/* ━━━━━━ HERO - 문서 표지 ━━━━━━ */}
         <section className="pt-36 sm:pt-44 pb-16 sm:pb-24">
@@ -158,7 +158,7 @@ export default function EducationClient() {
                   </dl>
                   <div className="mt-7 pt-7 border-t border-[var(--border)] flex flex-wrap gap-2">
                     {d.tags.map((t) => (
-                      <span key={t} className="type-c2 px-3 py-1.5 rounded-[6px] bg-[var(--surface-2)] text-[var(--text-2)]">
+                      <span key={t} className="type-c2 px-3 py-1.5 rounded-chip bg-[var(--surface-2)] text-[var(--text-2)]">
                         {t}
                       </span>
                     ))}
@@ -319,37 +319,37 @@ export default function EducationClient() {
         </div>
       </div>
 
-      {/* ━━━━━━ CTA - 다크로 되돌아가 푸터와 이어진다 ━━━━━━ */}
-      <section className="py-28 sm:py-40 bg-[var(--gray-600)]">
+      {/* ━━━━━━ CTA ━━━━━━ */}
+      <section className="py-28 sm:py-40 border-t border-[var(--border)]">
         <div className={container}>
           <div className="grid lg:grid-cols-12 gap-x-gutter gap-y-10 items-end">
             <div className="lg:col-span-7">
-              <motion.p {...inView} variants={fadeLeft} className="type-c1 font-en uppercase tracking-[0.14em] text-white/55 mb-9">
+              <motion.p {...inView} variants={fadeLeft} className="type-c1 font-en uppercase tracking-[0.14em] text-[var(--text-3)] mb-9">
                 Contact
               </motion.p>
               <motion.h2 {...inView} variants={stagger}
-                className="font-bold text-white tracking-[-0.02em] leading-[1.15] mb-8"
+                className="font-bold text-[var(--text-1)] tracking-[-0.02em] leading-[1.15] mb-8"
                 style={{ fontSize: 'clamp(1.875rem, 4.4vw, 3.25rem)' }}>
                 <span className="block overflow-hidden pb-[0.08em] -mb-[0.08em]">
                   <motion.span variants={clipUp} className="block">커리큘럼은 기관에 맞춰</motion.span>
                 </span>
                 <span className="block overflow-hidden pb-[0.08em] -mb-[0.08em]">
-                  <motion.span variants={clipUp} className="block text-[var(--domain-200)]">다시 씁니다.</motion.span>
+                  <motion.span variants={clipUp} className="block text-[var(--accent)]">다시 씁니다.</motion.span>
                 </span>
               </motion.h2>
-              <motion.p {...inView} variants={fadeLeft} className="text-[17px] text-white/55 leading-[1.8] max-w-lg">
+              <motion.p {...inView} variants={fadeLeft} className="text-[17px] text-[var(--text-3)] leading-[1.8] max-w-lg">
                 대상, 시수, 목표만 알려주시면 표준 커리큘럼을 그에 맞게 재구성해 제안서로 보내드립니다.
               </motion.p>
             </div>
             <motion.div {...inView} variants={fadeRight} className="lg:col-span-5 flex flex-wrap items-center gap-7">
               <Link href="/contact?domain=edu"
-                className="group inline-flex items-center gap-2.5 h-14 px-9 rounded-pill type-b3 font-bold
-                           text-[var(--gray-600)] bg-[var(--domain-200)] hover:bg-[var(--domain-100)] transition-colors duration-300">
+                className="group inline-flex items-center justify-center gap-2 h-[52px] px-7 rounded-btn text-btn font-medium
+                           text-[var(--gray-600)] bg-[var(--domain-200)] hover:bg-[var(--domain-100)] transition-[background-color,transform] duration-150 ease-calm active:scale-[0.98]">
                 강의 · 교육 문의
                 <FiArrowUpRight size={17} className={arrowHover} />
               </Link>
               <a href={`mailto:${CONTACT_EMAIL}`}
-                className="text-[15px] font-semibold text-white/60 hover:text-white border-b border-white/25 hover:border-white pb-0.5 transition-colors">
+                className="text-[15px] font-semibold text-[var(--text-3)] hover:text-[var(--text-1)] border-b border-fg/25 hover:border-fg pb-0.5 transition-colors">
                 {CONTACT_EMAIL}
               </a>
             </motion.div>

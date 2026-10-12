@@ -2,12 +2,8 @@
  * MATE Design System - 소재(클래스) 레이어
  *
  * 토큰은 globals.css `:root` 가 단일 원천이고, 여기서는 그 토큰을
- * 실제 UI 소재(버튼·링크·간격·타입)로 조립한다.
+ * 실제 UI 소재(버튼 · 링크 · 간격)로 조립한다.
  * 값을 바꾸면 사이트 전체에 일관되게 반영된다.
- *
- * 컬러 역할 분담
- *   MATE Blue 하나로 한다. 면에는 primary 400(로고 원색), 어두운 바탕 위 글자에는 primary 200.
- *   강조색을 따로 두지 않는다.
  */
 
 /** 브랜드 상수 */
@@ -15,69 +11,60 @@ export const CONTACT_EMAIL = 'hsib1212@naver.com';
 export const CONTACT_PHONE = '0507-1339-9141';
 export const KAKAO_OPEN_CHAT_URL = 'https://open.kakao.com/o/scVFEK3h';
 
-/* ── Typography - Figma 타입 스케일 (Pretendard / LS -0.3%) ──
-   디스플레이 D1·D2는 MATE 전용 에디토리얼 티어. */
-export const typeD1 = 'type-d1';
-export const typeD2 = 'type-d2';
-export const typeH1 = 'type-h1';
-export const typeH2 = 'type-h2';
-export const typeH3 = 'type-h3';
-export const typeB1 = 'type-b1';
-export const typeB2 = 'type-b2';
-export const typeB3 = 'type-b3';
-export const typeB4 = 'type-b4';
-export const typeC1 = 'type-c1';
-export const typeC2 = 'type-c2';
-
-/** 대형 타이포 크기 - D2 / D1 티어와 동일한 clamp (style prop용) */
+/** 대형 타이포 크기 (안쪽 페이지 - style prop용) */
 export const displaySize = { fontSize: 'clamp(2.25rem, 6vw, 4.75rem)' } as const;
 export const displaySizeLg = { fontSize: 'clamp(2.25rem, 7vw, 6.5rem)' } as const;
 
-/* ── Buttons ──────────────────────────────────────────── */
+/* ── Buttons ──────────────────────────────────────────
+   버튼은 면이 있는 한 가지 모양만 쓴다. 강조는 면의 색으로 가른다.
+     파란 면 = 가장 중요한 동작, 회색 면 = 그다음.
+   모서리 18px, 글자 15px. 높이(52px)는 참고한 가이드라인에 없어 저희가 정했다. */
+const btnBase =
+  'group inline-flex items-center justify-center gap-2 h-[52px] px-7 rounded-btn whitespace-nowrap ' +
+  'text-btn font-medium transition-[background-color,transform] duration-150 ease-calm active:scale-[0.98]';
 
-/** 흰 버튼 - 검은 바탕의 기본 동작. 올리면 대표 색상 면이 된다 (흰 글자와 7.6:1) */
+/** 강조 버튼 - 파란 면에 흰 글자 */
 export const btnPrimary =
-  'group inline-flex items-center gap-2.5 h-14 px-9 rounded-pill text-[15px] font-bold ' +
-  'text-canvas bg-gray-50 hover:bg-brand-fill hover:text-gray-50 transition-colors duration-300';
+  `${btnBase} text-gray-50 bg-[var(--brand-fill)] hover:bg-[var(--brand-fill-hover)]`;
 
-/** 파란 면 위 버튼 - 흰 바탕에 글자가 MATE Blue (7.6:1) */
+/** 보조 버튼 - 회색 면 */
+export const btnOutline = `${btnBase} text-fg bg-fg/10 hover:bg-fg/[0.16]`;
+
+/** 파란 면 위의 강조 버튼 - 흰 면에 파란 글자 (7.3:1) */
 export const btnOnBrand =
-  'group inline-flex items-center gap-2.5 h-14 px-9 rounded-pill text-[15px] font-bold ' +
-  'text-[var(--brand-fill)] bg-white hover:bg-[var(--primary-100)] transition-colors duration-300';
+  `${btnBase} text-[var(--primary-400)] bg-gray-50 hover:bg-[var(--primary-100)]`;
 
-/** 아웃라인 필 버튼 - 보조 액션 */
-export const btnOutline =
-  'inline-flex items-center gap-2.5 h-14 px-9 rounded-pill text-[15px] font-bold ' +
-  'text-gray-50 border border-white/20 hover:border-white transition-colors duration-300';
+/** 파란 면 위의 보조 버튼 - 옅은 흰 면 */
+export const btnOnBrandQuiet = `${btnBase} text-gray-50 bg-white/15 hover:bg-white/25`;
 
 /* ── Links ────────────────────────────────────────────── */
 
-/** 밑줄 텍스트 링크 - 3순위 액션 */
+/** 밑줄 글자 링크 */
 export const linkUnderline =
-  'text-[15px] font-semibold text-white/60 hover:text-gray-50 ' +
-  'border-b border-white/25 hover:border-white pb-0.5 transition-colors';
+  'text-btn font-medium text-fg/70 hover:text-fg ' +
+  'border-b border-fg/30 hover:border-fg pb-0.5 transition-colors duration-150';
 
 /** 파란 면 위 밑줄 링크 */
 export const linkOnBrand =
-  'text-[15px] font-semibold text-white border-b border-white/50 hover:border-white pb-0.5 transition-colors';
+  'text-btn font-medium text-gray-50 border-b border-white/50 hover:border-white pb-0.5 transition-colors duration-150';
 
 /** 섹션 상단 '더보기' 링크 */
 export const linkMore =
-  'group inline-flex items-center gap-1.5 text-b4 ' +
-  'text-white/70 hover:text-gray-50 transition-colors';
+  'group inline-flex items-center gap-1.5 text-sub font-medium ' +
+  'text-[var(--accent)] transition-colors duration-150';
 
 /** 화살표 아이콘 호버 이동 */
 export const arrowHover =
-  'group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-300';
+  'group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-150 ease-calm';
 
-/* ── Layout - Grid System (inner 1500 / gutter 16 / 12col) ── */
+/* ── Layout - inner 1500 / gutter 16 / 좌우 여백 24 ───── */
 
 /** 섹션 세로 여백 */
 export const sectionPad = 'py-24 sm:py-32';
 /** CTA 섹션 세로 여백 (더 넉넉하게) */
 export const sectionPadLg = 'py-28 sm:py-40';
-/** 컨테이너 - inner 1500px 기준 */
-export const container = 'container mx-auto px-4 sm:px-6';
+/** 컨테이너 - 글과 조작 요소는 화면 가장자리에서 24px 이상 떨어진다 */
+export const container = 'container mx-auto px-6';
 
 /** 클립 리빌용 오버플로 래퍼 - 라틴 디센더가 잘리지 않도록 여유 확보 */
 export const clipWrap = 'block overflow-hidden pb-[0.12em] -mb-[0.12em]';
@@ -88,7 +75,7 @@ export const clipWrap = 'block overflow-hidden pb-[0.12em] -mb-[0.12em]';
  */
 export function hairlineCell(i: number): string {
   return [
-    'border-white/10',
+    'border-fg/10',
     i % 2 === 1 ? 'border-l pl-6 sm:pl-8' : '',
     i >= 2 ? 'border-t' : '',
     i > 0 ? 'lg:border-l lg:pl-8' : 'lg:border-l-0 lg:pl-0',

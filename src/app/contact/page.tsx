@@ -135,8 +135,8 @@ export default function ContactPage() {
   };
 
   const inputClass =
-    'w-full h-14 px-5 bg-white/[0.04] border border-white/15 rounded-[10px] text-[16px] text-[var(--text-1)] placeholder:text-white/45 outline-none transition-colors focus:border-white/60 focus:ring-0';
-  const labelClass = 'block text-[13px] font-semibold text-white/85 mb-2.5';
+    'w-full h-14 px-5 bg-fg/[0.04] border border-fg/15 rounded-chip text-[16px] text-[var(--text-1)] placeholder:text-[var(--text-3)] outline-none transition-colors focus:border-[var(--focus)] focus:ring-0';
+  const labelClass = 'block text-[13px] font-semibold text-[var(--text-1)] mb-2.5';
 
   return (
     <>
@@ -162,7 +162,7 @@ export default function ContactPage() {
                 {/* 어느 영역 문의인지 먼저 고르게 해서 내부 배정이 바로 되도록 한다 */}
                 <fieldset>
                   <legend className={labelClass}>
-                    문의 영역 <span className="font-normal text-white/50">(선택)</span>
+                    문의 영역 <span className="font-normal text-[var(--text-3)]">(선택)</span>
                   </legend>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                     {domains.map((d) => {
@@ -172,15 +172,15 @@ export default function ContactPage() {
                           key={d.key} type="button" data-domain={d.key}
                           aria-pressed={on}
                           onClick={() => setFormData((prev) => ({ ...prev, domain: on ? '' : d.key }))}
-                          className={`h-14 px-4 rounded-[10px] border text-left transition-colors ${
+                          className={`h-14 px-4 rounded-chip border text-left transition-colors ${
                             on
                               ? 'border-[var(--accent)] bg-[var(--accent-tint)]'
-                              : 'border-white/15 bg-white/[0.04] hover:border-white/35'
+                              : 'border-fg/15 bg-fg/[0.04] hover:border-fg/35'
                           }`}>
-                          <span className={`block type-b4 ${on ? 'text-[var(--text-1)]' : 'text-white/75'}`}>
+                          <span className={`block type-b4 ${on ? 'text-[var(--text-1)]' : 'text-[var(--text-2)]'}`}>
                             {d.kr}
                           </span>
-                          <span className={`block type-c2 font-en ${on ? 'text-[var(--accent-strong)]' : 'text-white/50'}`}>
+                          <span className={`block type-c2 font-en ${on ? 'text-[var(--accent-strong)]' : 'text-[var(--text-3)]'}`}>
                             {d.en}
                           </span>
                         </button>
@@ -218,7 +218,7 @@ export default function ContactPage() {
                   <textarea
                     id="message" name="message"
                     value={formData.message} onChange={handleChange} required rows={7}
-                    className="w-full px-5 py-4 bg-white/[0.04] border border-white/15 rounded-[10px] text-[16px] leading-[1.75] text-[var(--text-1)] placeholder:text-white/45 outline-none transition-colors resize-none focus:border-white/60 focus:ring-0"
+                    className="w-full px-5 py-4 bg-fg/[0.04] border border-fg/15 rounded-chip text-[16px] leading-[1.75] text-[var(--text-1)] placeholder:text-[var(--text-3)] outline-none transition-colors resize-none focus:border-[var(--focus)] focus:ring-0"
                     placeholder="만들려는 것과 생각하시는 일정을 편하게 적어 주세요."
                   />
                 </div>
@@ -235,7 +235,7 @@ export default function ContactPage() {
                 )}
 
                 {!GOOGLE_SCRIPT_URL && (
-                  <p className="type-c1 text-white/55 leading-[1.7]">
+                  <p className="type-c1 text-[var(--text-3)] leading-[1.7]">
                     버튼을 누르면 위 내용이 채워진 메일 초안이 열립니다. 바로 답장이 필요하시면
                     카카오톡 오픈채팅이 가장 빠릅니다.
                   </p>
@@ -265,7 +265,7 @@ export default function ContactPage() {
                 href={KAKAO_OPEN_CHAT_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group block p-8 sm:p-10 rounded-xl bg-[#FEE500] hover:bg-[#FDD835] transition-colors duration-300"
+                className="group block p-8 sm:p-10 rounded-thumb bg-[#FEE500] hover:bg-[#FDD835] transition-colors duration-300"
               >
                 <div className="flex items-center justify-between gap-4 mb-5">
                   <div className="flex items-center gap-3">
@@ -277,7 +277,7 @@ export default function ContactPage() {
                 <p className="text-[#3C1E1E]/70 text-[15px] mb-8 leading-[1.75]">
                   가장 빠른 창구입니다
                 </p>
-                <div className="inline-flex items-center gap-2.5 h-12 px-6 rounded-[10px] bg-[#3C1E1E] text-[#FEE500] text-[15px] font-bold group-hover:bg-[#2D1616] transition-colors duration-300">
+                <div className="inline-flex items-center gap-2.5 h-12 px-6 rounded-chip bg-[#3C1E1E] text-[#FEE500] text-[15px] font-bold group-hover:bg-[#2D1616] transition-colors duration-300">
                   <span>채팅 시작하기</span>
                   <FiArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform duration-300" />
                 </div>
@@ -285,22 +285,22 @@ export default function ContactPage() {
 
               {/* 연락처 - 헤어라인 리스트 */}
               <div className="mt-14 sm:mt-16">
-                <p className="index-num font-en pb-6 border-b border-white/10">Direct</p>
+                <p className="index-num font-en pb-6 border-b border-[var(--border)]">Direct</p>
                 <a href={`mailto:${CONTACT_EMAIL}`}
-                  className="group flex items-baseline justify-between gap-6 py-6 border-b border-white/10">
-                  <span className="text-[13px] text-white/55 flex-shrink-0">이메일</span>
+                  className="group flex items-baseline justify-between gap-6 py-6 border-b border-[var(--border)]">
+                  <span className="text-[13px] text-[var(--text-3)] flex-shrink-0">이메일</span>
                   <span className="text-[16px] sm:text-[17px] font-semibold text-[var(--text-1)] group-hover:text-[var(--accent)] transition-colors break-all text-right">
                     {CONTACT_EMAIL}
                   </span>
                 </a>
                 <a href={`tel:${CONTACT_PHONE}`}
-                  className="group flex items-baseline justify-between gap-6 py-6 border-b border-white/10">
-                  <span className="text-[13px] text-white/55 flex-shrink-0">전화</span>
+                  className="group flex items-baseline justify-between gap-6 py-6 border-b border-[var(--border)]">
+                  <span className="text-[13px] text-[var(--text-3)] flex-shrink-0">전화</span>
                   <span className="text-[16px] sm:text-[17px] font-semibold text-[var(--text-1)] group-hover:text-[var(--accent)] transition-colors text-right">
                     {CONTACT_PHONE}
                   </span>
                 </a>
-                <p className="pt-8 text-[15px] text-white/55 leading-[1.75]">
+                <p className="pt-8 text-[15px] text-[var(--text-3)] leading-[1.75]">
                   <span className="font-semibold text-[var(--text-1)]">빠른 답변</span>을 원하시면 카카오톡 오픈채팅을 이용해주세요.
                 </p>
               </div>
@@ -310,7 +310,7 @@ export default function ContactPage() {
       </section>
 
       {/* ━━ FAQ ━━ */}
-      <section className={`${sectionPad} border-t border-white/10`}>
+      <section className={`${sectionPad} border-t border-[var(--border)]`}>
         <div className={container}>
           {/* 공유 SectionHead는 홀수 번호에 fadeLeft/clipUp을 쓰므로 이 블록은 인라인 유지 */}
           <div className="mb-16 sm:mb-20">
@@ -319,7 +319,7 @@ export default function ContactPage() {
                 <motion.p {...inView} variants={fadeRight} className="index-num font-en">FAQ</motion.p>
               </div>
               <motion.span {...inView} variants={lineDraw}
-                className="absolute bottom-0 left-0 right-0 h-px bg-white/10 block" />
+                className="absolute bottom-0 left-0 right-0 h-px bg-[var(--border)] block" />
             </div>
             <motion.h2 {...inView} variants={stagger}
               className="font-en text-[var(--text-1)] font-bold tracking-[-0.02em] leading-[1.04]"

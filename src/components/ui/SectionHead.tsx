@@ -54,7 +54,7 @@ export default function SectionHead({
         </div>
         {/* 헤어라인이 좌→우로 그어짐 */}
         <motion.span {...inView} variants={lineDraw}
-          className="absolute bottom-0 left-0 right-0 h-px bg-white/10 block" />
+          className="absolute bottom-0 left-0 right-0 h-px bg-[var(--border)] block" />
       </div>
 
       <motion.h2 {...inView} variants={stagger}
@@ -72,7 +72,7 @@ export default function SectionHead({
       )}
       {desc && (
         <motion.p {...inView} variants={even ? fadeRight : fadeLeft}
-          className="mt-7 max-w-xl text-[17px] sm:text-lg text-white/55 leading-[1.75]">
+          className="mt-7 max-w-xl text-[17px] sm:text-lg text-[var(--text-3)] leading-[1.75]">
           {desc}
         </motion.p>
       )}

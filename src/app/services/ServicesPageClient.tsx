@@ -26,20 +26,20 @@ export default function ServicesPageClient() {
                 <motion.span variants={clipUp} className="block">세 영역을</motion.span>
               </span>
               <span className="block overflow-hidden pb-[0.1em] -mb-[0.1em]">
-                <motion.span variants={clipUp} className="block text-white/40">따로 맡습니다</motion.span>
+                <motion.span variants={clipUp} className="block text-fg/45">따로 맡습니다</motion.span>
               </span>
             </motion.h1>
             <motion.div {...onMount} variants={fadeRight} className="lg:col-span-5 lg:pb-4">
               <p className="type-h3 text-[var(--text-1)] leading-[1.45] mb-6">
                 영역마다 판단 기준이 다릅니다.
               </p>
-              <p className="type-b3 text-white/55 leading-[1.85]">
+              <p className="type-b3 text-[var(--text-3)] leading-[1.85]">
                 웹 · 앱, 게임 · XR, 교육은 필요한 사람도 판단 기준도 다릅니다.
                 그래서 영역별로 다루는 범위와 진행 방식을 따로 정리했습니다.
               </p>
             </motion.div>
           </div>
-          <motion.div {...onMount} variants={lineDraw} className="h-px bg-white/10 mt-16 sm:mt-24 origin-left" />
+          <motion.div {...onMount} variants={lineDraw} className="h-px bg-[var(--border)] mt-16 sm:mt-24 origin-left" />
         </div>
       </section>
 
@@ -56,25 +56,25 @@ export default function ServicesPageClient() {
               <motion.h2 {...inView} variants={fadeUp} className="type-d2 font-en text-[var(--text-1)] mb-5">
                 영역이 달라도 같은 것
               </motion.h2>
-              <motion.p {...inView} variants={fadeRight} className="type-b3 text-white/50 max-w-xl leading-[1.85]">
+              <motion.p {...inView} variants={fadeRight} className="type-b3 text-[var(--text-3)] max-w-xl leading-[1.85]">
                 무엇을 만들든 진행 방식은 동일합니다. 각 단계가 끝날 때마다 확인할 수 있는 결과물을 드립니다.
               </motion.p>
             </div>
           </div>
 
           <motion.div {...inView} variants={staggerTight}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 border-t border-white/10">
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 border-t border-[var(--border)]">
             {processSteps.map((s, i) => (
               <motion.div key={s.id} variants={fadeUp}
                 className={[
-                  'py-9 sm:py-12 border-b border-white/10',
+                  'py-9 sm:py-12 border-b border-[var(--border)]',
                   i % 2 === 1 ? 'sm:border-l sm:pl-7' : '',
                   i > 0 ? 'lg:border-l lg:pl-7' : 'lg:border-l-0 lg:pl-0',
-                  'border-white/10',
+                  'border-[var(--border)]',
                 ].join(' ')}>
                 <p className="index-num-lg font-en mb-6">0{s.order}</p>
                 <h3 className="type-b1 text-[var(--text-1)] mb-3">{s.title}</h3>
-                <p className="type-c1 text-white/55 leading-[1.8] pr-4">{s.description}</p>
+                <p className="type-c1 text-[var(--text-3)] leading-[1.8] pr-4">{s.description}</p>
               </motion.div>
             ))}
           </motion.div>

@@ -3,14 +3,19 @@ import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import FloatingContactButton from "@/components/FloatingContactButton";
+import BottomNav from "@/components/BottomNav";
+import ThemeProvider from "@/components/ThemeProvider";
 import SmoothScroll from "@/components/SmoothScroll";
 import { Analytics } from "@vercel/analytics/react";
 
 const siteUrl = "https://devteammate.co.kr";
 
-/* 모바일 브라우저 크롬(주소창 등)을 다크 캔버스에 맞춤 */
+/* 모바일 브라우저의 주소창 색을 그 테마의 바탕색에 맞춘다 */
 export const viewport: Viewport = {
-  themeColor: "#08080a",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f2f2f2" },
+    { media: "(prefers-color-scheme: dark)", color: "#080808" },
+  ],
 };
 
 export const metadata: Metadata = {
@@ -111,7 +116,8 @@ export default function RootLayout({
   };
 
   return (
-    <html lang="ko">
+    // next-themes 가 첫 페인트 전에 html 에 data-theme 을 달므로 서버 HTML 과 속성이 달라진다
+    <html lang="ko" suppressHydrationWarning>
       <body>
         <script
           type="application/ld+json"
@@ -121,11 +127,14 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
         />
-        <SmoothScroll />
-        <Header />
-        <main className="min-h-screen">{children}</main>
-        <Footer />
-        <FloatingContactButton />
+        <ThemeProvider>
+          <SmoothScroll />
+          <Header />
+          <main className="min-h-screen">{children}</main>
+          <Footer />
+          <BottomNav />
+          <FloatingContactButton />
+        </ThemeProvider>
         <Analytics />
       </body>
     </html>

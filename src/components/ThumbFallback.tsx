@@ -10,11 +10,11 @@ export default function ThumbFallback({ label }: { label?: string }) {
       className="absolute inset-0 flex items-center justify-center bg-[var(--surface)]"
       style={{
         backgroundImage:
-          'repeating-linear-gradient(135deg, rgba(255,255,255,0.03) 0 1px, transparent 1px 10px)',
+          'repeating-linear-gradient(135deg, rgb(var(--fg-rgb) / 0.03) 0 1px, transparent 1px 10px)',
       }}
     >
       {label && (
-        <span className="px-4 text-center type-c2 font-en uppercase tracking-[0.2em] text-white/60">
+        <span className="px-4 text-center type-c2 font-en uppercase tracking-[0.2em] text-[var(--text-3)]">
           {label}
         </span>
       )}

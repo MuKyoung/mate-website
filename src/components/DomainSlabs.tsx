@@ -54,19 +54,19 @@ export default function DomainSlabs({
         const play = eager ? onMount : inView;
         return (
           <motion.div key={d.key} {...play} variants={fadeUp} data-domain={d.key}>
-            <Link href={s.href} className="group relative block overflow-hidden border-b border-white/10">
+            <Link href={s.href} className="group relative block overflow-hidden border-b border-[var(--border)]">
               {/* 배경 - 사진이 있는 영역만 깔고, 나머지는 호버 때 액센트 워시 */}
               {s.bg ? (
                 <>
-                  <div className="absolute inset-0 opacity-[0.5] transition-opacity duration-700 group-hover:opacity-[0.68]"
+                  <div className="absolute inset-0 opacity-[0.5] transition-opacity duration-500 group-hover:opacity-[0.68]"
                     style={{ filter: 'saturate(1.1) contrast(1.08)' }}>
                     <SafeImage src={s.bg} alt="" fill className="absolute inset-0" />
                   </div>
                   <div className="absolute inset-0"
-                    style={{ background: 'linear-gradient(90deg, var(--canvas) 15%, rgba(8,8,10,0.68) 52%, rgba(8,8,10,0.5) 100%)' }} />
+                    style={{ background: 'linear-gradient(90deg, var(--canvas) 15%, rgb(var(--canvas-rgb) / 0.68) 52%, rgb(var(--canvas-rgb) / 0.5) 100%)' }} />
                 </>
               ) : (
-                <div className="absolute inset-0 opacity-0 transition-opacity duration-700 group-hover:opacity-100"
+                <div className="absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
                   style={{ background: 'linear-gradient(90deg, var(--accent-dim), transparent 62%)' }} />
               )}
 
@@ -84,17 +84,17 @@ export default function DomainSlabs({
                       style={{ fontSize: 'clamp(2.25rem, 5.4vw, 4.25rem)' }}>
                       {d.en}
                     </h2>
-                    <p className="type-b1 text-white/65">{d.kr}</p>
+                    <p className="type-b1 text-[var(--text-3)]">{d.kr}</p>
                   </div>
 
                   {/* 설명 + 태그 */}
                   <div className="lg:col-span-5 lg:pl-6">
                     <p className="type-h3 mb-5 leading-[1.45] text-[var(--text-1)]">{d.lead}</p>
-                    <p className="type-b3 mb-7 max-w-md leading-[1.85] text-white/70">{d.summary}</p>
+                    <p className="type-b3 mb-7 max-w-md leading-[1.85] text-[var(--text-2)]">{d.summary}</p>
                     <div className="flex flex-wrap gap-2">
                       {d.tags.map((t) => (
                         <span key={t}
-                          className="type-c2 font-en rounded-[6px] border border-white/20 px-3 py-1.5 text-white/75">
+                          className="type-c2 font-en rounded-chip border border-fg/20 px-3 py-1.5 text-[var(--text-2)]">
                           {t}
                         </span>
                       ))}
@@ -109,19 +109,19 @@ export default function DomainSlabs({
                           <p className="font-en type-h3 font-mono-stat mb-1.5 font-bold leading-none text-[var(--text-1)]">
                             {st.value}
                           </p>
-                          <p className="type-c2 text-white/70">{st.label}</p>
+                          <p className="type-c2 text-[var(--text-2)]">{st.label}</p>
                         </div>
                       ))}
                     </div>
-                    <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-white/20
-                                     text-white/60 transition-all duration-300
+                    <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-fg/20
+                                     text-[var(--text-3)] transition-all duration-300
                                      group-hover:rotate-45 group-hover:border-[var(--accent)] group-hover:text-[var(--accent)]">
                       <FiArrowUpRight size={20} />
                     </span>
                   </div>
                 </div>
 
-                <p className="type-c1 relative mt-8 text-white/60">{s.note}</p>
+                <p className="type-c1 relative mt-8 text-[var(--text-3)]">{s.note}</p>
               </div>
             </Link>
           </motion.div>
