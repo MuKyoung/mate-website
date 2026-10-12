@@ -22,6 +22,17 @@ function todayISO(offsetDays = 0): string {
   return d.toISOString().slice(0, 10);
 }
 
+/**
+ * 예시로 넣어 둔 뒤 아무도 손대지 않은 작업.
+ *
+ * 초기 데이터는 실제 프로젝트 이름에 지어낸 내용(응답 4초, 빌드 1.8GB 등)을 붙인
+ * 것이라, 표시 없이 두면 팀원이 누군가 올린 실제 작업으로 읽는다.
+ * 초기 데이터의 id 는 t1, t2… 이고 사람이 만든 것은 t<시각>-<번호> 라 겹치지 않는다.
+ * 한 번이라도 고치거나 옮기면 updatedAt 이 바뀌므로, 그런 것은 예시로 세지 않는다 -
+ * 사람이 손댄 것을 일괄 삭제에 휩쓸리게 두지 않기 위해서다.
+ */
+export const isUntouchedSample = (t: Task) => /^t\d+$/.test(t.id) && t.createdAt === t.updatedAt;
+
 /** 처음 열었을 때 빈 화면이 아니라 쓰는 법이 보이도록 하는 초기 데이터 */
 function seed(): Task[] {
   const now = new Date().toISOString();
@@ -99,6 +110,8 @@ export interface Store {
   /** 드래그로 상태·순서를 함께 바꾼다 */
   move(id: string, status: Status, beforeId: string | null): void;
   reset(): void;
+  /** 손대지 않은 예시 작업을 모두 지운다 (되돌릴 수 있다) */
+  clearSamples(): void;
   /** 되돌릴 수 있는 마지막 동작의 설명 - 없으면 null */
   undoLabel: string | null;
   undo(): void;
@@ -246,8 +259,19 @@ export function useTaskStore(): Store {
     commit(fresh);
   }, [commit]);
 
+  const clearSamples = useCallback(() => {
+    setTasks((prev) => {
+      const samples = prev.filter(isUntouchedSample);
+      if (samples.length === 0) return prev;
+      pushHistory(`예시 작업 ${samples.length}건 삭제`, prev);
+      const next = prev.filter((t) => !isUntouchedSample(t));
+      write(next);
+      return next;
+    });
+  }, [pushHistory]);
+
   return {
-    tasks, ready, persistent, create, update, remove, move, reset,
+    tasks, ready, persistent, create, update, remove, move, reset, clearSamples,
     undoLabel: history.length ? history[history.length - 1].label : null,
     undo,
   };
