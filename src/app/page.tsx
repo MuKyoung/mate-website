@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { FiArrowUpRight } from 'react-icons/fi';
+import BrandOpening from '@/components/BrandOpening';
 import DomainSlabs from '@/components/DomainSlabs';
 import ProjectCard from '@/components/ProjectCard';
 import SectionHead from '@/components/ui/SectionHead';
@@ -13,7 +14,7 @@ import { projects } from '@/data/projects';
 import {
   fadeUp, fadeLeft, fadeRight, riseTilt, clipUp, clipLeft, rowIn, stagger, staggerRows, inView,
 } from '@/lib/motion';
-import { arrowHover, container, sectionPad } from '@/lib/styles';
+import { arrowHover, container, linkMore, sectionPad } from '@/lib/styles';
 
 
 /* 가치 나열 대신, 계약서에 적을 수 있는 규칙만 남긴다 */
@@ -37,8 +38,45 @@ export default function Home() {
 
   return (
     <>
-      <DomainSlabs eager withGames className="pb-0"
-        heading="MATE는 웹 · 앱, 게임 · XR, 교육 외주 개발과 자체 게임 제작 · 퍼블리싱을 합니다" />
+      <BrandOpening />
+
+      {/* 어떤 회사인가 - 서비스를 나열하기 전에 먼저 답한다 */}
+      <section className="pb-20 pt-24 sm:pb-28 sm:pt-32">
+        <div className={container}>
+          <div className="grid gap-x-gutter gap-y-12 lg:grid-cols-12">
+            <motion.div {...inView} variants={fadeLeft} className="lg:col-span-5">
+              <p className="index-num font-en mb-6">About</p>
+              <h2 className="type-d2 text-[var(--text-1)]">
+                맡아서 만들고,<br />저희 이름으로도 냅니다
+              </h2>
+            </motion.div>
+
+            <motion.div {...inView} variants={stagger} className="lg:col-span-6 lg:col-start-7">
+              <motion.p variants={fadeUp}
+                className="mb-7 text-[19px] font-semibold leading-[1.6] text-[var(--text-1)] sm:text-[21px]">
+                MATE는 SI 개발과 자체 퍼블리싱을 함께 하는 팀입니다.
+              </motion.p>
+              <motion.p variants={fadeUp} className="type-b3 mb-5 leading-[1.9] text-white/72">
+                2020년부터 웹 · 앱, 게임 · XR, 교육 세 영역에서 일을 받아 왔습니다.
+                그와 별개로 저희 게임도 만듭니다. 지금 두 타이틀을 기획부터
+                퍼블리싱까지 직접 하고 있습니다.
+              </motion.p>
+              <motion.p variants={fadeUp} className="type-b3 leading-[1.9] text-white/72">
+                두 사업의 기준은 같습니다. 만든 것이 멈추지 않아야 한다는 것.
+                개발 4 · 디자인 2 · 운영 1, 일곱 명이 한 팀으로 움직입니다.
+              </motion.p>
+              <motion.div variants={fadeUp} className="mt-9">
+                <Link href="/team" className={linkMore}>
+                  팀 전체 보기
+                  <FiArrowUpRight size={15} className={arrowHover} />
+                </Link>
+              </motion.div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      <DomainSlabs withGames className="pb-0" />
 
       {/* ━━ (02) Work - 비대칭 2열 ━━ */}
       <section className={sectionPad}>
