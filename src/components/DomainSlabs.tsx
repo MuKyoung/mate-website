@@ -94,7 +94,7 @@ export default function DomainSlabs({
                   {/* 설명 + 태그 */}
                   <div className="lg:col-span-5 lg:pl-6">
                     <p className="type-h3 mb-5 leading-[1.45] text-[var(--text-1)]">{d.lead}</p>
-                    <p className="type-b3 mb-7 max-w-md leading-[1.85] text-white/72">{d.summary}</p>
+                    <p className="type-b3 mb-7 max-w-md leading-[1.85] text-white/70">{d.summary}</p>
                     <div className="flex flex-wrap gap-2">
                       {d.tags.map((t) => (
                         <span key={t}
@@ -157,7 +157,7 @@ export default function DomainSlabs({
                   <p className="type-h3 mb-5 leading-[1.45] text-[var(--text-1)]">
                     MATE 이름으로 내는 게임
                   </p>
-                  <p className="type-b3 mb-7 max-w-md leading-[1.85] text-white/72">
+                  <p className="type-b3 mb-7 max-w-md leading-[1.85] text-white/70">
                     기획과 아트, 개발, 퍼블리싱까지 팀 안에서 끝냅니다. 판권도 저희가 쥡니다.
                     지금 두 타이틀을 만들고 있습니다.
                   </p>

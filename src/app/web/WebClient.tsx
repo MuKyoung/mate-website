@@ -19,7 +19,7 @@ function Wireframe() {
     <span className="block h-[6px] rounded-[2px]" style={{ width: w, background: `rgba(255,255,255,${o})` }} />
   );
   return (
-    <div className="rounded-[12px] border border-white/12 bg-[var(--surface)] overflow-hidden shadow-[0_24px_60px_-20px_rgba(0,0,0,0.6)]">
+    <div className="rounded-[12px] border border-white/15 bg-[var(--surface)] overflow-hidden shadow-[0_24px_60px_-20px_rgba(0,0,0,0.6)]">
       {/* 브라우저 크롬 */}
       <div className="flex items-center gap-2 px-4 h-10 border-b border-white/10 bg-[var(--surface-2)]">
         <span className="w-2.5 h-2.5 rounded-full bg-white/15" />
@@ -184,7 +184,7 @@ export default function WebClient() {
                       <div className="lg:col-span-7 flex flex-wrap gap-2.5 lg:justify-end lg:content-start">
                         {s.items.map((it) => (
                           <span key={it}
-                            className="inline-flex items-center h-10 px-5 rounded-[8px] border border-white/12
+                            className="inline-flex items-center h-10 px-5 rounded-[8px] border border-white/15
                                        bg-white/[0.03] type-b4 text-white/70">
                             {it}
                           </span>

@@ -137,7 +137,7 @@ export default function EducationClient() {
                   </span>
                 </motion.h1>
                 <motion.p {...onMount} variants={fadeUp} className="type-b3 text-[var(--text-2)] leading-[1.9] max-w-xl">
-                  {d.summary}
+                  {d.summary}{' '}
                   마지막 주에는 수강생 각자의 결과물이 남습니다.
                 </motion.p>
               </div>

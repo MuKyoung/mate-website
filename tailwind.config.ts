@@ -1,7 +1,7 @@
 import type { Config } from "tailwindcss";
 
 /**
- * MATE Design System — Tailwind 바인딩
+ * MATE Design System - Tailwind 바인딩
  *
  * 색은 CSS 변수(globals.css `:root`)가 단일 원천이고 여기서는 이름만 노출한다.
  * 변수 하나만 바꾸면 Tailwind 클래스·소재 클래스가 동시에 따라온다.
@@ -15,7 +15,7 @@ const config: Config = {
     "./src/lib/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
-    // ── Grid System — PC 1920 기준 / inner 1500 / gutter 16 / 12 columns ──
+    // ── Grid System - PC 1920 기준 / inner 1500 / gutter 16 / 12 columns ──
     container: {
       center: true,
       padding: { DEFAULT: "1rem", sm: "1.5rem", lg: "2.5rem" },
@@ -36,7 +36,7 @@ const config: Config = {
 
       // ── Color System ─────────────────────────────────────────
       colors: {
-        // primary — 딥 인디고. 숫자가 커질수록 어두워진다.
+        // primary - MATE Blue. 400 이 로고 원색(#2644cb), 200 이 어두운 배경 위 글자용.
         primary: {
           100: "var(--primary-100)",
           200: "var(--primary-200)",
@@ -46,7 +46,7 @@ const config: Config = {
           600: "var(--primary-600)",
           DEFAULT: "var(--primary-200)",
         },
-        // gray — 쿨 뉴트럴. 50 화이트 → 600 텍스트 블랙/다크 캔버스.
+        // gray - 쿨 뉴트럴. 50 화이트 → 600 텍스트 블랙/다크 캔버스.
         gray: {
           50: "var(--gray-50)",
           100: "var(--gray-100)",
@@ -56,7 +56,7 @@ const config: Config = {
           500: "var(--gray-500)",
           600: "var(--gray-600)",
         },
-        // point — 앰버. 한 화면에 한 번만 쓰는 강조색.
+        // point - 따로 두지 않는다. 이름만 남겨 primary 를 가리킨다 (globals.css 참고).
         point: {
           100: "var(--point-100)",
           200: "var(--point-200)",
@@ -64,7 +64,7 @@ const config: Config = {
           DEFAULT: "var(--point-200)",
         },
 
-        // 시맨틱 별칭 — 컴포넌트는 되도록 이쪽을 쓴다.
+        // 시맨틱 별칭 - 컴포넌트는 되도록 이쪽을 쓴다.
         canvas: "var(--canvas)",
         background: "var(--canvas)",
         foreground: "var(--text-1)",
@@ -75,13 +75,16 @@ const config: Config = {
         "border-strong": "var(--border-2)",
         brand: {
           DEFAULT: "var(--accent)",
+          // 면에 까는 대표 색상 - 로고 원색 그대로. 흰 글자를 올린다.
+          fill: "var(--brand-fill)",
+          "fill-hover": "var(--brand-fill-hover)",
           strong: "var(--accent-strong)",
           tint: "var(--accent-tint)",
         },
         success: { DEFAULT: "var(--success)", tint: "var(--success-tint)" },
         danger: { DEFAULT: "var(--danger)", tint: "var(--danger-tint)" },
 
-        // ── GitHub Primer (light) — /taskmanager 전용 ──────────
+        // ── GitHub Primer (light) - /taskmanager 전용 ──────────
         // 사내 도구는 마케팅 사이트와 완전히 다른 체계를 쓴다.
         // 고정 HEX 인 이유: 테마 토글이 없는 라이트 전용 화면이고,
         // GitHub 색을 그대로 쓰는 것이 목적이라 파생값을 두지 않는다.
@@ -110,7 +113,7 @@ const config: Config = {
         },
       },
 
-      // ── Typography — Figma 스케일과 1:1 (LS -0.3%) ────────────
+      // ── Typography - Figma 스케일과 1:1 (LS -0.3%) ────────────
       fontSize: {
         d1: ["clamp(2.5rem, 10vw, 9rem)", { lineHeight: "0.98", letterSpacing: "-0.04em", fontWeight: "800" }],
         d2: ["clamp(2.25rem, 6vw, 4.75rem)", { lineHeight: "1.04", letterSpacing: "-0.03em", fontWeight: "800" }],

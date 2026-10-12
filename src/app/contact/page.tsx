@@ -272,7 +272,7 @@ export default function ContactPage() {
                     <RiKakaoTalkFill className="text-[#3C1E1E]" size={26} />
                     <h3 className="text-[19px] font-bold text-[#3C1E1E] tracking-[-0.02em]">카카오톡 문의</h3>
                   </div>
-                  <p className="text-[13px] font-semibold text-[#3C1E1E]/60">1:1 오픈채팅</p>
+                  <p className="text-[13px] font-semibold text-[#3C1E1E]/80">1:1 오픈채팅</p>
                 </div>
                 <p className="text-[#3C1E1E]/70 text-[15px] mb-8 leading-[1.75]">
                   가장 빠른 창구입니다

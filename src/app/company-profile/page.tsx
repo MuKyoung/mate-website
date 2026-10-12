@@ -88,30 +88,12 @@ export default function CompanyProfilePage() {
           position: absolute;
           left: 0; top: 0; bottom: 0;
           width: 44%;
-          background: #08080d;
+          background: #08080a;
           padding: 14mm 12mm 12mm;
           display: flex;
           flex-direction: column;
           justify-content: space-between;
           overflow: hidden;
-        }
-        .p1-left::before {
-          content: '';
-          position: absolute;
-          top: -30mm; right: -30mm;
-          width: 80mm; height: 80mm;
-          border-radius: 50%;
-          background: rgba(59,130,246,0.06);
-          pointer-events: none;
-        }
-        .p1-left::after {
-          content: '';
-          position: absolute;
-          bottom: -20mm; left: -20mm;
-          width: 60mm; height: 60mm;
-          border-radius: 50%;
-          background: rgba(59,130,246,0.04);
-          pointer-events: none;
         }
         .p1-right {
           position: absolute;
@@ -191,7 +173,7 @@ export default function CompanyProfilePage() {
         .p1-contact-dot {
           width: 3px; height: 3px;
           border-radius: 50%;
-          background: #3b82f6;
+          background: #5776ff;
           flex-shrink: 0;
         }
 
@@ -201,12 +183,12 @@ export default function CompanyProfilePage() {
           align-items: center;
           gap: 2mm;
           padding: 1.5mm 4mm;
-          background: #eff6ff;
-          border: 1px solid #bfdbfe;
+          background: rgba(38, 68, 203, 0.07);
+          border: 1px solid rgba(38, 68, 203, 0.28);
           border-radius: 20mm;
           font-size: 6.5pt;
           font-weight: 600;
-          color: #2563eb;
+          color: #2644cb;
           margin-bottom: 5mm;
           width: fit-content;
         }
@@ -220,7 +202,7 @@ export default function CompanyProfilePage() {
           font-weight: 700;
           letter-spacing: 0.2em;
           text-transform: uppercase;
-          color: #2563eb;
+          color: #2644cb;
           margin-bottom: 2mm;
         }
         .p1-about-title {
@@ -257,12 +239,12 @@ export default function CompanyProfilePage() {
         .p1-why-check {
           width: 12px; height: 12px;
           border-radius: 50%;
-          background: #eff6ff;
-          border: 1.5px solid #bfdbfe;
+          background: rgba(38, 68, 203, 0.07);
+          border: 1.5px solid rgba(38, 68, 203, 0.28);
           flex-shrink: 0;
           display: flex; align-items: center; justify-content: center;
           font-size: 6pt;
-          color: #2563eb;
+          color: #2644cb;
           margin-top: 0.5mm;
         }
         .p1-why-title { font-size: 7.5pt; font-weight: 700; color: #111827; margin-bottom: 0.5mm; }
@@ -304,7 +286,7 @@ export default function CompanyProfilePage() {
           font-weight: 700;
           letter-spacing: 0.2em;
           text-transform: uppercase;
-          color: #2563eb;
+          color: #2644cb;
           margin-bottom: 3mm;
         }
         .p2-services {
@@ -343,9 +325,9 @@ export default function CompanyProfilePage() {
         .p2-svc-tags { display: flex; flex-wrap: wrap; gap: 1.5mm; }
         .p2-svc-tag {
           padding: 0.8mm 2.5mm;
-          background: #eff6ff;
-          color: #2563eb;
-          border: 1px solid #bfdbfe;
+          background: rgba(38, 68, 203, 0.07);
+          color: #2644cb;
+          border: 1px solid rgba(38, 68, 203, 0.28);
           border-radius: 1.5mm;
           font-size: 6pt;
           font-weight: 500;
@@ -373,7 +355,7 @@ export default function CompanyProfilePage() {
         .p2-proc-num {
           font-size: 6.5pt;
           font-weight: 700;
-          color: #2563eb;
+          color: #2644cb;
           letter-spacing: 0.1em;
           margin-bottom: 1.5mm;
         }
@@ -406,7 +388,7 @@ export default function CompanyProfilePage() {
           grid-template-columns: 1fr 1fr 1fr 1.6fr;
           gap: 4mm;
           padding: 4mm 5mm;
-          background: #08080d;
+          background: #08080a;
           border-radius: 3mm;
           margin-top: auto;
           break-inside: avoid;
@@ -416,8 +398,8 @@ export default function CompanyProfilePage() {
         .p2-contact-icon {
           width: 8mm; height: 8mm;
           border-radius: 2mm;
-          background: rgba(59,130,246,0.12);
-          border: 1px solid rgba(59,130,246,0.2);
+          background: rgba(87, 118, 255, 0.14);
+          border: 1px solid rgba(87, 118, 255, 0.28);
           display: flex; align-items: center; justify-content: center;
           font-size: 10pt;
           flex-shrink: 0;
@@ -468,11 +450,10 @@ export default function CompanyProfilePage() {
           transition: background 0.15s;
         }
         .cp-btn-primary {
-          background: #2563eb;
+          background: #2644cb;
           color: #fff;
-          box-shadow: 0 4px 16px rgba(37,99,235,0.3);
         }
-        .cp-btn-primary:hover { background: #1d4ed8; }
+        .cp-btn-primary:hover { background: #3555e3; }
 
         /* 화면 미리보기용 여백 */
         @media screen {
@@ -516,7 +497,7 @@ export default function CompanyProfilePage() {
             {/* 로고 */}
             <div>
               <Image src="/images/logo.png" alt="MATE" width={90} height={28}
-                style={{ height: 22, width: 'auto', mixBlendMode: 'screen', marginBottom: '6mm' }} />
+                style={{ height: 22, width: 'auto', filter: 'brightness(0) invert(1)', marginBottom: '6mm' }} />
 
               <p className="p1-eyebrow">Company Profile · 2026</p>
               <h1 className="p1-headline">
@@ -607,7 +588,7 @@ export default function CompanyProfilePage() {
               <span className="p2-header-title">제공 서비스 &amp; 개발 프로세스</span>
               <div className="p2-header-brand">
                 <Image src="/images/logo.png" alt="MATE" width={60} height={20}
-                  style={{ height: 14, width: 'auto', filter: 'invert(1)', opacity: 0.3 }} />
+                  style={{ height: 20, width: 'auto' }} />
                 <span>devteammate.co.kr</span>
               </div>
             </div>

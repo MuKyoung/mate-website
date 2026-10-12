@@ -48,11 +48,15 @@ export default function Header() {
   const solid = isScrolled || isMobileMenuOpen;
   const hidden = isHidden && !isMobileMenuOpen;
   const light = LIGHT_ROUTES.some((r) => pathname.startsWith(r));
+  // 홈 첫 화면에서는 헤더가 대표 색상 면 위에 얹힌다. 흐린 글자(white/55)는
+  // 파랑 위에서 3.4:1 밖에 안 나오므로 이때만 진하게 쓴다 (white/85 = 5.9:1).
+  const onBrand = pathname === '/' && !solid;
 
   // 라이트 라우트에서는 표면·텍스트·로고를 모두 뒤집는다
-  const surface = light ? 'rgba(255, 255, 255, 0.82)' : 'rgba(14, 17, 23, 0.72)';
+  const surface = light ? 'rgba(255, 255, 255, 0.82)' : 'rgba(8, 8, 10, 0.72)';
   const hairline = light ? '1px solid rgba(14,17,23,0.10)' : '1px solid rgba(255,255,255,0.10)';
-  const txtIdle = light ? 'text-[rgba(14,17,23,0.55)] hover:text-[var(--gray-600)]' : 'text-white/55 hover:text-white';
+  const txtIdle = light ? 'text-[rgba(14,17,23,0.66)] hover:text-[var(--gray-600)]'
+    : onBrand ? 'text-white/85 hover:text-white' : 'text-white/55 hover:text-white';
   const txtActive = light ? 'text-[var(--gray-600)]' : 'text-white';
   const barColor = light ? 'bg-[var(--gray-600)]' : 'bg-white';
 
@@ -107,8 +111,10 @@ export default function Header() {
 
           <Link
             href="/contact"
-            className={`ml-4 px-6 h-10 inline-flex items-center rounded-full text-sm font-bold transition-colors duration-300 hover:bg-[var(--accent)] hover:text-white ${
-              light ? 'text-white bg-[var(--gray-600)]' : 'text-[var(--canvas)] bg-white'
+            className={`ml-4 px-6 h-10 inline-flex items-center rounded-full text-sm font-bold transition-colors duration-300 ${
+              // 파란 면 위에서는 파랑으로 바뀌면 버튼이 사라진다 - 옅은 파랑으로 받는다
+              onBrand ? 'text-[var(--brand-fill)] bg-white hover:bg-[var(--primary-100)]'
+                : `hover:bg-[var(--brand-fill)] hover:text-white ${light ? 'text-white bg-[var(--gray-600)]' : 'text-[var(--canvas)] bg-white'}`
             }`}
           >
             상담 신청
@@ -118,7 +124,8 @@ export default function Header() {
         {/* 모바일 버튼 */}
         <button
           className={`md:hidden w-9 h-9 flex items-center justify-center transition-colors rounded-lg ${
-            light ? 'text-[rgba(14,17,23,0.7)] hover:bg-black/5' : 'text-white/70 hover:text-white hover:bg-white/10'
+            light ? 'text-[rgba(14,17,23,0.7)] hover:bg-black/5'
+              : `${onBrand ? 'text-white' : 'text-white/70'} hover:text-white hover:bg-white/10`
           }`}
           onClick={() => setMobileMenuOpen(!isMobileMenuOpen)}
           aria-label={isMobileMenuOpen ? '메뉴 닫기' : '메뉴 열기'}
@@ -154,7 +161,7 @@ export default function Header() {
             id="mobile-nav"
             className="md:hidden overflow-hidden"
             style={{
-              background: light ? 'rgba(255,255,255,0.97)' : 'rgba(14,17,23,0.95)',
+              background: light ? 'rgba(255,255,255,0.97)' : 'rgba(8,8,10,0.95)',
               backdropFilter: 'blur(14px)',
               borderTop: hairline,
             }}
@@ -173,7 +180,7 @@ export default function Header() {
                     className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
                       pathname === item.href
                         ? (light ? 'text-[var(--gray-600)] bg-black/[0.05]' : 'text-white bg-white/[0.07]')
-                        : (light ? 'text-[rgba(14,17,23,0.55)] hover:bg-black/[0.03]' : 'text-white/55 hover:text-white hover:bg-white/[0.04]')
+                        : (light ? 'text-[rgba(14,17,23,0.66)] hover:bg-black/[0.03]' : 'text-white/55 hover:text-white hover:bg-white/[0.04]')
                     }`}
                   >
                     {item.label}
@@ -192,7 +199,7 @@ export default function Header() {
                 <Link
                   href="/contact"
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`block text-center px-4 py-3 rounded-full text-sm font-bold transition-colors hover:bg-[var(--accent)] hover:text-white ${
+                  className={`block text-center px-4 py-3 rounded-full text-sm font-bold transition-colors hover:bg-[var(--brand-fill)] hover:text-white ${
                     light ? 'text-white bg-[var(--gray-600)]' : 'text-[var(--canvas)] bg-white'
                   }`}
                 >

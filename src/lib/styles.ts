@@ -6,8 +6,8 @@
  * 값을 바꾸면 사이트 전체에 일관되게 반영된다.
  *
  * 컬러 역할 분담
- *   blue (primary 200)  = 액션 · 링크 · 인터랙션
- *   vermilion (point 200) = 섹션 라벨 · 강조 · 활성 상태
+ *   MATE Blue 하나로 한다. 면에는 primary 400(로고 원색), 어두운 바탕 위 글자에는 primary 200.
+ *   강조색을 따로 두지 않는다.
  */
 
 /** 브랜드 상수 */
@@ -35,20 +35,20 @@ export const displaySizeLg = { fontSize: 'clamp(2.25rem, 7vw, 6.5rem)' } as cons
 
 /* ── Buttons ──────────────────────────────────────────── */
 
-/** 화이트 필 버튼 - 기본 CTA (호버 시 인디고) */
+/** 흰 버튼 - 검은 바탕의 기본 동작. 올리면 대표 색상 면이 된다 (흰 글자와 7.6:1) */
 export const btnPrimary =
   'group inline-flex items-center gap-2.5 h-14 px-9 rounded-pill text-[15px] font-bold ' +
-  'text-canvas bg-gray-50 hover:bg-primary-200 hover:text-gray-50 transition-colors duration-300';
+  'text-canvas bg-gray-50 hover:bg-brand-fill hover:text-gray-50 transition-colors duration-300';
+
+/** 파란 면 위 버튼 - 흰 바탕에 글자가 MATE Blue (7.6:1) */
+export const btnOnBrand =
+  'group inline-flex items-center gap-2.5 h-14 px-9 rounded-pill text-[15px] font-bold ' +
+  'text-[var(--brand-fill)] bg-white hover:bg-[var(--primary-100)] transition-colors duration-300';
 
 /** 아웃라인 필 버튼 - 보조 액션 */
 export const btnOutline =
   'inline-flex items-center gap-2.5 h-14 px-9 rounded-pill text-[15px] font-bold ' +
   'text-gray-50 border border-white/20 hover:border-white transition-colors duration-300';
-
-/** 포인트 필 버튼 - 화면당 1회, 포인트 색 강조 액션 */
-export const btnPoint =
-  'group inline-flex items-center gap-2.5 h-14 px-9 rounded-pill text-[15px] font-bold ' +
-  'text-primary-600 bg-point-200 hover:bg-point-100 transition-colors duration-300';
 
 /* ── Links ────────────────────────────────────────────── */
 
@@ -56,6 +56,10 @@ export const btnPoint =
 export const linkUnderline =
   'text-[15px] font-semibold text-white/60 hover:text-gray-50 ' +
   'border-b border-white/25 hover:border-white pb-0.5 transition-colors';
+
+/** 파란 면 위 밑줄 링크 */
+export const linkOnBrand =
+  'text-[15px] font-semibold text-white border-b border-white/50 hover:border-white pb-0.5 transition-colors';
 
 /** 섹션 상단 '더보기' 링크 */
 export const linkMore =

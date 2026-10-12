@@ -43,12 +43,12 @@ export default function Home() {
                 className="mb-7 text-[19px] font-semibold leading-[1.6] text-[var(--text-1)] sm:text-[21px]">
                 MATE는 SI 개발과 자체 퍼블리싱을 함께 하는 팀입니다.
               </motion.p>
-              <motion.p variants={fadeUp} className="type-b3 mb-5 leading-[1.9] text-white/72">
+              <motion.p variants={fadeUp} className="type-b3 mb-5 leading-[1.9] text-white/70">
                 {since}년에 시작해 웹 · 앱, 게임 · XR, 교육으로 영역을 넓혀 왔습니다.
                 그와 별개로 저희 게임도 만듭니다. 지금 두 타이틀을 기획부터
                 퍼블리싱까지 직접 하고 있습니다.
               </motion.p>
-              <motion.p variants={fadeUp} className="type-b3 leading-[1.9] text-white/72">
+              <motion.p variants={fadeUp} className="type-b3 leading-[1.9] text-white/70">
                 두 사업의 기준은 같습니다. 만든 것이 멈추지 않아야 한다는 것.
                 개발 4 · 디자인 2 · 운영 1, 일곱 명이 한 팀으로 움직입니다.
               </motion.p>
