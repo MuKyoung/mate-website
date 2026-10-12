@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { isUntouchedSample, useTaskStore } from './store';
+import { useTaskStore } from './store';
 import {
   DOMAINS, MEMBERS, PRIORITIES, STATUSES,
   domainLabel, priorityLabel,
@@ -181,9 +181,6 @@ export default function TaskManagerClient() {
     visible.forEach((t) => map[t.status].push(t));
     return map;
   }, [visible]);
-
-  /** 아무도 손대지 않은 예시 작업 수 - 안내 띠를 띄울지 정한다 */
-  const sampleCount = useMemo(() => store.tasks.filter(isUntouchedSample).length, [store.tasks]);
 
   const counts = useMemo(() => {
     const mine = store.tasks.filter((t) => t.assignee === me && t.status !== 'done').length;
@@ -451,20 +448,6 @@ export default function TaskManagerClient() {
         </div>
         )}
 
-        {/* 예시 작업 안내 - 실제 프로젝트 이름이 들어 있어, 말해 주지 않으면 진짜 작업으로 읽힌다 */}
-        {section === 'tasks' && sampleCount > 0 && (
-          <div role="status"
-            className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1.5 border-b border-gh-attention-border bg-gh-attention-subtle px-4 py-2 text-[13.5px] text-gh-fg">
-            <span>
-              <strong className="font-semibold">예시 작업 {sampleCount}건</strong>이 들어 있습니다.
-              쓰는 법을 보여 주려고 넣어 둔 것이고 실제 작업이 아닙니다.
-            </span>
-            <button onClick={store.clearSamples} className={`${ghBtn} ml-auto h-7 px-2.5 text-[13px]`}>
-              예시 지우기
-            </button>
-          </div>
-        )}
-
         {/* ── 문서 ── */}
         {section === 'docs' && (
           <Docs store={docStore} me={me}
@@ -570,7 +553,7 @@ export default function TaskManagerClient() {
             <div className="overflow-hidden rounded-md border border-gh-border bg-gh-canvas">
               <table className="w-full border-collapse text-[14px]">
                 <thead>
-                  <tr className="border-b border-gh-border bg-gh-canvas-subtle text-left text-[12px] text-gh-fg-muted">
+                  <tr className="border-b border-gh-border bg-gh-canvas-subtle text-left text-[12px] uppercase tracking-wide text-gh-fg-muted">
                     {([
                       ['title', '작업', ''],
                       ['status', '상태', 'w-[100px]'],

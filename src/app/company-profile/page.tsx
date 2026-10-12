@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { projects } from '@/data/projects';
-import { teamCapabilities, counts } from '@/data/teamCapabilities';
+import { teamCapabilities } from '@/data/teamCapabilities';
 import { useEffect } from 'react';
 
 /* ─────────────────────────────────────────── 데이터 */
@@ -36,11 +36,12 @@ const PROCESS = [
 ];
 
 /* 사이트 본문과 같은 출처에서 파생한다 - 문서마다 숫자가 달라지지 않도록 */
+const TOTAL = teamCapabilities.capabilities.reduce((n, c) => n + c.projects, 0);
 
 const STATS = [
-  { v: `${counts.devProjects}건`, l: '개발 프로젝트 납품' },
+  { v: `${TOTAL}+`, l: '누적 프로젝트' },
   { v: `${projects.length}건`, l: '포트폴리오 공개' },
-  { v: `${teamCapabilities.stats.since}`, l: '시작한 해' },
+  { v: '5년', l: '팀 운영' },
   { v: `${teamCapabilities.stats.teamMembers}명`, l: '전문 인력' },
 ];
 
@@ -88,12 +89,30 @@ export default function CompanyProfilePage() {
           position: absolute;
           left: 0; top: 0; bottom: 0;
           width: 44%;
-          background: #08080a;
+          background: #08080d;
           padding: 14mm 12mm 12mm;
           display: flex;
           flex-direction: column;
           justify-content: space-between;
           overflow: hidden;
+        }
+        .p1-left::before {
+          content: '';
+          position: absolute;
+          top: -30mm; right: -30mm;
+          width: 80mm; height: 80mm;
+          border-radius: 50%;
+          background: rgba(59,130,246,0.06);
+          pointer-events: none;
+        }
+        .p1-left::after {
+          content: '';
+          position: absolute;
+          bottom: -20mm; left: -20mm;
+          width: 60mm; height: 60mm;
+          border-radius: 50%;
+          background: rgba(59,130,246,0.04);
+          pointer-events: none;
         }
         .p1-right {
           position: absolute;
@@ -173,7 +192,7 @@ export default function CompanyProfilePage() {
         .p1-contact-dot {
           width: 3px; height: 3px;
           border-radius: 50%;
-          background: #5776ff;
+          background: #3b82f6;
           flex-shrink: 0;
         }
 
@@ -183,12 +202,12 @@ export default function CompanyProfilePage() {
           align-items: center;
           gap: 2mm;
           padding: 1.5mm 4mm;
-          background: rgba(38, 68, 203, 0.07);
-          border: 1px solid rgba(38, 68, 203, 0.28);
+          background: #eff6ff;
+          border: 1px solid #bfdbfe;
           border-radius: 20mm;
           font-size: 6.5pt;
           font-weight: 600;
-          color: #2644cb;
+          color: #2563eb;
           margin-bottom: 5mm;
           width: fit-content;
         }
@@ -202,7 +221,7 @@ export default function CompanyProfilePage() {
           font-weight: 700;
           letter-spacing: 0.2em;
           text-transform: uppercase;
-          color: #2644cb;
+          color: #2563eb;
           margin-bottom: 2mm;
         }
         .p1-about-title {
@@ -239,12 +258,12 @@ export default function CompanyProfilePage() {
         .p1-why-check {
           width: 12px; height: 12px;
           border-radius: 50%;
-          background: rgba(38, 68, 203, 0.07);
-          border: 1.5px solid rgba(38, 68, 203, 0.28);
+          background: #eff6ff;
+          border: 1.5px solid #bfdbfe;
           flex-shrink: 0;
           display: flex; align-items: center; justify-content: center;
           font-size: 6pt;
-          color: #2644cb;
+          color: #2563eb;
           margin-top: 0.5mm;
         }
         .p1-why-title { font-size: 7.5pt; font-weight: 700; color: #111827; margin-bottom: 0.5mm; }
@@ -286,7 +305,7 @@ export default function CompanyProfilePage() {
           font-weight: 700;
           letter-spacing: 0.2em;
           text-transform: uppercase;
-          color: #2644cb;
+          color: #2563eb;
           margin-bottom: 3mm;
         }
         .p2-services {
@@ -325,9 +344,9 @@ export default function CompanyProfilePage() {
         .p2-svc-tags { display: flex; flex-wrap: wrap; gap: 1.5mm; }
         .p2-svc-tag {
           padding: 0.8mm 2.5mm;
-          background: rgba(38, 68, 203, 0.07);
-          color: #2644cb;
-          border: 1px solid rgba(38, 68, 203, 0.28);
+          background: #eff6ff;
+          color: #2563eb;
+          border: 1px solid #bfdbfe;
           border-radius: 1.5mm;
           font-size: 6pt;
           font-weight: 500;
@@ -355,7 +374,7 @@ export default function CompanyProfilePage() {
         .p2-proc-num {
           font-size: 6.5pt;
           font-weight: 700;
-          color: #2644cb;
+          color: #2563eb;
           letter-spacing: 0.1em;
           margin-bottom: 1.5mm;
         }
@@ -388,7 +407,7 @@ export default function CompanyProfilePage() {
           grid-template-columns: 1fr 1fr 1fr 1.6fr;
           gap: 4mm;
           padding: 4mm 5mm;
-          background: #08080a;
+          background: #08080d;
           border-radius: 3mm;
           margin-top: auto;
           break-inside: avoid;
@@ -398,8 +417,8 @@ export default function CompanyProfilePage() {
         .p2-contact-icon {
           width: 8mm; height: 8mm;
           border-radius: 2mm;
-          background: rgba(87, 118, 255, 0.14);
-          border: 1px solid rgba(87, 118, 255, 0.28);
+          background: rgba(59,130,246,0.12);
+          border: 1px solid rgba(59,130,246,0.2);
           display: flex; align-items: center; justify-content: center;
           font-size: 10pt;
           flex-shrink: 0;
@@ -450,10 +469,11 @@ export default function CompanyProfilePage() {
           transition: background 0.15s;
         }
         .cp-btn-primary {
-          background: #2644cb;
+          background: #2563eb;
           color: #fff;
+          box-shadow: 0 4px 16px rgba(37,99,235,0.3);
         }
-        .cp-btn-primary:hover { background: #3555e3; }
+        .cp-btn-primary:hover { background: #1d4ed8; }
 
         /* 화면 미리보기용 여백 */
         @media screen {
@@ -497,7 +517,7 @@ export default function CompanyProfilePage() {
             {/* 로고 */}
             <div>
               <Image src="/images/logo.png" alt="MATE" width={90} height={28}
-                style={{ height: 22, width: 'auto', filter: 'brightness(0) invert(1)', marginBottom: '6mm' }} />
+                style={{ height: 22, width: 'auto', mixBlendMode: 'screen', marginBottom: '6mm' }} />
 
               <p className="p1-eyebrow">Company Profile · 2026</p>
               <h1 className="p1-headline">
@@ -554,8 +574,8 @@ export default function CompanyProfilePage() {
               각각 전담하는 외주 개발 팀입니다. 2020년부터 시작해 AR·VR 시뮬레이션, 웹·모바일 앱까지
               영역을 넓혀 왔습니다. 지금은 <strong>자체 게임</strong>도 만들어 직접 퍼블리싱합니다.<br /><br />
               단순 기능 구현을 넘어 <strong>기획·디자인·개발·배포</strong> 전 과정을 함께하는
-              파트너십을 지향합니다. 저장소를 열어 두고 진행하며, 완료 시 모든 소스 코드와
-              문서를 넘겨드립니다.
+              파트너십을 지향합니다. 저장소를 열어 두고 진행하며, 완료 시 소스 코드와 문서,
+              인프라 계정 소유권까지 넘겨드립니다.
             </p>
 
             {/* Why choose us */}
@@ -588,7 +608,7 @@ export default function CompanyProfilePage() {
               <span className="p2-header-title">제공 서비스 &amp; 개발 프로세스</span>
               <div className="p2-header-brand">
                 <Image src="/images/logo.png" alt="MATE" width={60} height={20}
-                  style={{ height: 20, width: 'auto' }} />
+                  style={{ height: 14, width: 'auto', filter: 'invert(1)', opacity: 0.3 }} />
                 <span>devteammate.co.kr</span>
               </div>
             </div>
@@ -643,7 +663,7 @@ export default function CompanyProfilePage() {
               <div className="p2-kakao-card">
                 <div>
                   <div className="p2-kakao-title">💬 카카오톡 오픈채팅</div>
-                  <div className="p2-kakao-sub">평일 10:00~18:00 실시간 응대</div>
+                  <div className="p2-kakao-sub">평일 10:00 – 18:00 실시간 응대</div>
                   <div className="p2-kakao-url">open.kakao.com/o/scVFEK3h</div>
                 </div>
               </div>

@@ -98,11 +98,11 @@ export default function Roadmap({
     [tasks, now],
   );
 
-  /** 'M.D~M.D' - 어느 주를 말하는지 숫자로 못박는다 */
+  /** 'M.D–M.D' - 어느 주를 말하는지 숫자로 못박는다 */
   const weekLabel = (offset: number) => {
     const a = new Date(weekStart(now).getTime() + offset * 7 * DAY);
     const b = new Date(a.getTime() + 6 * DAY);
-    return `${a.getMonth() + 1}.${a.getDate()}~${b.getMonth() + 1}.${b.getDate()}`;
+    return `${a.getMonth() + 1}.${a.getDate()}–${b.getMonth() + 1}.${b.getDate()}`;
   };
 
   return (

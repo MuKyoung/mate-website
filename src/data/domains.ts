@@ -49,7 +49,7 @@ export const domains: DomainMeta[] = [
     stats: [
       { value: `${cap.outsourcing.projects}+`, label: '웹·앱 프로젝트' },
       { value: '5년+', label: '외주 개발 경력' },
-      { value: '1~3개월', label: '공개 프로젝트 기간' },
+      { value: '1~3개월', label: '평균 개발 기간' },
     ],
     tags: ['Next.js', 'Flutter', 'Python', 'AWS'],
   },
@@ -151,19 +151,19 @@ export const webStack = [
 export const webDeliverables = [
   {
     title: '소스 코드 전체',
-    desc: 'GitHub로 관리하며 프로젝트 기간 동안에도 실시간으로 보실 수 있습니다. 끝나면 모든 소스 코드를 드립니다.',
+    desc: 'GitHub로 관리하며 개발 기간 중에도 실시간으로 열람하실 수 있습니다. 완료 시 저장소를 그대로 넘겨드립니다.',
   },
   {
-    title: '문서',
-    desc: '프로젝트가 끝나면 소스 코드와 함께 문서를 드립니다.',
+    title: '기술 문서',
+    desc: '완료 시 소스 코드와 함께 문서를 제공합니다. 어떤 문서가 필요한지는 착수 전에 함께 정합니다.',
   },
   {
-    title: '배포와 모니터링',
-    desc: '최종 검수 후 배포합니다. 배포한 뒤에도 모니터링으로 안정성을 확인합니다.',
+    title: '배포 환경',
+    desc: '어느 인프라에 올릴지, 계정을 누가 소유할지는 계약 단계에서 정해 두고 그대로 이행합니다.',
   },
   {
     title: '완료 후 유지보수',
-    desc: '프로젝트가 끝난 뒤에도 버그 수정, 기능 추가, 업데이트를 지원합니다.',
+    desc: '버그 수정, 기능 추가, 업데이트를 이어서 맡을 수 있습니다. 별도 협의로 진행합니다.',
   },
 ];
 
@@ -194,7 +194,7 @@ export const gameCapabilities = [
     no: '03',
     en: 'VR Simulation',
     kr: 'VR 시뮬레이션',
-    desc: '키오스크 조작, 중고차 구매 안내 같은 교육·훈련용 시뮬레이션을 만들었습니다.',
+    desc: '교육·훈련용 시뮬레이션이 가장 많습니다. 키오스크 조작, 중고차 점검, 생존 훈련 등을 만들었습니다.',
     tags: ['Meta Quest', 'XR Toolkit', '교육용', '훈련용'],
   },
   {
@@ -249,10 +249,10 @@ export const eduCourses = [
     level: '입문 ~ 중급',
     summary: '엔진 조작에서 시작해 각자의 게임을 빌드해 제출하는 것으로 끝납니다.',
     outline: [
-      { range: '1~3주', title: '엔진과 C# 기초', detail: '씬 구성, 컴포넌트 구조, 변수와 제어문을 게임 안에서 익힙니다.' },
-      { range: '4~6주', title: '게임 로직', detail: '플레이어 조작, 충돌, 상태 관리. 작은 미니게임을 완성합니다.' },
-      { range: '7~9주', title: 'UI와 데이터', detail: '인벤토리, 저장·불러오기, 씬 전환을 붙입니다.' },
-      { range: '10~12주', title: '개인 프로젝트', detail: '기획부터 빌드까지 직접. 마지막 주에 발표와 코드 리뷰를 합니다.' },
+      { range: '1–3주', title: '엔진과 C# 기초', detail: '씬 구성, 컴포넌트 구조, 변수와 제어문을 게임 안에서 익힙니다.' },
+      { range: '4–6주', title: '게임 로직', detail: '플레이어 조작, 충돌, 상태 관리. 작은 미니게임을 완성합니다.' },
+      { range: '7–9주', title: 'UI와 데이터', detail: '인벤토리, 저장·불러오기, 씬 전환을 붙입니다.' },
+      { range: '10–12주', title: '개인 프로젝트', detail: '기획부터 빌드까지 직접. 마지막 주에 발표와 코드 리뷰를 합니다.' },
     ],
   },
   {
@@ -263,10 +263,10 @@ export const eduCourses = [
     level: '입문 ~ 중급',
     summary: '마지막 주에 각자 배포된 주소를 하나씩 들고 나갑니다.',
     outline: [
-      { range: '1~3주', title: 'HTML · CSS · JS', detail: '브라우저가 무엇을 하는지부터. 정적 페이지를 직접 띄웁니다.' },
-      { range: '4~6주', title: 'React와 Next.js', detail: '컴포넌트 사고방식, 상태 관리, 라우팅.' },
-      { range: '7~9주', title: '데이터 연동', detail: 'API 호출, 인증, 데이터베이스 연결.' },
-      { range: '10~12주', title: '배포와 운영', detail: 'Vercel 배포, 도메인 연결, 에러 추적까지 경험합니다.' },
+      { range: '1–3주', title: 'HTML · CSS · JS', detail: '브라우저가 무엇을 하는지부터. 정적 페이지를 직접 띄웁니다.' },
+      { range: '4–6주', title: 'React와 Next.js', detail: '컴포넌트 사고방식, 상태 관리, 라우팅.' },
+      { range: '7–9주', title: '데이터 연동', detail: 'API 호출, 인증, 데이터베이스 연결.' },
+      { range: '10–12주', title: '배포와 운영', detail: 'Vercel 배포, 도메인 연결, 에러 추적까지 경험합니다.' },
     ],
   },
   {
@@ -277,9 +277,9 @@ export const eduCourses = [
     level: '개발 경험자',
     summary: '이미 코드를 쓸 줄 아는 사람이 AI를 실제 제품에 붙이는 법을 배웁니다.',
     outline: [
-      { range: '1~2주', title: 'LLM API 기초', detail: '프롬프트 설계, 토큰과 비용, 스트리밍 응답.' },
-      { range: '3~5주', title: 'RAG 구축', detail: '문서 임베딩, 벡터 검색, 응답 근거 붙이기.' },
-      { range: '6~8주', title: '제품에 통합', detail: '실패 처리, 평가, 배포. 팀 프로젝트로 마무리합니다.' },
+      { range: '1–2주', title: 'LLM API 기초', detail: '프롬프트 설계, 토큰과 비용, 스트리밍 응답.' },
+      { range: '3–5주', title: 'RAG 구축', detail: '문서 임베딩, 벡터 검색, 응답 근거 붙이기.' },
+      { range: '6–8주', title: '제품에 통합', detail: '실패 처리, 평가, 배포. 팀 프로젝트로 마무리합니다.' },
     ],
   },
 ];

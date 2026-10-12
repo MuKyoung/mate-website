@@ -13,7 +13,7 @@ import {
   fadeUp, fadeLeft, fadeRight, riseTiltR, clipUp, clipLeft, clipRight,
   zoomTilt, lineDraw, stagger, inView, onMount,
 } from '@/lib/motion';
-import { btnOutline, btnPrimary, clipWrap, container, displaySize, sectionPad } from '@/lib/styles';
+import { btnOutline, clipWrap, container, displaySize, sectionPad } from '@/lib/styles';
 
 function getYouTubeVideoId(url: string): string | null {
   const patterns = [
@@ -43,14 +43,21 @@ export default function ProjectDetailClient({ params }: Props) {
   /* 갤러리가 대표 이미지 하나만 담고 있으면 위에서 이미 본 그림이다. */
   const gallery = project.images.filter((img) => img !== project.thumbnail);
 
+  // 실제로 그려지는 섹션에만 번호를 매긴다
+  let n = 0;
+  const num = () => String(++n).padStart(2, '0');
+  const overviewNum = overview ? num() : null;
+  const galleryNum = gallery.length > 0 ? num() : null;
+  const ctaNum = num();
+
   return (
     <>
       {/* ── 헤더 - 다크 + 하단 헤어라인 ── */}
-      <section className="pt-40 sm:pt-52 pb-16 sm:pb-24 border-b border-[var(--border)]">
+      <section className="pt-40 sm:pt-52 pb-16 sm:pb-24 border-b border-white/10">
         <div className={container}>
           <motion.div {...onMount} variants={fadeLeft} className="mb-12 sm:mb-16">
             <Link href="/projects"
-              className="group inline-flex items-center gap-2 text-[15px] font-semibold text-[var(--text-3)] hover:text-[var(--text-1)] border-b border-fg/20 hover:border-fg pb-0.5 transition-colors">
+              className="group inline-flex items-center gap-2 text-[15px] font-semibold text-white/55 hover:text-white border-b border-white/20 hover:border-white pb-0.5 transition-colors">
               <FiArrowLeft size={15} className="group-hover:-translate-x-0.5 transition-transform duration-300" />
               프로젝트 목록
             </Link>
@@ -70,15 +77,15 @@ export default function ProjectDetailClient({ params }: Props) {
           </motion.h1>
 
           <motion.p {...onMount} variants={fadeRight}
-            className="text-xl sm:text-2xl text-[var(--text-3)] leading-[1.65] max-w-3xl mb-12 sm:mb-14">
+            className="text-xl sm:text-2xl text-white/55 leading-[1.65] max-w-3xl mb-12 sm:mb-14">
             {project.description}
           </motion.p>
 
-          {/* 액션 - 강조 버튼 / 보조 버튼 / 밑줄 링크 */}
+          {/* 액션 - 화이트 필 / 아웃라인 / 언더라인 링크 */}
           <motion.div {...onMount} variants={fadeUp} className="flex flex-wrap items-center gap-x-8 gap-y-5">
             {project.liveUrl && (
               <a href={project.liveUrl} target="_blank" rel="noopener noreferrer"
-                className={btnPrimary}>
+                className="inline-flex items-center gap-2.5 h-14 px-9 rounded-full text-[15px] font-bold text-[var(--canvas)] bg-white hover:bg-[var(--accent)] hover:text-white transition-colors duration-300">
                 <FiExternalLink size={17} />
                 라이브 데모
               </a>
@@ -92,7 +99,7 @@ export default function ProjectDetailClient({ params }: Props) {
             )}
             {project.githubUrl && (
               <a href={project.githubUrl} target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-[15px] font-semibold text-[var(--text-3)] hover:text-[var(--text-1)] border-b border-fg/20 hover:border-fg pb-0.5 transition-colors">
+                className="inline-flex items-center gap-2 text-[15px] font-semibold text-white/55 hover:text-white border-b border-white/20 hover:border-white pb-0.5 transition-colors">
                 <FiGithub size={16} />
                 GitHub
               </a>
@@ -112,7 +119,7 @@ export default function ProjectDetailClient({ params }: Props) {
               {/* 영상 / 썸네일 - 대형 */}
               {project.youtubeUrl ? (
                 <motion.div {...inView} variants={zoomTilt}
-                  className="relative rounded-thumb overflow-hidden aspect-video bg-[var(--surface)]">
+                  className="relative rounded-[16px] overflow-hidden aspect-video bg-[var(--surface)]">
                   <iframe
                     src={`https://www.youtube.com/embed/${getYouTubeVideoId(project.youtubeUrl)}?rel=0`}
                     title={project.title}
@@ -124,7 +131,7 @@ export default function ProjectDetailClient({ params }: Props) {
                   src={project.thumbnail}
                   alt={project.title}
                   className="aspect-[16/9]"
-                  rounded="rounded-thumb"
+                  rounded="rounded-[16px]"
                   placeholder={<ThumbFallback label={project.category} />}
                 />
               )}
@@ -136,7 +143,7 @@ export default function ProjectDetailClient({ params }: Props) {
                   <motion.p variants={fadeLeft} className="index-num font-en">Overview</motion.p>
                   {/* 헤어라인이 좌→우로 그어짐 */}
                   <motion.span variants={lineDraw}
-                    className="absolute bottom-0 left-0 right-0 h-px bg-[var(--border)] block" />
+                    className="absolute bottom-0 left-0 right-0 h-px bg-white/10 block" />
                 </div>
                 <h2
                   className="text-[var(--text-1)] font-bold tracking-[-0.02em] leading-[1.04] mb-9"
@@ -145,7 +152,7 @@ export default function ProjectDetailClient({ params }: Props) {
                     <motion.span variants={clipLeft} className="block">프로젝트 개요</motion.span>
                   </span>
                 </h2>
-                <motion.p variants={fadeUp} className="text-[17px] text-[var(--text-3)] leading-[1.85] whitespace-pre-line">
+                <motion.p variants={fadeUp} className="text-[17px] text-white/55 leading-[1.85] whitespace-pre-line">
                   {overview}
                 </motion.p>
               </motion.div>
@@ -158,7 +165,7 @@ export default function ProjectDetailClient({ params }: Props) {
                     <motion.p variants={fadeRight} className="index-num font-en">Gallery</motion.p>
                     {/* 헤어라인이 좌→우로 그어짐 */}
                     <motion.span variants={lineDraw}
-                      className="absolute bottom-0 left-0 right-0 h-px bg-[var(--border)] block" />
+                      className="absolute bottom-0 left-0 right-0 h-px bg-white/10 block" />
                   </div>
                   <h2
                     className="text-[var(--text-1)] font-bold tracking-[-0.02em] leading-[1.04] mb-10 sm:mb-12"
@@ -174,7 +181,7 @@ export default function ProjectDetailClient({ params }: Props) {
                         src={img}
                         alt={`${project.title} ${i + 1}`}
                         className="aspect-[16/9]"
-                        rounded="rounded-thumb"
+                        rounded="rounded-xl"
                         placeholder={<ThumbFallback label={project.category} />}
                       />
                     ))}
@@ -206,14 +213,14 @@ export default function ProjectDetailClient({ params }: Props) {
                   <div>
                     {team.map(d => (
                       <div key={d.id}
-                        className="flex items-center justify-between gap-4 py-5 border-b border-[var(--border)]">
+                        className="flex items-center justify-between gap-4 py-5 border-b border-white/10">
                         <div className="min-w-0">
                           <p className="text-[16px] font-bold text-[var(--text-1)]">{d.name}</p>
-                          <p className="text-[14px] text-[var(--text-3)]">{d.label}</p>
+                          <p className="text-[14px] text-white/55">{d.label}</p>
                         </div>
                         <span className="text-2xl font-bold text-[var(--text-1)] font-mono-stat tracking-[-0.02em] flex-shrink-0">
                           {d.count}
-                          <span className="text-[13px] font-bold text-[var(--text-3)] ml-1">명</span>
+                          <span className="text-[13px] font-bold text-white/50 ml-1">명</span>
                         </span>
                       </div>
                     ))}
@@ -226,8 +233,9 @@ export default function ProjectDetailClient({ params }: Props) {
         </div>
       </section>
 
-      {/* ── CTA ── */}
+      {/* ── (03) CTA ── */}
       <CtaSection
+        num={ctaNum}
         line1="비슷한 걸"
         line2="만들고 계신가요"
         kr="기획 단계든 중간에 멈춘 상태든 받습니다"

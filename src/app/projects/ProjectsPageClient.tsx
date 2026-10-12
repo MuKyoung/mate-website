@@ -26,15 +26,16 @@ export default function ProjectsPageClient({ projects }: ProjectsPageClientProps
         description={`게임 · VR ${gameCount}건, 웹 · 앱 ${webCount}건, 강의 ${eduCount}건. 기간은 ${Math.min(...months)}개월에서 ${Math.max(...months)}개월까지였고, 전부 납품이 끝난 것들입니다.`}
       />
 
-      {/* ━━ Work - 텍스트 탭 필터 + 비대칭 2열 그리드 ━━ */}
+      {/* ━━ (01) Work - 텍스트 탭 필터 + 비대칭 2열 그리드 ━━ */}
       <section className={sectionPad}>
         <div className={container}>
           <ProjectFilter projects={projects} />
         </div>
       </section>
 
-      {/* ━━ CTA ━━ */}
+      {/* ━━ (02) CTA ━━ */}
       <CtaSection
+        num="02"
         line1="다음 줄에"
         line2="들어갈 프로젝트"
         kr={`여기 올라온 ${projects.length}건은 전부 납품이 끝난 것입니다`}

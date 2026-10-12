@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { DOC_TEMPLATES, MEMBERS, memberById, type Doc } from './types';
-import { isUntouchedSampleDoc, type DocStore } from './docStore';
+import type { DocStore } from './docStore';
 import Markdown, { extractHeadings } from './Markdown';
 import { Avatar, ghBtn, ghBtnPrimary, ghField, useFocusTrap } from './ui';
 
@@ -114,7 +114,7 @@ function NewDocDialog({
         </div>
 
         <div className="px-5 py-5">
-          <p className="mb-1.5 text-[14px] font-semibold text-gh-fg">양식</p>
+          <p className="mb-1.5 text-[12px] font-semibold uppercase tracking-wide text-gh-fg-muted">양식</p>
           <div className="mb-5 grid gap-2 sm:grid-cols-2">
             {DOC_TEMPLATES.map((t) => (
               <button key={t.id} onClick={() => setPicked(t.id)}
@@ -129,13 +129,13 @@ function NewDocDialog({
             ))}
           </div>
 
-          <label className="mb-1.5 block text-[14px] font-semibold text-gh-fg" htmlFor="doc-title">
+          <label className="mb-1.5 block text-[12px] font-semibold uppercase tracking-wide text-gh-fg-muted" htmlFor="doc-title">
             제목
           </label>
           <input id="doc-title" value={title} onChange={(e) => setTitle(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter' && title.trim()) onCreate(picked, title.trim()); }}
             placeholder="검색해서 찾을 수 있는 이름으로"
-            className={`w-full ${ghField}`} />
+            className="w-full rounded-md border border-gh-border-strong bg-gh-canvas px-3 py-2 text-[14.5px] text-gh-fg outline-none transition focus:border-gh-accent focus:ring-2 focus:ring-gh-accent/20" />
         </div>
 
         <div className="flex items-center justify-end gap-2 border-t border-gh-border bg-gh-canvas-subtle px-5 py-3.5">
@@ -183,9 +183,6 @@ export default function Docs({ store, me, onTaskClick }: {
   const [confirming, setConfirming] = useState(false);
 
   const tree = useMemo(() => buildTree(store.docs), [store.docs]);
-
-  /** 아무도 고치지 않은 예시 문서 수 - 안내 띠를 띄울지 정한다 */
-  const sampleCount = useMemo(() => store.docs.filter(isUntouchedSampleDoc).length, [store.docs]);
 
   /** 트리를 평탄화한 목록 - 좁은 화면의 선택기에 쓴다 */
   const flat = useMemo(() => {
@@ -292,24 +289,7 @@ export default function Docs({ store, me, onTaskClick }: {
   const author = memberById(doc?.author ?? null);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-
-      {/* 예시 문서 안내 - 규칙 문서의 모양을 하고 있어, 말해 주지 않으면 팀이 정한 규칙으로 읽힌다 */}
-      {sampleCount > 0 && (
-        <div role="status"
-          className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1.5 border-b border-gh-attention-border bg-gh-attention-subtle px-4 py-2 text-[13.5px] text-gh-fg">
-          <span>
-            <strong className="font-semibold">예시 문서 {sampleCount}건</strong>이 들어 있습니다.
-            쓰는 법을 보여 주려고 채운 글이고 팀이 정한 규칙이 아닙니다. 고쳐 쓰면 그 문서는 예시에서 빠집니다.
-          </span>
-          <button onClick={() => { store.clearSamples(); setActiveId(null); }}
-            className={`${ghBtn} ml-auto h-7 px-2.5 text-[13px]`}>
-            예시 지우기
-          </button>
-        </div>
-      )}
-
-      <div className="flex min-h-0 flex-1">
+    <div className="flex min-h-0 flex-1">
 
       {/* 문서 트리 */}
       <aside className="hidden w-[244px] shrink-0 flex-col border-r border-gh-border bg-gh-canvas md:flex">
@@ -421,15 +401,15 @@ export default function Docs({ store, me, onTaskClick }: {
           <div className="min-h-0 flex-1 overflow-y-auto">
             {editing ? (
               <div className="mx-auto max-w-[900px] p-5">
-                <label className="mb-1.5 block text-[14px] font-semibold text-gh-fg" htmlFor="doc-edit-title">
+                <label className="mb-1.5 block text-[12px] font-semibold uppercase tracking-wide text-gh-fg-muted" htmlFor="doc-edit-title">
                   제목
                 </label>
                 <input id="doc-edit-title" value={doc.title}
                   onChange={(e) => store.update(doc.id, { title: e.target.value })}
-                  className="mb-4 w-full rounded-md border border-gh-border bg-gh-canvas px-3 py-2 text-[16px] font-semibold text-gh-fg outline-none transition-shadow duration-150 focus:border-gh-accent focus:shadow-[0_0_0_3px_rgba(9,105,218,0.1)]" />
+                  className="mb-4 w-full rounded-md border border-gh-border-strong bg-gh-canvas px-3 py-2 text-[16px] font-semibold text-gh-fg outline-none transition focus:border-gh-accent focus:ring-2 focus:ring-gh-accent/20" />
 
                 <div className="mb-1.5 flex flex-wrap items-center gap-1">
-                  <label className="mr-2 text-[14px] font-semibold text-gh-fg" htmlFor="doc-edit-body">
+                  <label className="mr-2 text-[12px] font-semibold uppercase tracking-wide text-gh-fg-muted" htmlFor="doc-edit-body">
                     본문
                   </label>
                   {TOOLS.map((t) => (
@@ -512,7 +492,6 @@ export default function Docs({ store, me, onTaskClick }: {
           onCreate={handleCreate}
           onClose={() => setCreatingUnder(undefined)} />
       )}
-      </div>
     </div>
   );
 }

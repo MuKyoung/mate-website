@@ -9,12 +9,12 @@ import { btnPrimary, displaySize, linkUnderline } from '@/lib/styles';
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen flex items-center px-6">
+    <div className="min-h-screen flex items-center px-4 sm:px-6">
       <motion.div {...onMount} variants={stagger} className="container mx-auto max-w-3xl">
         {/* 로고 */}
         <motion.div variants={fadeUp} className="mb-14">
           <Link href="/" className="inline-block hover:opacity-80 transition-opacity">
-            <Image src="/images/logo.png" alt="MATE" width={120} height={38} className="logo-auto h-8 w-auto" />
+            <Image src="/images/logo.png" alt="MATE" width={120} height={38} className="h-8 w-auto brightness-0 invert" />
           </Link>
         </motion.div>
 
@@ -24,7 +24,7 @@ export default function NotFound() {
             404 Not Found
           </motion.p>
           <motion.span variants={lineDraw}
-            className="absolute bottom-0 left-0 right-0 h-px bg-[var(--border)] block" />
+            className="absolute bottom-0 left-0 right-0 h-px bg-white/10 block" />
         </div>
 
         {/* 대형 타이틀 */}
@@ -36,7 +36,7 @@ export default function NotFound() {
           </span>
         </motion.h1>
 
-        <motion.p variants={fadeRight} className="text-[15px] sm:text-[16px] text-[var(--text-3)] leading-[1.75] mb-12 max-w-md">
+        <motion.p variants={fadeRight} className="text-[15px] sm:text-[16px] text-white/55 leading-[1.75] mb-12 max-w-md">
           요청하신 페이지가 존재하지 않거나 이동되었을 수 있습니다.
         </motion.p>
 

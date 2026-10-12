@@ -3,44 +3,60 @@
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { FiArrowUpRight } from 'react-icons/fi';
-import { fadeUp, inView } from '@/lib/motion';
-import { arrowHover, btnOnBrand, container, CONTACT_EMAIL, linkOnBrand } from '@/lib/styles';
+import { fadeUp, fadeLeft, fadeRight, clipUp, clipLeft, stagger, inView } from '@/lib/motion';
+import {
+  arrowHover, btnPrimary, clipWrap, container, CONTACT_EMAIL,
+  displaySizeLg, linkUnderline, sectionPadLg,
+} from '@/lib/styles';
 
 interface CtaSectionProps {
-  /** 큰 문장 1행 - 페이지마다 다르게 넘긴다 */
+  /** 섹션 번호 라벨 (예: '06') */
+  num: string;
+  /** 대형 헤딩 1행 - 페이지마다 다르게 넘긴다 */
   line1: string;
-  /** 큰 문장 2행 */
+  /** 대형 헤딩 2행 - 액센트 강조 */
   line2: string;
-  /** 한 줄 설명 */
+  /** 국문 캡션 (- 프리픽스 자동) */
   kr: string;
   /** 버튼 문구 */
   cta?: string;
 }
 
 /**
- * 페이지 하단 공통 문의 - 대표 색상의 둥근 면에 문장 + 한 줄 설명 + 버튼 + 이메일.
+ * 페이지 하단 공통 CTA - 대형 스테이트먼트 + 국문 캡션 + 화이트 필 버튼 + 이메일.
  * 모든 페이지가 같은 마무리를 갖도록 하나로 관리한다.
- * 영역 페이지에서 불려도 색은 바뀌지 않는다. 문의는 공통 영역이라 대표 색상을 쓴다.
  */
-export default function CtaSection({ line1, line2, kr, cta = '프로젝트 문의' }: CtaSectionProps) {
+export default function CtaSection({ num, line1, line2, kr, cta = '프로젝트 문의' }: CtaSectionProps) {
   return (
-    <section className="py-12 sm:py-20">
+    <section className={`${sectionPadLg} border-t border-white/10`}>
       <div className={container}>
-        <motion.div {...inView} variants={fadeUp}
-          className="on-brand -mx-3 rounded-block px-6 py-12 medium:mx-0 medium:px-12 medium:py-16">
-          <p className="text-sub font-medium text-[var(--text-3)]">문의</p>
-          <h2 className="mt-4 text-ext font-bold">
-            <span className="block">{line1}</span>
-            <span className="block">{line2}</span>
-          </h2>
-          <p className="mt-5 max-w-xl text-body text-[var(--text-2)]">{kr}</p>
-          <div className="mt-9 flex flex-wrap items-center gap-x-7 gap-y-5">
-            <Link href="/contact" className={btnOnBrand}>
-              {cta}
-              <FiArrowUpRight aria-hidden size={17} className={arrowHover} />
-            </Link>
-            <a href={`mailto:${CONTACT_EMAIL}`} className={linkOnBrand}>{CONTACT_EMAIL}</a>
-          </div>
+        <motion.p {...inView} variants={fadeUp} className="index-num font-en mb-10">
+          Contact
+        </motion.p>
+
+        <motion.h2 {...inView} variants={stagger}
+          className="text-[var(--text-1)] font-bold tracking-[-0.02em] leading-[1.1] mb-8"
+          style={displaySizeLg}>
+          <span className={clipWrap}>
+            <motion.span variants={clipLeft} className="block">{line1}</motion.span>
+          </span>
+          <span className={clipWrap}>
+            <motion.span variants={clipUp} className="block text-[var(--point)]">{line2}</motion.span>
+          </span>
+        </motion.h2>
+
+        <motion.p {...inView} variants={fadeLeft} className="caption-kr mb-14 sm:mb-20">
+          {kr}
+        </motion.p>
+
+        <motion.div {...inView} variants={fadeRight} className="flex flex-wrap items-center gap-8">
+          <Link href="/contact" className={btnPrimary}>
+            {cta}
+            <FiArrowUpRight size={17} className={arrowHover} />
+          </Link>
+          <a href={`mailto:${CONTACT_EMAIL}`} className={linkUnderline}>
+            {CONTACT_EMAIL}
+          </a>
         </motion.div>
       </div>
     </section>
