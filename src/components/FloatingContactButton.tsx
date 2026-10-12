@@ -9,11 +9,14 @@ import { FiMessageCircle } from 'react-icons/fi';
  *
  * 좁은 화면에서는 아래 탭의 '문의'가 같은 자리를 맡으므로 띄우지 않는다.
  * 그림자 대신 색으로 띄운다. 파란 단색 면이라 어느 바탕에서도 구분된다.
+ *
+ * 홈에는 띄우지 않는다. 화면마다 바탕이 달라 파란 면 위에서는 버튼이 묻히고,
+ * 문의로 가는 길은 첫 화면과 마지막 화면, 상단 바에 이미 있다.
  */
 export default function FloatingContactButton() {
   const pathname = usePathname();
 
-  if (pathname === '/contact' || pathname === '/contact/') return null;
+  if (pathname === '/' || pathname === '/contact' || pathname === '/contact/') return null;
   if (pathname.startsWith('/taskmanager') || pathname.startsWith('/company-profile')) return null;
 
   return (

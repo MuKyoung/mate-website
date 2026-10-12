@@ -15,7 +15,8 @@ export default function SmoothScroll() {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const coarse = window.matchMedia('(pointer: coarse)').matches;
     // 관성 스크롤은 읽는 화면용이다. 작업 도구에서는 스크롤이 정확해야 한다.
-    if (reduced || coarse || pathname.startsWith('/taskmanager')) return;
+    // 홈은 화면 한 장씩 달라붙는 풀페이지라 관성 스크롤과 같이 쓸 수 없다.
+    if (reduced || coarse || pathname === '/' || pathname.startsWith('/taskmanager')) return;
 
     const lenis = new Lenis({
       duration: 1.05,

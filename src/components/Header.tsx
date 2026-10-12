@@ -27,6 +27,9 @@ export const isActivePath = (pathname: string, href: string) =>
  *
  * 늘 보인다. 맨 위에서는 바탕과 같은 면이고, 내려가면 뒤가 비치는 흐린 면이 되어
  * 지나온 화면과 이어져 보인다. 그림자는 쓰지 않는다.
+ *
+ * 홈(풀페이지)에서는 다르게 움직인다. 화면마다 바탕이 달라서, 지금 상단 바 아래에
+ * 놓인 화면의 바탕색과 글자색을 그대로 입는다 (fp-head - globals.css, home/FullPage.tsx).
  */
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
@@ -42,10 +45,13 @@ export default function Header() {
   // 작업 관리 도구는 자체 셸을 쓴다 - 마케팅 헤더가 끼어들지 않게 한다
   if (pathname.startsWith('/taskmanager')) return null;
 
+  const home = pathname === '/';
+
   return (
     <header
       className={`fixed inset-x-0 top-0 z-50 border-b transition-[background-color,border-color] duration-300 ease-calm ${
-        scrolled ? 'border-[var(--border)] bg-canvas/80 backdrop-blur-xl' : 'border-transparent bg-canvas'
+        home ? 'fp-head border-transparent bg-canvas'
+          : scrolled ? 'border-[var(--border)] bg-canvas/80 backdrop-blur-xl' : 'border-transparent bg-canvas'
       }`}>
       <nav aria-label="주 메뉴" className={`${container} flex h-16 items-center justify-between gap-4`}>
 

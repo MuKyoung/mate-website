@@ -1,9 +1,9 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import Link from 'next/link';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { FiArrowUpRight, FiArrowLeft, FiArrowRight, FiPause, FiPlay } from 'react-icons/fi';
+import { FiArrowUpRight, FiArrowLeft, FiArrowRight } from 'react-icons/fi';
 import SafeImage from '@/components/SafeImage';
 import ThumbFallback from '@/components/ThumbFallback';
 import { projects } from '@/data/projects';
@@ -15,14 +15,12 @@ import { arrowHover, container, linkUnderline, CONTACT_EMAIL } from '@/lib/style
 
 const d = domainByKey.game;
 const work = projects.filter((p) => p.category === 'Game Application' || p.category === 'VR Application');
-const reel = work.filter((p) => p.thumbnail);
 
 const credentials = gameCredentials;
 
 export default function GameClient() {
   const heroRef = useRef<HTMLDivElement>(null);
   const railRef = useRef<HTMLDivElement>(null);
-  const [reelPaused, setReelPaused] = useState(false);
 
   // 히어로 배경만 느리게 밀려 시차를 만든다
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
@@ -85,30 +83,6 @@ export default function GameClient() {
             ))}
           </motion.div>
         </motion.div>
-      </section>
-
-      {/* ━━━━━━ REEL - 썸네일 마퀴 ━━━━━━ */}
-      <section className="py-14 sm:py-20 overflow-hidden border-y border-[var(--border)]">
-        <div className="flex gap-4 animate-marquee w-max" style={reelPaused ? { animationPlayState: 'paused' } : undefined}>
-          {[...reel, ...reel].map((p, i) => (
-            <div key={`${p.id}-${i}`}
-              className="relative w-[240px] sm:w-[320px] aspect-[16/10] rounded-chip overflow-hidden shrink-0 border border-[var(--border)]">
-              <SafeImage src={p.thumbnail} alt={p.title} fill className="absolute inset-0" />
-              <div className="absolute inset-0"
-                style={{ background: 'linear-gradient(0deg, var(--canvas), transparent 62%)' }} />
-              <p className="absolute bottom-3 left-4 right-4 type-c1 font-bold text-[var(--text-1)] truncate">{p.title}</p>
-            </div>
-          ))}
-        </div>
-        {/* 저절로 움직이는 것에는 멈춤 버튼을 둔다 */}
-        <div className={`${container} mt-6 motion-reduce:hidden`}>
-          <button type="button" onClick={() => setReelPaused((v) => !v)} aria-pressed={reelPaused}
-            className="inline-flex h-9 items-center gap-1.5 rounded-pill bg-fg/10 px-3.5 text-min font-medium text-[var(--text-1)]
-                       transition-colors duration-150 ease-calm hover:bg-fg/[0.16]">
-            {reelPaused ? <FiPlay aria-hidden size={14} /> : <FiPause aria-hidden size={14} />}
-            {reelPaused ? '다시 흐르게' : '멈춤'}
-          </button>
-        </div>
       </section>
 
       {/* ━━━━━━ CAPABILITIES - 가로 스크롤 레일 ━━━━━━ */}

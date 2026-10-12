@@ -8,12 +8,62 @@ import { fadeUp, inView } from '@/lib/motion';
 import { container } from '@/lib/styles';
 
 /**
- * 홈을 짓는 조각들.
+ * 화면을 짓는 조각들.
  *
- * 화면은 둘로 나눈다. 보는 곳(제목과 요약 - 누를 것이 없다)과 다루는 곳(카드와 목록).
- * 좁은 화면에서는 위아래로, 넓은 화면(600px~)에서는 좌우 두 단으로 놓는다.
+ * 홈은 풀페이지다 - 화면 한 장이 창 하나를 채운다 (Screen · ScreenBody · Eyebrow).
+ * 브랜드 가이드처럼 길게 읽는 페이지는 두 단 섹션으로 짓는다 (Section):
+ * 보는 곳(제목과 요약)과 다루는 곳(카드와 목록)을 나누고, 600px 부터 좌우로 놓는다.
  * 두 단의 비율은 600~960px 에서 42:58, 그보다 넓으면 38:62 다.
  */
+
+/**
+ * 화면의 바탕.
+ *  auto  - 테마를 따른다
+ *  dark  - 테마와 상관없이 어둡다 (그림을 거는 자리)
+ *  photo - 사진을 깐다. 글자는 흰색
+ *  brand - 대표 색상 면. 글자는 흰색
+ * 상단 바와 화면 표시 점이 이 값을 보고 자기 색을 고른다 (globals.css 의 data-head / data-mid).
+ */
+export type Tone = 'auto' | 'dark' | 'photo' | 'brand';
+
+const TONE: Record<Tone, string> = {
+  auto: '',
+  dark: 'theme-dark bg-[var(--canvas)] text-[var(--text-1)]',
+  photo: 'theme-dark bg-[#080808] text-[var(--text-1)]',
+  brand: 'on-brand',
+};
+
+/** 풀페이지의 화면 한 장. 제목에는 `${id}-title` 을 id 로 단다. */
+export function Screen({ id, tone = 'auto', children }: { id: string; tone?: Tone; children: ReactNode }) {
+  return (
+    <section id={id} data-tone={tone} aria-labelledby={`${id}-title`}
+      className={`fp-screen relative flex flex-col overflow-hidden ${TONE[tone]}`}>
+      {children}
+    </section>
+  );
+}
+
+/**
+ * 화면의 내용이 놓이는 자리. 세로 가운데에 놓는다.
+ * 위는 상단 바(64px)만큼, 좁은 화면의 아래는 탭(56px)만큼 비운다.
+ *
+ * 넓은 화면의 여백은 창 높이를 따라 줄어든다. 노트북은 주소창과 탭을 빼면 창 높이가
+ * 600~660px 밖에 안 되는데, 그 높이에도 화면 한 장이 다 들어와야 한다.
+ */
+export function ScreenBody({ children, className = '' }: { children: ReactNode; className?: string }) {
+  return (
+    <div className={`${container} relative flex flex-1 flex-col justify-center
+                     pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] pt-20
+                     expanded:pb-[clamp(1.25rem,4.5svh,3rem)] expanded:pt-[clamp(4.75rem,10.5svh,6rem)] ${className}`}>
+      {children}
+    </div>
+  );
+}
+
+/** 화면 이름 - 제목 위에 작게 붙는다 */
+export function Eyebrow({ children, className = 'text-[var(--accent)]' }: { children: ReactNode; className?: string }) {
+  return <p className={`text-sub font-medium uppercase tracking-[0.14em] ${className}`}>{children}</p>;
+}
 
 /** 두 단의 폭 - 히어로와 섹션이 같은 비율을 쓴다 */
 export const panes = 'grid medium:grid-cols-[42fr_58fr] wide:grid-cols-[38fr_62fr]';

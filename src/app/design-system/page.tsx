@@ -1,13 +1,14 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import { domains } from '@/data/domains';
+import { stockList } from '@/data/stock';
 import { Badge, Card, GroupLabel, Row, Section } from '@/components/home/kit';
 import { btnOnBrand, btnOnBrandQuiet, btnOutline, btnPrimary, container } from '@/lib/styles';
 import { Swatch, TypeRow } from './Live';
 
 export const metadata: Metadata = {
   title: 'Brand Guide',
-  description: 'MATE 브랜드 가이드 · 로고, 대표 색상, 말투, 글자, 모양, 움직임, 부품, 공유 이미지.',
+  description: 'MATE 브랜드 가이드 · 로고, 대표 색상, 말투, 글자, 모양, 움직임, 부품, 사진, 공유 이미지.',
   robots: { index: false, follow: false },
 };
 
@@ -61,9 +62,19 @@ const BLUE = [
   { token: '--primary-600', name: 'blue 600' },
 ];
 
-/** 글자 크기 아홉 단계 + 첫 화면 문장 */
+/** 사진을 쓸 때 지키는 것 */
+const PHOTO_RULES = [
+  ['한 장은 한 곳에만 씁니다', '같은 사진을 여러 화면에 되풀이하지 않습니다.'],
+  ['저희가 만든 것은 저희 그림으로 보여 줍니다', '작업을 소개하는 자리(최근 작업, 포트폴리오)에는 스톡 사진을 쓰지 않습니다.'],
+  ['스톡 사진은 분위기만 잡습니다', '사람, 상표, 어느 도시인지 알아볼 수 있는 풍경, 저희 사무실이나 설비로 읽힐 수 있는 사진은 쓰지 않습니다.'],
+  ['써도 되는 사진만 씁니다', '상업적으로 써도 되는 라이선스의 사진만 받고, 받은 곳을 아래 목록에 남깁니다.'],
+  ['글자를 올리면 대비를 잽니다', '사진 위 글자는 뒤에 놓인 픽셀을 기준으로 4.5:1 이상이 되게 어두운 막을 깝니다.'],
+] as const;
+
+/** 글자 크기 아홉 단계 + 홈에서만 쓰는 큰 문장 둘 */
 const TYPE = [
-  { name: '첫 화면', cls: 'type-hero', sample: '멈추지 않게', use: '홈의 문장 하나' },
+  { name: '첫 화면', cls: 'type-hero', sample: '멈추지 않게', use: '홈 첫 화면의 문장' },
+  { name: '화면 문장', cls: 'type-screen', sample: '맡아서 만들고,', use: '홈의 화면마다 한 문장' },
   { name: '40', cls: 'text-ext font-bold', sample: '일하는 방식', use: '큰 제목' },
   { name: '20', cls: 'text-dlg font-medium', sample: '카드의 제목', use: '카드 제목' },
   { name: '19', cls: 'text-ttl', sample: '상단 바의 제목', use: '상단 바' },
@@ -243,7 +254,7 @@ export default function BrandGuidePage() {
         <Card className={pad}>
           <p className={note}>
             40과 20 사이에는 단계가 없습니다. 참고한 가이드라인에도 비어 있어 중간 크기를 만들지 않았습니다.
-            40보다 큰 글자는 홈 첫 화면의 문장 하나뿐이고, 이 크기와 행간, 굵기(700 · 500 · 400)는 저희가 정한 값입니다.
+            40보다 큰 글자는 홈에서만 씁니다(첫 화면의 문장, 화면마다 한 문장). 이 크기와 행간, 굵기(700 · 500 · 400)는 저희가 정한 값입니다.
             글자는 200%까지 키워도 내용이 잘리지 않아야 합니다.
           </p>
         </Card>
@@ -265,8 +276,9 @@ export default function BrandGuidePage() {
           <ul>
             <Row main="좌우 여백 24px" sub="글과 누르는 것은 화면 가장자리에서 24px 이상 떨어집니다." />
             <Row main="누르는 것 사이 8px" sub="나란히 놓인 버튼과 탭은 8px 이상 띄웁니다." />
+            <Row main="홈은 화면 한 장씩" sub="홈은 화면 한 장이 창 하나를 채우고 한 장씩 넘어갑니다. 넓은 창에서는 반드시 화면 머리에 서고, 휴대폰에서는 가까이 갔을 때만 달라붙습니다. 창이 낮아지면 여백과 사진이 같이 줄어 한 장에 들어옵니다." />
             <Row main="보는 곳과 다루는 곳" sub="제목과 요약은 위(넓은 화면에서는 왼쪽), 카드와 버튼은 아래(오른쪽)에 둡니다. 가장 중요한 동작은 맨 아래에 둡니다." />
-            <Row main="두 단의 비율" sub="화면 폭 600px부터 두 단으로 놓습니다. 600~960px은 42:58, 그보다 넓으면 38:62입니다." />
+            <Row main="두 단의 비율" sub="이 가이드처럼 길게 읽는 페이지는 화면 폭 600px부터 두 단으로 놓습니다. 600~960px은 42:58, 그보다 넓으면 38:62입니다." />
             <Row main="메뉴의 자리" sub="좁은 화면에서는 엄지가 닿는 아래 탭, 840px부터는 상단 바입니다. 탭은 글자만 쓰고 다섯 개를 넘기지 않습니다." />
           </ul>
         </Card>
@@ -278,7 +290,7 @@ export default function BrandGuidePage() {
             <Row main="100~500ms" sub="알아챌 수 있을 만큼은 길게, 다음 동작을 가로막지 않을 만큼은 짧게." />
             <Row main="곡선 하나" sub="빠르게 붙고 천천히 멎습니다. cubic-bezier(0.22, 0.25, 0, 1)" />
             <Row main="멀리서 날아오지 않습니다" sub="요소는 제자리 가까이에서 나타납니다. 기울이거나 튕기지 않습니다." />
-            <Row main="저절로 움직이면 멈출 수 있게" sub="5초 넘게 움직이는 것(첫 화면의 작업 벽)에는 멈춤 버튼을 둡니다. 움직임을 줄여 달라고 한 기기에서는 처음부터 서 있습니다." />
+            <Row main="저절로 움직이면 멈출 수 있게" sub="5초 넘게 저절로 움직이는 것을 두게 되면 멈춤 버튼을 답니다. 지금은 저절로 움직이는 요소가 없습니다." />
           </ul>
         </Card>
       </Section>
@@ -305,6 +317,39 @@ export default function BrandGuidePage() {
             <Row main="값을 보여 주는 줄" trail="값" />
             <Row main="상태를 보여 주는 줄" trail={<Badge>제작 중</Badge>} />
           </ul>
+        </Card>
+      </Section>
+
+      <Section id="photo" title="사진" summary="홈의 분위기는 사진으로 잡습니다. 저희가 찍은 사진이 아직 없어 바깥 사진을 쓰고 있고, 어디서 받았는지 여기에 적어 둡니다.">
+        <Card>
+          <ul>
+            {PHOTO_RULES.map(([rule, detail]) => <Row key={rule} main={rule} sub={detail} />)}
+          </ul>
+        </Card>
+        <GroupLabel>지금 쓰는 사진 {stockList.length}장</GroupLabel>
+        <ul className="-mx-3 grid gap-3 medium:mx-0 wide:grid-cols-2">
+          {stockList.map((ph) => (
+            <li key={ph.src} className="rounded-block bg-surface p-3">
+              <div className="relative aspect-[16/9] overflow-hidden rounded-thumb bg-surface-2">
+                <Image src={ph.src} alt={ph.what} fill sizes="(min-width: 960px) 30vw, 100vw" className="object-cover" />
+              </div>
+              <div className="px-3 pb-2 pt-3">
+                <p className="text-sub font-medium text-[var(--text-1)]">{ph.what}</p>
+                <p className="text-min text-[var(--text-3)]">{ph.where}</p>
+                <p className="mt-1.5 text-min text-[var(--text-3)]">
+                  사진 {ph.by} ·{' '}
+                  <a href={ph.source} target="_blank" rel="noopener noreferrer"
+                    className="font-medium text-[var(--accent)] underline underline-offset-2">Unsplash 원본</a>
+                </p>
+              </div>
+            </li>
+          ))}
+        </ul>
+        <Card className={pad}>
+          <p className={note}>
+            모두 Unsplash 라이선스로 공개된 사진입니다. 상업적 이용과 수정이 허용되고 출처 표기는 의무가 아니지만, 바꿀 때 헷갈리지 않게 적어 둡니다.
+            팀이나 사무실, 자체 게임의 사진과 그림이 준비되면 그쪽으로 바꿉니다.
+          </p>
         </Card>
       </Section>
 

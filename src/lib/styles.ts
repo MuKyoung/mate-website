@@ -37,6 +37,12 @@ export const btnOnBrand =
 /** 파란 면 위의 보조 버튼 - 옅은 흰 면 */
 export const btnOnBrandQuiet = `${btnBase} text-gray-50 bg-white/15 hover:bg-white/25`;
 
+/**
+ * 사진 위의 보조 버튼 - 비치지 않는 회색 면.
+ * 비치는 면을 쓰면 뒤에 밝은 것이 지나갈 때 글자가 묻힌다. 어두운 테마 구역 안에서 쓴다.
+ */
+export const btnOnPhotoQuiet = `${btnBase} text-fg bg-surface-2 hover:bg-fg/20`;
+
 /* ── Links ────────────────────────────────────────────── */
 
 /** 밑줄 글자 링크 */

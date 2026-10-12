@@ -9,6 +9,8 @@ import { isActivePath } from '@/components/Header';
  *
  * 한 손으로 쥐었을 때 엄지가 닿는 곳에 둔다. 탭은 글자만 쓰고 다섯 개를 넘기지 않는다.
  * 옆으로 밀어 넘기는 동작은 붙이지 않는다. 웹 · 앱, 게임 · XR, 교육은 '서비스' 안에 있다.
+ *
+ * 홈(풀페이지)에서는 지금 밑에 놓인 화면의 색을 입는다 (fp-foot - globals.css).
  */
 const tabs = [
   { href: '/services', label: '서비스', also: ['/web', '/game', '/education'] },
@@ -23,7 +25,8 @@ export default function BottomNav() {
 
   return (
     <nav aria-label="주 메뉴"
-      className="pb-safe fixed inset-x-0 bottom-0 z-50 border-t border-[var(--border)] bg-canvas/90 backdrop-blur-xl expanded:hidden">
+      className={`pb-safe fixed inset-x-0 bottom-0 z-50 border-t border-[var(--border)] bg-canvas/90 backdrop-blur-xl
+                  transition-colors duration-300 ease-calm expanded:hidden ${pathname === '/' ? 'fp-foot' : ''}`}>
       <ul className="mx-auto flex h-14 max-w-[600px] items-stretch gap-2 px-6">
         {tabs.map((t) => {
           const active = [t.href, ...t.also].some((h) => isActivePath(pathname, h));
