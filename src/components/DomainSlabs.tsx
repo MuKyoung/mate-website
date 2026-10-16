@@ -19,7 +19,9 @@ import { container } from '@/lib/styles';
 const SLAB = {
   web: {
     href: '/web',
-    bg: null as string | null,
+    // 포트폴리오의 세종호이스트크레인 홈페이지 첫 화면에 걸린 사진.
+    // 화면 캡처를 깔면 그 사이트의 제목과 메뉴, 협력사 로고 띠가 이쪽 글자 뒤로 비쳐 사진만 쓴다.
+    bg: '/images/projects/세종호이스트크레인-메인.webp' as string | null,
     note: '설계 문서에서 시작해 배포까지',
   },
   game: {
