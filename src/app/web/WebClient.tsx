@@ -275,8 +275,8 @@ export default function WebClient() {
               <motion.div {...inView} variants={fadeRight}
                 className="lg:col-span-5 lg:self-end lg:pb-3 flex items-end justify-between gap-6">
                 <p className="type-b3 text-white/50 leading-[1.85]">
-                  납품이 끝난 건만 올립니다. 공개되지 않은 화면은 싣지 않고, 무엇을 어떤 구성으로
-                  만들었는지만 적습니다.
+                  납품이 끝난 건만 올립니다. 공개되지 않은 화면은 싣지 않고, 무엇을 만들었는지만
+                  적습니다.
                 </p>
                 <Link href="/projects"
                   className="group inline-flex items-center gap-1.5 type-b4 text-white/70 hover:text-gray-50 transition-colors whitespace-nowrap">
@@ -301,10 +301,6 @@ export default function WebClient() {
                 </motion.div>
               ))}
             </motion.div>
-
-            <motion.p {...inView} variants={fadeUp} className="mt-8 type-c1 text-white/50">
-              논디 · Chatudy · 큐어팜은 React · Next.js 프론트에 Flutter 앱, Python 백엔드, AWS 배포 구성입니다.
-            </motion.p>
           </div>
         </section>
       )}

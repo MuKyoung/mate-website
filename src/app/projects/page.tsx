@@ -4,7 +4,7 @@ import { projects } from '@/data/projects';
 
 const siteUrl = 'https://devteammate.co.kr';
 
-const description = `납품이 끝난 프로젝트 ${projects.length}건. 게임 · VR, 웹 · 앱, 강의까지 기술 구성을 함께 공개합니다.`;
+const description = `납품이 끝난 프로젝트 ${projects.length}건. 게임 · VR, 웹 · 앱, 강의로 나눠 정리했습니다.`;
 
 export const metadata: Metadata = {
   title: '프로젝트 포트폴리오',

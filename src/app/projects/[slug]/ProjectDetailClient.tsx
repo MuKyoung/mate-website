@@ -187,20 +187,7 @@ export default function ProjectDetailClient({ params }: Props) {
               )}
             </div>
 
-            {/* 사이드바 - 룰탑 블록 */}
-            <div className="lg:col-span-1 space-y-16">
-
-              {/* 기술 스택 */}
-              <motion.div {...inView} variants={fadeRight} className="rule-top">
-                <p className="index-num font-en mb-6">Tech stack</p>
-                <div className="flex flex-wrap gap-2">
-                  {project.techStack.map((tech) => (
-                    <span key={tech} className="tag">{tech}</span>
-                  ))}
-                </div>
-              </motion.div>
-
-            </div>
+            {/* 오른쪽 한 칸은 비워 둔다. 기술 스택을 싣던 자리인데 기술은 노출하지 않기로 했다 */}
 
           </div>
         </div>

@@ -257,11 +257,6 @@ export default function GameClient() {
                       </h3>
                     </div>
                     <p className="mt-2.5 type-b3 text-white/50 leading-[1.7] line-clamp-2">{p.description}</p>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {p.techStack.slice(0, 4).map((t) => (
-                        <span key={t} className="type-c2 px-2.5 py-1 rounded-[5px] bg-white/[0.05] text-white/55 font-en">{t}</span>
-                      ))}
-                    </div>
                   </Link>
                 </motion.article>
               );

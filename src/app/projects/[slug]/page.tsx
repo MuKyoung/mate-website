@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: project.title,
     description: `${project.description} | 유니티 외주 개발, 개발 강의 전문`,
-    keywords: `외주 개발, ${project.category}, ${project.techStack.join(', ')}`,
+    keywords: `외주 개발, ${project.category}`,
     alternates: {
       canonical: projectUrl,
     },

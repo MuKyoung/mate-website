@@ -23,11 +23,10 @@ export interface Project {
   /** 공개 가능한 대표 이미지. 없으면 ThumbFallback 이 대신 선다 */
   thumbnail?: string;
   images: string[];
-  techStack: string[];
   liveUrl?: string;
   githubUrl?: string;
   youtubeUrl?: string; // 유튜브 영상 URL (선택사항) - 있으면 썸네일 대신 영상 표시
-  // 개발 기간과 참여 인원은 두지 않는다 - 사이트에 노출하지 않기로 했다
+  // 개발 기간, 참여 인원, 기술 스택은 두지 않는다 - 사이트에 노출하지 않기로 했다
   category: string;
 }
 
