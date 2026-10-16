@@ -27,9 +27,7 @@ export interface Project {
   liveUrl?: string;
   githubUrl?: string;
   youtubeUrl?: string; // 유튜브 영상 URL (선택사항) - 있으면 썸네일 대신 영상 표시
-  teamMembers: string[]; // member IDs
-  /** 개발 기간 (개월). 확인되지 않았으면 비워 두고, 화면에는 기간을 적지 않는다 */
-  durationMonths?: number;
+  // 개발 기간과 참여 인원은 두지 않는다 - 사이트에 노출하지 않기로 했다
   category: string;
 }
 

@@ -16,15 +16,13 @@ export default function ProjectsPageClient({ projects }: ProjectsPageClientProps
   const gameCount = count(/Game|VR/);
   const webCount = count(/Web/);
   const eduCount = count(/Education/);
-  // 기간을 아직 모르는 사례는 범위 계산에서 뺀다
-  const months = projects.flatMap((p) => (p.durationMonths ? [p.durationMonths] : []));
 
   return (
     <>
       <PageHeader
         eyebrow="Portfolio"
         title="프로젝트 포트폴리오"
-        description={`게임 · VR ${gameCount}건, 웹 · 앱 ${webCount}건, 강의 ${eduCount}건. 기간은 ${Math.min(...months)}개월에서 ${Math.max(...months)}개월까지였고, 전부 납품이 끝난 것들입니다.`}
+        description={`게임 · VR ${gameCount}건, 웹 · 앱 ${webCount}건, 강의 ${eduCount}건. 전부 납품이 끝난 것들입니다.`}
       />
 
       {/* ━━ (01) Work - 텍스트 탭 필터 + 비대칭 2열 그리드 ━━ */}

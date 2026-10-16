@@ -91,11 +91,11 @@ export default function WebClient() {
           <motion.div {...onMount} variants={lineDraw}
             className="h-px bg-white/10 mt-16 mb-0 origin-left" />
           <motion.div {...inView} variants={staggerTight}
-            className="grid grid-cols-1 sm:grid-cols-3 border-b border-white/10">
+            className={`grid grid-cols-1 border-b border-white/10 ${d.stats.length === 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-3'}`}>
             {d.stats.map((s, i) => (
               <motion.div key={s.label} variants={fadeUp}
                 className={`py-8 sm:py-10 ${i > 0 ? 'sm:border-l sm:border-white/10 sm:pl-8' : ''}
-                            ${i < 2 ? 'border-b sm:border-b-0 border-white/10' : ''}`}>
+                            ${i < d.stats.length - 1 ? 'border-b sm:border-b-0 border-white/10' : ''}`}>
                 <p className="font-en text-[38px] sm:text-[46px] font-bold text-[var(--text-1)] font-mono-stat tracking-[-0.02em] leading-none mb-3">
                   {s.value}
                 </p>
@@ -296,10 +296,7 @@ export default function WebClient() {
                                    transition-colors duration-300 group-hover:text-[var(--accent)]">
                       {p.title}
                     </h3>
-                    <p className="lg:col-span-7 type-b3 text-white/55 leading-[1.8]">{p.description}</p>
-                    <p className="lg:col-span-2 type-c1 text-white/50 font-mono-stat lg:text-right whitespace-nowrap">
-                      {p.durationMonths ? `${p.durationMonths}개월` : ''}
-                    </p>
+                    <p className="lg:col-span-9 type-b3 text-white/55 leading-[1.8]">{p.description}</p>
                   </Link>
                 </motion.div>
               ))}

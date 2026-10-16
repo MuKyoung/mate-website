@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { projects } from '@/data/projects';
-import { summarizeDepartments } from '@/data/organization';
 import { FiExternalLink, FiGithub, FiArrowLeft, FiYoutube } from 'react-icons/fi';
 import ParallaxImage from '@/components/ParallaxImage';
 import ThumbFallback from '@/components/ThumbFallback';
@@ -32,8 +31,6 @@ interface Props { params: { slug: string } }
 export default function ProjectDetailClient({ params }: Props) {
   const project = projects.find(p => p.id === params.slug);
   if (!project) notFound();
-
-  const team = summarizeDepartments(project.teamMembers);
 
   /* 개요가 한 줄 소개를 그대로 복제한 경우가 있다.
      같은 문장을 제목 아래에서 또 읽히게 두면 섹션만 있고 내용은 없는 화면이 된다. */
@@ -63,9 +60,9 @@ export default function ProjectDetailClient({ params }: Props) {
             </Link>
           </motion.div>
 
-          {/* 메타 - 카테고리 · 기간 */}
+          {/* 메타 - 카테고리 */}
           <motion.p {...onMount} variants={fadeLeft} className="index-num mb-7">
-            {project.category}{project.durationMonths ? ` · ${project.durationMonths}개월` : ''}
+            {project.category}
           </motion.p>
 
           <motion.h1 {...onMount} variants={stagger}
@@ -203,30 +200,6 @@ export default function ProjectDetailClient({ params }: Props) {
                 </div>
               </motion.div>
 
-              {/* 참여 조직 - 실명 대신 부서 구성만 표시 */}
-              {team.length > 0 && (
-                <motion.div {...inView} variants={riseTiltR} className="rule-top">
-                  <p className="index-num font-en mb-3">Team</p>
-                  <p className="text-[17px] font-bold text-[var(--text-1)] mb-5">
-                    참여 인원 {project.teamMembers.length}명
-                  </p>
-                  <div>
-                    {team.map(d => (
-                      <div key={d.id}
-                        className="flex items-center justify-between gap-4 py-5 border-b border-white/10">
-                        <div className="min-w-0">
-                          <p className="text-[16px] font-bold text-[var(--text-1)]">{d.name}</p>
-                          <p className="text-[14px] text-white/55">{d.label}</p>
-                        </div>
-                        <span className="text-2xl font-bold text-[var(--text-1)] font-mono-stat tracking-[-0.02em] flex-shrink-0">
-                          {d.count}
-                          <span className="text-[13px] font-bold text-white/50 ml-1">명</span>
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
             </div>
 
           </div>

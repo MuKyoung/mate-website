@@ -255,7 +255,6 @@ export default function GameClient() {
                                       ${big ? 'text-[26px] sm:text-[34px]' : 'text-[20px] sm:text-[23px]'}`}>
                         {p.title}
                       </h3>
-                      <p className="index-num pt-2 whitespace-nowrap shrink-0">{p.durationMonths}개월</p>
                     </div>
                     <p className="mt-2.5 type-b3 text-white/50 leading-[1.7] line-clamp-2">{p.description}</p>
                     <div className="mt-4 flex flex-wrap gap-2">

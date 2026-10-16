@@ -49,7 +49,6 @@ export const domains: DomainMeta[] = [
     stats: [
       { value: `${cap.outsourcing.projects}+`, label: '웹·앱 프로젝트' },
       { value: '5년+', label: '외주 개발 경력' },
-      { value: '1~3개월', label: '평균 개발 기간' },
     ],
     tags: ['Next.js', 'Flutter', 'Python', 'AWS'],
   },
