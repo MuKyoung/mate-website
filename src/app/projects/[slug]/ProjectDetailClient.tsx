@@ -65,7 +65,7 @@ export default function ProjectDetailClient({ params }: Props) {
 
           {/* 메타 - 카테고리 · 기간 */}
           <motion.p {...onMount} variants={fadeLeft} className="index-num mb-7">
-            {project.category} · {project.durationMonths}개월
+            {project.category}{project.durationMonths ? ` · ${project.durationMonths}개월` : ''}
           </motion.p>
 
           <motion.h1 {...onMount} variants={stagger}
@@ -87,7 +87,7 @@ export default function ProjectDetailClient({ params }: Props) {
               <a href={project.liveUrl} target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center gap-2.5 h-14 px-9 rounded-full text-[15px] font-bold text-[var(--canvas)] bg-white hover:bg-[var(--accent)] hover:text-white transition-colors duration-300">
                 <FiExternalLink size={17} />
-                라이브 데모
+                사이트 바로가기
               </a>
             )}
             {project.youtubeUrl && (

@@ -174,4 +174,21 @@ export const projects: Project[] = [
     durationMonths: 3,
     category: 'Web Application',
   },
+  {
+    id: '13',
+    title: '세종호이스트크레인 홈페이지',
+    description: '크레인과 호이스트를 설계 · 제작 · 설치하는 (주)세종호이스트크레인의 회사 홈페이지. 회사소개, 사업영역, 시공사례, 견적문의를 한 사이트에 담았습니다.',
+    longDescription:
+      '크레인과 호이스트를 설계 · 제작 · 설치하는 (주)세종호이스트크레인의 회사 홈페이지입니다.\n\n회사소개(인사말, 연혁, 기술 · 인증, 수상이력, 오시는 길), 전기 · 전력부터 일반 제조까지 다섯 갈래의 사업영역, 시공사례, 뉴스, 견적문의와 문의현황 조회로 구성했고 영문 페이지를 함께 두었습니다. Next.js로 만들어 Vercel에 배포했습니다.',
+    // 공개된 사이트의 첫 화면을 찍은 것이다
+    thumbnail: '/images/projects/세종호이스트크레인.webp',
+    images: [
+      '/images/projects/세종호이스트크레인.webp',
+    ],
+    techStack: ['Next.js', 'React', 'Vercel'],
+    liveUrl: 'https://www.sjhoistcrane.com',
+    // 참여 인원과 기간은 아직 확인받지 못했다 - 비워 두면 화면에 나오지 않는다
+    teamMembers: [],
+    category: 'Website',
+  },
 ];

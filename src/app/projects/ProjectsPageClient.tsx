@@ -16,7 +16,8 @@ export default function ProjectsPageClient({ projects }: ProjectsPageClientProps
   const gameCount = count(/Game|VR/);
   const webCount = count(/Web/);
   const eduCount = count(/Education/);
-  const months = projects.map((p) => p.durationMonths);
+  // 기간을 아직 모르는 사례는 범위 계산에서 뺀다
+  const months = projects.flatMap((p) => (p.durationMonths ? [p.durationMonths] : []));
 
   return (
     <>

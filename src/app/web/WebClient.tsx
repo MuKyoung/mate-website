@@ -10,7 +10,7 @@ import { fadeUp, fadeLeft, fadeRight, clipUp, lineDraw, rowIn, stagger, staggerT
 import { arrowHover, btnPrimary, container, linkUnderline, CONTACT_EMAIL } from '@/lib/styles';
 
 const d = domainByKey.web;
-const work = projects.filter((p) => p.category === 'Web Application');
+const work = projects.filter((p) => p.category === 'Web Application' || p.category === 'Website');
 
 /* 히어로 우측 - 화면 설계도를 추상화한 와이어프레임.
    실제 스크린샷 대신 구조만 남겨 '설계한다'는 도메인 성격을 드러낸다. */
@@ -275,7 +275,7 @@ export default function WebClient() {
               <motion.div {...inView} variants={fadeRight}
                 className="lg:col-span-5 lg:self-end lg:pb-3 flex items-end justify-between gap-6">
                 <p className="type-b3 text-white/50 leading-[1.85]">
-                  납품이 끝난 건만 올립니다. 화면은 발주처 자산이라 공개하지 않고, 무엇을 어떤 구성으로
+                  납품이 끝난 건만 올립니다. 공개되지 않은 화면은 싣지 않고, 무엇을 어떤 구성으로
                   만들었는지만 적습니다.
                 </p>
                 <Link href="/projects"
@@ -298,7 +298,7 @@ export default function WebClient() {
                     </h3>
                     <p className="lg:col-span-7 type-b3 text-white/55 leading-[1.8]">{p.description}</p>
                     <p className="lg:col-span-2 type-c1 text-white/50 font-mono-stat lg:text-right whitespace-nowrap">
-                      {p.durationMonths}개월
+                      {p.durationMonths ? `${p.durationMonths}개월` : ''}
                     </p>
                   </Link>
                 </motion.div>
@@ -306,7 +306,7 @@ export default function WebClient() {
             </motion.div>
 
             <motion.p {...inView} variants={fadeUp} className="mt-8 type-c1 text-white/50">
-              세 건 모두 React · Next.js 프론트에 Flutter 앱, Python 백엔드, AWS 배포 구성입니다.
+              논디 · Chatudy · 큐어팜은 React · Next.js 프론트에 Flutter 앱, Python 백엔드, AWS 배포 구성입니다.
             </motion.p>
           </div>
         </section>

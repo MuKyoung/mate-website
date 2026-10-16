@@ -13,6 +13,7 @@ const CATEGORY_MAP: Record<string, string> = {
   'VR Application': '게임 · XR',
   'AR Application': '게임 · XR',
   'Web Application': '웹 · 앱',
+  'Website': '웹 · 앱',
   'Mobile Application': '웹 · 앱',
   'Education Content': '교육',
 };

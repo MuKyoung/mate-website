@@ -54,7 +54,7 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
             {project.title}
           </h3>
           <p className="index-num sm:pt-2.5 sm:whitespace-nowrap sm:flex-shrink-0">
-            {project.category} · {project.durationMonths}개월
+            {project.category}{project.durationMonths ? ` · ${project.durationMonths}개월` : ''}
           </p>
         </div>
         <p className="mt-2.5 text-[15px] text-white/55 leading-[1.7] line-clamp-2 max-w-xl">

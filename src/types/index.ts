@@ -28,7 +28,8 @@ export interface Project {
   githubUrl?: string;
   youtubeUrl?: string; // 유튜브 영상 URL (선택사항) - 있으면 썸네일 대신 영상 표시
   teamMembers: string[]; // member IDs
-  durationMonths: number; // 개발 기간 (개월)
+  /** 개발 기간 (개월). 확인되지 않았으면 비워 두고, 화면에는 기간을 적지 않는다 */
+  durationMonths?: number;
   category: string;
 }
 
