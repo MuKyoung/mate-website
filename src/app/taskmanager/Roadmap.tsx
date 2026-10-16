@@ -102,7 +102,7 @@ export default function Roadmap({
   const weekLabel = (offset: number) => {
     const a = new Date(weekStart(now).getTime() + offset * 7 * DAY);
     const b = new Date(a.getTime() + 6 * DAY);
-    return `${a.getMonth() + 1}.${a.getDate()}–${b.getMonth() + 1}.${b.getDate()}`;
+    return `${a.getMonth() + 1}.${a.getDate()}~${b.getMonth() + 1}.${b.getDate()}`;
   };
 
   return (

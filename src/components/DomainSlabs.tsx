@@ -22,17 +22,17 @@ const SLAB = {
     // 포트폴리오의 세종호이스트크레인 홈페이지 첫 화면에 걸린 사진.
     // 화면 캡처를 깔면 그 사이트의 제목과 메뉴, 협력사 로고 띠가 이쪽 글자 뒤로 비쳐 사진만 쓴다.
     bg: '/images/projects/세종호이스트크레인-메인.webp' as string | null,
-    note: '설계 문서에서 시작해 배포까지',
+    note: '기획서 작성부터 배포 후 모니터링까지',
   },
   game: {
     href: '/game',
     bg: '/images/projects/꼬꼬지생.webp',
-    note: '두 번째 단계에서 이미 플레이 가능한 빌드',
+    note: '프로토타입부터 빠르게 만들어 확인합니다',
   },
   edu: {
     href: '/education',
     bg: '/images/projects/미래산업과학고.webp',
-    note: '기관 목표에 맞춰 커리큘럼을 다시 구성',
+    note: '교육 방향과 수준에 맞춰 커리큘럼을 조정합니다',
   },
 } as const;
 

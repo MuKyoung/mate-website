@@ -145,7 +145,7 @@ export default function ContactPage() {
       <PageHeader
         eyebrow="Contact Us"
         title="프로젝트 문의"
-        description="만들려는 것과 예산 범위만 알려주시면 됩니다. 기획이 정리되지 않은 상태로 오셔도 첫 통화에서 범위부터 같이 자릅니다."
+        description="만들려는 것만 알려주시면 됩니다. 기획이 정리되지 않았어도 괜찮습니다. 요구사항과 목표는 첫 상담에서 같이 정리합니다."
       />
 
       {/* ━━ (01) Inquiry - 폼 좌 / 채널 우 ━━ */}
@@ -219,7 +219,7 @@ export default function ContactPage() {
                     id="message" name="message"
                     value={formData.message} onChange={handleChange} required rows={7}
                     className="w-full px-5 py-4 bg-white/[0.04] border border-white/15 rounded-[10px] text-[16px] leading-[1.75] text-[var(--text-1)] placeholder:text-white/45 outline-none transition-colors resize-none focus:border-white/60 focus:ring-0"
-                    placeholder="만들려는 것, 생각하시는 일정과 예산 범위를 적어주시면 첫 회신에서 바로 범위 얘기를 시작할 수 있습니다."
+                    placeholder="만들려는 것과 생각하시는 일정을 편하게 적어 주세요."
                   />
                 </div>
 

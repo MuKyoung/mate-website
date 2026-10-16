@@ -48,11 +48,11 @@ type TypeRow = {
 };
 
 const TYPE: TypeRow[] = [
-  { token: 'D1', cls: 'type-d1 font-en', sample: 'Display', use: '히어로 · CTA 스테이트먼트', fw: 800, fs: '40–144', lh: '0.98' },
-  { token: 'D2', cls: 'type-d2 font-en', sample: 'Section', use: '섹션 대형 타이틀', fw: 800, fs: '36–76', lh: '1.04' },
-  { token: 'H1', cls: 'type-h1', sample: '타이틀 및 제목', use: '페이지 제목', fw: 700, fs: '32–56', lh: '1.3' },
-  { token: 'H2', cls: 'type-h2', sample: '보조타이틀 및 강조', use: '블록 제목', fw: 700, fs: '24–32', lh: '1.2' },
-  { token: 'H3', cls: 'type-h3', sample: '보조타이틀 및 강조', use: '가벼운 블록 제목', fw: 500, fs: '24–32', lh: '1.2' },
+  { token: 'D1', cls: 'type-d1 font-en', sample: 'Display', use: '히어로 · CTA 스테이트먼트', fw: 800, fs: '40~144', lh: '0.98' },
+  { token: 'D2', cls: 'type-d2 font-en', sample: 'Section', use: '섹션 대형 타이틀', fw: 800, fs: '36~76', lh: '1.04' },
+  { token: 'H1', cls: 'type-h1', sample: '타이틀 및 제목', use: '페이지 제목', fw: 700, fs: '32~56', lh: '1.3' },
+  { token: 'H2', cls: 'type-h2', sample: '보조타이틀 및 강조', use: '블록 제목', fw: 700, fs: '24~32', lh: '1.2' },
+  { token: 'H3', cls: 'type-h3', sample: '보조타이틀 및 강조', use: '가벼운 블록 제목', fw: 500, fs: '24~32', lh: '1.2' },
   { token: 'B1', cls: 'type-b1', sample: '서브 타이틀', use: '카드 제목', fw: 700, fs: '18', lh: '1.5' },
   { token: 'B2', cls: 'type-b2', sample: '주요 콘텐츠 및 내용', use: '강조 본문', fw: 700, fs: '16', lh: '1.5' },
   { token: 'B3', cls: 'type-b3', sample: '보조 콘텐츠 및 내용', use: '기본 본문', fw: 500, fs: '16', lh: '1.5' },

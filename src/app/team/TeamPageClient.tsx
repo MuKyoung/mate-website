@@ -5,7 +5,7 @@ import Link from 'next/link';
 import PageHeader from '@/components/PageHeader';
 import TeamCapabilityCard from '@/components/TeamCapabilityCard';
 import OrgChart from '@/components/OrgChart';
-import { teamCapabilities, awards, type Award } from '@/data/teamCapabilities';
+import { teamCapabilities, awards, type Award, counts } from '@/data/teamCapabilities';
 import { projects } from '@/data/projects';
 import {
   FiArrowUpRight, FiStar, FiFileText, FiBookmark, FiGrid,
@@ -29,20 +29,21 @@ function getAwardIcon(award: Award): IconType {
   return FiBookmark;
 }
 
-const TOTAL = teamCapabilities.capabilities.reduce((n, c) => n + c.projects, 0);
-
+/* 개발 납품과 강의는 따로 센다. 둘을 더해 '누적 프로젝트' 라고 쓰면 틀린 말이 된다.
+   회사 인원은 적지 않는다 (사용자 요청, 2026-10-16). */
 const stats = [
-  { value: `${TOTAL}+`, label: '누적 프로젝트' },
+  { value: `${counts.devProjects}+`, label: '개발 프로젝트 납품' },
+  { value: `${counts.lectures}+`, label: '진행 강의' },
   { value: `${projects.length}건`, label: '포트폴리오 공개' },
-  { value: '5년', label: '팀 운영' },
-  { value: `${teamCapabilities.stats.teamMembers}명`, label: '개발 4 · 디자인 2 · 운영 1' },
+  { value: `${teamCapabilities.stats.since}`, label: '시작한 해' },
 ];
 
+/* 홈의 '일하는 방식' 과 같은 근거(faq.ts, process.ts)에서만 가져온다 */
 const whyChooseUs = [
-  { title: '열린 저장소',        desc: '개발 중에도 GitHub을 열어 둡니다. 진행률을 물어보실 필요가 없습니다' },
-  { title: '담당자 고정',        desc: '계약 때 만난 사람이 배포까지 갑니다. 중간에 팀이 바뀌지 않습니다' },
-  { title: '한 팀 전담',          desc: '기획 · 개발 · 디자인 · 운영을 외부에 다시 넘기지 않습니다' },
-  { title: '전부 인계',           desc: '소스 코드와 문서, 인프라 계정 소유권까지 넘겨드립니다' },
+  { title: '열린 저장소',      desc: 'GitHub로 관리합니다. 프로젝트 기간 동안 진행 상황을 실시간으로 보실 수 있습니다' },
+  { title: '주간 공유',        desc: '개발 단계에서는 주 단위로 공유하고, 코드 리뷰를 거쳐 올립니다' },
+  { title: '소스 · 문서 인계', desc: '프로젝트가 끝나면 모든 소스 코드와 문서를 넘겨드립니다' },
+  { title: '배포 후 모니터링', desc: '배포한 뒤에도 모니터링으로 안정성을 확인합니다' },
 ];
 
 /* 섹션 헤더 - 라벨 행(라인 드로우) + 대형 타이틀 (홈과 동일 패턴, 섹션별 방향 교차) */
@@ -86,7 +87,7 @@ export default function TeamPageClient() {
       <PageHeader
         eyebrow="About Team"
         title="MATE 팀 소개"
-        description="개발 4 · 디자인 2 · 운영 1, 일곱 명이 하나의 팀으로 움직입니다. 웹 · 앱, 게임 · XR, 교육 세 영역을 각각 전담합니다."
+        description="개발 · 디자인 · 운영이 하나의 팀으로 움직입니다. 웹 · 앱, 게임 · XR, 교육 세 영역을 각각 전담합니다."
       />
 
       {/* ━━ 핵심 수치 - 헤어라인 스트립 ━━ */}
@@ -133,8 +134,8 @@ export default function TeamPageClient() {
                 자체 게임 제작 · 퍼블리싱을 함께 합니다.
               </motion.p>
               <motion.p variants={fadeUp} className="text-[17px] text-white/55 leading-[1.75] mb-16">
-                5년간 쌓은 외주 경험을 바탕으로,
-                개발 4명 · 디자인 2명 · 운영 1명, 총 7명이 하나의 팀으로 움직입니다.
+                {teamCapabilities.stats.since}년부터 쌓은 외주 경험을 바탕으로,
+                개발 · 디자인 · 운영이 하나의 팀으로 움직입니다.
                 여러 회사에 나눠 맡기지 않아도, 필요한 개발을 한 팀에서 해결할 수 있습니다.
               </motion.p>
 

@@ -16,19 +16,20 @@ import {
 import { arrowHover, container, sectionPad } from '@/lib/styles';
 
 
-/* 가치 나열 대신, 계약서에 적을 수 있는 규칙만 남긴다 */
+/* 회사가 FAQ와 진행 절차(faq.ts, process.ts)에 밝혀 둔 것만 적는다.
+   고객은 이 목록을 약속으로 읽으므로, 듣기 좋은 조건을 지어 넣지 않는다. */
 const values = [
   {
     kr: '저장소를 열어 둡니다',
-    desc: '개발 중에도 GitHub 접근 권한을 드립니다. 진행률을 물어보실 필요가 없습니다.',
+    desc: 'GitHub로 관리합니다. 프로젝트 기간 동안 진행 상황을 실시간으로 보실 수 있습니다.',
   },
   {
-    kr: '담당자가 바뀌지 않습니다',
-    desc: '계약 때 만난 사람이 배포까지 갑니다. 인력이 빠지면 일정이 밀리는 것부터 알려드립니다.',
+    kr: '매주 진행 상황을 공유합니다',
+    desc: '개발 단계에서는 주 단위로 공유하고, 코드 리뷰를 거쳐 올립니다.',
   },
   {
-    kr: '끝나면 전부 넘겨드립니다',
-    desc: '소스 코드와 문서, 인프라 계정 소유권까지. 저희 없이도 굴러가야 정상입니다.',
+    kr: '끝나면 소스와 문서를 드립니다',
+    desc: '프로젝트가 끝나면 모든 소스 코드와 문서를 넘겨드립니다.',
   },
 ];
 
@@ -66,16 +67,16 @@ export default function Home() {
             className="font-bold text-[var(--text-1)] tracking-[-0.02em] leading-[1.22] max-w-5xl"
             style={{ fontSize: 'clamp(1.625rem, 3.6vw, 3rem)' }}>
             <span className="block overflow-hidden pb-[0.1em]">
-              <motion.span variants={clipUp} className="block">넘기고 나면 연락이 끊기는 외주를</motion.span>
+              <motion.span variants={clipUp} className="block">납품으로 끝내지 않습니다.</motion.span>
             </span>
             <span className="block overflow-hidden pb-[0.1em]">
               <motion.span variants={clipLeft} className="block">
-저희도 <span className="text-[var(--point)]">발주처로서 겪었습니다</span>.
+배포한 뒤에도 <span className="text-[var(--point)]">지켜봅니다</span>.
               </motion.span>
             </span>
             <span className="block overflow-hidden pb-[0.1em]">
               <motion.span variants={fadeRight} className="block text-white/50">
-                그래서 배포 다음 달에 뭘 할지까지 계약서에 적습니다.
+                모니터링으로 안정성을 확인하고,<br />유지보수도 이어서 맡습니다.
               </motion.span>
             </span>
           </motion.p>
@@ -86,7 +87,7 @@ export default function Home() {
       {/* ━━ (04) Rules - EN 키워드 + KR 부연 (레퍼런스 Vision 방식) ━━ */}
       <section className="pt-20 sm:pt-28 pb-24 sm:pb-32">
         <div className={container}>
-          <SectionHead num="04" title={<>계약서에 적는 것</>} />
+          <SectionHead num="04" title={<>일하는 방식</>} />
           <motion.div {...inView} variants={staggerRows} className="border-t border-white/10">
             {values.map((v) => (
               <motion.div key={v.kr} variants={rowIn}
@@ -100,7 +101,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ━━ (05) 밖에서 받은 평가 - 익명 후기 하나 + 확인 가능한 심사 이력 ━━ */}
+      {/* ━━ (05) 밖에서 받은 평가 - 소속과 확인 가능한 심사 이력만 ━━ */}
       <section className={sectionPad}>
         <div className={container}>
           <SectionHead num="05" title={<>밖에서 받은 평가</>} />
@@ -110,8 +111,7 @@ export default function Home() {
             {affiliations.map((a) => (
               <motion.div key={a.id} variants={rowIn} className="bg-[var(--canvas)] p-7 sm:p-9">
                 <p className="type-c1 text-[var(--point)] mb-3">{a.role}</p>
-                <h3 className="type-h2 text-[var(--text-1)] mb-3">{a.name}</h3>
-                <p className="type-b3 text-white/50 leading-[1.8]">{a.note}</p>
+                <h3 className="type-h2 text-[var(--text-1)]">{a.name}</h3>
               </motion.div>
             ))}
           </motion.div>
@@ -136,7 +136,7 @@ export default function Home() {
 
       {/* ━━ (06) CTA ━━ */}
       <CtaSection num="06" line1="아직 정리가" line2="안 되셨어도"
-        kr="첫 통화에서 만들려는 것과 예산 범위부터 듣습니다" />
+        kr="요구사항과 목표는 첫 상담에서 같이 정리합니다" />
     </>
   );
 }

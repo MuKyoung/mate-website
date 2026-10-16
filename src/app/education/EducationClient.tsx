@@ -67,7 +67,6 @@ function Course({ c, defaultOpen }: { c: (typeof eduCourses)[number]; defaultOpe
         <span className="block sm:flex-1 sm:min-w-0">
           <span className="block sm:flex sm:flex-wrap sm:items-baseline sm:gap-x-4 mb-2 sm:mb-3">
             <span className="block type-h2 text-[var(--text-1)]">{c.title}</span>
-            <span className="block mt-1 sm:mt-0 type-c1 text-[var(--text-3)] font-en">{c.weeks}</span>
           </span>
           <span className="block type-b3 text-[var(--text-2)] leading-[1.75] mt-3 sm:mt-0 sm:pr-4">{c.summary}</span>
         </span>
@@ -85,12 +84,12 @@ function Course({ c, defaultOpen }: { c: (typeof eduCourses)[number]; defaultOpe
         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }} className="overflow-hidden">
         <div className="px-6 sm:px-9 pb-8">
           <dl className="border-t border-[var(--border)]">
-            {c.outline.map((o) => (
-              <div key={o.range}
+            {c.outline.map((o, i) => (
+              <div key={o.title}
                 className="py-5 border-b border-[var(--border)]
                            sm:grid sm:grid-cols-12 sm:gap-x-6 sm:items-baseline">
                 <dt className="sm:col-span-2 type-b4 text-[var(--accent-strong)] font-en whitespace-nowrap mb-1 sm:mb-0">
-                  {o.range}
+                  {String(i + 1).padStart(2, '0')}
                 </dt>
                 <dd className="sm:col-span-4 type-b2 text-[var(--text-1)] mb-2 sm:mb-0">{o.title}</dd>
                 <dd className="sm:col-span-6 type-b3 text-[var(--text-2)] leading-[1.75]">{o.detail}</dd>
@@ -137,7 +136,7 @@ export default function EducationClient() {
                   </span>
                 </motion.h1>
                 <motion.p {...onMount} variants={fadeUp} className="type-b3 text-[var(--text-2)] leading-[1.9] max-w-xl">
-                  {d.summary} 지난달 외주에서 쓴 도구와 절차를 그대로 가져옵니다.
+                  {d.summary}{' '}
                   마지막 주에는 수강생 각자의 결과물이 남습니다.
                 </motion.p>
               </div>
@@ -184,7 +183,7 @@ export default function EducationClient() {
               </div>
               <figcaption className="mt-5 flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2">
                 <span className="type-b3 text-[var(--text-2)]">
-                  미래산업과학고등학교 · 정규 수업 9개월 과정
+                  미래산업과학고등학교 · 정규 수업
                 </span>
                 <span className="type-c1 text-[var(--text-3)]">
                   화면은 C# 변수 선언과 초기화를 다루던 3주차 수업입니다

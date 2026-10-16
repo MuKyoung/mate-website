@@ -33,7 +33,7 @@ function seed(): Task[] {
     { t: 'VR 키오스크: Quest 3 대응', d: '컨트롤러 입력 매핑 변경분 반영하고 실기기 테스트.', s: 'todo', p: 'high', dom: 'game', a: 'm3', from: 0, due: 4, l: ['XR'] },
     { t: '영창하세요 마법사님: 빌드 용량 축소', d: '텍스처 아틀라스 재구성. 현재 1.8GB에서 1.2GB 목표.', s: 'backlog', p: 'low', dom: 'game', a: 'm1', from: null, due: null, l: ['최적화'] },
     { t: '21세기 표류기: 튜토리얼 재작성', d: '첫 3분 이탈률이 높다. 손 조작 안내를 단계별로 쪼갠다.', s: 'todo', p: 'high', dom: 'game', a: 'm3', from: 2, due: 6, l: ['UX'] },
-    { t: '미래산업과학고: 2학기 커리큘럼 확정', d: '10~12주차 개인 프로젝트 주제 목록과 평가 기준을 정리한다.', s: 'doing', p: 'urgent', dom: 'edu', a: 'm7', from: -6, due: 2, l: ['커리큘럼'] },
+    { t: '미래산업과학고: 2학기 커리큘럼 확정', d: '개인 프로젝트 주제 목록과 평가 기준을 정리한다.', s: 'doing', p: 'urgent', dom: 'edu', a: 'm7', from: -6, due: 2, l: ['커리큘럼'] },
     { t: 'AI 활용 과정: 실습 환경 사전 세팅', d: '수강생 노트북에서 바로 돌아가도록 설치 스크립트와 체크리스트를 만든다.', s: 'todo', p: 'normal', dom: 'edu', a: 'm2', from: 4, due: 9, l: ['교육운영'] },
     { t: '대학 특강 제안서 초안', d: '시수·정원·산출물 항목을 기관 양식에 맞춰 채운다.', s: 'review', p: 'high', dom: 'edu', a: 'm7', from: -3, due: 1, l: ['제안'] },
     { t: '포트폴리오 화면 캡처 확보', d: '논디·Chatudy·큐어팜·피오크래프트 4건. 발주처 공개 가능 범위부터 확인.', s: 'todo', p: 'urgent', dom: 'ops', a: 'm5', from: 0, due: 2, l: ['웹사이트'] },
