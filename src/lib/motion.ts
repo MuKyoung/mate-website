@@ -1,4 +1,4 @@
-// 대형 스크롤 모션 토큰 - 큼직한 진입, 마스크 리빌, 스케일 변형.
+// 스크롤 모션 토큰. 움직임은 짧은 거리로 조용하게 - 크게 날아들거나 기울지 않는다.
 // 모든 페이지가 동일한 타이밍을 공유하도록 여기서만 정의한다.
 
 import type { Variants, Transition } from 'framer-motion';
@@ -8,29 +8,29 @@ export const easeEnter = [0.16, 1, 0.3, 1] as const;
 /** ease-inOut - 양방향 */
 export const easeStandard = [0.65, 0, 0.35, 1] as const;
 
-export const DUR = { fast: 0.3, standard: 0.7, slow: 1.1 } as const;
+export const DUR = { fast: 0.3, standard: 0.6, slow: 0.9 } as const;
 
 export const tEnter: Transition = { duration: DUR.slow, ease: easeEnter };
 
-/** 아래에서 크게 떠오르는 리빌 - 기본 진입 */
+/** 아래에서 떠오르는 리빌 - 기본 진입 */
 export const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 64 },
+  hidden: { opacity: 0, y: 24 },
   show: { opacity: 1, y: 0, transition: tEnter },
 };
 
 /** 클립 리빌 - 아래에서 위로 마스크가 열림 (대형 타이포) */
 export const clipUp: Variants = {
-  hidden: { clipPath: 'inset(105% 0 0 0)', y: 40 },
+  hidden: { clipPath: 'inset(105% 0 0 0)', y: 14 },
   show: {
     clipPath: 'inset(0% 0 0 0)', y: 0,
-    transition: { duration: 1.15, ease: easeEnter },
+    transition: { duration: 0.95, ease: easeEnter },
   },
 };
 
 /** 이미지 마스크 리빌 - 아래에서 위로 크게 열림 */
 export const maskUp: Variants = {
   hidden: { clipPath: 'inset(100% 0 0 0)' },
-  show: { clipPath: 'inset(0% 0 0 0)', transition: { duration: 1.3, ease: easeEnter } },
+  show: { clipPath: 'inset(0% 0 0 0)', transition: { duration: 1.1, ease: easeEnter } },
 };
 
 /* ── 방향·각도 변주 - 균일한 상승 일변도를 깨는 어휘 ──
@@ -38,44 +38,44 @@ export const maskUp: Variants = {
 
 /** 왼쪽에서 진입 */
 export const fadeLeft: Variants = {
-  hidden: { opacity: 0, x: -72 },
+  hidden: { opacity: 0, x: -20 },
   show: { opacity: 1, x: 0, transition: tEnter },
 };
 
 /** 오른쪽에서 진입 */
 export const fadeRight: Variants = {
-  hidden: { opacity: 0, x: 72 },
+  hidden: { opacity: 0, x: 20 },
   show: { opacity: 1, x: 0, transition: tEnter },
 };
 
-/** 살짝 기울며 떠오르는 진입 (왼쪽 아래 축) */
+/** 조금 더 깊이 떠오르는 진입 (예전 이름을 쓰는 곳이 있어 남긴다 - 기울기는 뺐다) */
 export const riseTilt: Variants = {
-  hidden: { opacity: 0, y: 84, rotate: 2.4, transformOrigin: '0% 100%' },
-  show: { opacity: 1, y: 0, rotate: 0, transition: { duration: 1.15, ease: easeEnter } },
+  hidden: { opacity: 0, y: 32 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.95, ease: easeEnter } },
 };
 
-/** 살짝 기울며 떠오르는 진입 (오른쪽 아래 축) */
+/** riseTilt 와 같다 */
 export const riseTiltR: Variants = {
-  hidden: { opacity: 0, y: 84, rotate: -2.4, transformOrigin: '100% 100%' },
-  show: { opacity: 1, y: 0, rotate: 0, transition: { duration: 1.15, ease: easeEnter } },
+  hidden: { opacity: 0, y: 32 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.95, ease: easeEnter } },
 };
 
 /** 클립 리빌 - 왼쪽에서 오른쪽으로 열림 (타이포) */
 export const clipLeft: Variants = {
-  hidden: { clipPath: 'inset(0 100% 0 0)', x: -28 },
-  show: { clipPath: 'inset(0 0% 0 0)', x: 0, transition: { duration: 1.1, ease: easeEnter } },
+  hidden: { clipPath: 'inset(0 100% 0 0)', x: -10 },
+  show: { clipPath: 'inset(0 0% 0 0)', x: 0, transition: { duration: 0.95, ease: easeEnter } },
 };
 
 /** 클립 리빌 - 오른쪽에서 왼쪽으로 열림 (타이포) */
 export const clipRight: Variants = {
-  hidden: { clipPath: 'inset(0 0 0 100%)', x: 28 },
-  show: { clipPath: 'inset(0 0 0 0%)', x: 0, transition: { duration: 1.1, ease: easeEnter } },
+  hidden: { clipPath: 'inset(0 0 0 100%)', x: 10 },
+  show: { clipPath: 'inset(0 0 0 0%)', x: 0, transition: { duration: 0.95, ease: easeEnter } },
 };
 
-/** 줌아웃 + 미세 회전 진입 (대형 이미지/패널) */
+/** 살짝 줌아웃하며 드러나는 진입 (대형 이미지/패널) */
 export const zoomTilt: Variants = {
-  hidden: { opacity: 0, scale: 1.12, rotate: 1.6 },
-  show: { opacity: 1, scale: 1, rotate: 0, transition: { duration: 1.25, ease: easeEnter } },
+  hidden: { opacity: 0, scale: 1.04 },
+  show: { opacity: 1, scale: 1, transition: { duration: 1.1, ease: easeEnter } },
 };
 
 /** 라인 드로우 - 헤어라인이 좌→우로 그어짐 */

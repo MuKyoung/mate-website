@@ -9,9 +9,9 @@ import FAQAccordion from '@/components/FAQAccordion';
 import SectionHead from '@/components/ui/SectionHead';
 import { faqs } from '@/data/faq';
 import { domains } from '@/data/domains';
-import { fadeLeft, fadeRight, clipLeft, lineDraw, stagger, inView } from '@/lib/motion';
+import { fadeLeft, fadeRight, stagger, inView } from '@/lib/motion';
 import {
-  arrowHover, btnPrimary, clipWrap, container, displaySize, sectionPad,
+  arrowHover, btnPrimary, container, sectionPad,
   CONTACT_EMAIL, CONTACT_PHONE, KAKAO_OPEN_CHAT_URL,
 } from '@/lib/styles';
 
@@ -135,20 +135,20 @@ export default function ContactPage() {
   };
 
   const inputClass =
-    'w-full h-14 px-5 bg-white/[0.04] border border-white/15 rounded-[10px] text-[16px] text-[var(--text-1)] placeholder:text-white/45 outline-none transition-colors focus:border-white/60 focus:ring-0';
-  const labelClass = 'block text-[13px] font-semibold text-white/85 mb-2.5';
+    'w-full h-14 px-5 bg-[var(--surface)] border border-white/15 rounded-[2px] text-[16px] text-[var(--text-1)] placeholder:text-white/40 outline-none transition-colors focus:border-[var(--blue-glow)] focus:ring-0';
+  const labelClass = 'mb-2.5 block font-mono text-[11px] uppercase tracking-[0.02em] text-white/60';
 
   return (
     <>
 
       {/* ── 페이지 헤더 ── */}
       <PageHeader
-        eyebrow="Contact Us"
+        eyebrow="Contact"
         title="프로젝트 문의"
         description="만들려는 것만 알려주시면 됩니다. 기획이 정리되지 않았어도 괜찮습니다. 요구사항과 목표는 첫 상담에서 같이 정리합니다."
       />
 
-      {/* ━━ (01) Inquiry - 폼 좌 / 채널 우 ━━ */}
+      {/* ━━ Inquiry - 폼 좌 / 채널 우 ━━ */}
       <section className={sectionPad}>
         <div className={container}>
           <SectionHead num="01" label="Inquiry" title={<>어디서부터 말씀드릴까요</>} kr="정리되지 않은 상태로 보내주셔도 됩니다" />
@@ -162,9 +162,9 @@ export default function ContactPage() {
                 {/* 어느 영역 문의인지 먼저 고르게 해서 내부 배정이 바로 되도록 한다 */}
                 <fieldset>
                   <legend className={labelClass}>
-                    문의 영역 <span className="font-normal text-white/50">(선택)</span>
+                    문의 영역 <span className="text-white/40">(선택)</span>
                   </legend>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-3">
                     {domains.map((d) => {
                       const on = formData.domain === d.key;
                       return (
@@ -172,15 +172,15 @@ export default function ContactPage() {
                           key={d.key} type="button" data-domain={d.key}
                           aria-pressed={on}
                           onClick={() => setFormData((prev) => ({ ...prev, domain: on ? '' : d.key }))}
-                          className={`h-14 px-4 rounded-[10px] border text-left transition-colors ${
+                          className={`h-14 px-4 border text-left transition-colors ${
                             on
-                              ? 'border-[var(--accent)] bg-[var(--accent-tint)]'
-                              : 'border-white/15 bg-white/[0.04] hover:border-white/35'
+                              ? 'border-primary-200 bg-primary-200'
+                              : 'border-white/15 bg-[var(--surface)] hover:border-white/40'
                           }`}>
                           <span className={`block type-b4 ${on ? 'text-[var(--text-1)]' : 'text-white/75'}`}>
                             {d.kr}
                           </span>
-                          <span className={`block type-c2 font-en ${on ? 'text-[var(--accent-strong)]' : 'text-white/50'}`}>
+                          <span className={`block font-mono text-[11px] uppercase ${on ? 'text-white/80' : 'text-white/45'}`}>
                             {d.en}
                           </span>
                         </button>
@@ -218,7 +218,7 @@ export default function ContactPage() {
                   <textarea
                     id="message" name="message"
                     value={formData.message} onChange={handleChange} required rows={7}
-                    className="w-full px-5 py-4 bg-white/[0.04] border border-white/15 rounded-[10px] text-[16px] leading-[1.75] text-[var(--text-1)] placeholder:text-white/45 outline-none transition-colors resize-none focus:border-white/60 focus:ring-0"
+                    className="w-full px-5 py-4 bg-[var(--surface)] border border-white/15 rounded-[2px] text-[16px] leading-[1.75] text-[var(--text-1)] placeholder:text-white/40 outline-none transition-colors resize-none focus:border-[var(--blue-glow)] focus:ring-0"
                     placeholder="만들려는 것과 생각하시는 일정을 편하게 적어 주세요."
                   />
                 </div>
@@ -265,19 +265,19 @@ export default function ContactPage() {
                 href={KAKAO_OPEN_CHAT_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group block p-8 sm:p-10 rounded-xl bg-[#FEE500] hover:bg-[#FDD835] transition-colors duration-300"
+                className="group block p-7 sm:p-9 bg-[#FEE500] hover:bg-[#FDD835] transition-colors duration-300"
               >
                 <div className="flex items-center justify-between gap-4 mb-5">
                   <div className="flex items-center gap-3">
                     <RiKakaoTalkFill className="text-[#3C1E1E]" size={26} />
-                    <h3 className="text-[19px] font-bold text-[#3C1E1E] tracking-[-0.02em]">카카오톡 문의</h3>
+                    <h3 className="text-[19px] font-medium text-[#3C1E1E] tracking-[-0.02em]">카카오톡 문의</h3>
                   </div>
-                  <p className="text-[13px] font-semibold text-[#3C1E1E]/60">1:1 오픈채팅</p>
+                  <p className="font-mono text-[11px] uppercase text-[#3C1E1E]/60">1:1 오픈채팅</p>
                 </div>
                 <p className="text-[#3C1E1E]/70 text-[15px] mb-8 leading-[1.75]">
                   가장 빠른 창구입니다
                 </p>
-                <div className="inline-flex items-center gap-2.5 h-12 px-6 rounded-[10px] bg-[#3C1E1E] text-[#FEE500] text-[15px] font-bold group-hover:bg-[#2D1616] transition-colors duration-300">
+                <div className="inline-flex items-center gap-2.5 h-12 px-6 rounded-[2px] bg-[#3C1E1E] text-[#FEE500] text-[15px] font-medium group-hover:bg-[#2D1616] transition-colors duration-300">
                   <span>채팅 시작하기</span>
                   <FiArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform duration-300" />
                 </div>
@@ -285,23 +285,23 @@ export default function ContactPage() {
 
               {/* 연락처 - 헤어라인 리스트 */}
               <div className="mt-14 sm:mt-16">
-                <p className="index-num font-en pb-6 border-b border-white/10">Direct</p>
+                <p className="mono-label pb-4 border-b border-white/[0.12]">Direct:</p>
                 <a href={`mailto:${CONTACT_EMAIL}`}
                   className="group flex items-baseline justify-between gap-6 py-6 border-b border-white/10">
-                  <span className="text-[13px] text-white/55 flex-shrink-0">이메일</span>
-                  <span className="text-[16px] sm:text-[17px] font-semibold text-[var(--text-1)] group-hover:text-[var(--accent)] transition-colors break-all text-right">
+                  <span className="font-mono text-[11px] uppercase text-white/55 flex-shrink-0">Email</span>
+                  <span className="text-[16px] sm:text-[17px] font-medium text-[var(--text-1)] group-hover:text-[var(--point)] transition-colors break-all text-right">
                     {CONTACT_EMAIL}
                   </span>
                 </a>
                 <a href={`tel:${CONTACT_PHONE}`}
                   className="group flex items-baseline justify-between gap-6 py-6 border-b border-white/10">
-                  <span className="text-[13px] text-white/55 flex-shrink-0">전화</span>
-                  <span className="text-[16px] sm:text-[17px] font-semibold text-[var(--text-1)] group-hover:text-[var(--accent)] transition-colors text-right">
+                  <span className="font-mono text-[11px] uppercase text-white/55 flex-shrink-0">Phone</span>
+                  <span className="text-[16px] sm:text-[17px] font-medium text-[var(--text-1)] group-hover:text-[var(--point)] transition-colors text-right">
                     {CONTACT_PHONE}
                   </span>
                 </a>
                 <p className="pt-8 text-[15px] text-white/55 leading-[1.75]">
-                  <span className="font-semibold text-[var(--text-1)]">빠른 답변</span>을 원하시면 카카오톡 오픈채팅을 이용해주세요.
+                  <span className="font-medium text-[var(--text-1)]">빠른 답변</span>을 원하시면 카카오톡 오픈채팅을 이용해주세요.
                 </p>
               </div>
             </motion.div>
@@ -309,29 +309,10 @@ export default function ContactPage() {
         </div>
       </section>
 
-      {/* ━━ (03) FAQ ━━ */}
+      {/* ━━ FAQ ━━ */}
       <section className={`${sectionPad} border-t border-white/10`}>
         <div className={container}>
-          {/* 공유 SectionHead는 홀수 번호에 fadeLeft/clipUp을 쓰므로 이 블록은 인라인 유지 */}
-          <div className="mb-16 sm:mb-20">
-            <div className="relative pb-6 mb-10 sm:mb-14">
-              <div className="flex items-center justify-between">
-                <motion.p {...inView} variants={fadeRight} className="index-num font-en">FAQ</motion.p>
-              </div>
-              <motion.span {...inView} variants={lineDraw}
-                className="absolute bottom-0 left-0 right-0 h-px bg-white/10 block" />
-            </div>
-            <motion.h2 {...inView} variants={stagger}
-              className="font-en text-[var(--text-1)] font-bold tracking-[-0.02em] leading-[1.04]"
-              style={displaySize}>
-              <span className={clipWrap}>
-                <motion.span variants={clipLeft} className="block">FAQ</motion.span>
-              </span>
-            </motion.h2>
-            <motion.p {...inView} variants={fadeLeft} className="caption-kr mt-6">
-              궁금한 점이 있으시면 먼저 읽어 보세요
-            </motion.p>
-          </div>
+          <SectionHead label="FAQ" title={<>자주 묻는 질문</>} kr="궁금한 점이 있으시면 먼저 읽어 보세요" />
           <div className="max-w-3xl">
             <FAQAccordion faqs={faqs} />
           </div>

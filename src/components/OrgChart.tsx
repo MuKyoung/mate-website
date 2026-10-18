@@ -18,14 +18,14 @@ export default function OrgChart() {
               i > 0 ? 'border-t md:border-t-0 md:border-l md:pl-10' : '',
               i < departments.length - 1 ? 'md:pr-10' : '',
             ].join(' ')}>
-            <p className="index-num font-en mb-8">{dept.label}</p>
-            <h3 className="text-[20px] font-bold text-white tracking-[-0.02em] mb-3">{dept.name}</h3>
-            <p className="text-[15px] text-white/55 leading-[1.75] mb-8">{dept.description}</p>
+            <p className="mono-label mb-8">{dept.label}:</p>
+            <h3 className="mb-3 text-[22px] font-medium tracking-[-0.03em] text-white">{dept.name}</h3>
+            <p className="mb-8 text-[15px] leading-[1.75] text-white/60">{dept.description}</p>
 
             {/* 담당 영역 - 헤어라인 리스트 */}
             <ul>
               {dept.focus.map((f) => (
-                <li key={f} className="py-2.5 text-[13px] text-white/55 border-t border-white/10 last:border-b">
+                <li key={f} className="border-t border-white/10 py-2.5 font-mono text-[12px] text-white/60 last:border-b">
                   {f}
                 </li>
               ))}

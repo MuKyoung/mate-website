@@ -1,23 +1,18 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import Link from 'next/link';
 import PageHeader from '@/components/PageHeader';
 import TeamCapabilityCard from '@/components/TeamCapabilityCard';
 import OrgChart from '@/components/OrgChart';
+import SectionHead from '@/components/ui/SectionHead';
+import CtaSection from '@/components/ui/CtaSection';
+import StripeField from '@/components/visual/StripeField';
 import { teamCapabilities, awards, type Award, counts } from '@/data/teamCapabilities';
 import { projects } from '@/data/projects';
-import {
-  FiArrowUpRight, FiStar, FiFileText, FiBookmark, FiGrid,
-} from 'react-icons/fi';
+import { FiStar, FiFileText, FiBookmark, FiGrid } from 'react-icons/fi';
 import type { IconType } from 'react-icons';
-import {
-  fadeUp, fadeLeft, fadeRight, riseTilt, clipUp, clipLeft, clipRight, lineDraw, stagger, inView,
-} from '@/lib/motion';
-import {
-  arrowHover, btnPrimary, clipWrap, container, CONTACT_EMAIL, displaySize,
-  displaySizeLg, hairlineCell, linkUnderline, sectionPad, sectionPadLg,
-} from '@/lib/styles';
+import { fadeUp, clipUp, rowIn, stagger, staggerTight, staggerRows, inView } from '@/lib/motion';
+import { clipWrap, container, displaySize, sectionPad } from '@/lib/styles';
 
 /* 수상 랭크 → react-icons (UI 이모지 금지) */
 function getAwardIcon(award: Award): IconType {
@@ -46,204 +41,162 @@ const whyChooseUs = [
   { title: '배포 후 모니터링', desc: '배포한 뒤에도 모니터링으로 안정성을 확인합니다' },
 ];
 
-/* 섹션 헤더 - 라벨 행(라인 드로우) + 대형 타이틀 (홈과 동일 패턴, 섹션별 방향 교차) */
-function SectionHead({ num, label, title, desc }: {
-  num: string; label: string; title: React.ReactNode; desc?: string;
-}) {
-  const n = parseInt(num, 10);
-  const even = n % 2 === 0;
-  const clip = [clipRight, clipUp, clipLeft][n % 3]; // 03 clipRight · 04 clipUp · 05 clipLeft
-  return (
-    <div className="mb-16 sm:mb-20">
-      <div className="relative pb-6 mb-10 sm:mb-14">
-        <motion.p {...inView} variants={even ? fadeRight : fadeLeft} className="index-num font-en">
-          {label}
-        </motion.p>
-        <motion.span {...inView} variants={lineDraw}
-          className="absolute bottom-0 left-0 right-0 h-px bg-white/10 block" />
-      </div>
-      <motion.h2 {...inView} variants={stagger}
-        className="text-[var(--text-1)] font-bold tracking-[-0.02em] leading-[1.04]"
-        style={displaySize}>
-        <span className={clipWrap}>
-          <motion.span variants={clip} className="block">{title}</motion.span>
-        </span>
-      </motion.h2>
-      {desc && (
-        <motion.p {...inView} variants={even ? fadeLeft : fadeRight}
-          className="mt-7 text-[17px] text-white/55 leading-[1.75] max-w-xl">
-          {desc}
-        </motion.p>
-      )}
-    </div>
-  );
-}
-
 export default function TeamPageClient() {
   const yearGroups = Array.from(new Set(awards.map(a => a.year))).sort((a, b) => b - a);
 
   return (
     <>
       <PageHeader
-        eyebrow="About Team"
+        eyebrow="Team"
         title="MATE 팀 소개"
         description="개발 · 디자인 · 운영이 하나의 팀으로 움직입니다. 웹 · 앱, 게임 · XR, 교육 세 영역을 각각 전담합니다."
       />
 
-      {/* ━━ 핵심 수치 - 헤어라인 스트립 ━━ */}
+      {/* ━━ 숫자 - 칸마다 이름표를 붙인 줄 ━━ */}
       <section className="border-b border-white/10">
         <div className={container}>
-          <motion.div {...inView} variants={stagger} className="grid grid-cols-2 lg:grid-cols-4">
-            {stats.map((stat, i) => (
-              <motion.div key={stat.label} variants={i % 2 === 0 ? fadeUp : riseTilt}
-                className={hairlineCell(i)}>
-                <div className="flex items-baseline gap-3 py-7 sm:py-9">
-                  <span className="font-en text-3xl sm:text-4xl font-bold text-[var(--text-1)] font-mono-stat tracking-[-0.02em]">
-                    {stat.value}
-                  </span>
-                  <span className="text-[13px] text-white/55">{stat.label}</span>
-                </div>
+          <motion.div {...inView} variants={staggerTight} className="grid grid-cols-2 gap-x-6 gap-y-8 py-10 sm:py-12 lg:grid-cols-4">
+            {stats.map((stat) => (
+              <motion.div key={stat.label} variants={fadeUp}>
+                <p className="mono-label mb-3">{stat.label}:</p>
+                <p className="font-en font-mono-stat text-[40px] leading-none tracking-[-0.05em] text-[var(--text-1)] sm:text-[52px]">
+                  {stat.value}
+                </p>
               </motion.div>
             ))}
           </motion.div>
         </div>
       </section>
 
-      {/* ━━ (01) About - 좌 제목 / 우 본문 ━━ */}
+      {/* ━━ About - 좌 제목 / 우 본문과 일하는 방식 ━━ */}
       <section className={sectionPad}>
         <div className={container}>
-          <div className="relative pb-6 mb-10 sm:mb-14">
-            <motion.p {...inView} variants={fadeLeft} className="index-num font-en">About</motion.p>
-            <motion.span {...inView} variants={lineDraw}
-              className="absolute bottom-0 left-0 right-0 h-px bg-white/10 block" />
-          </div>
+          <motion.p {...inView} variants={fadeUp} className="mono-label mb-10 border-b border-white/[0.12] pb-4 sm:mb-14">About:</motion.p>
 
-          <div className="grid lg:grid-cols-12 gap-y-14 gap-x-8">
-            <motion.h2 {...inView} variants={stagger}
-              className="lg:col-span-5 text-[var(--text-1)] font-bold tracking-[-0.02em] leading-[1.04]"
-              style={displaySize}>
-              <span className={clipWrap}>
-                <motion.span variants={clipUp} className="block">Unity · 웹 · 앱까지<br />한 팀에서</motion.span>
-              </span>
-            </motion.h2>
+          <div className="grid gap-x-8 gap-y-14 lg:grid-cols-12">
+            <div className="lg:col-span-5">
+              <motion.h2 {...inView} variants={stagger}
+                className="font-medium leading-[1.08] tracking-[-0.045em] text-[var(--text-1)]"
+                style={displaySize}>
+                <span className={clipWrap}>
+                  <motion.span variants={clipUp} className="block">Unity · 웹 · 앱까지</motion.span>
+                </span>
+                <span className={clipWrap}>
+                  <motion.span variants={clipUp} className="block text-white/45">한 팀에서</motion.span>
+                </span>
+              </motion.h2>
+              <motion.div {...inView} variants={fadeUp} className="relative mt-12 hidden h-56 lg:block">
+                <StripeField seed={31} className="absolute inset-0" />
+              </motion.div>
+            </div>
 
             <motion.div {...inView} variants={stagger} className="lg:col-span-6 lg:col-start-7">
-              <motion.p variants={fadeRight}
-                className="text-xl sm:text-2xl font-semibold text-[var(--text-1)] leading-[1.5] mb-8">
+              <motion.p variants={fadeUp}
+                className="mb-6 text-[20px] font-medium leading-[1.5] tracking-[-0.025em] text-[var(--text-1)] sm:text-[24px]">
                 MATE는 웹 · 앱, 게임 · XR, 교육 세 영역의 외주 개발과
                 자체 게임 제작 · 퍼블리싱을 함께 합니다.
               </motion.p>
-              <motion.p variants={fadeUp} className="text-[17px] text-white/55 leading-[1.75] mb-16">
+              <motion.p variants={fadeUp} className="mb-14 text-[17px] leading-[1.75] text-white/60">
                 {teamCapabilities.stats.since}년부터 쌓은 외주 경험을 바탕으로,
                 개발 · 디자인 · 운영이 하나의 팀으로 움직입니다.
                 여러 회사에 나눠 맡기지 않아도, 필요한 개발을 한 팀에서 해결할 수 있습니다.
               </motion.p>
 
-              <div>
+              <motion.p variants={fadeUp} className="mono-label mb-4">How we work:</motion.p>
+              <motion.ol variants={staggerRows} className="space-y-2">
                 {whyChooseUs.map((item, i) => (
-                  <motion.div key={item.title} variants={i % 2 === 0 ? fadeLeft : fadeRight}
-                    className="grid sm:grid-cols-[11rem_1fr] gap-x-8 gap-y-2 py-7 border-t border-white/10 last:border-b">
-                    <p className="text-[17px] font-bold text-[var(--text-1)]">{item.title}</p>
-                    <p className="text-[15px] text-white/55 leading-[1.75]">{item.desc}</p>
-                  </motion.div>
+                  <motion.li key={item.title} variants={rowIn}
+                    className="grid gap-x-6 gap-y-2 border border-white/10 bg-[var(--surface)] p-5 sm:grid-cols-[2rem_10rem_1fr] sm:items-baseline">
+                    <span className="font-mono text-[12px] text-white/45 tabular-nums">{i + 1}</span>
+                    <p className="text-[16px] font-medium text-[var(--text-1)]">{item.title}</p>
+                    <p className="text-[15px] leading-[1.7] text-white/60">{item.desc}</p>
+                  </motion.li>
                 ))}
-              </div>
+              </motion.ol>
             </motion.div>
           </div>
         </div>
       </section>
 
-      {/* ━━ (02) Vision - 대형 스테이트먼트 ━━ */}
-      <section className={sectionPad}>
+      {/* ━━ Vision - 큰 문장 하나 ━━ */}
+      <section className={`${sectionPad} border-t border-white/10`}>
         <div className={container}>
-          <div className="relative pb-6 mb-14 sm:mb-20">
-            <motion.p {...inView} variants={fadeRight} className="index-num font-en">Vision</motion.p>
-            <motion.span {...inView} variants={lineDraw}
-              className="absolute bottom-0 left-0 right-0 h-px bg-white/10 block" />
-          </div>
+          <motion.p {...inView} variants={fadeUp} className="mono-label mb-14 border-b border-white/[0.12] pb-4 sm:mb-20">Vision:</motion.p>
 
           <motion.h2 {...inView} variants={stagger}
-            className="text-[var(--text-1)] font-bold tracking-[-0.02em] leading-[1.1] mb-16 sm:mb-24"
-            style={{ fontSize: 'clamp(2.25rem, 6vw, 4.5rem)' }}>
+            className="mb-14 font-medium leading-[1.06] tracking-[-0.05em] text-[var(--text-1)] sm:mb-20"
+            style={{ fontSize: 'clamp(2.25rem, 6vw, 5rem)' }}>
             <span className="block overflow-hidden pb-[0.08em]">
-              <motion.span variants={clipLeft} className="block">
+              <motion.span variants={clipUp} className="block font-en">
                 MATE <span className="text-[var(--point)]">=</span> 기획 + 개발 + 배포
               </motion.span>
             </span>
             <span className="block overflow-hidden pb-[0.08em]">
-              <motion.span variants={fadeRight} className="block text-white/50">끝까지 함께하는 개발 파트너</motion.span>
+              <motion.span variants={clipUp} className="block text-white/45">끝까지 함께하는 개발 파트너</motion.span>
             </span>
           </motion.h2>
 
-          <div className="grid lg:grid-cols-12 gap-y-8 gap-x-8">
+          <div className="grid gap-x-8 gap-y-8 lg:grid-cols-12">
             <motion.p {...inView} variants={fadeUp}
-              className="lg:col-span-6 lg:col-start-7 text-[17px] sm:text-xl text-white/55 leading-[1.75]">
-              요구사항을 정리하는 기획 단계부터 설계와 개발, 배포와 운영까지 프로젝트의 전 과정을 한 팀이 책임집니다.
-              요청받은 기능을 만들어 넘기고 끝나는 외주가 아니라, 만들기 전에 방향을 함께 검증하고
-              배포 이후의 개선까지 이어가는 파트너로 일합니다.
+              className="text-[17px] leading-[1.75] text-white/60 sm:text-[19px] lg:col-span-6 lg:col-start-7">
+              단순 기능 구현을 넘어 기획 · 디자인 · 개발 · 배포 전 과정을 함께하는 파트너십을 지향합니다.
+              배포한 뒤에도 모니터링으로 안정성을 확인하고, 유지보수를 이어서 맡습니다.
             </motion.p>
           </div>
         </div>
       </section>
 
-      {/* ━━ (03) Capabilities - 헤어라인 3열 ━━ */}
-      <section className={sectionPad}>
+      {/* ━━ Capabilities - 세 장의 패널 ━━ */}
+      <section className={`${sectionPad} border-t border-white/10`}>
         <div className={container}>
-          <SectionHead num="03" label="Capabilities" title="전문 역량"
+          <SectionHead label="Capabilities" title="전문 역량"
             desc="유니티 외주 개발과 강의를 통해 쌓은 실전 경험입니다." />
-
-          <div className="grid grid-cols-1 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
             {teamCapabilities.capabilities.map((capability, index) => (
-              <div key={capability.id}
-                className={[
-                  'border-white/10',
-                  index > 0 ? 'border-t pt-12 mt-12 md:border-t-0 md:pt-0 md:mt-0 md:border-l md:pl-10' : '',
-                  index < teamCapabilities.capabilities.length - 1 ? 'md:pr-10' : '',
-                ].join(' ')}>
-                <TeamCapabilityCard capability={capability} index={index} />
-              </div>
+              <TeamCapabilityCard key={capability.id} capability={capability} index={index} />
             ))}
           </div>
         </div>
       </section>
 
-      {/* ━━ (04) Organization ━━ */}
-      <section className={sectionPad}>
+      {/* ━━ Organization ━━ */}
+      <section className={`${sectionPad} border-t border-white/10`}>
         <div className={container}>
-          <SectionHead num="04" label="Organization" title="조직 구성"
+          <SectionHead label="Organization" title="조직 구성"
             desc="개발 · 디자인 · 운영 세 축이 하나의 팀으로 움직입니다." />
-
           <OrgChart />
         </div>
       </section>
 
-      {/* ━━ (05) Awards & Exhibitions ━━ */}
-      <section className={sectionPad}>
+      {/* ━━ Awards & Exhibitions - 해마다 묶은 목록 ━━ */}
+      <section className={`${sectionPad} border-t border-white/10`}>
         <div className={container}>
-          <SectionHead num="05" label={'Awards & Exhibitions'} title="수상 및 전시 경력" />
+          <SectionHead label="Awards & Exhibitions" title="수상 및 전시 경력" />
 
-          <div className="max-w-5xl space-y-16 sm:space-y-20">
-            {yearGroups.map((year, yi) => (
-              <motion.div key={year} {...inView} variants={stagger}>
-                <motion.span variants={yi % 2 === 0 ? fadeLeft : fadeRight}
-                  className="index-num-lg font-en mb-6">{year}</motion.span>
-                <div className="mt-6">
-                  {awards.filter(a => a.year === year).map((award, ri) => {
+          <div className="space-y-14 sm:space-y-16">
+            {yearGroups.map((year) => (
+              <motion.div key={year} {...inView} variants={staggerRows} className="grid gap-x-gutter gap-y-4 lg:grid-cols-12">
+                <motion.p variants={rowIn} className="font-mono text-[13px] text-white/50 tabular-nums lg:col-span-2 lg:pt-5">
+                  {year}
+                </motion.p>
+                <div className="border-t border-white/[0.12] lg:col-span-10">
+                  {awards.filter(a => a.year === year).map((award) => {
                     const Icon = getAwardIcon(award);
-                    // 연도 라벨과 반대 방향에서 시작해 행마다 교차
-                    const rowDir = (yi + ri) % 2 === 0 ? fadeRight : fadeLeft;
                     return (
-                      <motion.div key={award.id} variants={rowDir}
-                        className="flex items-start gap-4 py-5 border-t border-white/10 last:border-b">
-                        <Icon size={17} className="flex-shrink-0 mt-1 text-white/50" />
+                      <motion.div key={award.id} variants={rowIn}
+                        className="flex items-start gap-4 border-b border-white/10 py-5">
+                        <span className={`mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center ${
+                          award.type === 'exhibition' ? 'border border-white/25 text-white/70' : 'bg-primary-200 text-white'}`}>
+                          <Icon size={12} />
+                        </span>
                         <div className="min-w-0 flex-1 sm:flex sm:items-baseline sm:justify-between sm:gap-8">
                           <div className="min-w-0">
-                            <p className="text-[17px] font-bold text-[var(--text-1)] leading-snug">{award.title}</p>
-                            <p className="text-[15px] text-white/55 mt-1">{award.organization}</p>
+                            <p className="text-[17px] font-medium leading-snug tracking-[-0.02em] text-[var(--text-1)]">{award.title}</p>
+                            <p className="mt-1 text-[14px] text-white/55">{award.organization}</p>
                           </div>
-                          <div className="flex flex-wrap items-center gap-2.5 mt-3 sm:mt-0 flex-shrink-0">
-                            <span className="text-[13px] text-white/50">
-                              {award.type === 'exhibition' ? '전시회' : '수상'}
+                          <div className="mt-3 flex flex-shrink-0 flex-wrap items-center gap-2 sm:mt-0">
+                            <span className="font-mono text-[11px] uppercase text-white/45">
+                              {award.type === 'exhibition' ? '전시' : '수상'}
                             </span>
                             {award.rank && <span className="tag">{award.rank}</span>}
                           </div>
@@ -258,34 +211,8 @@ export default function TeamPageClient() {
         </div>
       </section>
 
-      {/* ━━ (06) CTA ━━ */}
-      <section className={`${sectionPadLg} border-t border-white/10`}>
-        <div className={container}>
-          <motion.p {...inView} variants={fadeUp} className="index-num font-en mb-10">Contact</motion.p>
-          <motion.h2 {...inView} variants={stagger}
-            className="text-[var(--text-1)] font-bold tracking-[-0.02em] leading-[1.1] mb-8"
-            style={displaySizeLg}>
-            <span className="block overflow-hidden pb-[0.07em]">
-              <motion.span variants={clipLeft} className="block">함께 프로젝트를</motion.span>
-            </span>
-            <span className="block overflow-hidden pb-[0.07em]">
-              <motion.span variants={clipUp} className="block text-[var(--point)]">시작해볼까요?</motion.span>
-            </span>
-          </motion.h2>
-          <motion.p {...inView} variants={fadeLeft} className="caption-kr mb-14 sm:mb-20">
-            무료 상담으로 가능성을 확인하세요.
-          </motion.p>
-          <motion.div {...inView} variants={fadeRight} className="flex flex-wrap items-center gap-8">
-            <Link href="/contact" className={btnPrimary}>
-              문의하기
-              <FiArrowUpRight size={17} className={arrowHover} />
-            </Link>
-            <a href={`mailto:${CONTACT_EMAIL}`} className={linkUnderline}>
-              {CONTACT_EMAIL}
-            </a>
-          </motion.div>
-        </div>
-      </section>
+      <CtaSection line1="함께 프로젝트를" line2="시작해볼까요?"
+        kr="무료 상담으로 가능성을 확인하세요." cta="문의하기" />
     </>
   );
 }

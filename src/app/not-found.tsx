@@ -20,8 +20,8 @@ export default function NotFound() {
 
         {/* 라벨 행 - 헤어라인 라인 드로우 */}
         <div className="relative pb-6 mb-10 sm:mb-12">
-          <motion.p variants={fadeRight} className="index-num font-en">
-            404 Not Found
+          <motion.p variants={fadeRight} className="mono-label">
+            404 / Not found:
           </motion.p>
           <motion.span variants={lineDraw}
             className="absolute bottom-0 left-0 right-0 h-px bg-white/10 block" />
@@ -29,7 +29,7 @@ export default function NotFound() {
 
         {/* 대형 타이틀 */}
         <motion.h1 variants={stagger}
-          className="text-[var(--text-1)] font-bold tracking-[-0.02em] leading-[1.04] mb-6"
+          className="mb-6 font-medium leading-[1.06] tracking-[-0.045em] text-[var(--text-1)]"
           style={displaySize}>
           <span className="block overflow-hidden pb-[0.08em]">
             <motion.span variants={clipLeft} className="block">페이지를 찾을 수 없습니다</motion.span>

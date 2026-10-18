@@ -3,11 +3,16 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { FiMail, FiPhone, FiArrowUpRight } from 'react-icons/fi';
-import { RiKakaoTalkFill } from 'react-icons/ri';
+import { FiArrowUpRight } from 'react-icons/fi';
 import { domains } from '@/data/domains';
+import { teamCapabilities } from '@/data/teamCapabilities';
+import HorizonGlow from '@/components/visual/HorizonGlow';
 import { container, CONTACT_EMAIL, CONTACT_PHONE, KAKAO_OPEN_CHAT_URL } from '@/lib/styles';
 
+/**
+ * 모든 페이지의 마지막 화면.
+ * 위에는 칸마다 이름을 붙인 정보 줄, 아래에는 로고 뒤로 파란 수평선이 떠오른다.
+ */
 export default function Footer() {
   const pathname = usePathname();
   const year = new Date().getFullYear();
@@ -24,112 +29,93 @@ export default function Footer() {
   ];
 
   // 실제로 연결되는 채널만 노출한다 (미개설 SNS 링크는 두지 않음)
-  const social = [
-    { icon: RiKakaoTalkFill, href: KAKAO_OPEN_CHAT_URL,          label: '카카오톡 오픈채팅' },
-    { icon: FiMail,          href: `mailto:${CONTACT_EMAIL}`,    label: '이메일' },
-    { icon: FiPhone,         href: `tel:${CONTACT_PHONE}`,       label: '전화' },
+  const channels = [
+    { href: `mailto:${CONTACT_EMAIL}`, label: CONTACT_EMAIL },
+    { href: `tel:${CONTACT_PHONE}`, label: CONTACT_PHONE },
+    { href: KAKAO_OPEN_CHAT_URL, label: '카카오톡 오픈채팅', external: true },
   ];
 
+  const linkCls = 'group inline-flex items-center gap-1.5 text-[14px] text-white/60 hover:text-white transition-colors';
+
   return (
-    <footer className="relative border-t border-white/10">
-      <div className={`${container} pt-20 sm:pt-28 pb-16 sm:pb-20`}>
+    <footer className="relative overflow-hidden border-t border-white/10">
+      <div className={`${container} pt-16 sm:pt-20`}>
+        <div className="grid grid-cols-2 gap-x-6 gap-y-12 lg:grid-cols-12">
+          <div className="col-span-2 lg:col-span-3">
+            <p className="mono-label text-white/80">DEVTEAMMATE.CO.KR</p>
+          </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 sm:gap-12 mb-16">
-          {/* 브랜드 */}
-          <div className="col-span-2 md:col-span-1">
-            <Link href="/" className="inline-block mb-4 hover:opacity-75 transition-opacity">
-              <Image src="/images/logo.png" alt="MATE" width={80} height={26} className="h-6 w-auto brightness-0 invert" />
-            </Link>
-            <p className="text-sm text-white/55 leading-relaxed mb-5">
-              웹 · 앱, 게임 · XR, 교육 외주 개발과 자체 게임 제작 · 퍼블리싱.
+          <div className="col-span-2 lg:col-span-4">
+            <p className="mono-label mb-3">Overview:</p>
+            <p className="max-w-sm text-[14px] leading-[1.7] text-white/60">
+              웹 · 앱, 게임 · XR, 교육 세 영역의 외주 개발과 자체 게임 제작 · 퍼블리싱을 함께 합니다.
             </p>
-            <div className="flex gap-1">
-              {social.map((s) => {
-                const external = s.href.startsWith('http');
-                return (
-                  <a key={s.label} href={s.href}
-                    {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-                    aria-label={s.label} title={s.label}
-                    className="w-10 h-10 flex items-center justify-center rounded-full text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors duration-200">
-                    <s.icon size={16} />
-                  </a>
-                );
-              })}
-            </div>
           </div>
 
-          {/* 네비게이션 */}
-          <div>
-            <h4 className="font-en text-xs font-bold text-white/85 tracking-[0.05em] uppercase mb-5">Navigation</h4>
-            <ul className="space-y-2.5">
+          <div className="lg:col-span-2">
+            <p className="mono-label mb-3">Pages:</p>
+            <ul className="space-y-2">
               {nav.map((l) => (
-                <li key={l.href}>
-                  <Link href={l.href}
-                    className="group inline-flex items-center gap-1 text-sm text-white/55 hover:text-white transition-colors">
-                    {l.label}
-                    <FiArrowUpRight size={10} className="opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </Link>
-                </li>
+                <li key={l.href}><Link href={l.href} className={linkCls}>{l.label}</Link></li>
               ))}
             </ul>
           </div>
 
-          {/* 도메인 */}
-          <div>
-            <h4 className="font-en text-xs font-bold text-white/85 tracking-[0.05em] uppercase mb-5">Domains</h4>
-            <ul className="space-y-2.5">
+          <div className="lg:col-span-2">
+            <p className="mono-label mb-3">Domains:</p>
+            <ul className="space-y-2">
               {domains.map((d) => (
-                <li key={d.key}>
-                  <Link href={`/${d.slug}`}
-                    className="group inline-flex items-center gap-1 text-sm text-white/55 hover:text-white transition-colors">
-                    {d.kr}
-                    <FiArrowUpRight size={10} className="opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </Link>
+                <li key={d.key}><Link href={`/${d.slug}`} className={linkCls}>{d.kr}</Link></li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="col-span-2 lg:col-span-1 lg:text-right">
+            <p className="mono-label lg:justify-end">©{year}</p>
+          </div>
+
+          <div className="col-span-2 lg:col-span-4 lg:col-start-4">
+            <p className="mono-label mb-3">Contact:</p>
+            <ul className="space-y-2">
+              {channels.map((c) => (
+                <li key={c.href}>
+                  <a href={c.href} className={`${linkCls} break-all`}
+                    {...(c.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
+                    {c.label}
+                    <FiArrowUpRight size={12} className="opacity-0 transition-opacity group-hover:opacity-100" />
+                  </a>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* 연락처 */}
-          <div className="col-span-2 md:col-span-1">
-            <h4 className="font-en text-xs font-bold text-white/85 tracking-[0.05em] uppercase mb-5">Contact</h4>
-            <div className="space-y-3.5">
-              <div>
-                <p className="text-[10px] text-white/50 uppercase tracking-wider mb-0.5">Email</p>
-                <a href={`mailto:${CONTACT_EMAIL}`}
-                  className="text-sm text-white/55 hover:text-white transition-colors break-all">
-                  {CONTACT_EMAIL}
-                </a>
-              </div>
-              <div>
-                <p className="text-[10px] text-white/50 uppercase tracking-wider mb-0.5">Phone</p>
-                <a href={`tel:${CONTACT_PHONE}`}
-                  className="text-sm text-white/55 hover:text-white transition-colors">
-                  {CONTACT_PHONE}
-                </a>
-              </div>
-            </div>
+          <div className="col-span-2 lg:col-span-5">
+            <p className="mono-label mb-3">Business:</p>
+            <dl className="space-y-2 text-[13px] text-white/55">
+              {[
+                ['상호', 'MATE 외주개발팀'],
+                ['시작한 해', `${teamCapabilities.stats.since}`],
+              ].map(([k, v]) => (
+                <div key={k} className="flex gap-3">
+                  <dt className="w-20 shrink-0 text-white/45">{k}</dt>
+                  <dd>{v}</dd>
+                </div>
+              ))}
+            </dl>
           </div>
         </div>
+      </div>
 
-        {/* 사업자 정보 */}
-        <div className="pt-8 border-t border-white/10">
-          <dl className="flex flex-wrap gap-x-8 gap-y-2 mb-6">
-            {[
-              ['상호', 'MATE 외주개발팀'],
-              ['이메일', CONTACT_EMAIL],
-              ['대표번호', CONTACT_PHONE],
-            ].map(([k, v]) => (
-              <div key={k} className="flex items-center gap-2">
-                <dt className="text-[11px] font-semibold text-white/50">{k}</dt>
-                <dd className="text-[12px] text-white/55">{v}</dd>
-              </div>
-            ))}
-          </dl>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <p className="text-xs text-white/50">© {year} MATE. All rights reserved.</p>
-          </div>
+      {/* 마무리 - 로고 뒤로 수평선이 떠오른다 */}
+      <div className="relative mt-20 h-[58vw] max-h-[560px] min-h-[300px] sm:mt-28">
+        <HorizonGlow side="bottom" rim="62%" radius="max(92vw, 720px)" />
+        <div className="relative flex h-full flex-col items-center pt-[10%] sm:pt-[7%]">
+          <Image src="/images/logo.png" alt="MATE" width={1991} height={493}
+            className="h-auto w-[min(52vw,420px)] brightness-0 invert" />
         </div>
+        <p className="absolute bottom-5 left-0 right-0 text-center font-mono text-[11px] tracking-[0.02em] text-black/60">
+          © {year} MATE. All rights reserved.
+        </p>
       </div>
     </footer>
   );

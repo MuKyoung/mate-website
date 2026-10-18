@@ -2,33 +2,27 @@
 
 import { useRef } from 'react';
 import Link from 'next/link';
-import { motion, useScroll, useTransform } from 'framer-motion';
-import { FiArrowUpRight, FiArrowLeft, FiArrowRight } from 'react-icons/fi';
-import SafeImage from '@/components/SafeImage';
-import ThumbFallback from '@/components/ThumbFallback';
+import { motion } from 'framer-motion';
+import { FiArrowLeft, FiArrowRight, FiMonitor, FiSmartphone, FiBox } from 'react-icons/fi';
+import CtaSection from '@/components/ui/CtaSection';
+import SectionHead from '@/components/ui/SectionHead';
+import ProjectCard from '@/components/ProjectCard';
+import HorizonGlow from '@/components/visual/HorizonGlow';
+import StripeField from '@/components/visual/StripeField';
 import { projects } from '@/data/projects';
 import {
   gameCapabilities, gamePlatforms, gamePipeline, gameCredentials, domainByKey,
 } from '@/data/domains';
-import { fadeUp, fadeLeft, fadeRight, clipUp, maskUp, rowIn, stagger, staggerTight, staggerRows, inView, onMount } from '@/lib/motion';
-import { arrowHover, container, linkUnderline, CONTACT_EMAIL } from '@/lib/styles';
+import { fadeUp, clipUp, rowIn, stagger, staggerTight, staggerRows, inView, onMount } from '@/lib/motion';
+import { container, iconSquare, numSquare, sectionPad } from '@/lib/styles';
 
 const d = domainByKey.game;
 const work = projects.filter((p) => p.category === 'Game Application' || p.category === 'VR Application');
-const reel = work.filter((p) => p.thumbnail);
-
 const credentials = gameCredentials;
+const platformIcon = [FiMonitor, FiSmartphone, FiBox];
 
 export default function GameClient() {
-  const heroRef = useRef<HTMLDivElement>(null);
   const railRef = useRef<HTMLDivElement>(null);
-
-  // 히어로 배경만 느리게 밀려 시차를 만든다
-  const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
-  const bgY = useTransform(scrollYProgress, [0, 1], ['0%', '18%']);
-  const bgScale = useTransform(scrollYProgress, [0, 1], [1.05, 1.16]);
-  const titleY = useTransform(scrollYProgress, [0, 1], ['0%', '-30%']);
-
   const nudge = (dir: -1 | 1) => {
     railRef.current?.scrollBy({ left: dir * 420, behavior: 'smooth' });
   };
@@ -36,120 +30,87 @@ export default function GameClient() {
   return (
     <div data-domain="game">
 
-      {/* ━━━━━━ HERO - 풀블리드 이미지 위 중앙 정렬 ━━━━━━ */}
-      <section ref={heroRef} className="relative min-h-[92vh] flex items-center justify-center overflow-hidden">
-        <motion.div style={{ y: bgY, scale: bgScale }} className="absolute inset-0">
-          <SafeImage src="/images/projects/영창하세요마법사님.webp" alt="" fill className="absolute inset-0" />
-        </motion.div>
-        {/* 비네트 - 상하단을 캔버스로 녹여 헤더/다음 섹션과 이어 붙인다 */}
-        <div className="absolute inset-0" style={{ background: 'var(--canvas)', opacity: 0.66 }} />
-        {/* 타이포가 앉는 중앙만 한 겹 더 눌러 글자를 띄운다 */}
-        <div className="absolute inset-0"
-          style={{ background: 'radial-gradient(58% 42% at 50% 42%, rgba(8,8,10,0.72) 0%, transparent 100%)' }} />
-        <div className="absolute inset-0"
-          style={{ background: 'radial-gradient(120% 82% at 50% 42%, transparent 0%, var(--canvas) 84%)' }} />
-        <div className="absolute inset-x-0 bottom-0 h-56"
-          style={{ background: 'linear-gradient(180deg, transparent, var(--canvas))' }} />
-        {/* 바이올렛 글로우 */}
-        <div className="absolute left-1/2 top-[40%] -translate-x-1/2 -translate-y-1/2 w-[min(620px,90vw)] aspect-square rounded-full pointer-events-none"
-          style={{ background: 'radial-gradient(circle, var(--accent-dim) 0%, transparent 66%)' }} />
-
-        <motion.div style={{ y: titleY }} className={`relative ${container} text-center`}>
-          <motion.p {...onMount} variants={fadeUp} className="index-num font-en justify-center mb-9">
-            Game &amp; XR Development
+      {/* ━━━━━━ HERO ━━━━━━ */}
+      <section className="relative overflow-hidden pt-40 pb-16 sm:pt-52 sm:pb-24">
+        <HorizonGlow side="top" rim="clamp(110px, 13vw, 200px)" radius="max(120vw, 900px)" />
+        <div className={`relative ${container}`}>
+          <motion.p {...onMount} variants={fadeUp} className="mono-label mb-12 border-b border-white/[0.12] pb-4 sm:mb-16">
+            <Link href="/services" className="text-white/45 hover:text-white">MATE / Services /</Link> {d.en}:
           </motion.p>
 
-          <motion.h1 {...onMount} variants={stagger}
-            className="font-en font-bold text-[var(--text-1)] tracking-[-0.02em] leading-[0.92] mb-10"
-            style={{ fontSize: 'clamp(3rem, 11vw, 9.5rem)' }}>
-            <span className="block overflow-hidden pb-[0.1em] -mb-[0.1em]">
-              <motion.span variants={clipUp} className="block">PLAYABLE</motion.span>
-            </span>
-            <span className="block overflow-hidden pb-[0.1em] -mb-[0.1em]">
-              <motion.span variants={clipUp} className="block text-[var(--accent)]">FIRST</motion.span>
-            </span>
-          </motion.h1>
+          <div className="grid items-end gap-x-gutter gap-y-12 lg:grid-cols-12">
+            <motion.h1 {...onMount} variants={stagger}
+              className="font-en font-medium leading-[0.96] tracking-[-0.05em] text-[var(--text-1)] lg:col-span-7"
+              style={{ fontSize: 'clamp(2.75rem, 7.6vw, 6.75rem)' }}>
+              <span className="-mb-[0.1em] block overflow-hidden pb-[0.1em]">
+                <motion.span variants={clipUp} className="block">Game &amp; XR</motion.span>
+              </span>
+              <span className="-mb-[0.1em] block overflow-hidden pb-[0.1em]">
+                <motion.span variants={clipUp} className="block text-white/45">Development</motion.span>
+              </span>
+            </motion.h1>
+            <motion.div {...onMount} variants={fadeUp} className="lg:col-span-5 lg:pb-3">
+              <p className="type-h3 mb-5 text-[var(--text-1)]">{d.lead}</p>
+              <p className="type-b3 text-white/65">{d.summary}</p>
+            </motion.div>
+          </div>
 
-          <motion.p {...onMount} variants={fadeUp}
-            className="type-h3 text-white/70 max-w-2xl mx-auto leading-[1.5] mb-14">
-            {d.lead}
-          </motion.p>
-
-          <motion.div {...onMount} variants={fadeUp}
-            className="inline-flex flex-wrap items-center justify-center divide-x divide-white/15 border-y border-white/15">
+          <motion.div {...inView} variants={staggerTight}
+            className="mt-16 grid grid-cols-2 gap-x-6 gap-y-8 border-t border-white/[0.12] pt-6 sm:mt-24 lg:grid-cols-12">
             {d.stats.map((s) => (
-              <div key={s.label} className="px-8 sm:px-12 py-6">
-                <p className="font-en text-[30px] sm:text-[38px] font-bold text-[var(--text-1)] font-mono-stat leading-none mb-2.5">
-                  {s.value}
-                </p>
-                <p className="type-c2 text-white/55">{s.label}</p>
-              </div>
+              <motion.div key={s.label} variants={fadeUp} className="lg:col-span-2">
+                <p className="mono-label mb-3">{s.label}:</p>
+                <p className="font-en font-mono-stat text-[40px] leading-none tracking-[-0.05em] text-[var(--text-1)] sm:text-[48px]">{s.value}</p>
+              </motion.div>
             ))}
+            <motion.div variants={fadeUp} className="col-span-2 lg:col-span-5 lg:col-start-8">
+              <p className="mono-label mb-3">Tags:</p>
+              <div className="flex flex-wrap gap-1.5">
+                {d.tags.map((t) => <span key={t} className="tag">{t}</span>)}
+              </div>
+            </motion.div>
           </motion.div>
-        </motion.div>
-      </section>
-
-      {/* ━━━━━━ REEL - 썸네일 마퀴 ━━━━━━ */}
-      <section className="py-14 sm:py-20 overflow-hidden border-y border-white/10">
-        <div className="flex gap-4 animate-marquee w-max">
-          {[...reel, ...reel].map((p, i) => (
-            <div key={`${p.id}-${i}`}
-              className="relative w-[240px] sm:w-[320px] aspect-[16/10] rounded-[10px] overflow-hidden shrink-0 border border-white/10">
-              <SafeImage src={p.thumbnail} alt={p.title} fill className="absolute inset-0" />
-              <div className="absolute inset-0"
-                style={{ background: 'linear-gradient(0deg, var(--canvas), transparent 62%)' }} />
-              <p className="absolute bottom-3 left-4 right-4 type-c1 font-bold text-white/85 truncate">{p.title}</p>
-            </div>
-          ))}
         </div>
       </section>
 
       {/* ━━━━━━ CAPABILITIES - 가로 스크롤 레일 ━━━━━━ */}
-      <section className="py-24 sm:py-36">
-        <div className={`${container} mb-12 sm:mb-16`}>
-          <div className="flex flex-wrap items-end justify-between gap-8">
-            <div>
-              <motion.p {...inView} variants={fadeLeft} className="index-num font-en mb-7">What We Make</motion.p>
-              <motion.h2 {...inView} variants={fadeUp} className="type-d2 font-en text-[var(--text-1)]">
-                만드는 것들
-              </motion.h2>
-            </div>
-            <motion.div {...inView} variants={fadeRight} className="hidden sm:flex items-center gap-3">
-              <button onClick={() => nudge(-1)} aria-label="이전"
-                className="w-12 h-12 rounded-full border border-white/15 text-white/60 hover:text-[var(--text-1)] hover:border-white/45 transition-colors flex items-center justify-center">
-                <FiArrowLeft size={17} />
-              </button>
-              <button onClick={() => nudge(1)} aria-label="다음"
-                className="w-12 h-12 rounded-full border border-white/15 text-white/60 hover:text-[var(--text-1)] hover:border-white/45 transition-colors flex items-center justify-center">
-                <FiArrowRight size={17} />
-              </button>
-            </motion.div>
-          </div>
+      <section className={`${sectionPad} border-t border-white/10`}>
+        <div className={container}>
+          <SectionHead label="What we make" title={<>만드는 것들</>} />
+        </div>
+        <div className={`${container} -mt-6 mb-6 hidden justify-end gap-2 sm:flex`}>
+          <button onClick={() => nudge(-1)} aria-label="이전"
+            className="flex h-10 w-10 items-center justify-center border border-white/25 text-white/70 transition-colors hover:border-white hover:text-white">
+            <FiArrowLeft size={16} />
+          </button>
+          <button onClick={() => nudge(1)} aria-label="다음"
+            className="flex h-10 w-10 items-center justify-center border border-white/25 text-white/70 transition-colors hover:border-white hover:text-white">
+            <FiArrowRight size={16} />
+          </button>
         </div>
 
         <motion.div {...inView} variants={fadeUp}
           ref={railRef}
-          className="no-scrollbar flex gap-4 sm:gap-5 overflow-x-auto snap-x snap-mandatory pb-2"
+          className="no-scrollbar flex snap-x snap-mandatory gap-2 overflow-x-auto pb-2"
           style={{
-            // 첫 카드를 컨테이너 정렬선에 붙이고, 오른쪽으로는 화면 밖까지 흐르게 둔다
-            paddingLeft: 'max(1rem, calc((100vw - 1500px) / 2 + 1.5rem))',
+            // 첫 카드를 컨테이너 정렬선에 붙이고, 오른쪽으로는 화면 밖까지 흐르게 둔다.
+            // 스냅이 첫 카드를 왼쪽 끝에 붙이지 않도록 같은 값을 scroll-padding 에도 준다
+            paddingLeft: 'max(1.5rem, calc((100vw - 1500px) / 2 + 1.5rem))',
+            scrollPaddingLeft: 'max(1.5rem, calc((100vw - 1500px) / 2 + 1.5rem))',
             paddingRight: '1rem',
           }}>
           {gameCapabilities.map((c) => (
             <article key={c.id}
-              className="group snap-start shrink-0 w-[300px] sm:w-[380px] rounded-[12px] border border-white/10
-                         bg-[var(--surface)] p-8 sm:p-10 flex flex-col
-                         hover:border-[var(--accent)] transition-colors duration-300">
-              <p className="index-num-lg font-en mb-9">{c.no}</p>
-              <h3 className="font-en text-[26px] sm:text-[30px] font-bold text-[var(--text-1)] tracking-[-0.025em] leading-none mb-2.5">
+              className="group flex w-[290px] shrink-0 snap-start flex-col border border-white/10 bg-[var(--surface)] p-7
+                         transition-colors duration-300 hover:border-white/35 sm:w-[360px] sm:p-8">
+              <p className="mb-10 font-mono text-[12px] text-white/45 tabular-nums">{c.no}</p>
+              <h3 className="font-en mb-2 text-[26px] font-medium leading-none tracking-[-0.04em] text-[var(--text-1)] sm:text-[30px]">
                 {c.en}
               </h3>
-              <p className="type-b3 text-[var(--accent)] mb-6">{c.kr}</p>
-              <p className="type-b3 text-white/50 leading-[1.85] mb-9 flex-1">{c.desc}</p>
-              <div className="flex flex-wrap gap-2">
-                {c.tags.map((t) => (
-                  <span key={t} className="type-c2 px-3 py-1.5 rounded-[6px] bg-white/[0.06] text-white/60">{t}</span>
-                ))}
+              <p className="type-b3 mb-6 text-[var(--point)]">{c.kr}</p>
+              <p className="type-b3 mb-9 flex-1 text-white/60">{c.desc}</p>
+              <div className="flex flex-wrap gap-1.5">
+                {c.tags.map((t) => <span key={t} className="tag">{t}</span>)}
               </div>
             </article>
           ))}
@@ -157,55 +118,54 @@ export default function GameClient() {
       </section>
 
       {/* ━━━━━━ PLATFORMS ━━━━━━ */}
-      <section className="py-24 sm:py-36 border-t border-white/10">
+      <section className={`${sectionPad} border-t border-white/10`}>
         <div className={container}>
-          <motion.p {...inView} variants={fadeLeft} className="index-num font-en mb-7">Platforms</motion.p>
-          <motion.h2 {...inView} variants={fadeUp} className="type-d2 font-en text-[var(--text-1)] mb-16 sm:mb-20">
-            빌드가 올라가는 곳
-          </motion.h2>
-          <motion.div {...inView} variants={staggerTight} className="grid grid-cols-1 sm:grid-cols-3 border-t border-white/10">
-            {gamePlatforms.map((p, i) => (
-              <motion.div key={p.name} variants={fadeUp}
-                className={[
-                  'py-10 sm:py-14 border-b border-white/10',
-                  i > 0 ? 'sm:border-l sm:border-white/10 sm:pl-8' : '',
-                ].join(' ')}>
-                <h3 className="font-en text-[30px] sm:text-[40px] font-bold text-[var(--text-1)] tracking-[-0.02em] leading-none mb-4">
-                  {p.name}
-                </h3>
-                <p className="type-c1 text-white/55 font-en">{p.detail}</p>
-              </motion.div>
-            ))}
+          <SectionHead label="Platforms" title={<>빌드가 올라가는 곳</>} />
+          <motion.div {...inView} variants={staggerTight} className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            {gamePlatforms.map((p, i) => {
+              const Icon = platformIcon[i % platformIcon.length];
+              return (
+                <motion.div key={p.name} variants={fadeUp}
+                  className="flex min-h-[200px] flex-col justify-between border border-white/10 bg-[var(--surface)] p-6 sm:p-8">
+                  <span className={iconSquare}><Icon size={14} /></span>
+                  <div>
+                    <h3 className="font-en mb-2 text-[34px] font-medium leading-none tracking-[-0.045em] text-[var(--text-1)] sm:text-[42px]">
+                      {p.name}
+                    </h3>
+                    <p className="font-mono text-[12px] uppercase tracking-[0.02em] text-white/55">{p.detail}</p>
+                  </div>
+                </motion.div>
+              );
+            })}
           </motion.div>
         </div>
       </section>
 
-      {/* ━━━━━━ PIPELINE - 좌측 라인 진행 ━━━━━━ */}
-      <section className="py-24 sm:py-36 border-t border-white/10">
+      {/* ━━━━━━ PIPELINE - 번호 칸이 이어지는 세로 줄 ━━━━━━ */}
+      <section className={`${sectionPad} border-t border-white/10`}>
         <div className={container}>
-          <div className="grid lg:grid-cols-12 gap-x-gutter gap-y-14">
+          <div className="grid gap-x-gutter gap-y-14 lg:grid-cols-12">
             <div className="lg:col-span-4">
-              <motion.p {...inView} variants={fadeLeft} className="index-num font-en mb-7">Pipeline</motion.p>
-              <motion.h2 {...inView} variants={fadeUp} className="type-d2 font-en text-[var(--text-1)] mb-7">
+              <motion.p {...inView} variants={fadeUp} className="mono-label mb-10 border-b border-white/[0.12] pb-4">Pipeline:</motion.p>
+              <motion.h2 {...inView} variants={fadeUp} className="type-d2 mb-7 text-[var(--text-1)]">
                 만드는 순서
               </motion.h2>
-              <motion.p {...inView} variants={fadeLeft} className="type-b3 text-white/50 leading-[1.85] max-w-sm">
+              <motion.p {...inView} variants={fadeUp} className="type-b3 max-w-sm text-white/60">
                 게임은 문서로 재미를 증명할 수 없습니다. 그래서 두 번째 단계에서 이미
                 플레이 가능한 빌드를 만들고, 거기서부터 판단합니다.
               </motion.p>
+              <motion.div {...inView} variants={fadeUp} className="relative mt-12 hidden h-56 lg:block">
+                <StripeField seed={13} className="absolute inset-0" />
+              </motion.div>
             </div>
 
-            <motion.ol {...inView} variants={staggerTight} className="lg:col-span-8 relative">
-              <span className="absolute left-[19px] top-3 bottom-3 w-px bg-white/10" aria-hidden />
+            <motion.ol {...inView} variants={staggerTight} className="relative lg:col-span-7 lg:col-start-6">
+              <span className="absolute bottom-3 left-[13px] top-3 w-px bg-white/15" aria-hidden />
               {gamePipeline.map((s) => (
-                <motion.li key={s.no} variants={fadeRight} className="relative pl-16 pb-12 last:pb-0">
-                  <span className="absolute left-0 top-0 w-10 h-10 rounded-full border border-[var(--accent)]
-                                   bg-[var(--canvas)] flex items-center justify-center
-                                   type-c1 font-bold font-en text-[var(--accent)]">
-                    {s.no}
-                  </span>
-                  <h3 className="type-h2 text-[var(--text-1)] mb-3">{s.title}</h3>
-                  <p className="type-b3 text-white/50 leading-[1.85] max-w-xl">{s.desc}</p>
+                <motion.li key={s.no} variants={fadeUp} className="relative pb-12 pl-14 last:pb-0">
+                  <span className={`${numSquare} absolute left-0 top-0 bg-black`}>{Number(s.no)}</span>
+                  <h3 className="type-h2 mb-3 text-[var(--text-1)]">{s.title}</h3>
+                  <p className="type-b3 max-w-xl text-white/60">{s.desc}</p>
                 </motion.li>
               ))}
             </motion.ol>
@@ -213,74 +173,36 @@ export default function GameClient() {
         </div>
       </section>
 
-      {/* ━━━━━━ WORK - 비대칭 매거진 그리드 ━━━━━━ */}
-      <section className="py-24 sm:py-36 border-t border-white/10">
+      {/* ━━━━━━ WORK - 넓은 칸과 좁은 칸을 엇갈려 놓는다 ━━━━━━ */}
+      <section className={`${sectionPad} border-t border-white/10`}>
         <div className={container}>
-          <div className="flex flex-wrap items-end justify-between gap-6 mb-16 sm:mb-20">
-            <div>
-              <motion.p {...inView} variants={fadeLeft} className="index-num font-en mb-7">Selected Work</motion.p>
-              <motion.h2 {...inView} variants={fadeUp} className="type-d2 font-en text-[var(--text-1)]">
-                Shipped Titles
-              </motion.h2>
-            </div>
-            <motion.div {...inView} variants={fadeRight}>
-              <Link href="/projects" className="group inline-flex items-center gap-1.5 type-b4 text-white/70 hover:text-gray-50 transition-colors">
-                전체 포트폴리오
-                <FiArrowUpRight size={15} className={arrowHover} />
-              </Link>
-            </motion.div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-6 gap-x-gutter gap-y-14">
+          <SectionHead label="Selected work" title={<>Shipped Titles</>} href="/projects" more="전체 포트폴리오" />
+          <div className="grid gap-x-6 gap-y-16 lg:grid-cols-12">
             {work.map((p, i) => {
-              // 한 줄 = 큰 카드(4칸) + 작은 카드(2칸). 4개 주기로 0,3,4,7…에 큰 카드를 두면
-              // 큰 카드가 좌우로 지그재그하면서 6칸이 줄마다 정확히 떨어진다.
-              const big = i % 4 === 0 || i % 4 === 3;
+              const wide = i % 4 === 0 || i % 4 === 3;
               return (
-                <motion.article key={p.id} {...inView} variants={fadeUp}
-                  className={`group ${big ? 'md:col-span-4' : 'md:col-span-2'}`}>
-                  <Link href={`/projects/${p.id}`} className="block">
-                    <motion.div variants={maskUp}
-                      className={`relative overflow-hidden rounded-[10px] bg-[var(--surface)] mb-6
-                                  ${big ? 'aspect-[16/9]' : 'aspect-[4/3]'}`}>
-                      <SafeImage src={p.thumbnail} alt={p.title} fill
-                        className="absolute inset-0 transition-transform duration-[1100ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.06]"
-                        placeholder={<ThumbFallback label={p.category} />} />
-                      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                        style={{ background: 'linear-gradient(180deg, transparent 40%, var(--accent-tint))' }} />
-                    </motion.div>
-                    <div className="flex items-start justify-between gap-5">
-                      <h3 className={`font-bold text-[var(--text-1)] tracking-[-0.025em] leading-[1.2]
-                                      transition-colors duration-300 group-hover:text-[var(--accent)]
-                                      ${big ? 'text-[26px] sm:text-[34px]' : 'text-[20px] sm:text-[23px]'}`}>
-                        {p.title}
-                      </h3>
-                    </div>
-                    <p className="mt-2.5 type-b3 text-white/50 leading-[1.7] line-clamp-2">{p.description}</p>
-                  </Link>
-                </motion.article>
+                <div key={p.id} className={wide ? 'lg:col-span-7' : 'lg:col-span-5'}>
+                  <ProjectCard project={p} index={i} aspect={wide ? 'aspect-[16/10]' : 'aspect-[4/3]'} />
+                </div>
               );
             })}
           </div>
         </div>
       </section>
 
-      {/* ━━━━━━ CREDENTIALS - 전시·수상 ━━━━━━ */}
+      {/* ━━━━━━ CREDENTIALS - 전시 · 수상 ━━━━━━ */}
       {credentials.length > 0 && (
-        <section className="py-24 sm:py-36 border-t border-white/10">
+        <section className={`${sectionPad} border-t border-white/10`}>
           <div className={container}>
-            <motion.p {...inView} variants={fadeLeft} className="index-num font-en mb-7">Credentials</motion.p>
-            <motion.h2 {...inView} variants={fadeUp} className="type-d2 font-en text-[var(--text-1)] mb-16 sm:mb-20">
-              밖에서 받은 평가
-            </motion.h2>
-            <motion.div {...inView} variants={staggerRows} className="border-t border-white/10">
+            <SectionHead label="Credentials" title={<>밖에서 받은 평가</>} />
+            <motion.div {...inView} variants={staggerRows} className="border-t border-white/[0.12]">
               {credentials.map((a) => (
                 <motion.div key={a.id} variants={rowIn}
-                  className="grid grid-cols-12 gap-x-gutter gap-y-2 py-6 sm:py-7 border-b border-white/10 items-baseline">
-                  <p className="col-span-12 sm:col-span-2 font-en type-b2 text-white/50 font-mono-stat">{a.year}</p>
-                  <h3 className="col-span-12 sm:col-span-5 type-b1 text-[var(--text-1)]">{a.title}</h3>
-                  <p className="col-span-6 sm:col-span-3 type-b3 text-white/55">{a.organization}</p>
-                  <p className="col-span-6 sm:col-span-2 type-b4 text-[var(--accent)] sm:text-right">{a.rank}</p>
+                  className="grid grid-cols-12 items-baseline gap-x-gutter gap-y-1 border-b border-white/10 py-5 sm:py-6">
+                  <p className="col-span-3 font-mono text-[13px] text-white/50 tabular-nums sm:col-span-2">{a.year}</p>
+                  <h3 className="col-span-9 text-[16px] font-medium tracking-[-0.02em] text-[var(--text-1)] sm:col-span-5 sm:text-[17px]">{a.title}</h3>
+                  <p className="col-span-7 col-start-4 text-[14px] text-white/55 sm:col-span-3 sm:col-start-auto">{a.organization}</p>
+                  <p className="col-span-5 text-right font-mono text-[12px] text-[var(--point)] sm:col-span-2">{a.rank}</p>
                 </motion.div>
               ))}
             </motion.div>
@@ -288,36 +210,9 @@ export default function GameClient() {
         </section>
       )}
 
-      {/* ━━━━━━ CTA - 풀블리드 컬러 밴드 ━━━━━━ */}
-      <section className="relative py-28 sm:py-44 overflow-hidden border-t border-white/10">
-        <div className="absolute inset-0 pointer-events-none"
-          style={{ background: 'radial-gradient(90% 100% at 50% 100%, var(--accent-tint) 0%, transparent 70%)' }} />
-        <div className={`relative ${container} text-center`}>
-          <motion.p {...inView} variants={fadeUp} className="index-num font-en justify-center mb-10">Contact</motion.p>
-          <motion.h2 {...inView} variants={stagger}
-            className="font-bold text-[var(--text-1)] tracking-[-0.02em] leading-[1.12] mb-10"
-            style={{ fontSize: 'clamp(2.125rem, 5.4vw, 4.5rem)' }}>
-            <span className="block overflow-hidden pb-[0.1em] -mb-[0.1em]">
-              <motion.span variants={clipUp} className="block">장면 한 컷이면</motion.span>
-            </span>
-            <span className="block overflow-hidden pb-[0.1em] -mb-[0.1em]">
-              <motion.span variants={clipUp} className="block text-[var(--accent)]">시작할 수 있습니다</motion.span>
-            </span>
-          </motion.h2>
-          <motion.p {...inView} variants={fadeUp} className="caption-kr mb-14 max-w-xl mx-auto">
-            기획서가 없어도 됩니다. 만들고 싶은 화면을 말로 설명해 주셔도 됩니다.
-          </motion.p>
-          <motion.div {...inView} variants={fadeUp} className="flex flex-wrap items-center justify-center gap-8">
-            <Link href="/contact?domain=game"
-              className="group inline-flex items-center gap-2.5 h-14 px-9 rounded-pill type-b3 font-bold
-                         text-gray-50 bg-[var(--domain-300)] hover:bg-[var(--accent)] transition-colors duration-300">
-              게임 · XR 프로젝트 문의
-              <FiArrowUpRight size={17} className={arrowHover} />
-            </Link>
-            <a href={`mailto:${CONTACT_EMAIL}`} className={linkUnderline}>{CONTACT_EMAIL}</a>
-          </motion.div>
-        </div>
-      </section>
+      <CtaSection line1="장면 한 컷이면" line2="시작할 수 있습니다"
+        kr="기획서가 없어도 됩니다. 만들고 싶은 화면을 말로 설명해 주셔도 됩니다."
+        cta="게임 · XR 프로젝트 문의" href="/contact?domain=game" />
     </div>
   );
 }

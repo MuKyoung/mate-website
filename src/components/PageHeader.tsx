@@ -1,7 +1,8 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { clipUp, fadeLeft, fadeRight, lineDraw, onMount, stagger } from '@/lib/motion';
+import HorizonGlow from '@/components/visual/HorizonGlow';
+import { clipUp, fadeUp, lineDraw, onMount, stagger } from '@/lib/motion';
 
 interface PageHeaderProps {
   title: string;
@@ -9,30 +10,34 @@ interface PageHeaderProps {
   eyebrow?: string;
 }
 
+/**
+ * 하위 페이지 첫 화면 - 위에서 휘어 내려오는 빛 아래에 제목과 설명.
+ * 홈의 첫 화면보다 빛을 낮고 옅게 둔다.
+ */
 export default function PageHeader({ title, description, eyebrow }: PageHeaderProps) {
   return (
-    <section className="pt-40 sm:pt-52 pb-14 sm:pb-20 border-b border-white/10">
-      <div className="container mx-auto px-4 sm:px-6">
+    <section className="relative overflow-hidden border-b border-white/10 pt-40 pb-14 sm:pt-56 sm:pb-20">
+      <HorizonGlow side="top" rim="clamp(110px, 13vw, 200px)" radius="max(120vw, 900px)" />
+      <div className="container relative mx-auto px-4 sm:px-6">
         {eyebrow && (
-          <div className="relative pb-6 mb-12 sm:mb-16">
-            <motion.p {...onMount} variants={fadeLeft} className="index-num font-en">
-              {eyebrow}
+          <div className="relative mb-12 pb-4 sm:mb-16">
+            <motion.p {...onMount} variants={fadeUp} className="mono-label">
+              <span className="text-white/45">MATE /</span> {eyebrow}:
             </motion.p>
             <motion.span {...onMount} variants={lineDraw}
-              className="absolute bottom-0 left-0 right-0 h-px bg-white/10 block" />
+              className="absolute bottom-0 left-0 right-0 block h-px bg-white/[0.12]" />
           </div>
         )}
-        <div className="grid lg:grid-cols-12 gap-y-8 gap-x-8 items-end">
+        <div className="grid items-end gap-x-8 gap-y-8 lg:grid-cols-12">
           <motion.h1 {...onMount} variants={stagger}
-            className="lg:col-span-8 text-[var(--text-1)] font-bold tracking-[-0.02em] leading-[1.06]"
-            style={{ fontSize: 'clamp(2.25rem, 6.4vw, 5rem)' }}>
-            <span className="block overflow-hidden pb-[0.12em] -mb-[0.12em]">
+            className="font-medium leading-[1.02] tracking-[-0.045em] text-[var(--text-1)] lg:col-span-8"
+            style={{ fontSize: 'clamp(2.5rem, 6.4vw, 5.5rem)' }}>
+            <span className="-mb-[0.12em] block overflow-hidden pb-[0.12em]">
               <motion.span variants={clipUp} className="block">{title}</motion.span>
             </span>
           </motion.h1>
-          {/* 설명은 우측 칼럼 - 오른쪽에서 진입해 방향을 분리 */}
-          <motion.p {...onMount} variants={fadeRight}
-            className="lg:col-span-4 text-[16px] sm:text-lg text-white/55 leading-[1.7] lg:pb-4">
+          <motion.p {...onMount} variants={fadeUp}
+            className="text-[16px] leading-[1.7] text-white/65 sm:text-[17px] lg:col-span-4 lg:pb-3">
             {description}
           </motion.p>
         </div>

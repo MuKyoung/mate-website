@@ -1,63 +1,51 @@
 'use client';
 
-import { motion, type Variants } from 'framer-motion';
+import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { FiArrowUpRight } from 'react-icons/fi';
 import { Project } from '@/types';
 import SafeImage from '@/components/SafeImage';
 import ThumbFallback from '@/components/ThumbFallback';
-import { easeEnter, inView } from '@/lib/motion';
+import { fadeUp, inView } from '@/lib/motion';
 
 interface ProjectCardProps {
   project: Project;
   index: number;
+  /** 썸네일 비율 - 큰 칸은 넓게, 작은 칸은 4:3 */
+  aspect?: string;
 }
 
-export default function ProjectCard({ project, index }: ProjectCardProps) {
-  // 열 위치에 따라 이미지 마스크가 다른 방향에서 열림 - 좌열: 아래→위, 우열: 좌→우
-  const fromSide = index % 2 === 1;
-  const delay = (index % 2) * 0.12;
-
-  const card: Variants = {
-    hidden: fromSide ? { opacity: 0, x: 72 } : { opacity: 0, y: 72 },
-    show: { opacity: 1, x: 0, y: 0, transition: { delay, duration: 1.05, ease: easeEnter } },
-  };
-
-  /* 마스크는 부모의 상태를 물려받는다.
-     닫힌 클립은 면적이 0이라 IntersectionObserver가 교차를 보고하지 못하므로,
-     클립된 요소를 직접 관측하면 리빌이 영영 발화하지 않는다. */
-  const mask: Variants = {
-    hidden: { clipPath: fromSide ? 'inset(0 0 0 100%)' : 'inset(100% 0 0 0)' },
-    show: {
-      clipPath: fromSide ? 'inset(0 0 0 0%)' : 'inset(0% 0 0 0)',
-      transition: { delay: delay + 0.08, duration: 1.2, ease: easeEnter },
-    },
-  };
-
+/**
+ * 포트폴리오 카드. 작업 화면은 원래 색 그대로 둔다 - 고객이 보는 것은 결과물이다.
+ * 카드 위 등폭 줄에 번호와 분류를 적는다.
+ */
+export default function ProjectCard({ project, index, aspect = 'aspect-[4/3]' }: ProjectCardProps) {
   return (
-    <motion.div {...inView} variants={card} className="group">
+    <motion.div {...inView} variants={fadeUp} className="group">
       <Link href={`/projects/${project.id}`} className="block">
-        {/* 대형 이미지 - 방향 교차 마스크 리빌 + 호버 스케일·틸트 */}
-        <motion.div variants={mask}
-          className="relative aspect-[16/11] overflow-hidden rounded-xl bg-[var(--surface)] mb-6">
+        <div className="mb-4 flex items-center justify-between gap-4 border-t border-white/15 pt-3">
+          <p className="mono-label">
+            <span className="text-white/40 tabular-nums">{String(index + 1).padStart(2, '0')}</span>
+            {project.category}
+          </p>
+          <FiArrowUpRight size={15}
+            className="text-white/40 transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-white" />
+        </div>
+
+        <div className={`relative ${aspect} mb-5 overflow-hidden bg-[var(--surface)]`}>
           <SafeImage
             src={project.thumbnail}
             alt={project.title}
             fill
-            className="absolute inset-0 object-cover transition-transform duration-[1100ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.05] group-hover:rotate-[0.6deg]"
+            className="absolute inset-0 transition-transform duration-[900ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.03]"
             placeholder={<ThumbFallback label={project.category} />}
           />
-        </motion.div>
-
-        {/* 메타 행 - 모바일은 스택, sm부터 타이틀 좌 / 카테고리 우 */}
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-6">
-          <h3 className="text-[22px] sm:text-[26px] font-bold text-[var(--text-1)] tracking-[-0.025em] leading-[1.2] transition-colors duration-300 group-hover:text-[var(--accent)]">
-            {project.title}
-          </h3>
-          <p className="index-num sm:pt-2.5 sm:whitespace-nowrap sm:flex-shrink-0">
-            {project.category}
-          </p>
         </div>
-        <p className="mt-2.5 text-[15px] text-white/55 leading-[1.7] line-clamp-2 max-w-xl">
+
+        <h3 className="mb-2 text-[21px] font-medium leading-[1.25] tracking-[-0.03em] text-[var(--text-1)] transition-colors duration-300 group-hover:text-[var(--point)] sm:text-[24px]">
+          {project.title}
+        </h3>
+        <p className="line-clamp-2 max-w-xl text-[15px] leading-[1.7] text-white/55">
           {project.description}
         </p>
       </Link>

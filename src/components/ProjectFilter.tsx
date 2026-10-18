@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import ProjectCard from './ProjectCard';
 import { Project } from '@/types';
 import { motion } from 'framer-motion';
-import { fadeLeft, fadeRight, lineDraw, stagger, inView } from '@/lib/motion';
+import { fadeUp, stagger, inView } from '@/lib/motion';
 
 // 카테고리 매핑
 /* 헤더 내비와 같은 3도메인 체계를 쓴다 - 한 사이트에 분류가 둘이면 안 된다 */
@@ -56,26 +56,27 @@ export default function ProjectFilter({ projects }: ProjectFilterProps) {
 
   return (
     <div>
-      {/* 카테고리 - 텍스트 탭 + 헤어라인 */}
-      <motion.div {...inView} variants={stagger} className="mb-16 sm:mb-24">
-        <motion.p variants={fadeRight} className="index-num font-en mb-8">Category</motion.p>
+      {/* 분류 - 각진 칩. 고른 칩은 파랗게 찬다 */}
+      <motion.div {...inView} variants={stagger} className="mb-14 sm:mb-20">
+        <motion.p variants={fadeUp} className="mono-label mb-6">Category:</motion.p>
 
-        <div className="relative flex flex-wrap items-end justify-between gap-x-10 gap-y-3">
-          <motion.div variants={fadeLeft} className="flex flex-wrap items-end gap-x-6 sm:gap-x-9 gap-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-x-10 gap-y-4 border-b border-white/[0.12] pb-6">
+          <motion.div variants={fadeUp} className="flex flex-wrap items-center gap-1.5">
             {CATEGORY_OPTIONS.map((option) => {
               const active = selectedCategory === option.value;
               return (
                 <button
                   key={option.value}
                   onClick={() => setSelectedCategory(option.value)}
-                  className={`pb-4 -mb-px border-b-2 text-[15px] font-semibold transition-colors ${
+                  aria-pressed={active}
+                  className={`inline-flex h-10 items-center gap-2 border px-4 text-[14px] transition-colors ${
                     active
-                      ? 'border-white text-white'
-                      : 'border-transparent text-white/55 hover:text-white'
+                      ? 'border-primary-200 bg-primary-200 text-white'
+                      : 'border-white/20 text-white/65 hover:border-white/50 hover:text-white'
                   }`}
                 >
                   {option.label}
-                  <span className="ml-1.5 text-[12px] font-semibold tabular-nums opacity-50">
+                  <span className="font-mono text-[11px] tabular-nums opacity-70">
                     {categoryCounts[option.value] || 0}
                   </span>
                 </button>
@@ -83,32 +84,31 @@ export default function ProjectFilter({ projects }: ProjectFilterProps) {
             })}
           </motion.div>
 
-          <motion.p variants={fadeRight} className="index-num pb-4 ml-auto whitespace-nowrap">
-            {selectedCategory === 'all' ? '전체' : selectedCategory} 프로젝트 {filteredProjects.length}개
+          <motion.p variants={fadeUp} className="mono-label ml-auto whitespace-nowrap">
+            {selectedCategory === 'all' ? '전체' : selectedCategory} / {filteredProjects.length}건
           </motion.p>
-          {/* 헤어라인이 좌→우로 그어짐 */}
-          <motion.span variants={lineDraw}
-            className="absolute bottom-0 left-0 right-0 h-px bg-white/10 block" />
         </div>
       </motion.div>
 
-      {/* 프로젝트 그리드 - 비대칭 2열 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-20 md:gap-y-28">
-        {filteredProjects.map((project, index) => (
-          <div key={project.id} className={index % 2 === 1 ? 'md:mt-28' : ''}>
-            <ProjectCard project={project} index={index} />
-          </div>
-        ))}
+      {/* 프로젝트 그리드 - 넓은 칸과 좁은 칸을 엇갈려 놓는다 */}
+      <div className="grid gap-x-6 gap-y-16 lg:grid-cols-12 lg:gap-y-20">
+        {filteredProjects.map((project, index) => {
+          const wide = index % 4 === 0 || index % 4 === 3;
+          return (
+            <div key={project.id} className={wide ? 'lg:col-span-7' : 'lg:col-span-5'}>
+              <ProjectCard project={project} index={index} aspect={wide ? 'aspect-[16/10]' : 'aspect-[4/3]'} />
+            </div>
+          );
+        })}
       </div>
 
-      {/* 결과 없음 - 플레인 텍스트 */}
       {filteredProjects.length === 0 && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-28 text-center">
-          <p className="index-num font-en justify-center mb-6">No results</p>
-          <h3 className="text-[24px] sm:text-[28px] font-bold text-[var(--text-1)] tracking-[-0.025em] leading-[1.2] mb-4">
+          <p className="mono-label mb-6 justify-center">No results:</p>
+          <h3 className="mb-4 text-[24px] font-medium leading-[1.2] tracking-[-0.03em] text-[var(--text-1)] sm:text-[28px]">
             해당 카테고리의 프로젝트가 없습니다
           </h3>
-          <p className="text-[16px] text-white/55 leading-[1.75]">다른 카테고리를 선택해 보세요</p>
+          <p className="text-[16px] leading-[1.75] text-white/60">다른 카테고리를 선택해 보세요</p>
         </motion.div>
       )}
     </div>

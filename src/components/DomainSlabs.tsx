@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { FiArrowUpRight } from 'react-icons/fi';
-import SafeImage from '@/components/SafeImage';
+import BlueImage from '@/components/visual/BlueImage';
+import BlockMosaic from '@/components/visual/BlockMosaic';
 import { domains } from '@/data/domains';
 import { games } from '@/data/games';
 import { fadeUp, inView, onMount } from '@/lib/motion';
@@ -12,15 +13,15 @@ import { container } from '@/lib/styles';
 /**
  * 영역별 슬래브 - 한 영역이 화면 한 칸을 통째로 쓴다.
  *
- * 홈과 /services 가 같은 블록을 쓴다. 홈은 이게 첫 화면이라
- * 스크롤을 기다리지 않고 바로 재생해야 하므로 `eager` 로 구분한다.
+ * 홈과 /services 가 같은 블록을 쓴다. 사진은 오른쪽에 파랗게 눌러 깔고,
+ * 호버하면 원래 색이 돌아온다. 사진 한 장은 사이트에서 한 자리만 쓴다.
  */
 
 const SLAB = {
   web: {
     href: '/web',
     // 포트폴리오의 세종호이스트크레인 홈페이지 첫 화면에 걸린 사진.
-    // 화면 캡처를 깔면 그 사이트의 제목과 메뉴, 협력사 로고 띠가 이쪽 글자 뒤로 비쳐 사진만 쓴다.
+    // 화면 캡처를 깔면 그 사이트의 제목과 메뉴가 이쪽 글자 뒤로 비쳐 사진만 쓴다.
     bg: '/images/projects/세종호이스트크레인-메인.webp' as string | null,
     note: '기획서 작성부터 배포 후 모니터링까지',
   },
@@ -36,98 +37,81 @@ const SLAB = {
   },
 } as const;
 
+const titleSize = { fontSize: 'clamp(2.5rem, 5.6vw, 4.75rem)' } as const;
+
 export default function DomainSlabs({
   eager = false,
-  className = 'pb-8',
+  className = '',
   heading,
   withGames = false,
 }: {
   /** 첫 화면에 쓸 때 - 스크롤 진입을 기다리지 않는다 */
   eager?: boolean;
   className?: string;
-  /** 이 블록이 페이지의 첫 내용일 때 넘기는 h1.
-      슬래브 제목은 영역 이름이라 페이지 전체를 대표하지 못한다.
-      화면에는 띄우지 않되 문서 구조와 검색엔진에는 남긴다. */
+  /** 이 블록이 페이지의 첫 내용일 때 넘기는 h1. 화면에는 띄우지 않고 문서 구조에만 남긴다 */
   heading?: string;
   /** 자체 게임 슬래브를 뒤에 붙인다 - 외주가 아닌 독립 사업이라 따로 둔다 */
   withGames?: boolean;
 }) {
+  const play = eager ? onMount : inView;
   return (
-    <section className={className}>
+    <section className={`border-t border-white/10 ${className}`}>
       {heading && <h1 className="sr-only">{heading}</h1>}
       {domains.map((d, i) => {
         const s = SLAB[d.key];
-        const play = eager ? onMount : inView;
         return (
           <motion.div key={d.key} {...play} variants={fadeUp} data-domain={d.key}>
             <Link href={s.href} className="group relative block overflow-hidden border-b border-white/10">
-              {/* 배경 - 사진이 있는 영역만 깔고, 나머지는 호버 때 액센트 워시 */}
-              {s.bg ? (
-                <>
-                  <div className="absolute inset-0 opacity-[0.5] transition-opacity duration-700 group-hover:opacity-[0.68]"
-                    style={{ filter: 'saturate(1.1) contrast(1.08)' }}>
-                    <SafeImage src={s.bg} alt="" fill className="absolute inset-0" />
-                  </div>
-                  <div className="absolute inset-0"
-                    style={{ background: 'linear-gradient(90deg, var(--canvas) 15%, rgba(8,8,10,0.68) 52%, rgba(8,8,10,0.5) 100%)' }} />
-                </>
-              ) : (
-                <div className="absolute inset-0 opacity-0 transition-opacity duration-700 group-hover:opacity-100"
-                  style={{ background: 'linear-gradient(90deg, var(--accent-dim), transparent 62%)' }} />
+              {s.bg && (
+                <div className="absolute inset-y-0 right-0 w-full lg:w-[64%]">
+                  <BlueImage src={s.bg} reveal className="absolute inset-0" />
+                  <div aria-hidden className="absolute inset-0 bg-black/70 lg:bg-transparent"
+                    style={{ backgroundImage: 'linear-gradient(90deg, #000 0%, rgba(0,0,0,0.82) 22%, rgba(0,0,0,0.3) 62%, rgba(0,0,0,0.12) 100%)' }} />
+                </div>
               )}
 
-              <div className={`relative ${container} pb-12 pt-16 sm:pb-16 sm:pt-20 ${
-                eager && i === 0 ? 'pt-28 sm:pt-36' : ''}`}>
+              <div className={`relative ${container} py-14 sm:py-20`}>
                 <div className="grid items-start gap-x-gutter gap-y-10 lg:grid-cols-12">
-
-                  {/* 번호 + 영문 타이틀 - 번호는 흐름에서 빼내 좌우 기준선을 맞춘다 */}
-                  <div className="relative lg:col-span-5">
-                    <p className="index-num-lg font-en mb-5 lg:absolute lg:-top-9 lg:left-0 lg:mb-0">
-                      0{i + 1}
+                  <div className="lg:col-span-5">
+                    <p className="mono-label mb-6">
+                      <span className="text-white/40 tabular-nums">0{i + 1}</span> Area:
                     </p>
-                    <h2 className="font-en mb-4 font-bold leading-[0.95] tracking-[-0.02em] text-[var(--text-1)]
-                                   transition-colors duration-300 group-hover:text-[var(--accent)]"
-                      style={{ fontSize: 'clamp(2.25rem, 5.4vw, 4.25rem)' }}>
+                    <h2 className="font-en font-medium leading-[0.95] tracking-[-0.05em] text-[var(--text-1)]"
+                      style={titleSize}>
                       {d.en}
                     </h2>
-                    <p className="type-b1 text-white/65">{d.kr}</p>
+                    <p className="mt-4 text-[17px] text-white/70">{d.kr}</p>
                   </div>
 
-                  {/* 설명 + 태그 */}
-                  <div className="lg:col-span-5 lg:pl-6">
-                    <p className="type-h3 mb-5 leading-[1.45] text-[var(--text-1)]">{d.lead}</p>
-                    <p className="type-b3 mb-7 max-w-md leading-[1.85] text-white/72">{d.summary}</p>
-                    <div className="flex flex-wrap gap-2">
-                      {d.tags.map((t) => (
-                        <span key={t}
-                          className="type-c2 font-en rounded-[6px] border border-white/20 px-3 py-1.5 text-white/75">
-                          {t}
-                        </span>
-                      ))}
+                  <div className="lg:col-span-5">
+                    <p className="type-h3 mb-4 text-[var(--text-1)]">{d.lead}</p>
+                    <p className="type-b3 mb-7 max-w-md text-white/75">{d.summary}</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {d.tags.map((t) => <span key={t} className="tag bg-black/40">{t}</span>)}
                     </div>
                   </div>
 
-                  {/* 지표 + 진입 */}
-                  <div className="flex justify-between gap-6 lg:col-span-2 lg:h-full lg:flex-col lg:items-end">
-                    <div className="space-y-4 lg:text-right">
+                  <div className="flex items-end justify-between gap-6 lg:col-span-2 lg:h-full lg:flex-col lg:items-end">
+                    <div className="space-y-5 lg:text-right">
                       {d.stats.slice(0, 2).map((st) => (
                         <div key={st.label}>
-                          <p className="font-en type-h3 font-mono-stat mb-1.5 font-bold leading-none text-[var(--text-1)]">
+                          <p className="font-en font-mono-stat text-[32px] leading-none tracking-[-0.04em] text-[var(--text-1)]">
                             {st.value}
                           </p>
-                          <p className="type-c2 text-white/70">{st.label}</p>
+                          <p className="mt-1.5 font-mono text-[11px] uppercase tracking-[0.02em] text-white/60">{st.label}</p>
                         </div>
                       ))}
                     </div>
-                    <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-white/20
-                                     text-white/60 transition-all duration-300
-                                     group-hover:rotate-45 group-hover:border-[var(--accent)] group-hover:text-[var(--accent)]">
-                      <FiArrowUpRight size={20} />
+                    <span className="flex h-12 w-12 shrink-0 items-center justify-center border border-white/25 bg-black/30 text-white/80
+                                     transition-colors duration-300 group-hover:border-primary-200 group-hover:bg-primary-200 group-hover:text-white">
+                      <FiArrowUpRight size={18} />
                     </span>
                   </div>
                 </div>
 
-                <p className="type-c1 relative mt-8 text-white/60">{s.note}</p>
+                <p className="relative mt-10 font-mono text-[12px] tracking-[0.01em] text-white/60">
+                  <span className="mono-bullet" />{s.note}
+                </p>
               </div>
             </Link>
           </motion.div>
@@ -135,58 +119,54 @@ export default function DomainSlabs({
       })}
 
       {withGames && (
-        <motion.div {...(eager ? onMount : inView)} variants={fadeUp} data-domain="game">
+        <motion.div {...play} variants={fadeUp} data-domain="game">
           {/* 외주 세 영역과 나란히 두되 링크는 걸지 않는다 -
               두 타이틀 다 제작 중이라 보낼 스토어도 상세 페이지도 아직 없다 */}
           <div className="relative overflow-hidden border-b border-white/10">
-            <div className="absolute inset-0 opacity-[0.55]"
-              style={{ background: 'linear-gradient(90deg, var(--accent-dim), transparent 58%)' }} />
+            {/* 아직 공개할 화면이 없어 사진 대신 블록 모자이크를 둔다 */}
+            <div aria-hidden className="absolute inset-y-0 right-0 hidden w-[46%] opacity-90 lg:block">
+              <BlockMosaic seed={11} rows={10} className="absolute inset-0" />
+              <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, #000 0%, rgba(0,0,0,0.2) 45%, transparent 100%)' }} />
+            </div>
 
-            <div className={`relative ${container} pb-12 pt-16 sm:pb-16 sm:pt-20`}>
+            <div className={`relative ${container} py-14 sm:py-20`}>
               <div className="grid items-start gap-x-gutter gap-y-10 lg:grid-cols-12">
-                <div className="relative lg:col-span-5">
-                  <p className="index-num-lg font-en mb-5 lg:absolute lg:-top-9 lg:left-0 lg:mb-0">
-                    0{domains.length + 1}
+                <div className="lg:col-span-5">
+                  <p className="mono-label mb-6">
+                    <span className="text-white/40 tabular-nums">0{domains.length + 1}</span> Originals:
                   </p>
-                  <h2 className="font-en mb-4 font-bold leading-[0.95] tracking-[-0.02em] text-[var(--text-1)]"
-                    style={{ fontSize: 'clamp(2.25rem, 5.4vw, 4.25rem)' }}>
+                  <h2 className="font-en font-medium leading-[0.95] tracking-[-0.05em] text-[var(--text-1)]" style={titleSize}>
                     Original Games
                   </h2>
-                  <p className="type-b1 text-white/65">자체 게임 제작 · 퍼블리싱</p>
+                  <p className="mt-4 text-[17px] text-white/70">자체 게임 제작 · 퍼블리싱</p>
                 </div>
 
-                <div className="lg:col-span-5 lg:pl-6">
-                  <p className="type-h3 mb-5 leading-[1.45] text-[var(--text-1)]">
-                    MATE 이름으로 내는 게임
-                  </p>
-                  <p className="type-b3 mb-7 max-w-md leading-[1.85] text-white/72">
+                <div className="lg:col-span-5">
+                  <p className="type-h3 mb-4 text-[var(--text-1)]">MATE 이름으로 내는 게임</p>
+                  <p className="type-b3 mb-7 max-w-md text-white/75">
                     기획과 아트, 개발, 퍼블리싱까지 팀 안에서 끝냅니다. 판권도 저희가 쥡니다.
                     지금 두 타이틀을 만들고 있습니다.
                   </p>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-1.5">
                     {games.map((g) => (
-                      <span key={g.id}
-                        className="type-c2 inline-flex items-center gap-2 rounded-[6px] border border-white/20 px-3 py-1.5 text-white/80">
-                        {g.title}
-                        <span className="text-white/55">{g.status}</span>
+                      <span key={g.id} className="tag gap-2 bg-black/40">
+                        {g.title}<span className="text-white/45">{g.status}</span>
                       </span>
                     ))}
                   </div>
                 </div>
 
-                <div className="flex justify-between gap-6 lg:col-span-2 lg:h-full lg:flex-col lg:items-end">
-                  <div className="space-y-4 lg:text-right">
-                    <div>
-                      <p className="font-en type-h3 font-mono-stat mb-1.5 font-bold leading-none text-[var(--text-1)]">
-                        {games.length}종
-                      </p>
-                      <p className="type-c2 text-white/70">제작 중인 타이틀</p>
-                    </div>
-                  </div>
+                <div className="lg:col-span-2 lg:text-right">
+                  <p className="font-en font-mono-stat text-[32px] leading-none tracking-[-0.04em] text-[var(--text-1)]">
+                    {games.length}종
+                  </p>
+                  <p className="mt-1.5 font-mono text-[11px] uppercase tracking-[0.02em] text-white/60">제작 중인 타이틀</p>
                 </div>
               </div>
 
-              <p className="type-c1 relative mt-8 text-white/60">자체 IP · 공개할 수 있는 단계가 되면 여기에 올립니다</p>
+              <p className="relative mt-10 font-mono text-[12px] tracking-[0.01em] text-white/60">
+                <span className="mono-bullet" />자체 IP · 공개할 수 있는 단계가 되면 여기에 올립니다
+              </p>
             </div>
           </div>
         </motion.div>

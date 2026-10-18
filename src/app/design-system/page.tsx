@@ -13,28 +13,27 @@ export const metadata: Metadata = {
 type Swatch = { name: string; hex: string; note?: string };
 
 const PRIMARY: Swatch[] = [
-  { name: 'primary 100', hex: '#7BA3F5' },
-  { name: 'primary 200', hex: '#4F7FE8', note: '메인 브랜드 · 액션' },
-  { name: 'primary 300', hex: '#2F5ECC' },
-  { name: 'primary 400', hex: '#1E3F93', note: 'CTA 밴드' },
-  { name: 'primary 500', hex: '#172A54' },
-  { name: 'primary 600', hex: '#121826' },
+  { name: 'primary 100', hex: '#8FB0FF', note: '검정 위 강조 글자' },
+  { name: 'primary 200', hex: '#2E5BF0', note: '버튼 면 · 아이콘 칸' },
+  { name: 'primary 300', hex: '#2644CB', note: '로고 색' },
+  { name: 'primary 400', hex: '#18308F' },
+  { name: 'primary 500', hex: '#0D1B57' },
+  { name: 'primary 600', hex: '#000000' },
 ];
 
 const GRAY: Swatch[] = [
-  { name: 'gray 50', hex: '#FFFFFF' },
-  { name: 'gray 100', hex: '#F5F7FA', note: '본문 텍스트' },
-  { name: 'gray 200', hex: '#DDE3ED' },
-  { name: 'gray 300', hex: '#B4BECE' },
-  { name: 'gray 400', hex: '#8792A6' },
-  { name: 'gray 500', hex: '#5A6478' },
-  { name: 'gray 600', hex: '#0E1117', note: '캔버스 · 텍스트 블랙' },
+  { name: 'gray 50', hex: '#FFFFFF', note: '본문 텍스트' },
+  { name: 'gray 200', hex: '#E4E6EA' },
+  { name: 'gray 300', hex: '#B4B8C0' },
+  { name: 'gray 400', hex: '#858A94' },
+  { name: 'gray 500', hex: '#5A5F69' },
+  { name: 'gray 600', hex: '#000000', note: '캔버스' },
 ];
 
 const POINT: Swatch[] = [
-  { name: 'point 100', hex: '#FFF3DB' },
-  { name: 'point 200', hex: '#FFB020', note: '메인 포인트 컬러' },
-  { name: 'point 300', hex: '#D18A0A' },
+  { name: 'point 100', hex: '#C9D8FF' },
+  { name: 'point 200', hex: '#5B86FF', note: '강조 글자 (파랑 하나만 쓴다)' },
+  { name: 'point 300', hex: '#2E5BF0' },
 ];
 
 type TypeRow = {
@@ -48,35 +47,30 @@ type TypeRow = {
 };
 
 const TYPE: TypeRow[] = [
-  { token: 'D1', cls: 'type-d1 font-en', sample: 'Display', use: '히어로 · CTA 스테이트먼트', fw: 800, fs: '40~144', lh: '0.98' },
-  { token: 'D2', cls: 'type-d2 font-en', sample: 'Section', use: '섹션 대형 타이틀', fw: 800, fs: '36~76', lh: '1.04' },
-  { token: 'H1', cls: 'type-h1', sample: '타이틀 및 제목', use: '페이지 제목', fw: 700, fs: '32~56', lh: '1.3' },
-  { token: 'H2', cls: 'type-h2', sample: '보조타이틀 및 강조', use: '블록 제목', fw: 700, fs: '24~32', lh: '1.2' },
-  { token: 'H3', cls: 'type-h3', sample: '보조타이틀 및 강조', use: '가벼운 블록 제목', fw: 500, fs: '24~32', lh: '1.2' },
-  { token: 'B1', cls: 'type-b1', sample: '서브 타이틀', use: '카드 제목', fw: 700, fs: '18', lh: '1.5' },
-  { token: 'B2', cls: 'type-b2', sample: '주요 콘텐츠 및 내용', use: '강조 본문', fw: 700, fs: '16', lh: '1.5' },
-  { token: 'B3', cls: 'type-b3', sample: '보조 콘텐츠 및 내용', use: '기본 본문', fw: 500, fs: '16', lh: '1.5' },
-  { token: 'B4', cls: 'type-b4', sample: '안내 문구 강조', use: '라벨 · 버튼', fw: 700, fs: '14', lh: '1.5' },
-  { token: 'C1', cls: 'type-c1', sample: '주요 콘텐츠를 세부적으로 설명 (Caption)', use: '캡션', fw: 400, fs: '13', lh: '1.5' },
+  { token: 'D1', cls: 'type-d1 font-en', sample: 'Display', use: '히어로 · CTA 스테이트먼트', fw: 500, fs: '44~112', lh: '1' },
+  { token: 'D2', cls: 'type-d2 font-en', sample: 'Section', use: '섹션 대형 타이틀', fw: 500, fs: '36~68', lh: '1.06' },
+  { token: 'H1', cls: 'type-h1', sample: '타이틀 및 제목', use: '페이지 제목', fw: 500, fs: '32~52', lh: '1.16' },
+  { token: 'H2', cls: 'type-h2', sample: '보조타이틀 및 강조', use: '블록 제목', fw: 500, fs: '22~28', lh: '1.28' },
+  { token: 'H3', cls: 'type-h3', sample: '보조타이틀 및 강조', use: '가벼운 블록 제목', fw: 400, fs: '22~28', lh: '1.28' },
+  { token: 'B1', cls: 'type-b1', sample: '서브 타이틀', use: '카드 제목', fw: 500, fs: '18', lh: '1.55' },
+  { token: 'B2', cls: 'type-b2', sample: '주요 콘텐츠 및 내용', use: '강조 본문', fw: 500, fs: '16', lh: '1.55' },
+  { token: 'B3', cls: 'type-b3', sample: '보조 콘텐츠 및 내용', use: '기본 본문', fw: 400, fs: '16', lh: '1.65' },
+  { token: 'B4', cls: 'type-b4', sample: '안내 문구 강조', use: '라벨 · 버튼', fw: 500, fs: '14', lh: '1.55' },
+  { token: 'C1', cls: 'type-c1', sample: '주요 콘텐츠를 세부적으로 설명 (Caption)', use: '캡션', fw: 400, fs: '13', lh: '1.55' },
   { token: 'C2', cls: 'type-c2', sample: '제한적으로 사용 / 밀도 높은 UI', use: '메타 정보', fw: 400, fs: '12', lh: '1.5' },
+  { token: 'Mono', cls: 'mono-label', sample: 'OVERVIEW:', use: '칸 이름 · 숫자 · 날짜 (Geist Mono)', fw: 400, fs: '12', lh: '1.4' },
 ];
 
+/* 영역마다 색을 따로 두던 체계는 접었다 - 세 영역 모두 같은 파랑을 쓴다 */
+const SHARED_BLUE: Swatch[] = [
+  { name: 'domain 100', hex: '#8FB0FF' },
+  { name: 'domain 200', hex: '#2E5BF0', note: 'accent (공통)' },
+  { name: 'domain 300', hex: '#2644CB' },
+];
 const DOMAIN_SCALE: Record<string, Swatch[]> = {
-  web: [
-    { name: 'domain 100', hex: '#8FB4F8' },
-    { name: 'domain 200', hex: '#4F7FE8', note: 'accent' },
-    { name: 'domain 300', hex: '#2F5ECC' },
-  ],
-  game: [
-    { name: 'domain 100', hex: '#A594FF' },
-    { name: 'domain 200', hex: '#7C5CFF', note: 'accent' },
-    { name: 'domain 300', hex: '#5B3AE0' },
-  ],
-  edu: [
-    { name: 'domain 100', hex: '#FFD98A' },
-    { name: 'domain 200', hex: '#FFB020', note: 'accent' },
-    { name: 'domain 300', hex: '#D18A0A' },
-  ],
+  web: SHARED_BLUE,
+  game: SHARED_BLUE,
+  edu: SHARED_BLUE,
 };
 
 /* ── 유틸 ───────────────────────────────────────────── */

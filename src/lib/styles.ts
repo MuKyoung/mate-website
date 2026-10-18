@@ -6,8 +6,9 @@
  * 값을 바꾸면 사이트 전체에 일관되게 반영된다.
  *
  * 컬러 역할 분담
- *   indigo(primary 200) = 액션 · 링크 · 인터랙션
- *   amber (point 200)   = 섹션 라벨 · 강조 · 활성 상태
+ *   파랑(primary 200)     = 버튼 면 · 아이콘 칸 · 빛
+ *   밝은 파랑(primary 100) = 검은 바탕 위 강조 글자 · 링크 호버
+ *   흑백                    = 그 밖의 모든 것
  */
 
 /** 브랜드 상수 */
@@ -30,41 +31,58 @@ export const typeC1 = 'type-c1';
 export const typeC2 = 'type-c2';
 
 /** 대형 타이포 크기 - D2 / D1 티어와 동일한 clamp (style prop용) */
-export const displaySize = { fontSize: 'clamp(2.25rem, 6vw, 4.75rem)' } as const;
-export const displaySizeLg = { fontSize: 'clamp(2.25rem, 7vw, 6.5rem)' } as const;
+export const displaySize = { fontSize: 'clamp(2.25rem, 5.2vw, 4.25rem)' } as const;
+export const displaySizeLg = { fontSize: 'clamp(2.5rem, 6.4vw, 5.75rem)' } as const;
 
-/* ── Buttons ──────────────────────────────────────────── */
+/* ── Buttons - 각진 면. 파랑 + 흰색을 짝으로 쓴다 ─────────── */
 
-/** 화이트 필 버튼 - 기본 CTA (호버 시 인디고) */
+/** 파란 면 버튼 - 기본 CTA */
 export const btnPrimary =
-  'group inline-flex items-center gap-2.5 h-14 px-9 rounded-pill text-[15px] font-bold ' +
-  'text-canvas bg-gray-50 hover:bg-primary-200 hover:text-gray-50 transition-colors duration-300';
+  'group inline-flex items-center justify-center gap-3 h-12 px-6 rounded-[2px] text-[15px] font-medium ' +
+  'text-white bg-primary-200 hover:bg-[var(--blue-glow)] transition-colors duration-200';
 
-/** 아웃라인 필 버튼 - 보조 액션 */
+/** 흰 면 버튼 - 파란 버튼 옆의 보조 액션 */
+export const btnLight =
+  'group inline-flex items-center justify-center gap-3 h-12 px-6 rounded-[2px] text-[15px] font-medium ' +
+  'text-black bg-white hover:bg-[var(--blue-ice)] transition-colors duration-200';
+
+/** 테두리 버튼 - 3순위 */
 export const btnOutline =
-  'inline-flex items-center gap-2.5 h-14 px-9 rounded-pill text-[15px] font-bold ' +
-  'text-gray-50 border border-white/20 hover:border-white transition-colors duration-300';
+  'group inline-flex items-center justify-center gap-3 h-12 px-6 rounded-[2px] text-[15px] font-medium ' +
+  'text-white border border-white/25 hover:border-white hover:bg-white/[0.04] transition-colors duration-200';
 
-/** 포인트 필 버튼 - 화면당 1회, 앰버 강조 액션 */
-export const btnPoint =
-  'group inline-flex items-center gap-2.5 h-14 px-9 rounded-pill text-[15px] font-bold ' +
-  'text-primary-600 bg-point-200 hover:bg-point-100 transition-colors duration-300';
+/** 예전 이름 - 파란 버튼과 같다 */
+export const btnPoint = btnPrimary;
 
 /* ── Links ────────────────────────────────────────────── */
 
-/** 밑줄 텍스트 링크 - 3순위 액션 */
+/** 밑줄 텍스트 링크 */
 export const linkUnderline =
-  'text-[15px] font-semibold text-white/60 hover:text-gray-50 ' +
+  'text-[15px] text-white/65 hover:text-white ' +
   'border-b border-white/25 hover:border-white pb-0.5 transition-colors';
 
-/** 섹션 상단 '더보기' 링크 */
+/** 섹션 상단 '더보기' 링크 - 모노 라벨 */
 export const linkMore =
-  'group inline-flex items-center gap-1.5 text-b4 ' +
-  'text-white/70 hover:text-gray-50 transition-colors';
+  'group inline-flex items-center gap-2 font-mono text-[12px] uppercase tracking-[0.02em] ' +
+  'text-white/60 hover:text-white transition-colors';
 
 /** 화살표 아이콘 호버 이동 */
 export const arrowHover =
   'group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-300';
+
+/* ── 면과 칸 ──────────────────────────────────────────── */
+
+/** 어두운 패널 - 1px 테두리 + 아주 옅은 면 */
+export const panel = 'border border-white/10 bg-[var(--surface)]';
+
+/** 파란 아이콘 칸 - 카드 제목 앞에 붙는 작은 정사각형 */
+export const iconSquare =
+  'inline-flex shrink-0 items-center justify-center w-7 h-7 bg-primary-200 text-white';
+
+/** 번호 칸 - 목록 앞의 테두리 정사각형 */
+export const numSquare =
+  'inline-flex shrink-0 items-center justify-center w-7 h-7 border border-white/25 ' +
+  'font-mono text-[12px] text-white/80';
 
 /* ── Layout - Grid System (inner 1500 / gutter 16 / 12col) ── */
 

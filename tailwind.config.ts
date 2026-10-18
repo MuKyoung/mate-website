@@ -23,7 +23,9 @@ const config: Config = {
     },
     extend: {
       fontFamily: {
+        // 라틴은 Geist, 한글은 Pretendard 로 떨어진다 (globals.css --font-sans 와 같은 순서)
         sans: [
+          "Geist",
           "Pretendard Variable",
           "Pretendard",
           "-apple-system",
@@ -32,11 +34,21 @@ const config: Config = {
           "Noto Sans KR",
           "sans-serif",
         ],
+        // 칸 이름 · 숫자 · 날짜 같은 라벨용 등폭
+        mono: [
+          "Geist Mono",
+          "ui-monospace",
+          "SFMono-Regular",
+          "Menlo",
+          "Consolas",
+          "Pretendard Variable",
+          "monospace",
+        ],
       },
 
       // ── Color System ─────────────────────────────────────────
       colors: {
-        // primary — 딥 인디고. 숫자가 커질수록 어두워진다.
+        // primary — 로고 파랑 사다리. 100 은 검정 위 글자, 200 은 버튼 면, 300 이 로고 색.
         primary: {
           100: "var(--primary-100)",
           200: "var(--primary-200)",
@@ -56,7 +68,7 @@ const config: Config = {
           500: "var(--gray-500)",
           600: "var(--gray-600)",
         },
-        // point — 앰버. 한 화면에 한 번만 쓰는 강조색.
+        // point — 글자용 밝은 파랑. 파랑 하나만 쓰는 체계다.
         point: {
           100: "var(--point-100)",
           200: "var(--point-200)",
@@ -112,24 +124,25 @@ const config: Config = {
 
       // ── Typography — Figma 스케일과 1:1 (LS -0.3%) ────────────
       fontSize: {
-        d1: ["clamp(2.5rem, 10vw, 9rem)", { lineHeight: "0.98", letterSpacing: "-0.04em", fontWeight: "800" }],
-        d2: ["clamp(2.25rem, 6vw, 4.75rem)", { lineHeight: "1.04", letterSpacing: "-0.03em", fontWeight: "800" }],
-        h1: ["clamp(2rem, 4.4vw, 3.5rem)", { lineHeight: "1.3", letterSpacing: "-0.003em", fontWeight: "700" }],
-        h2: ["clamp(1.5rem, 2.6vw, 2rem)", { lineHeight: "1.2", letterSpacing: "-0.003em", fontWeight: "700" }],
-        h3: ["clamp(1.5rem, 2.6vw, 2rem)", { lineHeight: "1.2", letterSpacing: "-0.003em", fontWeight: "500" }],
-        b1: ["1.125rem", { lineHeight: "1.5", letterSpacing: "-0.003em", fontWeight: "700" }],
-        b2: ["1rem", { lineHeight: "1.5", letterSpacing: "-0.003em", fontWeight: "700" }],
-        b3: ["1rem", { lineHeight: "1.5", letterSpacing: "-0.003em", fontWeight: "500" }],
-        b4: ["0.875rem", { lineHeight: "1.5", letterSpacing: "-0.003em", fontWeight: "700" }],
+        d1: ["clamp(2.75rem, 8vw, 7rem)", { lineHeight: "1", letterSpacing: "-0.045em", fontWeight: "500" }],
+        d2: ["clamp(2.25rem, 5vw, 4.25rem)", { lineHeight: "1.06", letterSpacing: "-0.04em", fontWeight: "500" }],
+        h1: ["clamp(2rem, 4vw, 3.25rem)", { lineHeight: "1.16", letterSpacing: "-0.035em", fontWeight: "500" }],
+        h2: ["clamp(1.375rem, 2.2vw, 1.75rem)", { lineHeight: "1.28", letterSpacing: "-0.025em", fontWeight: "500" }],
+        h3: ["clamp(1.375rem, 2.2vw, 1.75rem)", { lineHeight: "1.28", letterSpacing: "-0.025em", fontWeight: "400" }],
+        b1: ["1.125rem", { lineHeight: "1.55", letterSpacing: "-0.012em", fontWeight: "500" }],
+        b2: ["1rem", { lineHeight: "1.55", letterSpacing: "-0.01em", fontWeight: "500" }],
+        b3: ["1rem", { lineHeight: "1.65", letterSpacing: "-0.01em", fontWeight: "400" }],
+        b4: ["0.875rem", { lineHeight: "1.55", letterSpacing: "-0.006em", fontWeight: "500" }],
         c1: ["0.8125rem", { lineHeight: "1.5", letterSpacing: "-0.003em", fontWeight: "400" }],
         c2: ["0.75rem", { lineHeight: "1.5", letterSpacing: "-0.003em", fontWeight: "400" }],
       },
 
       // ── Shape ────────────────────────────────────────────────
       borderRadius: {
-        DEFAULT: "10px", // Figma 카드 기준값
-        card: "10px",
-        pill: "9999px",
+        DEFAULT: "10px", // /taskmanager 가 쓰는 값이라 그대로 둔다
+        // 마케팅 사이트는 각지게 - 카드와 버튼 모두 2px
+        card: "2px",
+        pill: "2px",
       },
       boxShadow: {
         card: "none",

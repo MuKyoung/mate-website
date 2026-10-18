@@ -22,8 +22,8 @@ interface ParallaxImageProps {
  * 이미지를 컨테이너보다 크게 잡아(scale) 이동 시 빈 공간이 생기지 않게 한다.
  */
 export default function ParallaxImage({
-  src, alt, className = 'aspect-[16/10]', strength = 80,
-  placeholder, rounded = 'rounded-xl',
+  src, alt, className = 'aspect-[16/10]', strength = 40,
+  placeholder, rounded = 'rounded-none',
 }: ParallaxImageProps) {
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
