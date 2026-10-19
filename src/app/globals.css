@@ -596,14 +596,52 @@ body {
   align-items: center;
   justify-content: center;
   flex: none;
-  height: calc(var(--s) * 0.56);
+  height: calc(var(--s) * 0.52);
   overflow: hidden;
   background: #000;
   border: 1px solid rgba(255, 255, 255, 0.22);
 }
 .cube-tone--light .cube-media { border-color: rgba(0, 0, 0, 0.16); }
-.cube-media--glow {
-  background: radial-gradient(ellipse 120% 92% at 50% 128%, #f4f8ff 0%, #93b6ff 26%, #2e5bf0 50%, #0d1b57 76%, #000 100%);
+/* 04 면 - 자체 게임 타이틀. 블록 모자이크 위 아래쪽에 이름과 상태를 적는다 */
+.cube-originals {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--s) * 0.012);
+  padding: calc(var(--s) * 0.035) calc(var(--s) * 0.04);
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0.88), rgba(0, 0, 0, 0.6) 68%, transparent);
+  font-size: clamp(10px, calc(var(--s) * 0.036), 14px);
+  font-weight: 500;
+  color: #fff;
+}
+.cube-originals-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6em;
+}
+.cube-originals-row > span:first-child::before {
+  content: '';
+  display: inline-block;
+  width: 0.42em;
+  height: 0.42em;
+  margin-right: 0.5em;
+  vertical-align: 0.12em;
+  background: var(--blue-glow);
+}
+.cube-originals-row > span:last-child {
+  font-family: var(--font-mono);
+  font-size: 0.78em;
+  letter-spacing: 0.02em;
+  opacity: 0.7;
+}
+/* 윗면 · 밑면 - 로고 한 장만 가운데 */
+.cube-face--cap {
+  justify-content: center;
+  align-items: center;
 }
 .cube-caption {
   position: relative;
@@ -614,9 +652,9 @@ body {
 
 .cube-label {
   position: relative;
-  font-size: clamp(15px, calc(var(--s) * 0.085), 36px);
+  font-size: clamp(15px, calc(var(--s) * 0.08), 34px);
   font-weight: 500;
-  line-height: 1.1;
+  line-height: 1.08;
   letter-spacing: -0.035em;
   white-space: nowrap;
 }
@@ -637,7 +675,9 @@ body {
 
 .cube-shadow {
   position: absolute;
-  left: 50%;
+  /* 가운데 맞춤을 애니메이션 밖에 둔다. '동작 줄이기'로 애니메이션이 꺼지면 keyframes 의
+     translateX(-50%) 도 함께 사라져 그림자가 오른쪽으로 밀려났었다 */
+  left: calc(50% - var(--s) * 0.625);
   bottom: 0;
   width: calc(var(--s) * 1.25);
   height: calc(var(--s) * 0.2);
@@ -648,8 +688,8 @@ body {
 }
 @keyframes cube-bob    { from { transform: translateY(-1.6%); } to { transform: translateY(1.6%); } }
 @keyframes cube-shadow {
-  from { transform: translateX(-50%) scale(0.8);  opacity: 0.5; }
-  to   { transform: translateX(-50%) scale(1.06); opacity: 0.95; }
+  from { transform: scale(0.8);  opacity: 0.5; }
+  to   { transform: scale(1.06); opacity: 0.95; }
 }
 
 /* ── 스크롤 유도 - 가는 선을 따라 빛이 흘러내리고, 화살표가 아래로 까딱인다 ── */
