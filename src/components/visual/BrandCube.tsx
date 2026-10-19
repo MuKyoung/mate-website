@@ -8,6 +8,7 @@ import {
 } from 'framer-motion';
 import BlockMosaic from '@/components/visual/BlockMosaic';
 import { games } from '@/data/games';
+import { ongoing, type OngoingWork } from '@/data/ongoing';
 
 /**
  * 첫 화면 가운데에서 천천히 도는 큐브. 커서로 잡아 돌릴 수 있다.
@@ -59,18 +60,20 @@ type Face = {
   img: string;
   /** 그림에서 보여 줄 부분 (object-position) */
   focus: string;
+  /** 이름판 위에 적는 진행 중인 일 (src/data/ongoing.ts) */
+  work: OngoingWork[];
 };
 
 const SIDES: Face[] = [
   // 세종호이스트크레인 홈페이지 - 고객사가 게재를 허락했다 (2026-10-16). 첫 화면 문구와 걸린 보가 들어오게
   { side: 'front', no: '01', label: '웹 · 앱 · 브랜딩', en: 'Web, App & Branding', tone: 'blue',
-    img: '/images/projects/세종호이스트크레인.webp', focus: '25% 50%' },
+    img: '/images/projects/세종호이스트크레인.webp', focus: '25% 50%', work: ongoing.web },
   // ITLand - 저소득층 아동을 위한 VR 코딩 교육 프로그램 (사용자 지정, 2026-10-19)
   { side: 'right', no: '02', label: '게임 · XR', en: 'Game & XR', tone: 'dark',
-    img: '/images/projects/햄부기.webp', focus: '50% 50%' },
+    img: '/images/projects/햄부기.webp', focus: '50% 50%', work: ongoing.game },
   // 미래산업과학고 정규 수업 - 화면과 그 앞에서 설명하는 강사가 들어오게
   { side: 'back', no: '03', label: '교육 · 강의', en: 'Education & Lectures', tone: 'light',
-    img: '/images/projects/미래산업과학고.webp', focus: '73% 50%' },
+    img: '/images/projects/미래산업과학고.webp', focus: '73% 50%', work: ongoing.edu },
 ];
 
 export default function BrandCube({ spin }: { spin?: MotionValue<number> }) {
@@ -183,6 +186,16 @@ export default function BrandCube({ spin }: { spin?: MotionValue<number> }) {
                       <span className="cube-dot" />
                     </span>
                     <span className="cube-caption cube-glass">
+                      {f.work.length > 0 && (
+                        <span className="cube-list">
+                          {f.work.map((w) => (
+                            <span key={w.title} className="cube-list-row">
+                              <span>{w.title}</span>
+                              <span>{w.status}</span>
+                            </span>
+                          ))}
+                        </span>
+                      )}
                       <span className="cube-label">{f.label}</span>
                       <span className="cube-meta">{f.en}</span>
                     </span>
@@ -204,9 +217,9 @@ export default function BrandCube({ spin }: { spin?: MotionValue<number> }) {
                   <span className="cube-dot" />
                 </span>
                 <span className="cube-caption cube-glass">
-                  <span className="cube-originals">
+                  <span className="cube-list">
                     {games.map((g) => (
-                      <span key={g.id} className="cube-originals-row">
+                      <span key={g.id} className="cube-list-row">
                         <span>{g.title}</span>
                         <span>{g.status}</span>
                       </span>

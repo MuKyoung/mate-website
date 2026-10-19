@@ -694,7 +694,7 @@ body {
 
 /* 면의 색은 유리판의 물빛으로 남는다 */
 .cube-tone--blue  { color: #fff; --glass-tint: rgba(38, 74, 230, 0.5); }
-.cube-tone--dark  { color: #fff; --glass-tint: rgba(8, 10, 16, 0.58); }
+.cube-tone--dark  { color: #fff; --glass-tint: rgba(8, 10, 16, 0.84); }
 .cube-tone--light { color: #000; --glass-tint: rgba(255, 255, 255, 0.72); }
 .cube-tone--glow  { background: radial-gradient(circle at 50% 118%, #f4f8ff 0%, #93b6ff 22%, #2e5bf0 46%, #0d1b57 72%, #000 94%); }
 
@@ -734,8 +734,8 @@ body {
   padding: calc(var(--s) * 0.04) calc(var(--s) * 0.045);
 }
 
-/* 04 면 - 자체 게임 타이틀. 유리판 안, 이름 위에 적는다 */
-.cube-originals {
+/* 진행 중인 일 - 유리 이름판 안, 이름 위에 적는다 (01~03 src/data/ongoing.ts, 04 자체 게임) */
+.cube-list {
   display: flex;
   flex-direction: column;
   gap: calc(var(--s) * 0.012);
@@ -745,13 +745,17 @@ body {
   font-size: clamp(10px, calc(var(--s) * 0.034), 13px);
   font-weight: 500;
 }
-.cube-originals-row {
+.cube-list-row {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 0.6em;
 }
-.cube-originals-row > span:first-child::before {
+.cube-list-row > span:first-child {
+  padding-left: 0.92em;   /* 줄이 넘어가도 둘째 줄이 네모 점 뒤에 맞춰 선다 */
+  text-indent: -0.92em;
+}
+.cube-list-row > span:first-child::before {
   content: '';
   display: inline-block;
   width: 0.42em;
@@ -760,12 +764,17 @@ body {
   vertical-align: 0.12em;
   background: var(--blue-glow);
 }
-.cube-originals-row > span:last-child {
+.cube-list-row > span:last-child {
+  flex-shrink: 0;
+  white-space: nowrap;
   font-family: var(--font-mono);
   font-size: 0.78em;
   letter-spacing: 0.02em;
   opacity: 0.72;
 }
+.cube-tone--light .cube-list { border-bottom-color: rgba(0, 0, 0, 0.16); }
+.cube-tone--light .cube-list-row > span:first-child::before { background: #2E5BF0; }
+.cube-tone--blue .cube-list-row > span:first-child::before { background: #fff; }
 /* 윗면 · 밑면 그림 큐브 - 로고 한 장만 가운데 */
 .cube-face--cap {
   display: flex;
