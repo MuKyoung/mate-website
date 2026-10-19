@@ -12,6 +12,8 @@ import CtaSection from '@/components/ui/CtaSection';
 import HorizonGlow from '@/components/visual/HorizonGlow';
 import StripeField from '@/components/visual/StripeField';
 import AwardUnits from '@/components/visual/AwardUnits';
+import BrandCube from '@/components/visual/BrandCube';
+import ScrollCue from '@/components/motion/ScrollCue';
 import Scramble from '@/components/motion/Scramble';
 import ScrollWords from '@/components/motion/ScrollWords';
 import Ticker from '@/components/motion/Ticker';
@@ -76,21 +78,37 @@ export default function Home() {
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
   const heroY = useTransform(scrollYProgress, [0, 1], [0, -120]);
   const heroFade = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
+  // 큐브는 스크롤을 내리면 더 빨리 위로 빠지면서 반 바퀴 남짓 더 돈다
+  const cubeY = useTransform(scrollYProgress, [0, 1], [0, -200]);
+  const cubeSpin = useTransform(scrollYProgress, [0, 1], [0, -200]);
 
   return (
     <>
-      {/* ━━ 첫 화면 - 위에서 휘어 내려오는 빛, 로고, 칸마다 이름을 붙인 소개 줄 ━━ */}
-      <section ref={heroRef} className="relative flex min-h-[640px] flex-col justify-end overflow-hidden pb-10 sm:pb-14" style={{ height: '100svh' }}>
+      {/* ━━ 첫 화면 - 위에서 휘어 내려오는 빛, 가운데 도는 큐브, 스크롤 유도, 로고와 소개 줄 ━━ */}
+      <section ref={heroRef} className="relative flex flex-col overflow-hidden pb-10 sm:pb-14 [@media(min-width:1024px)_and_(max-height:860px)]:pb-8" style={{ minHeight: '100svh' }}>
         <HorizonGlow side="top" rim="min(31vh, 15vw + 140px)" radius="max(96vw, 760px)" />
+
+        {/* 큐브와 스크롤 유도 - 로고와 소개 줄 위로 남는 높이의 가운데에 선다 */}
+        <motion.div style={{ y: cubeY, opacity: heroFade }}
+          className="relative flex flex-1 flex-col items-center justify-center pb-4 pt-24 [@media(min-width:1024px)_and_(max-height:860px)]:pt-[72px]">
+          <motion.div initial={{ opacity: 0, scale: 0.8, y: 40 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 1.6, delay: 0.4, ease: easeEnter }}>
+            <BrandCube spin={cubeSpin} />
+          </motion.div>
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.9, delay: 1.7, ease: easeEnter }} className="mt-3 sm:mt-5 [@media(min-width:1024px)_and_(max-height:860px)]:mt-2">
+            <ScrollCue target="after-hero" />
+          </motion.div>
+        </motion.div>
 
         <motion.div className={`relative ${container}`} style={{ y: heroY, opacity: heroFade }}>
           <h1 className="sr-only">MATE는 웹 · 앱, 게임 · XR, 교육 외주 개발과 자체 게임 제작 · 퍼블리싱을 합니다</h1>
 
           {/* 로고 - 빛이 자리를 잡을 즈음 아래에서 열린다 */}
           <motion.div initial={{ clipPath: 'inset(100% 0 0 0)', y: 36 }} animate={{ clipPath: 'inset(0% 0 0 0)', y: 0 }}
-            transition={{ duration: 1.3, delay: 0.55, ease: easeEnter }} className="mb-16 sm:mb-24">
+            transition={{ duration: 1.3, delay: 0.55, ease: easeEnter }} className="mb-10 sm:mb-14 [@media(min-width:1024px)_and_(max-height:860px)]:mb-8">
             <Image src="/images/logo.png" alt="MATE" width={1991} height={493} priority
-              className="h-auto w-[min(62vw,380px)] brightness-0 invert" />
+              className="h-auto w-[min(56vw,300px)] brightness-0 invert [@media(min-width:1024px)_and_(max-height:860px)]:w-[230px]" />
           </motion.div>
 
           <motion.div {...onMount} variants={{ hidden: {}, show: { transition: { staggerChildren: 0.11, delayChildren: 1 } } }}
@@ -133,8 +151,11 @@ export default function Home() {
         </motion.div>
       </section>
 
-      {/* ━━ 수상 · 전시 이력이 흘러가는 띠 ━━ */}
-      <Ticker items={tickerItems} />
+      {/* ━━ 수상 · 전시 이력이 흘러가는 띠 - 스크롤 유도가 내려보내는 자리 ━━ */}
+      {/* 스크롤 여백은 SmoothScroll(Lenis)이 -80 으로 따로 준다. scroll-margin 을 함께 두면 두 번 빠진다 */}
+      <div id="after-hero">
+        <Ticker items={tickerItems} />
+      </div>
 
       <DomainSlabs withGames className="" />
 

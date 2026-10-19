@@ -505,6 +505,124 @@ body {
   .sweep:hover::before { transform: translateX(110%); }
 }
 
+/* ── 첫 화면 큐브 ────────────────────────────────────────
+   --s 가 한 변. 옆면 넷이 세로축으로 돌고, 위에서 살짝 내려다보도록 기울인다.
+   마우스를 올리면 회전이 멈춘다. 둥실 뜨는 움직임과 바닥 그림자는 같은 주기로 맞춘다. */
+.cube-wrap {
+  --s: clamp(150px, 13vw, 204px);
+  --h: calc(var(--s) / 2);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: var(--s);
+  height: calc(var(--s) * 1.42);
+  padding-top: calc(var(--s) * 0.12);
+}
+.cube-stage {
+  position: relative;
+  width: var(--s);
+  height: var(--s);
+  perspective: calc(var(--s) * 5);
+  animation: cube-bob 7s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate;
+}
+.cube-tilt,
+.cube-scroll,
+.cube-spin {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+.cube-tilt { transform: rotateX(-20deg); }
+.cube-spin { animation: cube-spin 26s linear infinite; }
+.cube-wrap:hover .cube-spin { animation-play-state: paused; }
+
+.cube-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: calc(var(--s) * 0.085);
+  overflow: hidden;
+  border: 1px solid rgba(143, 176, 255, 0.5);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+/* 위에서 오는 빛 - 면 위쪽이 조금 밝다 */
+.cube-face::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.13), transparent 40%);
+}
+.cube-face--front  { transform: translateZ(var(--h)); }
+.cube-face--right  { transform: rotateY(90deg) translateZ(var(--h)); }
+.cube-face--back   { transform: rotateY(180deg) translateZ(var(--h)); }
+.cube-face--left   { transform: rotateY(-90deg) translateZ(var(--h)); }
+.cube-face--top    { transform: rotateX(90deg) translateZ(var(--h)); }
+.cube-face--bottom { transform: rotateX(-90deg) translateZ(var(--h)); }
+
+.cube-tone--blue  { color: #fff; background: linear-gradient(160deg, #4a76ff 0%, #2448e0 48%, #0f237a 100%); }
+.cube-tone--dark  { color: #fff; background: linear-gradient(160deg, #1d212a 0%, #0a0b0e 62%, #000 100%); border-color: rgba(255, 255, 255, 0.22); }
+.cube-tone--light { color: #000; background: linear-gradient(160deg, #ffffff 0%, #e8edf8 60%, #cdd7ec 100%); border-color: rgba(255, 255, 255, 0.95); }
+.cube-tone--glow  { background: radial-gradient(circle at 50% 118%, #f4f8ff 0%, #93b6ff 22%, #2e5bf0 46%, #0d1b57 72%, #000 94%); border-color: rgba(143, 176, 255, 0.6); }
+
+.cube-label {
+  position: relative;
+  font-size: calc(var(--s) * 0.112);
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.035em;
+  white-space: nowrap;
+}
+.cube-meta {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: max(8px, calc(var(--s) * 0.047));
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  opacity: 0.72;
+}
+.cube-dot { width: calc(var(--s) * 0.036); height: calc(var(--s) * 0.036); background: currentColor; }
+.cube-tone--dark .cube-dot  { background: var(--blue-glow); }
+.cube-tone--light .cube-dot { background: var(--primary-300); }
+
+.cube-shadow {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: calc(var(--s) * 1.25);
+  height: calc(var(--s) * 0.22);
+  pointer-events: none;
+  background: radial-gradient(closest-side, rgba(76, 125, 255, 0.6), rgba(46, 91, 240, 0.18) 58%, transparent);
+  filter: blur(6px);
+  animation: cube-shadow 7s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate;
+}
+/* 노트북처럼 넓고 낮은 화면 - 큐브를 화면 높이에 맞춰 줄여, 아래 로고와 소개 줄이 첫 화면 안에 남게 한다 */
+@media (min-width: 1024px) and (max-height: 860px) {
+  .cube-wrap { --s: clamp(124px, 19vh, 188px); }
+}
+@keyframes cube-spin   { from { transform: rotateY(0deg); } to { transform: rotateY(-360deg); } }
+@keyframes cube-bob    { from { transform: translateY(-9px); } to { transform: translateY(9px); } }
+@keyframes cube-shadow {
+  from { transform: translateX(-50%) scale(0.8);  opacity: 0.5; }
+  to   { transform: translateX(-50%) scale(1.06); opacity: 0.95; }
+}
+
+/* ── 스크롤 유도 - 가는 선을 따라 빛이 흘러내리고, 화살표가 아래로 까딱인다 ── */
+.scroll-cue-light {
+  background: linear-gradient(180deg, transparent, var(--blue-glow) 62%, #ffffff);
+  animation: scroll-cue 2.4s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+@keyframes scroll-cue { from { transform: translateY(-100%); } to { transform: translateY(200%); } }
+.scroll-cue-arrow { animation: cue-bob 2.4s cubic-bezier(0.45, 0, 0.55, 1) infinite; }
+@keyframes cue-bob { 0%, 100% { transform: translateY(-2px); } 50% { transform: translateY(3px); } }
+
 /* 라우트 진입 - template.tsx 가 페이지마다 새로 마운트되며 재생된다 */
 @keyframes route-enter {
   from { opacity: 0; }
