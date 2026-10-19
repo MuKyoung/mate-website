@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useScroll, useSpring } from 'framer-motion';
 import { FiMenu, FiX, FiArrowUpRight } from 'react-icons/fi';
 
 const navItems = [
@@ -22,6 +22,9 @@ export default function Header() {
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [overLight, setOverLight]           = useState(false);
   const pathname = usePathname();
+  // 페이지를 얼마나 내려왔는지 - 헤더가 숨어도 보이도록 헤더 밖 맨 위에 따로 둔다
+  const { scrollYProgress } = useScroll();
+  const progress = useSpring(scrollYProgress, { stiffness: 140, damping: 28, mass: 0.4 });
 
   useEffect(() => {
     let last = window.scrollY;
@@ -65,6 +68,9 @@ export default function Header() {
   const txtActive = light ? 'text-black' : 'text-white';
 
   return (
+    <>
+    <motion.div aria-hidden style={{ scaleX: progress }}
+      className="fixed left-0 right-0 top-0 z-[60] h-[2px] origin-left bg-[var(--blue-glow)]" />
     <header
       className="fixed top-0 left-0 right-0 z-50 transition-[transform,background,border-color] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
       style={{
@@ -172,5 +178,6 @@ export default function Header() {
         )}
       </AnimatePresence>
     </header>
+    </>
   );
 }

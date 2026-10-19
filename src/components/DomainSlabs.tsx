@@ -5,9 +5,13 @@ import { motion } from 'framer-motion';
 import { FiArrowUpRight } from 'react-icons/fi';
 import BlueImage from '@/components/visual/BlueImage';
 import BlockMosaic from '@/components/visual/BlockMosaic';
+import Parallax from '@/components/motion/Parallax';
+import Scramble from '@/components/motion/Scramble';
+import { SplitText } from '@/components/motion/SplitText';
 import { domains } from '@/data/domains';
 import { games } from '@/data/games';
 import { fadeUp, inView, onMount } from '@/lib/motion';
+import type { Variants } from 'framer-motion';
 import { container } from '@/lib/styles';
 
 /**
@@ -39,9 +43,12 @@ const SLAB = {
 
 const titleSize = { fontSize: 'clamp(2.5rem, 5.6vw, 4.75rem)' } as const;
 
+/* 슬래브 한 칸 - 칸 안의 글자들이 차례로 들어오도록 자식을 엇갈려 재생한다 */
+const slabIn: Variants = { hidden: {}, show: { transition: { staggerChildren: 0.1 } } };
+
 export default function DomainSlabs({
   eager = false,
-  className = '',
+  className = 'border-t border-white/10',
   heading,
   withGames = false,
 }: {
@@ -55,16 +62,18 @@ export default function DomainSlabs({
 }) {
   const play = eager ? onMount : inView;
   return (
-    <section className={`border-t border-white/10 ${className}`}>
+    <section className={className}>
       {heading && <h1 className="sr-only">{heading}</h1>}
       {domains.map((d, i) => {
         const s = SLAB[d.key];
         return (
-          <motion.div key={d.key} {...play} variants={fadeUp} data-domain={d.key}>
+          <motion.div key={d.key} {...play} variants={slabIn} data-domain={d.key}>
             <Link href={s.href} className="group relative block overflow-hidden border-b border-white/10">
               {s.bg && (
                 <div className="absolute inset-y-0 right-0 w-full lg:w-[64%]">
-                  <BlueImage src={s.bg} reveal className="absolute inset-0" />
+                  <Parallax amount={56} className="absolute inset-0">
+                    <BlueImage src={s.bg} reveal className="absolute inset-0" />
+                  </Parallax>
                   <div aria-hidden className="absolute inset-0 bg-black/70 lg:bg-transparent"
                     style={{ backgroundImage: 'linear-gradient(90deg, #000 0%, rgba(0,0,0,0.82) 22%, rgba(0,0,0,0.3) 62%, rgba(0,0,0,0.12) 100%)' }} />
                 </div>
@@ -73,25 +82,26 @@ export default function DomainSlabs({
               <div className={`relative ${container} py-14 sm:py-20`}>
                 <div className="grid items-start gap-x-gutter gap-y-10 lg:grid-cols-12">
                   <div className="lg:col-span-5">
-                    <p className="mono-label mb-6">
-                      <span className="text-white/40 tabular-nums">0{i + 1}</span> Area:
-                    </p>
-                    <h2 className="font-en font-medium leading-[0.95] tracking-[-0.05em] text-[var(--text-1)]"
+                    <motion.p variants={fadeUp} className="mono-label mb-6">
+                      <span className="text-white/40 tabular-nums">0{i + 1}</span> <Scramble text="Area:" />
+                    </motion.p>
+                    <h2 className="font-en font-medium leading-[0.95] tracking-[-0.05em] text-[var(--text-1)]
+                                   transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-2"
                       style={titleSize}>
-                      {d.en}
+                      <SplitText text={d.en} />
                     </h2>
-                    <p className="mt-4 text-[17px] text-white/70">{d.kr}</p>
+                    <motion.p variants={fadeUp} className="mt-4 text-[17px] text-white/70">{d.kr}</motion.p>
                   </div>
 
-                  <div className="lg:col-span-5">
+                  <motion.div variants={fadeUp} className="lg:col-span-5">
                     <p className="type-h3 mb-4 text-[var(--text-1)]">{d.lead}</p>
                     <p className="type-b3 mb-7 max-w-md text-white/75">{d.summary}</p>
                     <div className="flex flex-wrap gap-1.5">
                       {d.tags.map((t) => <span key={t} className="tag bg-black/40">{t}</span>)}
                     </div>
-                  </div>
+                  </motion.div>
 
-                  <div className="flex items-end justify-between gap-6 lg:col-span-2 lg:h-full lg:flex-col lg:items-end">
+                  <motion.div variants={fadeUp} className="flex items-end justify-between gap-6 lg:col-span-2 lg:h-full lg:flex-col lg:items-end">
                     <div className="space-y-5 lg:text-right">
                       {d.stats.slice(0, 2).map((st) => (
                         <div key={st.label}>
@@ -104,22 +114,25 @@ export default function DomainSlabs({
                     </div>
                     <span className="flex h-12 w-12 shrink-0 items-center justify-center border border-white/25 bg-black/30 text-white/80
                                      transition-colors duration-300 group-hover:border-primary-200 group-hover:bg-primary-200 group-hover:text-white">
-                      <FiArrowUpRight size={18} />
+                      <FiArrowUpRight size={18} className="transition-transform duration-500 group-hover:rotate-45" />
                     </span>
-                  </div>
+                  </motion.div>
                 </div>
 
-                <p className="relative mt-10 font-mono text-[12px] tracking-[0.01em] text-white/60">
+                <motion.p variants={fadeUp} className="relative mt-10 font-mono text-[12px] tracking-[0.01em] text-white/60">
                   <span className="mono-bullet" />{s.note}
-                </p>
+                </motion.p>
               </div>
+              {/* 호버하면 아래 경계선이 파랗게 왼쪽에서 그어진다 */}
+              <span aria-hidden className="absolute bottom-[-1px] left-0 h-px w-full origin-left scale-x-0 bg-[var(--blue-glow)]
+                                           transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-x-100" />
             </Link>
           </motion.div>
         );
       })}
 
       {withGames && (
-        <motion.div {...play} variants={fadeUp} data-domain="game">
+        <motion.div {...play} variants={slabIn} data-domain="game">
           {/* 외주 세 영역과 나란히 두되 링크는 걸지 않는다 -
               두 타이틀 다 제작 중이라 보낼 스토어도 상세 페이지도 아직 없다 */}
           <div className="relative overflow-hidden border-b border-white/10">
@@ -132,13 +145,13 @@ export default function DomainSlabs({
             <div className={`relative ${container} py-14 sm:py-20`}>
               <div className="grid items-start gap-x-gutter gap-y-10 lg:grid-cols-12">
                 <div className="lg:col-span-5">
-                  <p className="mono-label mb-6">
-                    <span className="text-white/40 tabular-nums">0{domains.length + 1}</span> Originals:
-                  </p>
+                  <motion.p variants={fadeUp} className="mono-label mb-6">
+                    <span className="text-white/40 tabular-nums">0{domains.length + 1}</span> <Scramble text="Originals:" />
+                  </motion.p>
                   <h2 className="font-en font-medium leading-[0.95] tracking-[-0.05em] text-[var(--text-1)]" style={titleSize}>
-                    Original Games
+                    <SplitText text="Original Games" />
                   </h2>
-                  <p className="mt-4 text-[17px] text-white/70">자체 게임 제작 · 퍼블리싱</p>
+                  <motion.p variants={fadeUp} className="mt-4 text-[17px] text-white/70">자체 게임 제작 · 퍼블리싱</motion.p>
                 </div>
 
                 <div className="lg:col-span-5">

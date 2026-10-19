@@ -22,7 +22,7 @@ export default function FAQAccordion({ faqs }: FAQAccordionProps) {
         const isOpen = openId === faq.id;
         return (
           <motion.div key={faq.id} variants={fadeUp}
-            className={`border transition-colors duration-300 ${isOpen ? 'border-white/25 bg-[var(--surface)]' : 'border-white/10'}`}>
+            className={`sweep border transition-colors duration-300 ${isOpen ? 'border-white/25 bg-[var(--surface)]' : 'border-white/10 hover:border-white/25'}`}>
             <button
               onClick={() => setOpenId(isOpen ? null : faq.id)}
               aria-expanded={isOpen}

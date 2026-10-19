@@ -13,7 +13,9 @@ import { projects } from '@/data/projects';
 import {
   gameCapabilities, gamePlatforms, gamePipeline, gameCredentials, domainByKey,
 } from '@/data/domains';
-import { fadeUp, clipUp, rowIn, stagger, staggerTight, staggerRows, inView, onMount } from '@/lib/motion';
+import { fadeUp, rowIn, stagger, staggerTight, staggerRows, inView, onMount } from '@/lib/motion';
+import Scramble from '@/components/motion/Scramble';
+import { SplitText } from '@/components/motion/SplitText';
 import { container, iconSquare, numSquare, sectionPad } from '@/lib/styles';
 
 const d = domainByKey.game;
@@ -35,19 +37,15 @@ export default function GameClient() {
         <HorizonGlow side="top" rim="clamp(110px, 13vw, 200px)" radius="max(120vw, 900px)" />
         <div className={`relative ${container}`}>
           <motion.p {...onMount} variants={fadeUp} className="mono-label mb-12 border-b border-white/[0.12] pb-4 sm:mb-16">
-            <Link href="/services" className="text-white/45 hover:text-white">MATE / Services /</Link> {d.en}:
+            <Link href="/services" className="text-white/45 hover:text-white"><Scramble text="MATE / Services /" /></Link> <Scramble text={`${d.en}:`} delay={160} />
           </motion.p>
 
           <div className="grid items-end gap-x-gutter gap-y-12 lg:grid-cols-12">
             <motion.h1 {...onMount} variants={stagger}
               className="font-en font-medium leading-[0.96] tracking-[-0.05em] text-[var(--text-1)] lg:col-span-7"
               style={{ fontSize: 'clamp(2.75rem, 7.6vw, 6.75rem)' }}>
-              <span className="-mb-[0.1em] block overflow-hidden pb-[0.1em]">
-                <motion.span variants={clipUp} className="block">Game &amp; XR</motion.span>
-              </span>
-              <span className="-mb-[0.1em] block overflow-hidden pb-[0.1em]">
-                <motion.span variants={clipUp} className="block text-white/45">Development</motion.span>
-              </span>
+              <SplitText text="Game & XR" className="block" />
+              <SplitText text="Development" className="block text-white/45" />
             </motion.h1>
             <motion.div {...onMount} variants={fadeUp} className="lg:col-span-5 lg:pb-3">
               <p className="type-h3 mb-5 text-[var(--text-1)]">{d.lead}</p>
@@ -89,7 +87,7 @@ export default function GameClient() {
           </button>
         </div>
 
-        <motion.div {...inView} variants={fadeUp}
+        <motion.div {...inView} variants={staggerTight}
           ref={railRef}
           className="no-scrollbar flex snap-x snap-mandatory gap-2 overflow-x-auto pb-2"
           style={{
@@ -100,8 +98,8 @@ export default function GameClient() {
             paddingRight: '1rem',
           }}>
           {gameCapabilities.map((c) => (
-            <article key={c.id}
-              className="group flex w-[290px] shrink-0 snap-start flex-col border border-white/10 bg-[var(--surface)] p-7
+            <motion.article key={c.id} variants={fadeUp}
+              className="sweep group flex w-[290px] shrink-0 snap-start flex-col border border-white/10 bg-[var(--surface)] p-7
                          transition-colors duration-300 hover:border-white/35 sm:w-[360px] sm:p-8">
               <p className="mb-10 font-mono text-[12px] text-white/45 tabular-nums">{c.no}</p>
               <h3 className="font-en mb-2 text-[26px] font-medium leading-none tracking-[-0.04em] text-[var(--text-1)] sm:text-[30px]">
@@ -112,7 +110,7 @@ export default function GameClient() {
               <div className="flex flex-wrap gap-1.5">
                 {c.tags.map((t) => <span key={t} className="tag">{t}</span>)}
               </div>
-            </article>
+            </motion.article>
           ))}
         </motion.div>
       </section>
@@ -126,7 +124,7 @@ export default function GameClient() {
               const Icon = platformIcon[i % platformIcon.length];
               return (
                 <motion.div key={p.name} variants={fadeUp}
-                  className="flex min-h-[200px] flex-col justify-between border border-white/10 bg-[var(--surface)] p-6 sm:p-8">
+                  className="sweep flex min-h-[200px] flex-col justify-between border border-white/10 bg-[var(--surface)] p-6 transition-colors hover:border-white/25 sm:p-8">
                   <span className={iconSquare}><Icon size={14} /></span>
                   <div>
                     <h3 className="font-en mb-2 text-[34px] font-medium leading-none tracking-[-0.045em] text-[var(--text-1)] sm:text-[42px]">

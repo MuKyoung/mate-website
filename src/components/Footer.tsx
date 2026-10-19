@@ -6,7 +6,10 @@ import { usePathname } from 'next/navigation';
 import { FiArrowUpRight } from 'react-icons/fi';
 import { domains } from '@/data/domains';
 import { teamCapabilities } from '@/data/teamCapabilities';
+import { motion } from 'framer-motion';
 import HorizonGlow from '@/components/visual/HorizonGlow';
+import Scramble from '@/components/motion/Scramble';
+import { easeEnter } from '@/lib/motion';
 import { container, CONTACT_EMAIL, CONTACT_PHONE, KAKAO_OPEN_CHAT_URL } from '@/lib/styles';
 
 /**
@@ -42,18 +45,18 @@ export default function Footer() {
       <div className={`${container} pt-16 sm:pt-20`}>
         <div className="grid grid-cols-2 gap-x-6 gap-y-12 lg:grid-cols-12">
           <div className="col-span-2 lg:col-span-3">
-            <p className="mono-label text-white/80">DEVTEAMMATE.CO.KR</p>
+            <p className="mono-label text-white/80"><Scramble text="DEVTEAMMATE.CO.KR" duration={900} /></p>
           </div>
 
           <div className="col-span-2 lg:col-span-4">
-            <p className="mono-label mb-3">Overview:</p>
+            <p className="mono-label mb-3"><Scramble text="Overview:" /></p>
             <p className="max-w-sm text-[14px] leading-[1.7] text-white/60">
               웹 · 앱, 게임 · XR, 교육 세 영역의 외주 개발과 자체 게임 제작 · 퍼블리싱을 함께 합니다.
             </p>
           </div>
 
           <div className="lg:col-span-2">
-            <p className="mono-label mb-3">Pages:</p>
+            <p className="mono-label mb-3"><Scramble text="Pages:" /></p>
             <ul className="space-y-2">
               {nav.map((l) => (
                 <li key={l.href}><Link href={l.href} className={linkCls}>{l.label}</Link></li>
@@ -62,7 +65,7 @@ export default function Footer() {
           </div>
 
           <div className="lg:col-span-2">
-            <p className="mono-label mb-3">Domains:</p>
+            <p className="mono-label mb-3"><Scramble text="Domains:" /></p>
             <ul className="space-y-2">
               {domains.map((d) => (
                 <li key={d.key}><Link href={`/${d.slug}`} className={linkCls}>{d.kr}</Link></li>
@@ -71,11 +74,11 @@ export default function Footer() {
           </div>
 
           <div className="col-span-2 lg:col-span-1 lg:text-right">
-            <p className="mono-label lg:justify-end">©{year}</p>
+            <p className="mono-label lg:justify-end"><Scramble text={`©${year}`} /></p>
           </div>
 
           <div className="col-span-2 lg:col-span-4 lg:col-start-4">
-            <p className="mono-label mb-3">Contact:</p>
+            <p className="mono-label mb-3"><Scramble text="Contact:" /></p>
             <ul className="space-y-2">
               {channels.map((c) => (
                 <li key={c.href}>
@@ -90,7 +93,7 @@ export default function Footer() {
           </div>
 
           <div className="col-span-2 lg:col-span-5">
-            <p className="mono-label mb-3">Business:</p>
+            <p className="mono-label mb-3"><Scramble text="Business:" /></p>
             <dl className="space-y-2 text-[13px] text-white/55">
               {[
                 ['상호', 'MATE 외주개발팀'],
@@ -110,8 +113,11 @@ export default function Footer() {
       <div className="relative mt-20 h-[58vw] max-h-[560px] min-h-[300px] sm:mt-28">
         <HorizonGlow side="bottom" rim="62%" radius="max(92vw, 720px)" />
         <div className="relative flex h-full flex-col items-center pt-[10%] sm:pt-[7%]">
-          <Image src="/images/logo.png" alt="MATE" width={1991} height={493}
-            className="h-auto w-[min(52vw,420px)] brightness-0 invert" />
+          <motion.div initial={{ opacity: 0, y: 48 }} whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-10% 0px' }} transition={{ duration: 1.4, ease: easeEnter }}>
+            <Image src="/images/logo.png" alt="MATE" width={1991} height={493}
+              className="h-auto w-[min(52vw,420px)] brightness-0 invert" />
+          </motion.div>
         </div>
         <p className="absolute bottom-5 left-0 right-0 text-center font-mono text-[11px] tracking-[0.02em] text-black/60">
           © {year} MATE. All rights reserved.

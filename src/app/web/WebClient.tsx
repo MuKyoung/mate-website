@@ -10,7 +10,9 @@ import HorizonGlow from '@/components/visual/HorizonGlow';
 import BrowserFrame from '@/components/visual/BrowserFrame';
 import { projects } from '@/data/projects';
 import { webScope, webStack, webDeliverables, domainByKey } from '@/data/domains';
-import { fadeUp, clipUp, rowIn, stagger, staggerTight, staggerRows, inView, onMount } from '@/lib/motion';
+import { fadeUp, rowIn, stagger, staggerTight, staggerRows, inView, onMount } from '@/lib/motion';
+import Scramble from '@/components/motion/Scramble';
+import { SplitText } from '@/components/motion/SplitText';
 import { container, numSquare, sectionPad } from '@/lib/styles';
 
 const d = domainByKey.web;
@@ -29,19 +31,15 @@ export default function WebClient() {
         <HorizonGlow side="top" rim="clamp(110px, 13vw, 200px)" radius="max(120vw, 900px)" />
         <div className={`relative ${container}`}>
           <motion.p {...onMount} variants={fadeUp} className="mono-label mb-12 border-b border-white/[0.12] pb-4 sm:mb-16">
-            <Link href="/services" className="text-white/45 hover:text-white">MATE / Services /</Link> {d.en}:
+            <Link href="/services" className="text-white/45 hover:text-white"><Scramble text="MATE / Services /" /></Link> <Scramble text={`${d.en}:`} delay={160} />
           </motion.p>
 
           <div className="grid items-end gap-x-gutter gap-y-12 lg:grid-cols-12">
             <motion.h1 {...onMount} variants={stagger}
               className="font-en font-medium leading-[0.96] tracking-[-0.05em] text-[var(--text-1)] lg:col-span-7"
               style={{ fontSize: 'clamp(2.75rem, 7.6vw, 6.75rem)' }}>
-              <span className="-mb-[0.1em] block overflow-hidden pb-[0.1em]">
-                <motion.span variants={clipUp} className="block">Web &amp; App</motion.span>
-              </span>
-              <span className="-mb-[0.1em] block overflow-hidden pb-[0.1em]">
-                <motion.span variants={clipUp} className="block text-white/45">Development</motion.span>
-              </span>
+              <SplitText text="Web & App" className="block" />
+              <SplitText text="Development" className="block text-white/45" />
             </motion.h1>
             <motion.div {...onMount} variants={fadeUp} className="lg:col-span-5 lg:pb-3">
               <p className="type-h3 mb-5 text-[var(--text-1)]">{d.lead}</p>
@@ -180,7 +178,7 @@ export default function WebClient() {
           <motion.div {...inView} variants={staggerTight} className="grid gap-2 sm:grid-cols-2">
             {webDeliverables.map((it, i) => (
               <motion.div key={it.title} variants={fadeUp}
-                className="flex min-h-[220px] flex-col border border-white/10 bg-[var(--surface)] p-6 sm:p-8">
+                className="sweep flex min-h-[220px] flex-col border border-white/10 bg-[var(--surface)] p-6 transition-colors hover:border-white/25 sm:p-8">
                 <span className={`${numSquare} mb-10`}>{i + 1}</span>
                 <h3 className="type-h2 mb-3 text-[var(--text-1)]">{it.title}</h3>
                 <p className="type-b3 max-w-md text-white/60">{it.desc}</p>
@@ -201,7 +199,7 @@ export default function WebClient() {
               {work.map((p, i) => (
                 <motion.div key={p.id} variants={rowIn}>
                   <Link href={`/projects/${p.id}`}
-                    className="group grid items-baseline gap-x-gutter gap-y-3 border-b border-white/10 py-7 sm:py-9 lg:grid-cols-12">
+                    className="group grid items-baseline gap-x-gutter gap-y-3 border-b border-white/10 py-7 transition-colors hover:bg-white/[0.02] sm:py-9 lg:grid-cols-12">
                     <span className="font-mono text-[12px] text-white/40 tabular-nums lg:col-span-1">{String(i + 1).padStart(2, '0')}</span>
                     <h3 className="type-h2 text-[var(--text-1)] transition-colors duration-300 group-hover:text-[var(--point)] lg:col-span-3">
                       {p.title}

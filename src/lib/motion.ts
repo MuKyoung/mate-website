@@ -14,7 +14,7 @@ export const tEnter: Transition = { duration: DUR.slow, ease: easeEnter };
 
 /** 아래에서 떠오르는 리빌 - 기본 진입 */
 export const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 24 },
+  hidden: { opacity: 0, y: 40 },
   show: { opacity: 1, y: 0, transition: tEnter },
 };
 
@@ -38,13 +38,13 @@ export const maskUp: Variants = {
 
 /** 왼쪽에서 진입 */
 export const fadeLeft: Variants = {
-  hidden: { opacity: 0, x: -20 },
+  hidden: { opacity: 0, x: -36 },
   show: { opacity: 1, x: 0, transition: tEnter },
 };
 
 /** 오른쪽에서 진입 */
 export const fadeRight: Variants = {
-  hidden: { opacity: 0, x: 20 },
+  hidden: { opacity: 0, x: 36 },
   show: { opacity: 1, x: 0, transition: tEnter },
 };
 

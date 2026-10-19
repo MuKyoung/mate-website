@@ -7,8 +7,10 @@ import { FiArrowUpRight, FiPlus, FiMinus } from 'react-icons/fi';
 import { eduCourses, eduAudiences, eduFormat, eduRecord, domainByKey } from '@/data/domains';
 import SafeImage from '@/components/SafeImage';
 import CtaSection from '@/components/ui/CtaSection';
+import Scramble from '@/components/motion/Scramble';
+import { SplitText } from '@/components/motion/SplitText';
 import HorizonGlow from '@/components/visual/HorizonGlow';
-import { fadeUp, clipUp, rowIn, stagger, staggerTight, staggerRows, inView, onMount } from '@/lib/motion';
+import { fadeUp, rowIn, stagger, staggerTight, staggerRows, inView, onMount } from '@/lib/motion';
 import { arrowHover, container } from '@/lib/styles';
 
 const d = domainByKey.edu;
@@ -118,7 +120,7 @@ export default function EducationClient() {
         <HorizonGlow side="top" rim="clamp(110px, 13vw, 200px)" radius="max(120vw, 900px)" />
         <div className={`relative ${container}`}>
           <motion.p {...onMount} variants={fadeUp} className="mono-label mb-12 border-b border-white/[0.12] pb-4 sm:mb-16">
-            <Link href="/services" className="text-white/45 hover:text-white">MATE / Services /</Link> {d.en}:
+            <Link href="/services" className="text-white/45 hover:text-white"><Scramble text="MATE / Services /" /></Link> <Scramble text={`${d.en}:`} delay={160} />
           </motion.p>
 
           <div className="grid gap-x-gutter gap-y-12 lg:grid-cols-12">
@@ -126,12 +128,8 @@ export default function EducationClient() {
               <motion.h1 {...onMount} variants={stagger}
                 className="mb-9 font-medium leading-[1.06] tracking-[-0.045em] text-[var(--text-1)]"
                 style={{ fontSize: 'clamp(2.5rem, 5.6vw, 4.75rem)' }}>
-                <span className="-mb-[0.08em] block overflow-hidden pb-[0.08em]">
-                  <motion.span variants={clipUp} className="block">현업에서 실제로</motion.span>
-                </span>
-                <span className="-mb-[0.08em] block overflow-hidden pb-[0.08em]">
-                  <motion.span variants={clipUp} className="block text-white/45">쓰는 것만 가르칩니다</motion.span>
-                </span>
+                <SplitText text="현업에서 실제로" className="block" />
+                <SplitText text="쓰는 것만 가르칩니다" className="block text-white/45" />
               </motion.h1>
               <motion.p {...onMount} variants={fadeUp} className="type-b3 max-w-xl text-white/65">
                 {d.summary}{' '}

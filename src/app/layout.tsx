@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import FloatingContactButton from "@/components/FloatingContactButton";
 import SmoothScroll from "@/components/SmoothScroll";
+import MotionProvider from "@/components/MotionProvider";
 import { Analytics } from "@vercel/analytics/react";
 
 const siteUrl = "https://devteammate.co.kr";
@@ -121,11 +122,13 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
         />
-        <SmoothScroll />
-        <Header />
-        <main className="min-h-screen">{children}</main>
-        <Footer />
-        <FloatingContactButton />
+        <MotionProvider>
+          <SmoothScroll />
+          <Header />
+          <main className="min-h-screen">{children}</main>
+          <Footer />
+          <FloatingContactButton />
+        </MotionProvider>
         <Analytics />
       </body>
     </html>

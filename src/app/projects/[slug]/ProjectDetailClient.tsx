@@ -11,6 +11,8 @@ import CtaSection from '@/components/ui/CtaSection';
 import HorizonGlow from '@/components/visual/HorizonGlow';
 import BrowserFrame from '@/components/visual/BrowserFrame';
 import { fadeUp, clipUp, zoomTilt, lineDraw, stagger, inView, onMount } from '@/lib/motion';
+import Scramble from '@/components/motion/Scramble';
+import { SplitText } from '@/components/motion/SplitText';
 import { btnOutline, btnPrimary, container, displaySize, linkUnderline, sectionPad } from '@/lib/styles';
 
 function getYouTubeVideoId(url: string): string | null {
@@ -53,17 +55,15 @@ export default function ProjectDetailClient({ params }: Props) {
             <Link href="/projects"
               className="group mono-label hover:text-white">
               <FiArrowLeft size={13} className="transition-transform duration-300 group-hover:-translate-x-0.5" />
-              Projects
+              <Scramble text="Projects" />
             </Link>
-            <p className="mono-label"><span className="text-white/45">Case</span> {index}</p>
+            <p className="mono-label"><span className="text-white/45">Case</span> <Scramble text={index} delay={200} /></p>
           </motion.div>
 
           <motion.h1 {...onMount} variants={stagger}
             className="mb-8 max-w-5xl font-medium leading-[0.98] tracking-[-0.05em] text-[var(--text-1)] sm:mb-10"
             style={{ fontSize: 'clamp(2.5rem, 7.4vw, 6.5rem)' }}>
-            <span className="block overflow-hidden pb-[0.07em]">
-              <motion.span variants={clipUp} className="block">{project.title}</motion.span>
-            </span>
+            <SplitText text={project.title} className="block" delay={0.1} />
           </motion.h1>
 
           <div className="grid gap-x-gutter gap-y-10 lg:grid-cols-12">
@@ -194,7 +194,7 @@ export default function ProjectDetailClient({ params }: Props) {
                   {projects.filter((p) => p.id !== project.id).slice(0, 5).map((p) => (
                     <li key={p.id}>
                       <Link href={`/projects/${p.id}`}
-                        className="group flex items-baseline justify-between gap-4 border-b border-white/10 py-3.5">
+                        className="group flex items-baseline justify-between gap-4 border-b border-white/10 py-3.5 transition-[padding] duration-500 hover:pl-2">
                         <span className="text-[15px] text-white/70 transition-colors group-hover:text-white">{p.title}</span>
                         <FiArrowUpRight size={13} className="shrink-0 text-white/35 transition-colors group-hover:text-white" />
                       </Link>

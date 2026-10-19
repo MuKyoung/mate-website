@@ -24,7 +24,7 @@ export default function TeamCapabilityCard({ capability, index }: TeamCapability
   const isLecture = capability.id === 'education';
   return (
     <motion.div {...inView} variants={fadeUp}
-      className="flex h-full flex-col border border-white/10 bg-[var(--surface)] p-6 sm:p-8">
+      className="sweep flex h-full flex-col border border-white/10 bg-[var(--surface)] p-6 transition-colors hover:border-white/25 sm:p-8">
       <span className="font-mono text-[12px] text-white/45 tabular-nums">0{index + 1}</span>
 
       <h3 className="mb-3 mt-10 text-[24px] font-medium leading-[1.2] tracking-[-0.035em] text-[var(--text-1)] sm:text-[28px]">

@@ -106,7 +106,7 @@ export default function TeamPageClient() {
               <motion.ol variants={staggerRows} className="space-y-2">
                 {whyChooseUs.map((item, i) => (
                   <motion.li key={item.title} variants={rowIn}
-                    className="grid gap-x-6 gap-y-2 border border-white/10 bg-[var(--surface)] p-5 sm:grid-cols-[2rem_10rem_1fr] sm:items-baseline">
+                    className="sweep grid gap-x-6 gap-y-2 border border-white/10 bg-[var(--surface)] p-5 transition-colors hover:border-white/25 sm:grid-cols-[2rem_10rem_1fr] sm:items-baseline">
                     <span className="font-mono text-[12px] text-white/45 tabular-nums">{i + 1}</span>
                     <p className="text-[16px] font-medium text-[var(--text-1)]">{item.title}</p>
                     <p className="text-[15px] leading-[1.7] text-white/60">{item.desc}</p>
@@ -184,7 +184,7 @@ export default function TeamPageClient() {
                     const Icon = getAwardIcon(award);
                     return (
                       <motion.div key={award.id} variants={rowIn}
-                        className="flex items-start gap-4 border-b border-white/10 py-5">
+                        className="group flex items-start gap-4 border-b border-white/10 py-5 transition-colors hover:bg-white/[0.02]">
                         <span className={`mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center ${
                           award.type === 'exhibition' ? 'border border-white/25 text-white/70' : 'bg-primary-200 text-white'}`}>
                           <Icon size={12} />

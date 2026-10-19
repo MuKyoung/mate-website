@@ -4,9 +4,11 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { FiArrowUpRight } from 'react-icons/fi';
 import StripeField from '@/components/visual/StripeField';
-import { fadeUp, clipUp, stagger, inView } from '@/lib/motion';
+import { fadeUp, stagger, inView } from '@/lib/motion';
+import Scramble from '@/components/motion/Scramble';
+import { SplitText } from '@/components/motion/SplitText';
 import {
-  arrowHover, btnLight, btnPrimary, clipWrap, container, CONTACT_EMAIL,
+  arrowHover, btnLight, btnPrimary, container, CONTACT_EMAIL,
   displaySizeLg, sectionPadLg,
 } from '@/lib/styles';
 
@@ -36,17 +38,13 @@ export default function CtaSection({ line1, line2, kr, cta = '프로젝트 문�
       <div className={container}>
         <div className="grid items-end gap-x-gutter gap-y-14 lg:grid-cols-12">
           <div className="lg:col-span-7">
-            <motion.p {...inView} variants={fadeUp} className="mono-label mb-10">Contact:</motion.p>
+            <motion.p {...inView} variants={fadeUp} className="mono-label mb-10"><Scramble text="Contact:" /></motion.p>
 
             <motion.h2 {...inView} variants={stagger}
               className="mb-8 font-medium leading-[1.04] tracking-[-0.045em] text-[var(--text-1)]"
               style={displaySizeLg}>
-              <span className={clipWrap}>
-                <motion.span variants={clipUp} className="block">{line1}</motion.span>
-              </span>
-              <span className={clipWrap}>
-                <motion.span variants={clipUp} className="block text-[var(--point)]">{line2}</motion.span>
-              </span>
+              <SplitText text={line1} className="block" />
+              <SplitText text={line2} className="block text-[var(--point)]" />
             </motion.h2>
 
             <motion.p {...inView} variants={fadeUp} className="caption-kr mb-12">

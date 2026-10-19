@@ -6,7 +6,10 @@ import DomainSlabs from '@/components/DomainSlabs';
 import SectionHead from '@/components/ui/SectionHead';
 import HorizonGlow from '@/components/visual/HorizonGlow';
 import { processSteps } from '@/data/process';
-import { fadeUp, clipUp, stagger, staggerTight, inView, onMount } from '@/lib/motion';
+import { fadeUp, stagger, staggerTight, inView, onMount } from '@/lib/motion';
+import Scramble from '@/components/motion/Scramble';
+import { SplitText } from '@/components/motion/SplitText';
+
 import { container, numSquare, sectionPad } from '@/lib/styles';
 
 export default function ServicesPageClient() {
@@ -17,18 +20,14 @@ export default function ServicesPageClient() {
         <HorizonGlow side="top" rim="clamp(110px, 13vw, 200px)" radius="max(120vw, 900px)" />
         <div className={`relative ${container}`}>
           <motion.p {...onMount} variants={fadeUp} className="mono-label mb-12 border-b border-white/[0.12] pb-4 sm:mb-16">
-            <span className="text-white/45">MATE /</span> Services:
+            <span className="text-white/45"><Scramble text="MATE /" /></span> <Scramble text="Services:" delay={120} />
           </motion.p>
           <div className="grid items-end gap-x-gutter gap-y-10 lg:grid-cols-12">
             <motion.h1 {...onMount} variants={stagger}
               className="font-medium leading-[1.02] tracking-[-0.045em] text-[var(--text-1)] lg:col-span-7"
               style={{ fontSize: 'clamp(2.5rem, 6.4vw, 5.5rem)' }}>
-              <span className="-mb-[0.1em] block overflow-hidden pb-[0.1em]">
-                <motion.span variants={clipUp} className="block">세 영역을</motion.span>
-              </span>
-              <span className="-mb-[0.1em] block overflow-hidden pb-[0.1em]">
-                <motion.span variants={clipUp} className="block text-white/45">따로 맡습니다</motion.span>
-              </span>
+              <SplitText text="세 영역을" className="block" />
+              <SplitText text="따로 맡습니다" className="block text-white/45" />
             </motion.h1>
             <motion.div {...onMount} variants={fadeUp} className="lg:col-span-5 lg:pb-3">
               <p className="type-h3 mb-5 text-[var(--text-1)]">영역마다 판단 기준이 다릅니다.</p>
@@ -52,7 +51,7 @@ export default function ServicesPageClient() {
           <motion.ol {...inView} variants={staggerTight} className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-5">
             {processSteps.map((s) => (
               <motion.li key={s.id} variants={fadeUp}
-                className="flex min-h-[240px] flex-col border border-white/10 bg-[var(--surface)] p-6">
+                className="sweep flex min-h-[240px] flex-col border border-white/10 bg-[var(--surface)] p-6 transition-colors hover:border-white/25">
                 <span className={`${numSquare} mb-10`}>{s.order}</span>
                 <h3 className="type-h2 mb-3 text-[var(--text-1)]">{s.title}</h3>
                 <p className="text-[14px] leading-[1.75] text-white/60">{s.description}</p>

@@ -2,7 +2,9 @@
 
 import { motion } from 'framer-motion';
 import HorizonGlow from '@/components/visual/HorizonGlow';
-import { clipUp, fadeUp, lineDraw, onMount, stagger } from '@/lib/motion';
+import { fadeUp, lineDraw, onMount, stagger } from '@/lib/motion';
+import Scramble from '@/components/motion/Scramble';
+import { SplitText } from '@/components/motion/SplitText';
 
 interface PageHeaderProps {
   title: string;
@@ -22,7 +24,7 @@ export default function PageHeader({ title, description, eyebrow }: PageHeaderPr
         {eyebrow && (
           <div className="relative mb-12 pb-4 sm:mb-16">
             <motion.p {...onMount} variants={fadeUp} className="mono-label">
-              <span className="text-white/45">MATE /</span> {eyebrow}:
+              <span className="text-white/45"><Scramble text="MATE /" /></span> <Scramble text={`${eyebrow}:`} delay={120} />
             </motion.p>
             <motion.span {...onMount} variants={lineDraw}
               className="absolute bottom-0 left-0 right-0 block h-px bg-white/[0.12]" />
@@ -32,9 +34,7 @@ export default function PageHeader({ title, description, eyebrow }: PageHeaderPr
           <motion.h1 {...onMount} variants={stagger}
             className="font-medium leading-[1.02] tracking-[-0.045em] text-[var(--text-1)] lg:col-span-8"
             style={{ fontSize: 'clamp(2.5rem, 6.4vw, 5.5rem)' }}>
-            <span className="-mb-[0.12em] block overflow-hidden pb-[0.12em]">
-              <motion.span variants={clipUp} className="block">{title}</motion.span>
-            </span>
+            <SplitText text={title} className="block" delay={0.15} />
           </motion.h1>
           <motion.p {...onMount} variants={fadeUp}
             className="text-[16px] leading-[1.7] text-white/65 sm:text-[17px] lg:col-span-4 lg:pb-3">

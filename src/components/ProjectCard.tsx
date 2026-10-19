@@ -6,7 +6,7 @@ import { FiArrowUpRight } from 'react-icons/fi';
 import { Project } from '@/types';
 import SafeImage from '@/components/SafeImage';
 import ThumbFallback from '@/components/ThumbFallback';
-import { fadeUp, inView } from '@/lib/motion';
+import { fadeUp, maskUp, inView } from '@/lib/motion';
 
 interface ProjectCardProps {
   project: Project;
@@ -23,7 +23,9 @@ export default function ProjectCard({ project, index, aspect = 'aspect-[4/3]' }:
   return (
     <motion.div {...inView} variants={fadeUp} className="group">
       <Link href={`/projects/${project.id}`} className="block">
-        <div className="mb-4 flex items-center justify-between gap-4 border-t border-white/15 pt-3">
+        <div className="relative mb-4 flex items-center justify-between gap-4 border-t border-white/15 pt-3">
+          <span aria-hidden className="absolute left-0 top-[-1px] h-px w-full origin-left scale-x-0 bg-[var(--blue-glow)]
+                                       transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-x-100" />
           <p className="mono-label">
             <span className="text-white/40 tabular-nums">{String(index + 1).padStart(2, '0')}</span>
             {project.category}
@@ -32,7 +34,7 @@ export default function ProjectCard({ project, index, aspect = 'aspect-[4/3]' }:
             className="text-white/40 transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-white" />
         </div>
 
-        <div className={`relative ${aspect} mb-5 overflow-hidden bg-[var(--surface)]`}>
+        <motion.div variants={maskUp} className={`relative ${aspect} mb-5 overflow-hidden bg-[var(--surface)]`}>
           <SafeImage
             src={project.thumbnail}
             alt={project.title}
@@ -40,7 +42,7 @@ export default function ProjectCard({ project, index, aspect = 'aspect-[4/3]' }:
             className="absolute inset-0 transition-transform duration-[900ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.03]"
             placeholder={<ThumbFallback label={project.category} />}
           />
-        </div>
+        </motion.div>
 
         <h3 className="mb-2 text-[21px] font-medium leading-[1.25] tracking-[-0.03em] text-[var(--text-1)] transition-colors duration-300 group-hover:text-[var(--point)] sm:text-[24px]">
           {project.title}

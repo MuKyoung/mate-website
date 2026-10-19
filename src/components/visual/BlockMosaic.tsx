@@ -1,7 +1,13 @@
+'use client';
+
+import { motion } from 'framer-motion';
+import { easeEnter } from '@/lib/motion';
+
 /**
  * 가로 블록 모자이크 - 줄마다 한두 개의 막대가 파랑에서 회색으로 번진다.
  *
  * 감싸는 칸의 위치(relative 나 absolute)는 className 으로 넘긴다.
+ * 화면에 들어오면 줄마다 왼쪽에서 밀려 들어오고, 그 뒤로는 몇 줄이 천천히 좌우로 흐른다.
  * seed 로 정해지는 수열이라 서버와 브라우저가 같은 그림을 그린다.
  */
 
@@ -26,21 +32,24 @@ export default function BlockMosaic({
 }) {
   const r = rng(seed);
   const h = 100 / rows;
-  const blocks: { x: number; y: number; w: number; g: number; o: number }[] = [];
+  const lines: { y: number; drift: number; blocks: { x: number; w: number; g: number; o: number }[] }[] = [];
   for (let i = 0; i < rows; i++) {
     const n = r() < 0.35 ? 2 : 1;
     let x = r() * 30;
+    const blocks = [];
     for (let k = 0; k < n && x < 92; k++) {
       const w = 18 + r() * 46;
-      blocks.push({ x, y: i * h, w: Math.min(w, 100 - x), g: Math.floor(r() * 3), o: 0.6 + r() * 0.4 });
+      blocks.push({ x, w: Math.min(w, 100 - x), g: Math.floor(r() * 3), o: 0.6 + r() * 0.4 });
       x += w + 4 + r() * 20;
     }
+    lines.push({ y: i * h, drift: r() < 0.45 ? 9 + r() * 8 : 0, blocks });
   }
   const id = (g: number) => `bm${seed}-${g}`;
 
   return (
     <div aria-hidden className={`grain overflow-hidden bg-black ${className}`}>
-      <svg className="absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+      <motion.svg className="absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none"
+        initial="hidden" whileInView="show" viewport={{ once: true, margin: '-10% 0px' }}>
         <defs>
           <linearGradient id={id(0)} x1="0" y1="0" x2="1" y2="0">
             <stop offset="0" stopColor="#000" stopOpacity="0" />
@@ -58,10 +67,19 @@ export default function BlockMosaic({
             <stop offset="1" stopColor="#0d1b57" />
           </linearGradient>
         </defs>
-        {blocks.map((b, i) => (
-          <rect key={i} x={b.x} y={b.y} width={b.w} height={h} fill={`url(#${id(b.g)})`} opacity={b.o} />
+        {lines.map((line, li) => (
+          <g key={li} className={line.drift ? 'row-drift' : undefined}
+            style={line.drift ? { animationDuration: `${line.drift}s`, animationDelay: `-${li}s` } : undefined}>
+            {line.blocks.map((b, bi) => (
+              <motion.rect key={bi} x={b.x} y={line.y} width={b.w} height={h} fill={`url(#${id(b.g)})`}
+                variants={{
+                  hidden: { x: -18, opacity: 0 },
+                  show: { x: 0, opacity: b.o, transition: { duration: 1, delay: li * 0.06 + bi * 0.08, ease: easeEnter } },
+                }} />
+            ))}
+          </g>
         ))}
-      </svg>
+      </motion.svg>
     </div>
   );
 }

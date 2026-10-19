@@ -424,6 +424,87 @@ body {
   opacity: 0.55;
 }
 
+/* ── 계속 도는 움직임 ───────────────────────────────────
+   전부 transform · opacity 만 바꿔 합성 단계에서 끝나게 한다 (다시 그리지 않는다).
+   '동작 줄이기' 설정이면 아래 prefers-reduced-motion 규칙이 멈춘다. */
+
+/* 빛의 숨 - 아주 느리게 조금 커졌다 작아진다. 깜빡임처럼 보이지 않게 9초에 한 번 */
+@keyframes glow-breathe {
+  from { transform: scale(1);     opacity: 0.88; }
+  to   { transform: scale(1.035); opacity: 1; }
+}
+.glow-breathe-top,
+.glow-breathe-bottom {
+  animation: glow-breathe 9s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate;
+  will-change: transform, opacity;
+}
+.glow-breathe-top    { transform-origin: 50% 0%; }
+.glow-breathe-bottom { transform-origin: 50% 100%; }
+
+/* 줄무늬 막대의 숨 - 가운데를 축으로 위아래가 조금 줄었다 돌아온다 */
+@keyframes bar-breathe {
+  from { transform: scaleY(1); }
+  to   { transform: scaleY(0.72); }
+}
+.bar-breathe {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: bar-breathe 7s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate;
+}
+
+/* 블록 모자이크의 줄 - 좌우로 천천히 흐른다 */
+@keyframes row-drift {
+  from { transform: translateX(-3px); }
+  to   { transform: translateX(4px); }
+}
+.row-drift { animation: row-drift 12s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate; }
+
+/* 줄무늬 위를 가로로 훑는 빛. overlay 라 검은 틈에서는 보이지 않는다 */
+@keyframes stripe-sweep {
+  0%   { transform: translateX(-120%); }
+  55%  { transform: translateX(420%); }
+  100% { transform: translateX(420%); }
+}
+.stripe-sweep {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 26%;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(220, 231, 255, 0.55) 50%, transparent);
+  mix-blend-mode: overlay;
+  animation: stripe-sweep 7s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+  animation-delay: 1.6s;
+}
+
+/* 파란 칸 · 회색 칸 안에서 천천히 떠도는 밝은 얼룩 - 면이 멈춰 있지 않게 */
+@keyframes card-drift {
+  0%   { transform: translate(-18%, -12%); }
+  50%  { transform: translate(22%, 14%); }
+  100% { transform: translate(-18%, -12%); }
+}
+.card-drift {
+  position: absolute;
+  inset: -30%;
+  pointer-events: none;
+  background: radial-gradient(closest-side, rgba(255, 255, 255, 0.22), transparent 70%);
+  animation: card-drift 16s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+@layer components {
+  /* 패널 호버 - 파란 빛 한 줄이 왼쪽에서 오른쪽으로 지나간다 */
+  .sweep { position: relative; overflow: hidden; }
+  .sweep::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(100deg, transparent 30%, rgba(76, 125, 255, 0.16) 50%, transparent 70%);
+    transform: translateX(-110%);
+    transition: transform 0.95s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .sweep:hover::before { transform: translateX(110%); }
+}
+
 /* 라우트 진입 - template.tsx 가 페이지마다 새로 마운트되며 재생된다 */
 @keyframes route-enter {
   from { opacity: 0; }
