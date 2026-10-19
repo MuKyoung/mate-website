@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { Fragment, useRef } from 'react';
 import Image from 'next/image';
 import {
   motion, useAnimationFrame, useInView, useMotionValue, useReducedMotion, useTransform,
@@ -23,8 +23,12 @@ import { games } from '@/data/games';
  * 블록 모자이크 위에 타이틀 이름만 적는다 - 외주 작업 그림을 자체 제작처럼 보이게 하지 않는다.
  * 장식이라 스크린리더에는 숨긴다.
  *
- * 유리 연출: 번호 칩과 이름판은 뒤 그림을 흐리게 비추는 유리판이고, 면마다 반사광 한 줄이
- * 큐브가 도는 각도를 따라 면 위를 가로질러 미끄러진다 (globals.css .cube-glare, --ry).
+ * 유리 연출 - 두 겹으로 만든다.
+ *   안쪽은 그림 큐브(.cube-face), 바깥은 두께(--d)만큼 떠 있는 유리 껍데기(.cube-shell).
+ *   번호 칩과 이름판은 유리 위에 있어, 큐브가 돌면 그림과 다른 깊이에서 어긋나며 움직인다.
+ *   유리 모서리는 두께 있는 유리처럼 가장자리가 빛나고, 비스듬히 볼수록 더 많이 비추며(프레넬),
+ *   반사광 한 줄이 회전을 따라 미끄러진다. 안쪽 그림은 정면에서 돌아설수록 어두워진다.
+ *   (globals.css .cube-shell / .shell-fresnel / .cube-glare / .cube-light, --ry · --fa)
  *
  * 움직임
  * - 가만히 두면 28초에 한 바퀴 돈다. 커서를 올리면 천천히 멈춘다
@@ -163,26 +167,38 @@ export default function BrandCube({ spin }: { spin?: MotionValue<number> }) {
           <motion.div className="cube-scroll" style={spin ? { rotateY: spin } : undefined}>
             <motion.div className="cube-spin" style={{ rotateY: rotY, '--ry': ry } as unknown as MotionStyle}>
               {SIDES.map((f, i) => (
-                <div key={f.side} className={`cube-face cube-face--${f.side} cube-tone--${f.tone}`}>
-                  <Image src={f.img} alt="" fill priority={i === 0} sizes="440px" draggable={false}
-                    className="cube-bg object-cover" style={{ objectPosition: f.focus }} />
-                  <span className="cube-shade" />
-                  <span className="cube-top">
-                    <span className="cube-chip cube-glass">{f.no}</span>
-                    <span className="cube-dot" />
-                  </span>
-                  <span className="cube-caption cube-glass">
-                    <span className="cube-label">{f.label}</span>
-                    <span className="cube-meta">{f.en}</span>
-                  </span>
-                  <span className="cube-glare" />
-                </div>
+                <Fragment key={f.side}>
+                  {/* 안쪽 - 그림 */}
+                  <div className={`cube-face cube-face--${f.side}`}>
+                    <Image src={f.img} alt="" fill priority={i === 0} sizes="440px" draggable={false}
+                      className="cube-bg object-cover" style={{ objectPosition: f.focus }} />
+                    <span className="cube-shade" />
+                    <span className="cube-light" />
+                  </div>
+                  {/* 바깥 - 유리와 그 위의 글자 */}
+                  <div className={`cube-shell cube-shell--${f.side} cube-tone--${f.tone}`}>
+                    <span className="shell-fresnel" />
+                    <span className="cube-top">
+                      <span className="cube-chip cube-glass">{f.no}</span>
+                      <span className="cube-dot" />
+                    </span>
+                    <span className="cube-caption cube-glass">
+                      <span className="cube-label">{f.label}</span>
+                      <span className="cube-meta">{f.en}</span>
+                    </span>
+                    <span className="cube-glare" />
+                  </div>
+                </Fragment>
               ))}
 
               {/* 넷째 옆면 - 자체 제작 · 퍼블리싱. 공개할 화면이 아직 없어 타이틀 이름만 적는다 */}
-              <div className="cube-face cube-face--left cube-tone--dark">
+              <div className="cube-face cube-face--left">
                 <span className="cube-bg"><BlockMosaic seed={17} rows={9} className="absolute inset-0" /></span>
                 <span className="cube-shade" />
+                <span className="cube-light" />
+              </div>
+              <div className="cube-shell cube-shell--left cube-tone--dark">
+                <span className="shell-fresnel" />
                 <span className="cube-top">
                   <span className="cube-chip cube-glass">04</span>
                   <span className="cube-dot" />
@@ -202,12 +218,15 @@ export default function BrandCube({ spin }: { spin?: MotionValue<number> }) {
                 <span className="cube-glare" />
               </div>
 
-              {/* 윗면 · 밑면 - MATE 로고 */}
+              {/* 윗면 · 밑면 - 안쪽은 MATE 로고, 바깥은 유리 */}
               {(['top', 'bottom'] as const).map((side) => (
-                <div key={side} className={`cube-face cube-face--${side} cube-face--cap cube-tone--glow`}>
-                  <Image src="/images/logo.png" alt="" width={1991} height={493} draggable={false}
-                    className="relative h-auto w-[64%] brightness-0 invert" />
-                </div>
+                <Fragment key={side}>
+                  <div className={`cube-face cube-face--${side} cube-face--cap cube-tone--glow`}>
+                    <Image src="/images/logo.png" alt="" width={1991} height={493} draggable={false}
+                      className="relative h-auto w-[64%] brightness-0 invert" />
+                  </div>
+                  <div className={`cube-shell cube-shell--${side} cube-shell--cap`} />
+                </Fragment>
               ))}
             </motion.div>
           </motion.div>
