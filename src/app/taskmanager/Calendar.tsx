@@ -1,8 +1,8 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import type { DomainKey, Status, Task } from './types';
-import { Avatar, PriorityDot, ghBtn } from './ui';
+import type { DomainKey, Task } from './types';
+import { ghBtn } from './ui';
 
 const DAY = 86400000;
 const WEEKDAY = ['일', '월', '화', '수', '목', '금', '토'];

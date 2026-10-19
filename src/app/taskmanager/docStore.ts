@@ -14,6 +14,14 @@ const KEY = 'mate.taskmanager.docs.v1';
 const NL = '\n';
 const lines = (...xs: string[]) => xs.join(NL);
 
+/**
+ * 예시로 넣어 둔 뒤 아무도 고치지 않은 문서.
+ * 초기 문서는 '개발 규칙', '외주 진행 절차' 처럼 팀이 정한 규칙의 모양을 하고
+ * 있지만 쓰는 법을 보여 주려고 채운 글이다. 표시 없이 두면 실제 규칙으로 읽힌다.
+ * 초기 문서의 id 는 d1, d2… 이고 사람이 만든 것은 d<시각>-<번호> 라 겹치지 않는다.
+ */
+export const isUntouchedSampleDoc = (d: Doc) => /^d\d+$/.test(d.id) && d.createdAt === d.updatedAt;
+
 function seed(): Doc[] {
   const now = new Date().toISOString();
   const mk = (
@@ -198,6 +206,8 @@ export interface DocStore {
   update(id: string, patch: Partial<Doc>): void;
   /** 하위 문서까지 함께 지운다 */
   remove(id: string): void;
+  /** 손대지 않은 예시 문서를 지운다. 그 아래에 사람이 쓴 문서가 있으면 위로 올려 남긴다 */
+  clearSamples(): void;
 }
 
 export function useDocStore(): DocStore {
@@ -270,5 +280,25 @@ export function useDocStore(): DocStore {
     });
   }, []);
 
-  return { docs, ready, create, update, remove };
+  const clearSamples = useCallback(() => {
+    setDocs((prev) => {
+      const gone = new Set(prev.filter(isUntouchedSampleDoc).map((d) => d.id));
+      if (gone.size === 0) return prev;
+      const byId = new Map(prev.map((d) => [d.id, d]));
+      // 지워지는 문서 밑에 사람이 쓴 문서가 달려 있을 수 있다. 같이 지우지 않고,
+      // 살아남는 가장 가까운 조상 밑으로(없으면 최상위로) 옮긴다.
+      const survivingParent = (id: string | null): string | null => {
+        let cur = id;
+        while (cur && gone.has(cur)) cur = byId.get(cur)?.parentId ?? null;
+        return cur;
+      };
+      const next = prev
+        .filter((d) => !gone.has(d.id))
+        .map((d) => (d.parentId && gone.has(d.parentId) ? { ...d, parentId: survivingParent(d.parentId) } : d));
+      write(next);
+      return next;
+    });
+  }, []);
+
+  return { docs, ready, create, update, remove, clearSamples };
 }
