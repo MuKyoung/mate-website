@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { FiArrowUpRight } from 'react-icons/fi';
 import { domains } from '@/data/domains';
 import { teamCapabilities } from '@/data/teamCapabilities';
+import { business } from '@/data/business';
 import { motion } from 'framer-motion';
 import HorizonGlow from '@/components/visual/HorizonGlow';
 import Scramble from '@/components/motion/Scramble';
@@ -96,11 +97,14 @@ export default function Footer() {
             <p className="mono-label mb-3"><Scramble text="Business:" /></p>
             <dl className="space-y-2 text-[13px] text-white/55">
               {[
-                ['상호', 'MATE 외주개발팀'],
+                ['상호', `${business.name} (${business.brand})`],
+                ['대표', business.owner],
+                ['사업자등록번호', business.regNo],
+                ['주소', business.address],
                 ['시작한 해', `${teamCapabilities.stats.since}`],
               ].map(([k, v]) => (
                 <div key={k} className="flex gap-3">
-                  <dt className="w-20 shrink-0 text-white/45">{k}</dt>
+                  <dt className="w-24 shrink-0 text-white/45">{k}</dt>
                   <dd>{v}</dd>
                 </div>
               ))}

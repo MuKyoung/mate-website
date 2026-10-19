@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { projects } from '@/data/projects';
 import { teamCapabilities, counts } from '@/data/teamCapabilities';
+import { business } from '@/data/business';
 import { useEffect } from 'react';
 
 /* ─────────────────────────────────────────── 데이터 */
@@ -446,6 +447,14 @@ export default function CompanyProfilePage() {
         .p2-kakao-title { font-size: 8pt; font-weight: 800; color: #3C1E1E; margin-bottom: 0.5mm; }
         .p2-kakao-sub { font-size: 6.5pt; color: rgba(60,30,30,0.6); }
         .p2-kakao-url { font-size: 6.5pt; font-weight: 600; color: #3C1E1E; }
+        /* 사업자 정보 - 연락처 칸 아래 작은 한 줄 */
+        .p2-biz {
+          margin-top: 2.5mm;
+          font-size: 6pt;
+          line-height: 1.4;
+          color: rgba(0,0,0,0.45);
+          text-align: center;
+        }
 
         /* ── 인쇄 버튼 (화면 전용) ── */
         .cp-print-bar {
@@ -667,6 +676,9 @@ export default function CompanyProfilePage() {
                 </div>
               </div>
             </div>
+            <p className="p2-biz">
+              상호 {business.name} · 대표 {business.owner} · 사업자등록번호 {business.regNo} · {business.address}
+            </p>
 
           </div>
         </div>

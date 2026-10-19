@@ -6,6 +6,7 @@ import FloatingContactButton from "@/components/FloatingContactButton";
 import SmoothScroll from "@/components/SmoothScroll";
 import MotionProvider from "@/components/MotionProvider";
 import { Analytics } from "@vercel/analytics/react";
+import { business } from "@/data/business";
 
 const siteUrl = "https://devteammate.co.kr";
 
@@ -76,7 +77,9 @@ export default function RootLayout({
     "@context": "https://schema.org",
     "@type": "Organization",
     "name": "Mate",
+    "legalName": business.name,
     "alternateName": "Mate 외주개발팀",
+    "taxID": business.regNo,
     "description": "웹 · 앱, 게임 · XR, 교육 외주 개발과 자체 게임 제작 · 퍼블리싱.",
     "url": siteUrl,
     "logo": `${siteUrl}/images/logo.png`,
@@ -91,6 +94,9 @@ export default function RootLayout({
     "sameAs": [],
     "address": {
       "@type": "PostalAddress",
+      "streetAddress": business.addressParts.street,
+      "addressLocality": business.addressParts.locality,
+      "addressRegion": business.addressParts.region,
       "addressCountry": "KR",
     },
   };
