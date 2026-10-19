@@ -88,6 +88,12 @@ export const lineDraw: Variants = {
    행 하나하나가 크게 떠오르면 마지막 행이 자리를 잡을 때까지 읽기를 시작할 수 없다.
    밀도 높은 데이터에는 짧고 얕은 진입을 쓴다. */
 
+/** 흐림이 걷히며 떠오름 - Resend 홈의 제목 · 틀 진입 (2026-10-19) */
+export const blurUp: Variants = {
+  hidden: { opacity: 0, y: 28, filter: 'blur(12px)' },
+  show: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 1.1, ease: easeEnter } },
+};
+
 /** 표의 한 행 - 얕게, 짧게 */
 export const rowIn: Variants = {
   hidden: { opacity: 0, y: 12 },
