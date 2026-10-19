@@ -555,67 +555,124 @@ body {
 .cube-tilt,
 .cube-spin { will-change: transform; }
 
-/* 면 - 번호 줄, 그림, 이름 줄 순서의 카드 */
+/* 면 - 그림이 면을 꽉 채우고, 위에 번호 칩, 아래에 유리 이름판을 얹는다 */
 .cube-face {
   position: absolute;
   inset: 0;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: calc(var(--s) * 0.03);
-  padding: calc(var(--s) * 0.06);
+  padding: calc(var(--s) * 0.05);
   overflow: hidden;
-  border: 1px solid rgba(143, 176, 255, 0.5);
+  background: #000;
+  border: 1px solid rgba(255, 255, 255, 0.3);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
 }
-/* 위에서 오는 빛 - 면 위쪽이 조금 밝다 */
+/* 유리 모서리 - 위 가장자리의 반사와 안쪽으로 도는 가는 빛 테두리 */
 .cube-face::after {
   content: '';
   position: absolute;
   inset: 0;
+  z-index: 4;
   pointer-events: none;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), transparent 34%);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), transparent 24%, transparent 80%, rgba(255, 255, 255, 0.05));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
-.cube-face--front  { transform: translateZ(var(--h)); }
-.cube-face--right  { transform: rotateY(90deg) translateZ(var(--h)); }
-.cube-face--back   { transform: rotateY(180deg) translateZ(var(--h)); }
-.cube-face--left   { transform: rotateY(-90deg) translateZ(var(--h)); }
+/* --fa 는 그 면이 정면을 볼 때의 각도 - 반사광 자리를 계산하는 데 쓴다 */
+.cube-face--front  { transform: translateZ(var(--h)); --fa: 0deg; }
+.cube-face--right  { transform: rotateY(90deg) translateZ(var(--h)); --fa: 90deg; }
+.cube-face--back   { transform: rotateY(180deg) translateZ(var(--h)); --fa: 180deg; }
+.cube-face--left   { transform: rotateY(-90deg) translateZ(var(--h)); --fa: -90deg; }
 .cube-face--top    { transform: rotateX(90deg) translateZ(var(--h)); }
 .cube-face--bottom { transform: rotateX(-90deg) translateZ(var(--h)); }
 
-.cube-tone--blue  { color: #fff; background: linear-gradient(160deg, #4a76ff 0%, #2448e0 48%, #0f237a 100%); }
-.cube-tone--dark  { color: #fff; background: linear-gradient(160deg, #1d212a 0%, #0a0b0e 62%, #000 100%); border-color: rgba(255, 255, 255, 0.22); }
-.cube-tone--light { color: #000; background: linear-gradient(160deg, #ffffff 0%, #e8edf8 60%, #cdd7ec 100%); border-color: rgba(255, 255, 255, 0.95); }
+/* 면의 색은 이제 유리판의 물빛으로만 남는다 */
+.cube-tone--blue  { color: #fff; --glass-tint: rgba(38, 74, 230, 0.46); }
+.cube-tone--dark  { color: #fff; --glass-tint: rgba(8, 10, 16, 0.52); }
+.cube-tone--light { color: #000; --glass-tint: rgba(255, 255, 255, 0.68); }
 .cube-tone--glow  { background: radial-gradient(circle at 50% 118%, #f4f8ff 0%, #93b6ff 22%, #2e5bf0 46%, #0d1b57 72%, #000 94%); border-color: rgba(143, 176, 255, 0.6); }
 
-/* 면 안의 그림 칸 - 작업 화면이라 원래 색 그대로 둔다 */
-.cube-media {
+/* 면 가득 깔리는 그림 - 작업 화면이라 원래 색 그대로 둔다 */
+.cube-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+/* 글자를 얹는 위아래만 살짝 눌러 둔다 */
+.cube-shade {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.36) 0%, transparent 22%, transparent 50%, rgba(0, 0, 0, 0.5) 100%);
+}
+
+/* 유리판 - 뒤의 그림을 흐리게 비추고, 위 가장자리에 빛이 맺힌다.
+   흐림(backdrop-filter)이 안 되는 브라우저에서도 물빛만으로 글자가 읽히게 진하기를 정했다 */
+.cube-glass {
   position: relative;
+  z-index: 2;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0.04) 58%),
+    var(--glass-tint, rgba(8, 10, 16, 0.52));
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.08),
+    0 calc(var(--s) * 0.02) calc(var(--s) * 0.06) rgba(0, 0, 0, 0.3);
+  -webkit-backdrop-filter: blur(calc(var(--s) * 0.035)) saturate(1.5);
+  backdrop-filter: blur(calc(var(--s) * 0.035)) saturate(1.5);
+}
+.cube-tone--light .cube-glass { border-color: rgba(255, 255, 255, 0.9); }
+
+.cube-top {
+  position: relative;
+  z-index: 2;
   display: flex;
   align-items: center;
-  justify-content: center;
-  flex: none;
-  height: calc(var(--s) * 0.52);
-  overflow: hidden;
-  background: #000;
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  justify-content: space-between;
 }
-.cube-tone--light .cube-media { border-color: rgba(0, 0, 0, 0.16); }
-/* 04 면 - 자체 게임 타이틀. 블록 모자이크 위 아래쪽에 이름과 상태를 적는다 */
-.cube-originals {
+.cube-chip {
+  padding: calc(var(--s) * 0.012) calc(var(--s) * 0.024);
+  font-family: var(--font-mono);
+  font-size: clamp(9px, calc(var(--s) * 0.031), 12px);
+  letter-spacing: 0.02em;
+}
+.cube-caption {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--s) * 0.016);
+  padding: calc(var(--s) * 0.04) calc(var(--s) * 0.045);
+}
+
+/* 반사광 - 큐브가 돌면 면 위를 가로질러 미끄러진다 (--ry 는 BrandCube 가 매 프레임 넣는 회전각) */
+.cube-glare {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: -20% -50%;
+  z-index: 3;
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.08) 45%, rgba(255, 255, 255, 0.42) 50%, rgba(255, 255, 255, 0.08) 55%, transparent 60%);
+  mix-blend-mode: screen;
+  opacity: 0.45;
+}
+@supports (transform: translateX(calc(sin(1deg) * 1%))) {
+  .cube-glare {
+    transform: translateX(calc(sin(var(--ry, 0deg) + var(--fa, 0deg)) * -38%));
+    opacity: calc(cos(var(--ry, 0deg) + var(--fa, 0deg)) * 0.8);
+  }
+}
+
+/* 04 면 - 자체 게임 타이틀. 유리판 안, 이름 위에 적는다 */
+.cube-originals {
   display: flex;
   flex-direction: column;
   gap: calc(var(--s) * 0.012);
-  padding: calc(var(--s) * 0.035) calc(var(--s) * 0.04);
-  background: linear-gradient(0deg, rgba(0, 0, 0, 0.88), rgba(0, 0, 0, 0.6) 68%, transparent);
-  font-size: clamp(10px, calc(var(--s) * 0.036), 14px);
+  margin-bottom: calc(var(--s) * 0.022);
+  padding-bottom: calc(var(--s) * 0.026);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.22);
+  font-size: clamp(10px, calc(var(--s) * 0.034), 13px);
   font-weight: 500;
-  color: #fff;
 }
 .cube-originals-row {
   display: flex;
@@ -636,18 +693,12 @@ body {
   font-family: var(--font-mono);
   font-size: 0.78em;
   letter-spacing: 0.02em;
-  opacity: 0.7;
+  opacity: 0.72;
 }
 /* 윗면 · 밑면 - 로고 한 장만 가운데 */
 .cube-face--cap {
   justify-content: center;
   align-items: center;
-}
-.cube-caption {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: calc(var(--s) * 0.016);
 }
 
 .cube-label {
@@ -660,18 +711,20 @@ body {
 }
 .cube-meta {
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   font-family: var(--font-mono);
   font-size: clamp(9px, calc(var(--s) * 0.031), 12px);
   letter-spacing: 0.02em;
   text-transform: uppercase;
-  opacity: 0.72;
+  opacity: 0.75;
 }
-.cube-dot { width: clamp(5px, calc(var(--s) * 0.024), 9px); height: clamp(5px, calc(var(--s) * 0.024), 9px); background: currentColor; }
-.cube-tone--dark .cube-dot  { background: var(--blue-glow); }
-.cube-tone--light .cube-dot { background: var(--primary-300); }
+.cube-dot {
+  position: relative;
+  z-index: 2;
+  width: clamp(6px, calc(var(--s) * 0.026), 10px);
+  height: clamp(6px, calc(var(--s) * 0.026), 10px);
+  background: var(--blue-glow);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.5);
+}
 
 .cube-shadow {
   position: absolute;

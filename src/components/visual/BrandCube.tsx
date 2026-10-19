@@ -3,7 +3,8 @@
 import { useRef } from 'react';
 import Image from 'next/image';
 import {
-  motion, useAnimationFrame, useInView, useMotionValue, useReducedMotion, type MotionValue,
+  motion, useAnimationFrame, useInView, useMotionValue, useReducedMotion, useTransform,
+  type MotionStyle, type MotionValue,
 } from 'framer-motion';
 import BlockMosaic from '@/components/visual/BlockMosaic';
 import { games } from '@/data/games';
@@ -15,12 +16,15 @@ import { games } from '@/data/games';
  *   01 웹 · 앱 · 브랜딩 / 02 게임 · XR / 03 교육 · 강의 / 04 검증된 자체 제작 · 퍼블리싱
  * 윗면과 밑면은 MATE 로고.
  *
- * 그림은 각 영역의 실제 작업 화면이다. 게임 · XR 과 교육 · 강의는 아래 영역 슬래브와 같은
- * 그림을 쓴다 (교육은 사용자가 '강의하고 있는 이미지'를 골랐고, 공개할 수 있는 강의 사진은
- * 그 한 장뿐이다). 슬래브에서는 파랗게 눌러 배경으로 깔고, 큐브에서는 원래 색 그대로 보여 준다.
+ * 그림은 각 영역의 실제 작업 화면이고 면을 꽉 채운다 (원래 색 그대로).
+ * 게임 · XR 은 사용자가 ITLand 를 골랐다. 교육 · 강의는 사용자가 '강의하고 있는 이미지'를
+ * 골랐는데, 공개할 수 있는 강의 사진은 그 한 장뿐이라 아래 교육 슬래브 배경과 같은 사진이다.
  * 자체 게임은 두 타이틀 다 제작 중이라 공개할 화면이 없다. 영역 슬래브의 Original Games 처럼
  * 블록 모자이크 위에 타이틀 이름만 적는다 - 외주 작업 그림을 자체 제작처럼 보이게 하지 않는다.
  * 장식이라 스크린리더에는 숨긴다.
+ *
+ * 유리 연출: 번호 칩과 이름판은 뒤 그림을 흐리게 비추는 유리판이고, 면마다 반사광 한 줄이
+ * 큐브가 도는 각도를 따라 면 위를 가로질러 미끄러진다 (globals.css .cube-glare, --ry).
  *
  * 움직임
  * - 가만히 두면 28초에 한 바퀴 돈다. 커서를 올리면 천천히 멈춘다
@@ -54,15 +58,15 @@ type Face = {
 };
 
 const SIDES: Face[] = [
-  // 세종호이스트크레인 홈페이지 - 고객사가 게재를 허락했다 (2026-10-16)
+  // 세종호이스트크레인 홈페이지 - 고객사가 게재를 허락했다 (2026-10-16). 첫 화면 문구와 걸린 보가 들어오게
   { side: 'front', no: '01', label: '웹 · 앱 · 브랜딩', en: 'Web, App & Branding', tone: 'blue',
-    img: '/images/projects/세종호이스트크레인.webp', focus: '50% 30%' },
-  // 꼬꼬지생 - 타이틀 글자가 들어오도록 아래쪽을 잡는다
+    img: '/images/projects/세종호이스트크레인.webp', focus: '25% 50%' },
+  // ITLand - 저소득층 아동을 위한 VR 코딩 교육 프로그램 (사용자 지정, 2026-10-19)
   { side: 'right', no: '02', label: '게임 · XR', en: 'Game & XR', tone: 'dark',
-    img: '/images/projects/꼬꼬지생.webp', focus: '50% 80%' },
-  // 미래산업과학고 정규 수업 - 강사가 화면 앞에서 설명하는 장면
+    img: '/images/projects/햄부기.webp', focus: '50% 50%' },
+  // 미래산업과학고 정규 수업 - 화면과 그 앞에서 설명하는 강사가 들어오게
   { side: 'back', no: '03', label: '교육 · 강의', en: 'Education & Lectures', tone: 'light',
-    img: '/images/projects/미래산업과학고.webp', focus: '50% 58%' },
+    img: '/images/projects/미래산업과학고.webp', focus: '73% 50%' },
 ];
 
 export default function BrandCube({ spin }: { spin?: MotionValue<number> }) {
@@ -71,6 +75,9 @@ export default function BrandCube({ spin }: { spin?: MotionValue<number> }) {
   const visible = useInView(wrapRef);
   const rotY = useMotionValue(0);
   const rotX = useMotionValue(TILT);
+  // 반사광이 쓰는 전체 회전각 - 저절로 · 끌어서 돈 만큼과 스크롤이 더한 만큼을 합친다
+  const noSpin = useMotionValue(0);
+  const ry = useTransform([rotY, spin ?? noSpin], ([a, b]: number[]) => `${a + b}deg`);
   // 매 프레임 바뀌는 값이라 상태(state)가 아니라 ref 에 둔다 - 다시 그리지 않는다
   const st = useRef({
     dragging: false,
@@ -154,29 +161,33 @@ export default function BrandCube({ spin }: { spin?: MotionValue<number> }) {
       <div className="cube-stage">
         <motion.div className="cube-tilt" style={{ rotateX: rotX }}>
           <motion.div className="cube-scroll" style={spin ? { rotateY: spin } : undefined}>
-            <motion.div className="cube-spin" style={{ rotateY: rotY }}>
+            <motion.div className="cube-spin" style={{ rotateY: rotY, '--ry': ry } as unknown as MotionStyle}>
               {SIDES.map((f, i) => (
                 <div key={f.side} className={`cube-face cube-face--${f.side} cube-tone--${f.tone}`}>
-                  <span className="cube-meta">
-                    <span>{f.no}</span>
+                  <Image src={f.img} alt="" fill priority={i === 0} sizes="440px" draggable={false}
+                    className="cube-bg object-cover" style={{ objectPosition: f.focus }} />
+                  <span className="cube-shade" />
+                  <span className="cube-top">
+                    <span className="cube-chip cube-glass">{f.no}</span>
                     <span className="cube-dot" />
                   </span>
-                  <span className="cube-media">
-                    <Image src={f.img} alt="" fill priority={i === 0} sizes="440px" draggable={false}
-                      className="object-cover" style={{ objectPosition: f.focus }} />
-                  </span>
-                  <span className="cube-caption">
+                  <span className="cube-caption cube-glass">
                     <span className="cube-label">{f.label}</span>
                     <span className="cube-meta">{f.en}</span>
                   </span>
+                  <span className="cube-glare" />
                 </div>
               ))}
 
               {/* 넷째 옆면 - 자체 제작 · 퍼블리싱. 공개할 화면이 아직 없어 타이틀 이름만 적는다 */}
               <div className="cube-face cube-face--left cube-tone--dark">
-                <span className="cube-meta"><span>04</span><span className="cube-dot" /></span>
-                <span className="cube-media">
-                  <BlockMosaic seed={17} rows={8} className="absolute inset-0" />
+                <span className="cube-bg"><BlockMosaic seed={17} rows={9} className="absolute inset-0" /></span>
+                <span className="cube-shade" />
+                <span className="cube-top">
+                  <span className="cube-chip cube-glass">04</span>
+                  <span className="cube-dot" />
+                </span>
+                <span className="cube-caption cube-glass">
                   <span className="cube-originals">
                     {games.map((g) => (
                       <span key={g.id} className="cube-originals-row">
@@ -185,11 +196,10 @@ export default function BrandCube({ spin }: { spin?: MotionValue<number> }) {
                       </span>
                     ))}
                   </span>
-                </span>
-                <span className="cube-caption">
                   <span className="cube-label">검증된<br />자체 제작 · 퍼블리싱</span>
                   <span className="cube-meta">Originals &amp; Publishing</span>
                 </span>
+                <span className="cube-glare" />
               </div>
 
               {/* 윗면 · 밑면 - MATE 로고 */}
