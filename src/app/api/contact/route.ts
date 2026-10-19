@@ -8,6 +8,7 @@ import { CONTACT_EMAIL } from '@/lib/styles';
  * 환경 변수 (Vercel 프로젝트 설정)
  *   RESEND_API_KEY     필수. 없으면 503 을 돌려주고, 양식은 메일 초안 열기로 넘어간다.
  *   RESEND_FROM_EMAIL  보내는 주소. Resend 에서 인증한 도메인이어야 한다.
+ *                      주소만 적으면(inquiry@devteammate.co.kr) 보내는 이름 'MATE 문의'를 붙인다.
  *                      비워 두면 Resend 시험 주소(onboarding@resend.dev)로 보내는데,
  *                      이 주소는 Resend 계정 주인의 메일로만 보낼 수 있다.
  *   CONTACT_TO_EMAIL   받는 주소. 비워 두면 사이트에 적힌 연락 메일(CONTACT_EMAIL).
@@ -71,9 +72,15 @@ export async function POST(req: Request) {
 <div style="white-space:pre-wrap;border-top:1px solid #ddd;padding-top:16px">${escapeHtml(v.message)}</div>
 </div>`;
 
+  // 환경 변수에는 주소만 두고 한글 이름은 여기서 붙인다 - 설정 화면에서 한글이 깨질 일이 없게
+  const fromEnv = process.env.RESEND_FROM_EMAIL?.trim();
+  const from = !fromEnv
+    ? 'MATE 문의 <onboarding@resend.dev>'
+    : fromEnv.includes('<') ? fromEnv : `MATE 문의 <${fromEnv}>`;
+
   const resend = new Resend(apiKey);
   const { error } = await resend.emails.send({
-    from: process.env.RESEND_FROM_EMAIL || 'MATE 문의 <onboarding@resend.dev>',
+    from,
     to: process.env.CONTACT_TO_EMAIL || CONTACT_EMAIL,
     replyTo: v.email,
     subject,

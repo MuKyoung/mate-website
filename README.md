@@ -109,7 +109,7 @@ npx serve@latest out
 
 ```
 RESEND_API_KEY=re_...                                   # 필수
-RESEND_FROM_EMAIL=MATE 문의 <inquiry@devteammate.co.kr>  # 인증한 도메인의 주소
+RESEND_FROM_EMAIL=inquiry@devteammate.co.kr              # 인증한 도메인의 주소 (보내는 이름 'MATE 문의'는 코드가 붙임)
 CONTACT_TO_EMAIL=받을주소@example.com                    # 비우면 src/lib/styles.ts 의 CONTACT_EMAIL
 ```
 
