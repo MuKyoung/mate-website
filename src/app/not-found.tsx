@@ -29,7 +29,7 @@ export default function NotFound() {
 
         {/* 대형 타이틀 */}
         <motion.h1 variants={stagger}
-          className="mb-6 font-medium leading-[1.06] tracking-[-0.045em] text-[var(--text-1)]"
+          className="mb-6 font-medium leading-[1.06] tracking-[-0.028em] text-[var(--text-1)]"
           style={displaySize}>
           <span className="block overflow-hidden pb-[0.08em]">
             <motion.span variants={clipLeft} className="block">페이지를 찾을 수 없습니다</motion.span>

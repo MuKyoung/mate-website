@@ -26,6 +26,7 @@ const config: Config = {
         // 라틴은 Geist, 한글은 Pretendard 로 떨어진다 (globals.css --font-sans 와 같은 순서)
         sans: [
           "Geist",
+          "IBM Plex Sans KR",
           "Pretendard Variable",
           "Pretendard",
           "-apple-system",
@@ -41,6 +42,7 @@ const config: Config = {
           "SFMono-Regular",
           "Menlo",
           "Consolas",
+          "IBM Plex Sans KR",
           "Pretendard Variable",
           "monospace",
         ],
@@ -124,15 +126,15 @@ const config: Config = {
 
       // ── Typography — Figma 스케일과 1:1 (LS -0.3%) ────────────
       fontSize: {
-        d1: ["clamp(2.75rem, 8vw, 7rem)", { lineHeight: "1", letterSpacing: "-0.045em", fontWeight: "500" }],
-        d2: ["clamp(2.25rem, 5vw, 4.25rem)", { lineHeight: "1.06", letterSpacing: "-0.04em", fontWeight: "500" }],
-        h1: ["clamp(2rem, 4vw, 3.25rem)", { lineHeight: "1.16", letterSpacing: "-0.035em", fontWeight: "500" }],
-        h2: ["clamp(1.375rem, 2.2vw, 1.75rem)", { lineHeight: "1.28", letterSpacing: "-0.025em", fontWeight: "500" }],
-        h3: ["clamp(1.375rem, 2.2vw, 1.75rem)", { lineHeight: "1.28", letterSpacing: "-0.025em", fontWeight: "400" }],
-        b1: ["1.125rem", { lineHeight: "1.55", letterSpacing: "-0.012em", fontWeight: "500" }],
-        b2: ["1rem", { lineHeight: "1.55", letterSpacing: "-0.01em", fontWeight: "500" }],
-        b3: ["1rem", { lineHeight: "1.65", letterSpacing: "-0.01em", fontWeight: "400" }],
-        b4: ["0.875rem", { lineHeight: "1.55", letterSpacing: "-0.006em", fontWeight: "500" }],
+        d1: ["clamp(2.75rem, 8vw, 7rem)", { lineHeight: "1.02", letterSpacing: "-0.028em", fontWeight: "500" }],
+        d2: ["clamp(2.25rem, 5vw, 4.25rem)", { lineHeight: "1.08", letterSpacing: "-0.025em", fontWeight: "500" }],
+        h1: ["clamp(2rem, 4vw, 3.25rem)", { lineHeight: "1.18", letterSpacing: "-0.022em", fontWeight: "500" }],
+        h2: ["clamp(1.375rem, 2.2vw, 1.75rem)", { lineHeight: "1.3", letterSpacing: "-0.016em", fontWeight: "500" }],
+        h3: ["clamp(1.375rem, 2.2vw, 1.75rem)", { lineHeight: "1.3", letterSpacing: "-0.016em", fontWeight: "400" }],
+        b1: ["1.125rem", { lineHeight: "1.6", letterSpacing: "-0.006em", fontWeight: "500" }],
+        b2: ["1rem", { lineHeight: "1.6", letterSpacing: "-0.004em", fontWeight: "500" }],
+        b3: ["1rem", { lineHeight: "1.7", letterSpacing: "-0.004em", fontWeight: "400" }],
+        b4: ["0.875rem", { lineHeight: "1.6", letterSpacing: "0", fontWeight: "500" }],
         c1: ["0.8125rem", { lineHeight: "1.5", letterSpacing: "-0.003em", fontWeight: "400" }],
         c2: ["0.75rem", { lineHeight: "1.5", letterSpacing: "-0.003em", fontWeight: "400" }],
       },

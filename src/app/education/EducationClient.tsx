@@ -126,7 +126,7 @@ export default function EducationClient() {
           <div className="grid gap-x-gutter gap-y-12 lg:grid-cols-12">
             <div className="lg:col-span-7">
               <motion.h1 {...onMount} variants={stagger}
-                className="mb-9 font-medium leading-[1.06] tracking-[-0.045em] text-[var(--text-1)]"
+                className="mb-9 font-medium leading-[1.06] tracking-[-0.028em] text-[var(--text-1)]"
                 style={{ fontSize: 'clamp(2.5rem, 5.6vw, 4.75rem)' }}>
                 <SplitText text="현업에서 실제로" className="block" />
                 <SplitText text="쓰는 것만 가르칩니다" className="block text-white/45" />
@@ -145,7 +145,7 @@ export default function EducationClient() {
                   {d.stats.map((s) => (
                     <div key={s.label} className="flex items-baseline justify-between gap-5 py-4 first:pt-0 last:pb-0">
                       <dt className="text-[14px] text-white/65">{s.label}</dt>
-                      <dd className="font-en font-mono-stat text-[34px] leading-none tracking-[-0.05em] text-[var(--text-1)]">{s.value}</dd>
+                      <dd className="font-en font-mono-stat text-[34px] leading-none tracking-[-0.032em] text-[var(--text-1)]">{s.value}</dd>
                     </div>
                   ))}
                 </dl>

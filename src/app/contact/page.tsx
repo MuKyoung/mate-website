@@ -270,7 +270,7 @@ export default function ContactPage() {
                 <div className="flex items-center justify-between gap-4 mb-5">
                   <div className="flex items-center gap-3">
                     <RiKakaoTalkFill className="text-[#3C1E1E]" size={26} />
-                    <h3 className="text-[19px] font-medium text-[#3C1E1E] tracking-[-0.02em]">카카오톡 문의</h3>
+                    <h3 className="text-[19px] font-medium text-[#3C1E1E] tracking-[-0.012em]">카카오톡 문의</h3>
                   </div>
                   <p className="font-mono text-[11px] uppercase text-[#3C1E1E]/60">1:1 오픈채팅</p>
                 </div>

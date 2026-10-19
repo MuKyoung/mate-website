@@ -1,9 +1,11 @@
 /* ── 폰트 ─────────────────────────────────────────────────
    @import 는 반드시 파일 맨 위에 둔다. 다른 규칙 뒤에 오면 브라우저가 통째로 무시한다.
-   본문 한글 - Pretendard. 라틴 - Geist. 라벨 - Geist Mono.
-   Geist 에는 한글이 없어 한글 글자는 자연스럽게 Pretendard 로 떨어진다. */
+   라틴 - Geist. 라벨 - Geist Mono. 한글 - IBM Plex Sans KR.
+   Geist 에는 한글이 없어 한글 글자는 자연스럽게 Plex Sans KR 로 떨어진다. Pretendard 는
+   작업 관리 도구가 쓰고, 혹시 Plex 를 못 받았을 때의 대신으로 남겨 둔다.
+   (2026-10-19 Pretendard 가 흔하고 '짜치다'는 말을 듣고 바꿨다 - 획 끝이 또렷한 Plex 가 등폭 라벨과 맞는다) */
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300..600&family=Geist+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300..600&family=Geist+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -84,10 +86,10 @@
   --radius-lg:   3px;
 
   /* ── 글꼴 스택 ── */
-  --font-sans: 'Geist', 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont,
+  --font-sans: 'Geist', 'IBM Plex Sans KR', 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont,
     'Apple SD Gothic Neo', 'Noto Sans KR', 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas,
-    'Pretendard Variable', Pretendard, monospace;
+    'IBM Plex Sans KR', 'Pretendard Variable', Pretendard, monospace;
 
   /* 기존 코드 호환용 별칭 */
   --foreground:   var(--text-1);
@@ -214,7 +216,7 @@ body {
   color: var(--text-1);
   background: transparent;
   font-family: var(--font-sans);
-  letter-spacing: -0.01em;
+  letter-spacing: -0.004em;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -245,15 +247,15 @@ body {
 @layer components {
 /* ── Typography ───────────────────────────────────────
    제목도 굵게 누르지 않는다. 큰 글자는 보통 굵기와 좁은 자간으로 세운다. */
-.type-d1 { font-size: clamp(2.75rem, 8vw, 7rem);    font-weight: 500; line-height: 1;    letter-spacing: -0.045em; }
-.type-d2 { font-size: clamp(2.25rem, 5vw, 4.25rem); font-weight: 500; line-height: 1.06; letter-spacing: -0.04em; }
-.type-h1 { font-size: clamp(2rem, 4vw, 3.25rem);    font-weight: 500; line-height: 1.16; letter-spacing: -0.035em; }
-.type-h2 { font-size: clamp(1.375rem, 2.2vw, 1.75rem); font-weight: 500; line-height: 1.28; letter-spacing: -0.025em; }
-.type-h3 { font-size: clamp(1.375rem, 2.2vw, 1.75rem); font-weight: 400; line-height: 1.28; letter-spacing: -0.025em; }
-.type-b1 { font-size: 18px; font-weight: 500; line-height: 1.55; letter-spacing: -0.012em; }
-.type-b2 { font-size: 16px; font-weight: 500; line-height: 1.55; letter-spacing: -0.01em; }
-.type-b3 { font-size: 16px; font-weight: 400; line-height: 1.65; letter-spacing: -0.01em; }
-.type-b4 { font-size: 14px; font-weight: 500; line-height: 1.55; letter-spacing: -0.006em; }
+.type-d1 { font-size: clamp(2.75rem, 8vw, 7rem);    font-weight: 500; line-height: 1.02; letter-spacing: -0.028em; }
+.type-d2 { font-size: clamp(2.25rem, 5vw, 4.25rem); font-weight: 500; line-height: 1.08; letter-spacing: -0.025em; }
+.type-h1 { font-size: clamp(2rem, 4vw, 3.25rem);    font-weight: 500; line-height: 1.18; letter-spacing: -0.022em; }
+.type-h2 { font-size: clamp(1.375rem, 2.2vw, 1.75rem); font-weight: 500; line-height: 1.3;  letter-spacing: -0.016em; }
+.type-h3 { font-size: clamp(1.375rem, 2.2vw, 1.75rem); font-weight: 400; line-height: 1.3;  letter-spacing: -0.016em; }
+.type-b1 { font-size: 18px; font-weight: 500; line-height: 1.6;  letter-spacing: -0.006em; }
+.type-b2 { font-size: 16px; font-weight: 500; line-height: 1.6;  letter-spacing: -0.004em; }
+.type-b3 { font-size: 16px; font-weight: 400; line-height: 1.7;  letter-spacing: -0.004em; }
+.type-b4 { font-size: 14px; font-weight: 500; line-height: 1.6;  letter-spacing: 0; }
 .type-c1 { font-size: 13px; font-weight: 400; line-height: 1.55; letter-spacing: -0.003em; }
 .type-c2 { font-size: 12px; font-weight: 400; line-height: 1.5;  letter-spacing: 0; }
 
@@ -271,7 +273,7 @@ body {
 .caption-kr {
   font-size: clamp(15px, 1.5vw, 18px);
   font-weight: 400;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.004em;
   color: var(--text-2);
 }
 
@@ -581,7 +583,7 @@ body {
   inset: 0;
   z-index: 3;
   pointer-events: none;
-  box-shadow: inset 0 0 calc(var(--s) * 0.08) rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(0, 0, 0, 0.5);
+  box-shadow: inset 0 0 calc(var(--s) * 0.05) rgba(0, 0, 0, 0.35);
 }
 .cube-face--front, .cube-shell--front { --fa: 0deg; }
 .cube-face--right, .cube-shell--right { --fa: 90deg; }
@@ -629,16 +631,27 @@ body {
   justify-content: space-between;
   padding: calc(var(--d) + var(--s) * 0.045);
   color: #fff;
-  /* 유리 면 - 위 왼쪽에서 오는 빛이 비스듬히 비친다 */
+  /* 유리 면 - 위 왼쪽에서 오는 빛이 아주 옅게 비친다 */
   background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.05) 26%, rgba(255, 255, 255, 0) 52%, rgba(170, 200, 255, 0.1) 100%);
-  /* 유리 모서리 - 두께가 있는 유리는 가장자리가 밝게 빛난다 */
-  border: 1px solid rgba(225, 235, 255, 0.75);
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.18),
-    inset 0 0 calc(var(--d) * 1.1) rgba(140, 180, 255, 0.55),
-    inset 0 calc(var(--d) * 0.3) calc(var(--d) * 0.5) rgba(255, 255, 255, 0.28),
-    inset 0 calc(var(--d) * -0.3) calc(var(--d) * 0.6) rgba(40, 80, 220, 0.35);
+    linear-gradient(150deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.02) 30%, rgba(255, 255, 255, 0) 60%, rgba(200, 215, 255, 0.04) 100%);
+}
+/* 유리 모서리 - 빛이 닿는 위 왼쪽은 밝고, 반대쪽으로 갈수록 사라지는 가는 선 */
+.cube-shell::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  padding: 1px;
+  pointer-events: none;
+  background: linear-gradient(150deg,
+    rgba(255, 255, 255, 0.9) 0%,
+    rgba(255, 255, 255, 0.32) 16%,
+    rgba(255, 255, 255, 0.08) 42%,
+    rgba(255, 255, 255, 0.05) 70%,
+    rgba(255, 255, 255, 0.3) 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
 }
 .cube-shell--front  { transform: translateZ(calc(var(--h) + var(--d))); }
 .cube-shell--right  { transform: rotateY(90deg) translateZ(calc(var(--h) + var(--d))); }
@@ -653,8 +666,8 @@ body {
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background: linear-gradient(90deg, rgba(200, 220, 255, 0.55), rgba(200, 220, 255, 0.18) 50%, rgba(200, 220, 255, 0.55));
-  opacity: 0.12;
+  background: linear-gradient(90deg, rgba(210, 225, 255, 0.32), rgba(210, 225, 255, 0.08) 50%, rgba(210, 225, 255, 0.32));
+  opacity: 0.1;
 }
 /* 반사광 - 큐브가 돌면 유리 위를 가로질러 미끄러진다 */
 .cube-glare {
@@ -662,21 +675,21 @@ body {
   inset: -20% -50%;
   z-index: 3;
   pointer-events: none;
-  background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, 0.06) 44%, rgba(255, 255, 255, 0.5) 50%, rgba(255, 255, 255, 0.06) 56%, transparent 62%);
+  background: linear-gradient(105deg, transparent 34%, rgba(255, 255, 255, 0.04) 42%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0.04) 58%, transparent 66%);
   opacity: 0.45;
 }
 @supports (transform: translateX(calc(sin(1deg) * 1%))) {
   .cube-light   { opacity: calc((1 - cos(var(--ry, 0deg) + var(--fa, 0deg))) * 0.75); }
-  .shell-fresnel { opacity: calc(0.06 + (1 - cos(var(--ry, 0deg) + var(--fa, 0deg))) * 0.6); }
+  .shell-fresnel { opacity: calc(0.04 + (1 - cos(var(--ry, 0deg) + var(--fa, 0deg))) * 0.5); }
   .cube-glare {
     transform: translateX(calc(sin(var(--ry, 0deg) + var(--fa, 0deg)) * -38%));
-    opacity: calc(cos(var(--ry, 0deg) + var(--fa, 0deg)) * 0.85);
+    opacity: calc(cos(var(--ry, 0deg) + var(--fa, 0deg)) * 0.9);
   }
 }
 /* 윗면 · 밑면 유리 - 돌아도 늘 위를 보므로 고정된 반사만 둔다 */
 .cube-shell--cap {
   background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.04) 34%, rgba(255, 255, 255, 0) 60%, rgba(170, 200, 255, 0.14) 100%);
+    linear-gradient(135deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.02) 34%, rgba(255, 255, 255, 0) 60%, rgba(200, 215, 255, 0.06) 100%);
 }
 
 /* 면의 색은 유리판의 물빛으로 남는다 */
@@ -690,17 +703,16 @@ body {
   position: relative;
   z-index: 2;
   background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.04) 58%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0) 50%),
     var(--glass-tint, rgba(8, 10, 16, 0.58));
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.7),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.1),
-    0 calc(var(--s) * 0.03) calc(var(--s) * 0.07) rgba(0, 0, 0, 0.35);
+    inset 0 1px 0 rgba(255, 255, 255, 0.32),
+    0 calc(var(--s) * 0.03) calc(var(--s) * 0.08) rgba(0, 0, 0, 0.32);
   -webkit-backdrop-filter: blur(calc(var(--s) * 0.03)) saturate(1.5);
   backdrop-filter: blur(calc(var(--s) * 0.03)) saturate(1.5);
 }
-.cube-tone--light .cube-glass { border-color: rgba(255, 255, 255, 0.95); }
+.cube-tone--light .cube-glass { border-color: rgba(255, 255, 255, 0.6); }
 
 .cube-top {
   position: relative;
@@ -765,8 +777,8 @@ body {
   position: relative;
   font-size: clamp(15px, calc(var(--s) * 0.08), 34px);
   font-weight: 500;
-  line-height: 1.08;
-  letter-spacing: -0.035em;
+  line-height: 1.12;
+  letter-spacing: -0.018em;
   white-space: nowrap;
 }
 .cube-meta {
@@ -783,7 +795,7 @@ body {
   width: clamp(6px, calc(var(--s) * 0.026), 10px);
   height: clamp(6px, calc(var(--s) * 0.026), 10px);
   background: var(--blue-glow);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.5), 0 0 calc(var(--s) * 0.03) rgba(76, 125, 255, 0.9);
+  box-shadow: none;
 }
 
 .cube-shadow {

@@ -27,7 +27,7 @@ export default function TeamCapabilityCard({ capability, index }: TeamCapability
       className="sweep flex h-full flex-col border border-white/10 bg-[var(--surface)] p-6 transition-colors hover:border-white/25 sm:p-8">
       <span className="font-mono text-[12px] text-white/45 tabular-nums">0{index + 1}</span>
 
-      <h3 className="mb-3 mt-10 text-[24px] font-medium leading-[1.2] tracking-[-0.035em] text-[var(--text-1)] sm:text-[28px]">
+      <h3 className="mb-3 mt-10 text-[24px] font-medium leading-[1.2] tracking-[-0.022em] text-[var(--text-1)] sm:text-[28px]">
         {capability.title}
       </h3>
       <p className="mb-7 text-[15px] leading-[1.75] text-white/60">
@@ -41,11 +41,11 @@ export default function TeamCapabilityCard({ capability, index }: TeamCapability
       <dl className="mt-auto">
         <div className="flex items-baseline justify-between gap-3 border-t border-white/10 py-4">
           <dt className="font-mono text-[11px] uppercase tracking-[0.02em] text-white/55">경력</dt>
-          <dd className="font-en font-mono-stat text-[26px] leading-none tracking-[-0.04em] text-[var(--text-1)]">{capability.experience}</dd>
+          <dd className="font-en font-mono-stat text-[26px] leading-none tracking-[-0.025em] text-[var(--text-1)]">{capability.experience}</dd>
         </div>
         <div className="flex items-baseline justify-between gap-3 border-y border-white/10 py-4">
           <dt className="font-mono text-[11px] uppercase tracking-[0.02em] text-white/55">{isLecture ? '진행 강의' : '납품 프로젝트'}</dt>
-          <dd className="font-en font-mono-stat text-[26px] leading-none tracking-[-0.04em] text-[var(--text-1)]">
+          <dd className="font-en font-mono-stat text-[26px] leading-none tracking-[-0.025em] text-[var(--text-1)]">
             {capability.projects}+
           </dd>
         </div>

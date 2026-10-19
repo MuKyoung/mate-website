@@ -44,7 +44,7 @@ export default function ProjectCard({ project, index, aspect = 'aspect-[4/3]' }:
           />
         </motion.div>
 
-        <h3 className="mb-2 text-[21px] font-medium leading-[1.25] tracking-[-0.03em] text-[var(--text-1)] transition-colors duration-300 group-hover:text-[var(--point)] sm:text-[24px]">
+        <h3 className="mb-2 text-[21px] font-medium leading-[1.25] tracking-[-0.02em] text-[var(--text-1)] transition-colors duration-300 group-hover:text-[var(--point)] sm:text-[24px]">
           {project.title}
         </h3>
         <p className="line-clamp-2 max-w-xl text-[15px] leading-[1.7] text-white/55">

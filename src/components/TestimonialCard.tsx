@@ -23,7 +23,7 @@ export default function TestimonialCard({ testimonial, index, lead = false }: Te
     >
       <p
         className={`text-white/85 leading-[1.6] font-medium mb-7 ${
-          lead ? 'tracking-[-0.02em]' : 'text-[16px] sm:text-[17px] leading-[1.75]'
+          lead ? 'tracking-[-0.012em]' : 'text-[16px] sm:text-[17px] leading-[1.75]'
         }`}
         style={lead ? { fontSize: 'clamp(1.375rem, 2.4vw, 2rem)' } : undefined}
       >

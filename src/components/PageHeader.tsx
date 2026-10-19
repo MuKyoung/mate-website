@@ -32,7 +32,7 @@ export default function PageHeader({ title, description, eyebrow }: PageHeaderPr
         )}
         <div className="grid items-end gap-x-8 gap-y-8 lg:grid-cols-12">
           <motion.h1 {...onMount} variants={stagger}
-            className="font-medium leading-[1.02] tracking-[-0.045em] text-[var(--text-1)] lg:col-span-8"
+            className="font-medium leading-[1.02] tracking-[-0.028em] text-[var(--text-1)] lg:col-span-8"
             style={{ fontSize: 'clamp(2.5rem, 6.4vw, 5.5rem)' }}>
             <SplitText text={title} className="block" delay={0.15} />
           </motion.h1>

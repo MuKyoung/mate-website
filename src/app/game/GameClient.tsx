@@ -42,7 +42,7 @@ export default function GameClient() {
 
           <div className="grid items-end gap-x-gutter gap-y-12 lg:grid-cols-12">
             <motion.h1 {...onMount} variants={stagger}
-              className="font-en font-medium leading-[0.96] tracking-[-0.05em] text-[var(--text-1)] lg:col-span-7"
+              className="font-en font-medium leading-[0.96] tracking-[-0.032em] text-[var(--text-1)] lg:col-span-7"
               style={{ fontSize: 'clamp(2.75rem, 7.6vw, 6.75rem)' }}>
               <SplitText text="Game & XR" className="block" />
               <SplitText text="Development" className="block text-white/45" />
@@ -58,7 +58,7 @@ export default function GameClient() {
             {d.stats.map((s) => (
               <motion.div key={s.label} variants={fadeUp} className="lg:col-span-2">
                 <p className="mono-label mb-3">{s.label}:</p>
-                <p className="font-en font-mono-stat text-[40px] leading-none tracking-[-0.05em] text-[var(--text-1)] sm:text-[48px]">{s.value}</p>
+                <p className="font-en font-mono-stat text-[40px] leading-none tracking-[-0.032em] text-[var(--text-1)] sm:text-[48px]">{s.value}</p>
               </motion.div>
             ))}
             <motion.div variants={fadeUp} className="col-span-2 lg:col-span-5 lg:col-start-8">
@@ -102,7 +102,7 @@ export default function GameClient() {
               className="sweep group flex w-[290px] shrink-0 snap-start flex-col border border-white/10 bg-[var(--surface)] p-7
                          transition-colors duration-300 hover:border-white/35 sm:w-[360px] sm:p-8">
               <p className="mb-10 font-mono text-[12px] text-white/45 tabular-nums">{c.no}</p>
-              <h3 className="font-en mb-2 text-[26px] font-medium leading-none tracking-[-0.04em] text-[var(--text-1)] sm:text-[30px]">
+              <h3 className="font-en mb-2 text-[26px] font-medium leading-none tracking-[-0.025em] text-[var(--text-1)] sm:text-[30px]">
                 {c.en}
               </h3>
               <p className="type-b3 mb-6 text-[var(--point)]">{c.kr}</p>
@@ -127,7 +127,7 @@ export default function GameClient() {
                   className="sweep flex min-h-[200px] flex-col justify-between border border-white/10 bg-[var(--surface)] p-6 transition-colors hover:border-white/25 sm:p-8">
                   <span className={iconSquare}><Icon size={14} /></span>
                   <div>
-                    <h3 className="font-en mb-2 text-[34px] font-medium leading-none tracking-[-0.045em] text-[var(--text-1)] sm:text-[42px]">
+                    <h3 className="font-en mb-2 text-[34px] font-medium leading-none tracking-[-0.028em] text-[var(--text-1)] sm:text-[42px]">
                       {p.name}
                     </h3>
                     <p className="font-mono text-[12px] uppercase tracking-[0.02em] text-white/55">{p.detail}</p>
@@ -198,7 +198,7 @@ export default function GameClient() {
                 <motion.div key={a.id} variants={rowIn}
                   className="grid grid-cols-12 items-baseline gap-x-gutter gap-y-1 border-b border-white/10 py-5 sm:py-6">
                   <p className="col-span-3 font-mono text-[13px] text-white/50 tabular-nums sm:col-span-2">{a.year}</p>
-                  <h3 className="col-span-9 text-[16px] font-medium tracking-[-0.02em] text-[var(--text-1)] sm:col-span-5 sm:text-[17px]">{a.title}</h3>
+                  <h3 className="col-span-9 text-[16px] font-medium tracking-[-0.012em] text-[var(--text-1)] sm:col-span-5 sm:text-[17px]">{a.title}</h3>
                   <p className="col-span-7 col-start-4 text-[14px] text-white/55 sm:col-span-3 sm:col-start-auto">{a.organization}</p>
                   <p className="col-span-5 text-right font-mono text-[12px] text-[var(--point)] sm:col-span-2">{a.rank}</p>
                 </motion.div>

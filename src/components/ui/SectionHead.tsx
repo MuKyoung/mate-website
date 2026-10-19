@@ -53,7 +53,7 @@ export default function SectionHead({
       </div>
 
       <motion.h2 {...inView} variants={stagger}
-        className="max-w-5xl font-medium leading-[1.08] tracking-[-0.04em] text-[var(--text-1)]"
+        className="max-w-5xl font-medium leading-[1.08] tracking-[-0.025em] text-[var(--text-1)]"
         style={displaySize}>
         {text ? (
           <SplitText text={text} className="block" />

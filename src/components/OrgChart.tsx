@@ -19,7 +19,7 @@ export default function OrgChart() {
               i < departments.length - 1 ? 'md:pr-10' : '',
             ].join(' ')}>
             <p className="mono-label mb-8">{dept.label}:</p>
-            <h3 className="mb-3 text-[22px] font-medium tracking-[-0.03em] text-white">{dept.name}</h3>
+            <h3 className="mb-3 text-[22px] font-medium tracking-[-0.02em] text-white">{dept.name}</h3>
             <p className="mb-8 text-[15px] leading-[1.75] text-white/60">{dept.description}</p>
 
             {/* 담당 영역 - 헤어라인 리스트 */}

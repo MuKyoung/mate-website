@@ -28,7 +28,7 @@ export default function FAQAccordion({ faqs }: FAQAccordionProps) {
               aria-expanded={isOpen}
               className="group flex w-full items-center justify-between gap-6 px-5 py-5 text-left sm:px-6"
             >
-              <span className="text-[16px] font-medium leading-[1.45] tracking-[-0.02em] text-[var(--text-1)] sm:text-[18px]">
+              <span className="text-[16px] font-medium leading-[1.45] tracking-[-0.012em] text-[var(--text-1)] sm:text-[18px]">
                 {faq.question}
               </span>
               <span className={`flex h-7 w-7 shrink-0 items-center justify-center border transition-colors duration-300 ${

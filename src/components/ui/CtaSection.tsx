@@ -41,7 +41,7 @@ export default function CtaSection({ line1, line2, kr, cta = '프로젝트 문�
             <motion.p {...inView} variants={fadeUp} className="mono-label mb-10"><Scramble text="Contact:" /></motion.p>
 
             <motion.h2 {...inView} variants={stagger}
-              className="mb-8 font-medium leading-[1.04] tracking-[-0.045em] text-[var(--text-1)]"
+              className="mb-8 font-medium leading-[1.04] tracking-[-0.028em] text-[var(--text-1)]"
               style={displaySizeLg}>
               <SplitText text={line1} className="block" />
               <SplitText text={line2} className="block text-[var(--point)]" />

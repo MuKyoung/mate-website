@@ -61,7 +61,7 @@ export default function ProjectDetailClient({ params }: Props) {
           </motion.div>
 
           <motion.h1 {...onMount} variants={stagger}
-            className="mb-8 max-w-5xl font-medium leading-[0.98] tracking-[-0.05em] text-[var(--text-1)] sm:mb-10"
+            className="mb-8 max-w-5xl font-medium leading-[0.98] tracking-[-0.032em] text-[var(--text-1)] sm:mb-10"
             style={{ fontSize: 'clamp(2.5rem, 7.4vw, 6.5rem)' }}>
             <SplitText text={project.title} className="block" delay={0.1} />
           </motion.h1>
@@ -151,7 +151,7 @@ export default function ProjectDetailClient({ params }: Props) {
                     <motion.span variants={lineDraw}
                       className="absolute bottom-0 left-0 right-0 block h-px bg-white/[0.12]" />
                   </div>
-                  <h2 className="mb-9 font-medium leading-[1.06] tracking-[-0.04em] text-[var(--text-1)]" style={displaySize}>
+                  <h2 className="mb-9 font-medium leading-[1.06] tracking-[-0.025em] text-[var(--text-1)]" style={displaySize}>
                     <span className="block overflow-hidden pb-[0.1em]">
                       <motion.span variants={clipUp} className="block">프로젝트 개요</motion.span>
                     </span>

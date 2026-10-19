@@ -85,7 +85,7 @@ export default function DomainSlabs({
                     <motion.p variants={fadeUp} className="mono-label mb-6">
                       <span className="text-white/40 tabular-nums">0{i + 1}</span> <Scramble text="Area:" />
                     </motion.p>
-                    <h2 className="font-en font-medium leading-[0.95] tracking-[-0.05em] text-[var(--text-1)]
+                    <h2 className="font-en font-medium leading-[0.95] tracking-[-0.032em] text-[var(--text-1)]
                                    transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-2"
                       style={titleSize}>
                       <SplitText text={d.en} />
@@ -105,7 +105,7 @@ export default function DomainSlabs({
                     <div className="space-y-5 lg:text-right">
                       {d.stats.slice(0, 2).map((st) => (
                         <div key={st.label}>
-                          <p className="font-en font-mono-stat text-[32px] leading-none tracking-[-0.04em] text-[var(--text-1)]">
+                          <p className="font-en font-mono-stat text-[32px] leading-none tracking-[-0.025em] text-[var(--text-1)]">
                             {st.value}
                           </p>
                           <p className="mt-1.5 font-mono text-[11px] uppercase tracking-[0.02em] text-white/60">{st.label}</p>
@@ -148,7 +148,7 @@ export default function DomainSlabs({
                   <motion.p variants={fadeUp} className="mono-label mb-6">
                     <span className="text-white/40 tabular-nums">0{domains.length + 1}</span> <Scramble text="Originals:" />
                   </motion.p>
-                  <h2 className="font-en font-medium leading-[0.95] tracking-[-0.05em] text-[var(--text-1)]" style={titleSize}>
+                  <h2 className="font-en font-medium leading-[0.95] tracking-[-0.032em] text-[var(--text-1)]" style={titleSize}>
                     <SplitText text="Original Games" />
                   </h2>
                   <motion.p variants={fadeUp} className="mt-4 text-[17px] text-white/70">자체 게임 제작 · 퍼블리싱</motion.p>
@@ -170,7 +170,7 @@ export default function DomainSlabs({
                 </div>
 
                 <div className="lg:col-span-2 lg:text-right">
-                  <p className="font-en font-mono-stat text-[32px] leading-none tracking-[-0.04em] text-[var(--text-1)]">
+                  <p className="font-en font-mono-stat text-[32px] leading-none tracking-[-0.025em] text-[var(--text-1)]">
                     {games.length}종
                   </p>
                   <p className="mt-1.5 font-mono text-[11px] uppercase tracking-[0.02em] text-white/60">제작 중인 타이틀</p>

@@ -59,7 +59,7 @@ export default function TeamPageClient() {
             {stats.map((stat) => (
               <motion.div key={stat.label} variants={fadeUp}>
                 <p className="mono-label mb-3">{stat.label}:</p>
-                <p className="font-en font-mono-stat text-[40px] leading-none tracking-[-0.05em] text-[var(--text-1)] sm:text-[52px]">
+                <p className="font-en font-mono-stat text-[40px] leading-none tracking-[-0.032em] text-[var(--text-1)] sm:text-[52px]">
                   {stat.value}
                 </p>
               </motion.div>
@@ -76,7 +76,7 @@ export default function TeamPageClient() {
           <div className="grid gap-x-8 gap-y-14 lg:grid-cols-12">
             <div className="lg:col-span-5">
               <motion.h2 {...inView} variants={stagger}
-                className="font-medium leading-[1.08] tracking-[-0.045em] text-[var(--text-1)]"
+                className="font-medium leading-[1.08] tracking-[-0.028em] text-[var(--text-1)]"
                 style={displaySize}>
                 <span className={clipWrap}>
                   <motion.span variants={clipUp} className="block">Unity · 웹 · 앱까지</motion.span>
@@ -92,7 +92,7 @@ export default function TeamPageClient() {
 
             <motion.div {...inView} variants={stagger} className="lg:col-span-6 lg:col-start-7">
               <motion.p variants={fadeUp}
-                className="mb-6 text-[20px] font-medium leading-[1.5] tracking-[-0.025em] text-[var(--text-1)] sm:text-[24px]">
+                className="mb-6 text-[20px] font-medium leading-[1.5] tracking-[-0.016em] text-[var(--text-1)] sm:text-[24px]">
                 MATE는 웹 · 앱, 게임 · XR, 교육 세 영역의 외주 개발과
                 자체 게임 제작 · 퍼블리싱을 함께 합니다.
               </motion.p>
@@ -124,7 +124,7 @@ export default function TeamPageClient() {
           <motion.p {...inView} variants={fadeUp} className="mono-label mb-14 border-b border-white/[0.12] pb-4 sm:mb-20">Vision:</motion.p>
 
           <motion.h2 {...inView} variants={stagger}
-            className="mb-14 font-medium leading-[1.06] tracking-[-0.05em] text-[var(--text-1)] sm:mb-20"
+            className="mb-14 font-medium leading-[1.06] tracking-[-0.032em] text-[var(--text-1)] sm:mb-20"
             style={{ fontSize: 'clamp(2.25rem, 6vw, 5rem)' }}>
             <span className="block overflow-hidden pb-[0.08em]">
               <motion.span variants={clipUp} className="block font-en">
@@ -191,7 +191,7 @@ export default function TeamPageClient() {
                         </span>
                         <div className="min-w-0 flex-1 sm:flex sm:items-baseline sm:justify-between sm:gap-8">
                           <div className="min-w-0">
-                            <p className="text-[17px] font-medium leading-snug tracking-[-0.02em] text-[var(--text-1)]">{award.title}</p>
+                            <p className="text-[17px] font-medium leading-snug tracking-[-0.012em] text-[var(--text-1)]">{award.title}</p>
                             <p className="mt-1 text-[14px] text-white/55">{award.organization}</p>
                           </div>
                           <div className="mt-3 flex flex-shrink-0 flex-wrap items-center gap-2 sm:mt-0">

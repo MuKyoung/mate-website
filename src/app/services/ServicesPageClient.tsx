@@ -24,7 +24,7 @@ export default function ServicesPageClient() {
           </motion.p>
           <div className="grid items-end gap-x-gutter gap-y-10 lg:grid-cols-12">
             <motion.h1 {...onMount} variants={stagger}
-              className="font-medium leading-[1.02] tracking-[-0.045em] text-[var(--text-1)] lg:col-span-7"
+              className="font-medium leading-[1.02] tracking-[-0.028em] text-[var(--text-1)] lg:col-span-7"
               style={{ fontSize: 'clamp(2.5rem, 6.4vw, 5.5rem)' }}>
               <SplitText text="세 영역을" className="block" />
               <SplitText text="따로 맡습니다" className="block text-white/45" />

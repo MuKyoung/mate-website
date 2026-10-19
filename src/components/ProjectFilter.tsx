@@ -105,7 +105,7 @@ export default function ProjectFilter({ projects }: ProjectFilterProps) {
       {filteredProjects.length === 0 && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-28 text-center">
           <p className="mono-label mb-6 justify-center">No results:</p>
-          <h3 className="mb-4 text-[24px] font-medium leading-[1.2] tracking-[-0.03em] text-[var(--text-1)] sm:text-[28px]">
+          <h3 className="mb-4 text-[24px] font-medium leading-[1.2] tracking-[-0.02em] text-[var(--text-1)] sm:text-[28px]">
             해당 카테고리의 프로젝트가 없습니다
           </h3>
           <p className="text-[16px] leading-[1.75] text-white/60">다른 카테고리를 선택해 보세요</p>

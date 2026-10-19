@@ -36,7 +36,7 @@ export default function WebClient() {
 
           <div className="grid items-end gap-x-gutter gap-y-12 lg:grid-cols-12">
             <motion.h1 {...onMount} variants={stagger}
-              className="font-en font-medium leading-[0.96] tracking-[-0.05em] text-[var(--text-1)] lg:col-span-7"
+              className="font-en font-medium leading-[0.96] tracking-[-0.032em] text-[var(--text-1)] lg:col-span-7"
               style={{ fontSize: 'clamp(2.75rem, 7.6vw, 6.75rem)' }}>
               <SplitText text="Web & App" className="block" />
               <SplitText text="Development" className="block text-white/45" />
@@ -53,7 +53,7 @@ export default function WebClient() {
             {d.stats.map((s) => (
               <motion.div key={s.label} variants={fadeUp} className="lg:col-span-3">
                 <p className="mono-label mb-3">{s.label}:</p>
-                <p className="font-en font-mono-stat text-[40px] leading-none tracking-[-0.05em] text-[var(--text-1)] sm:text-[48px]">{s.value}</p>
+                <p className="font-en font-mono-stat text-[40px] leading-none tracking-[-0.032em] text-[var(--text-1)] sm:text-[48px]">{s.value}</p>
               </motion.div>
             ))}
             <motion.div variants={fadeUp} className="col-span-2 lg:col-span-6">
@@ -113,7 +113,7 @@ export default function WebClient() {
                     <span className="w-[76px] shrink-0 font-mono text-[12px] uppercase tracking-[0.02em] text-white/50">{s.step}</span>
                     <span className="min-w-0 flex-1">
                       <span className="flex flex-wrap items-baseline gap-x-5 gap-y-1">
-                        <span className={`font-en font-medium leading-none tracking-[-0.045em] transition-colors ${isOpen ? 'text-[var(--text-1)]' : 'text-white/60 group-hover:text-[var(--text-1)]'}`}
+                        <span className={`font-en font-medium leading-none tracking-[-0.028em] transition-colors ${isOpen ? 'text-[var(--text-1)]' : 'text-white/60 group-hover:text-[var(--text-1)]'}`}
                           style={{ fontSize: 'clamp(1.75rem, 3.4vw, 2.625rem)' }}>
                           {s.en}
                         </span>
@@ -156,7 +156,7 @@ export default function WebClient() {
             {webStack.map((row) => (
               <motion.div key={row.layer} variants={rowIn}
                 className="grid items-baseline gap-x-gutter gap-y-4 border-b border-white/10 py-7 sm:grid-cols-12 sm:py-9">
-                <p className="font-en font-medium leading-none tracking-[-0.045em] text-[var(--text-1)] sm:col-span-5"
+                <p className="font-en font-medium leading-none tracking-[-0.028em] text-[var(--text-1)] sm:col-span-5"
                   style={{ fontSize: 'clamp(1.75rem, 3.2vw, 2.5rem)' }}>
                   {row.layer}
                 </p>

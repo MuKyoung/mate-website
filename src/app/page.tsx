@@ -121,7 +121,7 @@ export default function Home() {
             {/* 흰 칸 - 개발 납품 */}
             <motion.div variants={cardIn} data-surface="light"
               className="flex min-h-[300px] flex-col justify-between bg-white p-6 text-black sm:p-7 lg:col-span-4">
-              <p className="flex items-center gap-3 text-[17px] font-medium tracking-[-0.02em]">
+              <p className="flex items-center gap-3 text-[17px] font-medium tracking-[-0.012em]">
                 <span className={iconSquare}><FiCode size={14} /></span>개발 프로젝트 납품
               </p>
               <div>
@@ -138,7 +138,7 @@ export default function Home() {
             <motion.div variants={cardIn}
               className="grain relative flex min-h-[300px] flex-col justify-between overflow-hidden bg-primary-200 p-6 sm:p-7 lg:col-span-4">
               <div aria-hidden className="card-drift" />
-              <p className="relative flex items-center gap-3 text-[17px] font-medium tracking-[-0.02em]">
+              <p className="relative flex items-center gap-3 text-[17px] font-medium tracking-[-0.012em]">
                 <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center bg-white text-primary-200"><FiBookOpen size={14} /></span>
                 진행 강의
               </p>
@@ -155,7 +155,7 @@ export default function Home() {
             {/* 어두운 칸 - 공개 포트폴리오 */}
             <motion.div variants={cardIn}
               className="sweep flex min-h-[300px] flex-col justify-between border border-white/10 bg-[var(--surface)] p-6 transition-colors hover:border-white/25 sm:p-7 lg:col-span-4">
-              <p className="flex items-center gap-3 text-[17px] font-medium tracking-[-0.02em]">
+              <p className="flex items-center gap-3 text-[17px] font-medium tracking-[-0.012em]">
                 <span className={iconSquare}><FiFolder size={14} /></span>공개한 작업
               </p>
               <div>
@@ -181,7 +181,7 @@ export default function Home() {
             <motion.div variants={cardIn}
               className="border border-white/10 bg-[var(--surface)] p-6 sm:p-7 lg:col-span-8">
               <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-                <p className="flex items-center gap-3 text-[17px] font-medium tracking-[-0.02em]">
+                <p className="flex items-center gap-3 text-[17px] font-medium tracking-[-0.012em]">
                   <span className={iconSquare}><FiAward size={14} /></span>연도별 수상 · 전시
                 </p>
                 <Link href="/team" className={linkMore}>
@@ -235,7 +235,7 @@ export default function Home() {
                 <Scramble text="Why MATE:" />
               </motion.p>
               <ScrollWords
-                className="font-medium leading-[1.2] tracking-[-0.04em] text-[var(--text-1)]"
+                className="font-medium leading-[1.2] tracking-[-0.025em] text-[var(--text-1)]"
                 style={{ fontSize: 'clamp(1.75rem, 3.4vw, 2.875rem)' }}
                 segments={[
                   { text: '납품으로 끝내지 않습니다.', br: true },
@@ -281,7 +281,7 @@ export default function Home() {
               <motion.div key={a.id} variants={rowIn}
                 className="sweep border border-white/10 bg-[var(--surface)] p-6 transition-colors hover:border-white/25 sm:p-8">
                 <p className="mono-label mb-8 text-[var(--point)]"><Scramble text={`${a.role}:`} /></p>
-                <h3 className="text-[24px] font-medium tracking-[-0.03em] text-[var(--text-1)] sm:text-[30px]">{a.name}</h3>
+                <h3 className="text-[24px] font-medium tracking-[-0.02em] text-[var(--text-1)] sm:text-[30px]">{a.name}</h3>
               </motion.div>
             ))}
           </motion.div>
@@ -297,7 +297,7 @@ export default function Home() {
               <motion.div key={a.id} variants={rowIn}
                 className="group grid grid-cols-12 items-baseline gap-x-gutter gap-y-1 border-b border-white/10 py-5 transition-colors hover:bg-white/[0.02] sm:py-6">
                 <p className="col-span-3 font-mono text-[13px] text-white/50 tabular-nums transition-colors group-hover:text-[var(--point)] sm:col-span-2">{a.year}</p>
-                <h3 className="col-span-9 text-[16px] font-medium tracking-[-0.02em] text-[var(--text-1)] transition-transform duration-500 group-hover:translate-x-1.5 sm:col-span-5 sm:text-[17px]">{a.title}</h3>
+                <h3 className="col-span-9 text-[16px] font-medium tracking-[-0.012em] text-[var(--text-1)] transition-transform duration-500 group-hover:translate-x-1.5 sm:col-span-5 sm:text-[17px]">{a.title}</h3>
                 <p className="col-span-7 col-start-4 text-[14px] text-white/55 sm:col-span-3 sm:col-start-auto">{a.organization}</p>
                 <p className="col-span-5 text-right font-mono text-[12px] text-[var(--point)] sm:col-span-2">{a.rank}</p>
               </motion.div>
