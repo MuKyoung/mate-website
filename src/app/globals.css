@@ -507,9 +507,11 @@ body {
 
 /* ── 첫 화면 큐브 ────────────────────────────────────────
    --s 가 한 변. 옆면 넷이 세로축으로 돌고, 위에서 살짝 내려다보도록 기울인다.
-   마우스를 올리면 회전이 멈춘다. 둥실 뜨는 움직임과 바닥 그림자는 같은 주기로 맞춘다. */
+   마우스를 올리면 회전이 멈춘다. 둥실 뜨는 움직임과 바닥 그림자는 같은 주기로 맞춘다.
+   첫 화면에 큐브와 스크롤 유도만 남으므로, 화면 너비와 높이 중 좁은 쪽에 맞춰 크게 키운다.
+   (옆면이 45도로 돌았을 때 가로 폭이 한 변의 1.42배가 되므로 모바일은 62vw 까지만) */
 .cube-wrap {
-  --s: clamp(150px, 13vw, 204px);
+  --s: min(62vw, 40vh);
   --h: calc(var(--s) / 2);
   position: relative;
   display: flex;
@@ -518,6 +520,9 @@ body {
   width: var(--s);
   height: calc(var(--s) * 1.42);
   padding-top: calc(var(--s) * 0.12);
+}
+@media (min-width: 768px) {
+  .cube-wrap { --s: clamp(240px, min(30vw, 44vh), 440px); }
 }
 .cube-stage {
   position: relative;
@@ -533,17 +538,19 @@ body {
   inset: 0;
   transform-style: preserve-3d;
 }
-.cube-tilt { transform: rotateX(-20deg); }
-.cube-spin { animation: cube-spin 26s linear infinite; }
+.cube-tilt { transform: rotateX(-18deg); }
+.cube-spin { animation: cube-spin 28s linear infinite; }
 .cube-wrap:hover .cube-spin { animation-play-state: paused; }
 
+/* 면 - 번호 줄, 그림, 이름 줄 순서의 카드 */
 .cube-face {
   position: absolute;
   inset: 0;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: calc(var(--s) * 0.085);
+  gap: calc(var(--s) * 0.03);
+  padding: calc(var(--s) * 0.06);
   overflow: hidden;
   border: 1px solid rgba(143, 176, 255, 0.5);
   backface-visibility: hidden;
@@ -555,7 +562,7 @@ body {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.13), transparent 40%);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), transparent 34%);
 }
 .cube-face--front  { transform: translateZ(var(--h)); }
 .cube-face--right  { transform: rotateY(90deg) translateZ(var(--h)); }
@@ -569,9 +576,32 @@ body {
 .cube-tone--light { color: #000; background: linear-gradient(160deg, #ffffff 0%, #e8edf8 60%, #cdd7ec 100%); border-color: rgba(255, 255, 255, 0.95); }
 .cube-tone--glow  { background: radial-gradient(circle at 50% 118%, #f4f8ff 0%, #93b6ff 22%, #2e5bf0 46%, #0d1b57 72%, #000 94%); border-color: rgba(143, 176, 255, 0.6); }
 
+/* 면 안의 그림 칸 - 작업 화면이라 원래 색 그대로 둔다 */
+.cube-media {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  height: calc(var(--s) * 0.56);
+  overflow: hidden;
+  background: #000;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+}
+.cube-tone--light .cube-media { border-color: rgba(0, 0, 0, 0.16); }
+.cube-media--glow {
+  background: radial-gradient(ellipse 120% 92% at 50% 128%, #f4f8ff 0%, #93b6ff 26%, #2e5bf0 50%, #0d1b57 76%, #000 100%);
+}
+.cube-caption {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--s) * 0.016);
+}
+
 .cube-label {
   position: relative;
-  font-size: calc(var(--s) * 0.112);
+  font-size: clamp(15px, calc(var(--s) * 0.085), 36px);
   font-weight: 500;
   line-height: 1.1;
   letter-spacing: -0.035em;
@@ -583,12 +613,12 @@ body {
   align-items: center;
   justify-content: space-between;
   font-family: var(--font-mono);
-  font-size: max(8px, calc(var(--s) * 0.047));
+  font-size: clamp(9px, calc(var(--s) * 0.031), 12px);
   letter-spacing: 0.02em;
   text-transform: uppercase;
   opacity: 0.72;
 }
-.cube-dot { width: calc(var(--s) * 0.036); height: calc(var(--s) * 0.036); background: currentColor; }
+.cube-dot { width: clamp(5px, calc(var(--s) * 0.024), 9px); height: clamp(5px, calc(var(--s) * 0.024), 9px); background: currentColor; }
 .cube-tone--dark .cube-dot  { background: var(--blue-glow); }
 .cube-tone--light .cube-dot { background: var(--primary-300); }
 
@@ -597,18 +627,14 @@ body {
   left: 50%;
   bottom: 0;
   width: calc(var(--s) * 1.25);
-  height: calc(var(--s) * 0.22);
+  height: calc(var(--s) * 0.2);
   pointer-events: none;
   background: radial-gradient(closest-side, rgba(76, 125, 255, 0.6), rgba(46, 91, 240, 0.18) 58%, transparent);
-  filter: blur(6px);
+  filter: blur(calc(var(--s) * 0.025));
   animation: cube-shadow 7s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate;
 }
-/* 노트북처럼 넓고 낮은 화면 - 큐브를 화면 높이에 맞춰 줄여, 아래 로고와 소개 줄이 첫 화면 안에 남게 한다 */
-@media (min-width: 1024px) and (max-height: 860px) {
-  .cube-wrap { --s: clamp(124px, 19vh, 188px); }
-}
 @keyframes cube-spin   { from { transform: rotateY(0deg); } to { transform: rotateY(-360deg); } }
-@keyframes cube-bob    { from { transform: translateY(-9px); } to { transform: translateY(9px); } }
+@keyframes cube-bob    { from { transform: translateY(-1.6%); } to { transform: translateY(1.6%); } }
 @keyframes cube-shadow {
   from { transform: translateX(-50%) scale(0.8);  opacity: 0.5; }
   to   { transform: translateX(-50%) scale(1.06); opacity: 0.95; }

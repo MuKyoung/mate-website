@@ -14,7 +14,7 @@ export default function ScrollCue({ target, className = '' }: { target: string; 
       <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-white/60 transition-colors group-hover:text-white">
         Scroll
       </span>
-      <span aria-hidden className="relative block h-10 w-px overflow-hidden bg-white/15 [@media(min-width:1024px)_and_(max-height:860px)]:h-6">
+      <span aria-hidden className="relative block h-10 w-px overflow-hidden bg-white/15">
         <span className="scroll-cue-light absolute inset-x-0 top-0 block h-1/2" />
       </span>
       <span aria-hidden

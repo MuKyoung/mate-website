@@ -2,7 +2,6 @@
 
 import { useRef } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { FiArrowUpRight, FiBookOpen, FiCode, FiFolder, FiAward } from 'react-icons/fi';
 import DomainSlabs from '@/components/DomainSlabs';
@@ -18,13 +17,12 @@ import Scramble from '@/components/motion/Scramble';
 import ScrollWords from '@/components/motion/ScrollWords';
 import Ticker from '@/components/motion/Ticker';
 import { SplitText } from '@/components/motion/SplitText';
-import { domains, homeCredentials } from '@/data/domains';
+import { homeCredentials } from '@/data/domains';
 import { affiliations, awards, counts, teamCapabilities } from '@/data/teamCapabilities';
-import { processSteps } from '@/data/process';
 import { projects } from '@/data/projects';
 import { games } from '@/data/games';
 import {
-  easeEnter, fadeUp, lineDraw, maskUp, rowIn, staggerRows, staggerTight, inView, onMount,
+  easeEnter, fadeUp, maskUp, rowIn, staggerRows, staggerTight, inView,
 } from '@/lib/motion';
 import { arrowHover, container, iconSquare, linkMore, numSquare, sectionPad } from '@/lib/styles';
 
@@ -73,10 +71,9 @@ const cardIn = maskUp;
 export default function Home() {
   const since = teamCapabilities.stats.since;
 
-  // 첫 화면의 로고와 정보 줄은 스크롤하면 빛보다 조금 빠르게 위로 빠지며 옅어진다
+  // 첫 화면의 큐브와 스크롤 유도는 스크롤하면 빛보다 빠르게 위로 빠지며 옅어진다
   const heroRef = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
-  const heroY = useTransform(scrollYProgress, [0, 1], [0, -120]);
   const heroFade = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
   // 큐브는 스크롤을 내리면 더 빨리 위로 빠지면서 반 바퀴 남짓 더 돈다
   const cubeY = useTransform(scrollYProgress, [0, 1], [0, -200]);
@@ -84,69 +81,25 @@ export default function Home() {
 
   return (
     <>
-      {/* ━━ 첫 화면 - 위에서 휘어 내려오는 빛, 가운데 도는 큐브, 스크롤 유도, 로고와 소개 줄 ━━ */}
-      <section ref={heroRef} className="relative flex flex-col overflow-hidden pb-10 sm:pb-14 [@media(min-width:1024px)_and_(max-height:860px)]:pb-8" style={{ minHeight: '100svh' }}>
+      {/* ━━ 첫 화면 - 위에서 휘어 내려오는 빛, 한가운데 도는 큐브, 맨 아래 스크롤 유도 ━━ */}
+      <section ref={heroRef} className="relative flex flex-col overflow-hidden" style={{ minHeight: '100svh' }}>
         <HorizonGlow side="top" rim="min(31vh, 15vw + 140px)" radius="max(96vw, 760px)" />
+        <h1 className="sr-only">MATE는 웹 · 앱, 게임 · XR, 교육 외주 개발과 자체 게임 제작 · 퍼블리싱을 합니다</h1>
 
-        {/* 큐브와 스크롤 유도 - 로고와 소개 줄 위로 남는 높이의 가운데에 선다 */}
+        {/* 큐브 - 헤더와 스크롤 유도 사이 남는 높이의 한가운데 */}
         <motion.div style={{ y: cubeY, opacity: heroFade }}
-          className="relative flex flex-1 flex-col items-center justify-center pb-4 pt-24 [@media(min-width:1024px)_and_(max-height:860px)]:pt-[72px]">
+          className="relative flex flex-1 items-center justify-center pt-16">
           <motion.div initial={{ opacity: 0, scale: 0.8, y: 40 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 1.6, delay: 0.4, ease: easeEnter }}>
+            transition={{ duration: 1.6, delay: 0.3, ease: easeEnter }}>
             <BrandCube spin={cubeSpin} />
-          </motion.div>
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.9, delay: 1.7, ease: easeEnter }} className="mt-3 sm:mt-5 [@media(min-width:1024px)_and_(max-height:860px)]:mt-2">
-            <ScrollCue target="after-hero" />
           </motion.div>
         </motion.div>
 
-        <motion.div className={`relative ${container}`} style={{ y: heroY, opacity: heroFade }}>
-          <h1 className="sr-only">MATE는 웹 · 앱, 게임 · XR, 교육 외주 개발과 자체 게임 제작 · 퍼블리싱을 합니다</h1>
-
-          {/* 로고 - 빛이 자리를 잡을 즈음 아래에서 열린다 */}
-          <motion.div initial={{ clipPath: 'inset(100% 0 0 0)', y: 36 }} animate={{ clipPath: 'inset(0% 0 0 0)', y: 0 }}
-            transition={{ duration: 1.3, delay: 0.55, ease: easeEnter }} className="mb-10 sm:mb-14 [@media(min-width:1024px)_and_(max-height:860px)]:mb-8">
-            <Image src="/images/logo.png" alt="MATE" width={1991} height={493} priority
-              className="h-auto w-[min(56vw,300px)] brightness-0 invert [@media(min-width:1024px)_and_(max-height:860px)]:w-[230px]" />
-          </motion.div>
-
-          <motion.div {...onMount} variants={{ hidden: {}, show: { transition: { staggerChildren: 0.11, delayChildren: 1 } } }}
-            className="relative grid grid-cols-2 gap-x-6 gap-y-9 pt-6 lg:grid-cols-12">
-            <motion.span variants={lineDraw} className="absolute left-0 right-0 top-0 block h-px bg-white/[0.12]" />
-            <motion.p variants={fadeUp} className="mono-label col-span-2 items-start text-white/80 lg:col-span-3">
-              <Scramble text="DEVTEAMMATE.CO.KR" delay={1000} duration={1000} />
-            </motion.p>
-
-            <motion.div variants={fadeUp} className="col-span-2 lg:col-span-4">
-              <p className="mono-label mb-3"><Scramble text="Overview:" delay={1150} /></p>
-              <p className="max-w-sm text-[14px] leading-[1.7] text-white/70 sm:text-[15px]">
-                MATE는 웹 · 앱, 게임 · XR, 교육 세 영역의 외주 개발과 자체 게임 제작 · 퍼블리싱을 함께 합니다.
-              </p>
-            </motion.div>
-
-            <motion.div variants={fadeUp} className="lg:col-span-2">
-              <p className="mono-label mb-3"><Scramble text="What we do:" delay={1250} /></p>
-              <ul className="space-y-1.5 text-[13px] text-white/70 sm:text-[14px]">
-                {domains.map((d) => (
-                  <li key={d.key}>
-                    <Link href={`/${d.slug}`} className="transition-colors hover:text-white"><span className="mono-bullet" />{d.kr}</Link>
-                  </li>
-                ))}
-                <li><span className="mono-bullet" />자체 게임 퍼블리싱</li>
-              </ul>
-            </motion.div>
-
-            <motion.div variants={fadeUp} className="lg:col-span-2">
-              <p className="mono-label mb-3"><Scramble text="Process:" delay={1350} /></p>
-              <ul className="space-y-1.5 text-[13px] text-white/70 sm:text-[14px]">
-                {processSteps.map((s) => <li key={s.id}><span className="mono-bullet" />{s.title}</li>)}
-              </ul>
-            </motion.div>
-
-            <motion.p variants={fadeUp} className="mono-label col-span-2 lg:col-span-1 lg:justify-end">
-              <Scramble text={`Since ${since}`} delay={1450} />
-            </motion.p>
+        {/* 스크롤 유도 - 첫 화면 맨 아래 가운데 */}
+        <motion.div style={{ opacity: heroFade }} className="relative flex justify-center pb-6 pt-4 sm:pb-10">
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.9, delay: 1.5, ease: easeEnter }}>
+            <ScrollCue target="after-hero" />
           </motion.div>
         </motion.div>
       </section>
