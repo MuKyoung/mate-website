@@ -61,12 +61,13 @@ git push -u origin main
    - **Framework Preset**: Next.js (자동 감지)
    - **Root Directory**: `./` (기본값)
    - **Build Command**: `npm run build` (자동)
-   - **Output Directory**: `out` (정적 사이트이므로)
+   - **Output Directory**: 비워 둠 (기본값). 견적 문의 메일이 서버 함수(`/api/contact`)로 돌아 정적 내보내기(`out`)를 쓰지 않습니다.
 5. "Deploy" 클릭
 
-### 4단계: 환경 변수 설정 (필요시)
+### 4단계: 환경 변수 설정
 
-Vercel 대시보드에서 환경 변수를 추가할 수 있습니다.
+Vercel 대시보드 > Settings > Environment Variables 에 견적 문의 메일(Resend) 값을 넣습니다.
+`RESEND_API_KEY`(필수), `RESEND_FROM_EMAIL`, `CONTACT_TO_EMAIL`. 자세한 내용은 README의 "견적 문의 폼 - Resend 메일 전송".
 
 ### 5단계: 자동 배포 확인
 

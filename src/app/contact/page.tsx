@@ -15,10 +15,6 @@ import {
   CONTACT_EMAIL, CONTACT_PHONE, KAKAO_OPEN_CHAT_URL,
 } from '@/lib/styles';
 
-const GOOGLE_SCRIPT_URL =
-  process.env.NEXT_PUBLIC_GOOGLE_SCRIPT_URL ||
-  process.env.NEXT_PUBLIC_GAS_WEB_APP_URL;
-
 export default function ContactPage() {
   const [formData, setFormData] = useState({
     domain: '',
@@ -45,7 +41,7 @@ export default function ContactPage() {
     });
   };
 
-  /** 폼 내용을 메일 초안으로 옮긴다 - 전송 서버 없이도 문의가 실제로 도착한다 */
+  /** 폼 내용을 메일 초안으로 옮긴다 - 메일 전송(RESEND_API_KEY)이 설정되기 전에도 문의가 도착한다 */
   const openMailDraft = () => {
     const domainLabel = domains.find((d) => d.key === formData.domain)?.kr ?? '미지정';
     const subject = `[문의] ${formData.subject || '프로젝트 문의'}`;
@@ -60,75 +56,36 @@ export default function ContactPage() {
       `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    // 전송 엔드포인트가 설정돼 있지 않으면 메일 초안으로 넘긴다
-    if (!GOOGLE_SCRIPT_URL) {
-      openMailDraft();
-      return;
-    }
+    // 봇 걸러내기 칸 - await 뒤에는 currentTarget 이 비므로 먼저 읽는다
+    const website = (e.currentTarget.elements.namedItem('website') as HTMLInputElement | null)?.value ?? '';
 
     setIsSubmitting(true);
+    setSubmitStatus('idle');
+    setErrorMessage(null);
 
     try {
-      const iframe = document.createElement('iframe');
-      iframe.style.display = 'none';
-      iframe.name = 'hidden_iframe';
-      document.body.appendChild(iframe);
-
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = GOOGLE_SCRIPT_URL;
-      form.target = 'hidden_iframe';
-
-      Object.entries({
-        domain: domains.find((d) => d.key === formData.domain)?.kr ?? '미지정',
-        name: formData.name,
-        email: formData.email,
-        subject: formData.subject,
-        message: formData.message,
-        submittedAt: new Date().toISOString(),
-      }).forEach(([key, value]) => {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = key;
-        input.value = value;
-        form.appendChild(input);
+      const res = await fetch('/api/contact/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...formData, website }),
       });
 
-      document.body.appendChild(form);
-
-      const submitPromise = new Promise<void>((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          reject(new Error('요청 시간 초과'));
-        }, 10000);
-
-        iframe.onload = () => {
-          clearTimeout(timeout);
-          resolve();
-        };
-
-        iframe.onerror = () => {
-          clearTimeout(timeout);
-          reject(new Error('전송 실패'));
-        };
-      });
-
-      form.submit();
-      await submitPromise;
-
-      document.body.removeChild(form);
-      document.body.removeChild(iframe);
+      // 메일 전송이 아직 설정되지 않았으면 메일 초안으로 넘긴다 (src/app/api/contact/route.ts)
+      if (res.status === 503) {
+        openMailDraft();
+        return;
+      }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
       setSubmitStatus('success');
-      setErrorMessage(null);
       setFormData({ domain: '', name: '', email: '', subject: '', message: '' });
       setTimeout(() => setSubmitStatus('idle'), 5000);
     } catch (err) {
       console.error(err);
       setSubmitStatus('error');
-      setErrorMessage('전송 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+      setErrorMessage('전송 중 오류가 발생했습니다. 잠시 후 다시 시도하시거나 메일 · 카카오톡 오픈채팅으로 연락해 주세요.');
     } finally {
       setIsSubmitting(false);
     }
@@ -193,7 +150,7 @@ export default function ContactPage() {
                   <label htmlFor="name" className={labelClass}>이름</label>
                   <input
                     type="text" id="name" name="name"
-                    value={formData.name} onChange={handleChange} required
+                    value={formData.name} onChange={handleChange} required maxLength={100}
                     className={inputClass} placeholder="홍길동"
                   />
                 </div>
@@ -201,7 +158,7 @@ export default function ContactPage() {
                   <label htmlFor="email" className={labelClass}>이메일</label>
                   <input
                     type="email" id="email" name="email"
-                    value={formData.email} onChange={handleChange} required
+                    value={formData.email} onChange={handleChange} required maxLength={200}
                     className={inputClass} placeholder="회신받으실 주소"
                   />
                 </div>
@@ -209,7 +166,7 @@ export default function ContactPage() {
                   <label htmlFor="subject" className={labelClass}>제목</label>
                   <input
                     type="text" id="subject" name="subject"
-                    value={formData.subject} onChange={handleChange} required
+                    value={formData.subject} onChange={handleChange} required maxLength={200}
                     className={inputClass} placeholder="예) 사내 교육용 VR 콘텐츠 제작 문의"
                   />
                 </div>
@@ -217,10 +174,15 @@ export default function ContactPage() {
                   <label htmlFor="message" className={labelClass}>메시지</label>
                   <textarea
                     id="message" name="message"
-                    value={formData.message} onChange={handleChange} required rows={7}
+                    value={formData.message} onChange={handleChange} required rows={7} maxLength={5000}
                     className="w-full px-5 py-4 bg-[var(--surface)] border border-white/15 rounded-[2px] text-[16px] leading-[1.75] text-[var(--text-1)] placeholder:text-white/40 outline-none transition-colors resize-none focus:border-[var(--blue-glow)] focus:ring-0"
                     placeholder="만들려는 것과 생각하시는 일정을 편하게 적어 주세요."
                   />
+                </div>
+                {/* 봇 걸러내기 - 사람에게는 보이지 않는 칸. 채워져 오면 서버가 보내지 않는다 */}
+                <div aria-hidden className="absolute -left-[9999px] h-px w-px overflow-hidden">
+                  <label htmlFor="website">웹사이트</label>
+                  <input type="text" id="website" name="website" tabIndex={-1} autoComplete="off" defaultValue="" />
                 </div>
 
                 {submitStatus === 'success' && (
@@ -234,13 +196,6 @@ export default function ContactPage() {
                   </p>
                 )}
 
-                {!GOOGLE_SCRIPT_URL && (
-                  <p className="type-c1 text-white/55 leading-[1.7]">
-                    버튼을 누르면 위 내용이 채워진 메일 초안이 열립니다. 바로 답장이 필요하시면
-                    카카오톡 오픈채팅이 가장 빠릅니다.
-                  </p>
-                )}
-
                 <button
                   type="submit"
                   disabled={isSubmitting}
@@ -251,7 +206,7 @@ export default function ContactPage() {
                   ) : (
                     <>
                       <FiSend size={17} className={arrowHover} />
-                      {GOOGLE_SCRIPT_URL ? '메시지 보내기' : '메일로 보내기'}
+                      메시지 보내기
                     </>
                   )}
                 </button>

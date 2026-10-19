@@ -143,8 +143,8 @@ DigitalCircusWebsite/
 - **Icons**: React Icons
 
 ### 빌드 및 배포
-- **정적 사이트 생성**: Next.js `output: 'export'`
-- **배포 플랫폼**: Vercel (권장), Netlify, GitHub Pages
+- **페이지 생성**: 모든 페이지를 빌드 때 정적으로 만들고, 견적 문의 메일(`/api/contact`, Resend)만 서버 함수로 돈다
+- **배포 플랫폼**: Vercel (권장), Netlify
 - **이미지 최적화**: Next.js Image 컴포넌트 (unoptimized 모드)
 
 ### 개발 도구
@@ -324,9 +324,8 @@ npm run dev      # 개발 서버 실행
 ### `next.config.js`
 ```javascript
 {
-  output: 'export',        // 정적 사이트 생성
   images: {
-    unoptimized: true,     // 정적 사이트용
+    unoptimized: true,     // 이미지 최적화 서버를 쓰지 않음
   },
   trailingSlash: true,     // URL 끝에 슬래시
 }

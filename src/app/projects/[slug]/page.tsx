@@ -8,6 +8,9 @@ interface PageProps {
   };
 }
 
+/** 목록에 없는 주소는 그때그때 그리지 않고 404 로 둔다 (정적 내보내기 때와 같게) */
+export const dynamicParams = false;
+
 export async function generateStaticParams() {
   return projects.map((project) => ({
     slug: project.id,

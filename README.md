@@ -99,38 +99,23 @@ npx serve@latest out
 
 각 페이지의 `metadata` export를 수정하여 SEO 정보를 업데이트할 수 있습니다.
 
-### 연락처 폼 - Google Sheets 연동
+### 견적 문의 폼 - Resend 메일 전송
 
-1. Google 스프레드시트 생성 후 **Apps Script** 실행
-2. 아래 스크립트를 추가하고 웹 앱으로 배포 (ANYONE 액세스)
+`/contact` 양식은 `src/app/api/contact/route.ts` 가 [Resend](https://resend.com)로 메일을 보냅니다.
+문의한 사람의 주소가 reply-to 로 들어가 받은 메일에서 바로 답장할 수 있습니다.
 
-```javascript
-function doPost(e) {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Responses');
-  const params = JSON.parse(e.postData.contents);
-  sheet.appendRow([
-    new Date(),
-    params.name,
-    params.email,
-    params.subject,
-    params.message,
-    params.submittedAt,
-  ]);
-  return ContentService.createTextOutput(
-    JSON.stringify({ result: 'success' })
-  )
-    .setMimeType(ContentService.MimeType.JSON)
-    .setHeader('Access-Control-Allow-Origin', '*');
-}
-```
-
-3. 발급된 웹 앱 URL을 `.env.local` 파일에 추가
+1. Resend에서 API 키를 만들고, 보내는 주소로 쓸 도메인(예: `devteammate.co.kr`)을 인증합니다.
+2. Vercel 프로젝트 설정 > Environment Variables 에 아래 값을 넣고 다시 배포합니다.
 
 ```
-NEXT_PUBLIC_GOOGLE_SCRIPT_URL=https://script.google.com/macros/s/....../exec
+RESEND_API_KEY=re_...                                   # 필수
+RESEND_FROM_EMAIL=MATE 문의 <inquiry@devteammate.co.kr>  # 인증한 도메인의 주소
+CONTACT_TO_EMAIL=받을주소@example.com                    # 비우면 src/lib/styles.ts 의 CONTACT_EMAIL
 ```
 
-4. 빌드 후 배포하면 폼 제출 내용이 스프레드시트에 저장됩니다.
+- `RESEND_API_KEY` 가 없으면 양식은 내용이 채워진 메일 초안을 여는 방식으로 동작합니다.
+- `RESEND_FROM_EMAIL` 을 비우면 Resend 시험 주소(`onboarding@resend.dev`)로 보내며, 이때는 Resend 계정 주인의 메일로만 도착합니다.
+- 로컬에서 시험할 때는 같은 값을 `.env.local` 에 넣습니다.
 
 ## 📝 배포
 
@@ -144,18 +129,11 @@ NEXT_PUBLIC_GOOGLE_SCRIPT_URL=https://script.google.com/macros/s/....../exec
 
 ### 다른 플랫폼
 
-- **Netlify**: `out/` 폴더를 드래그 앤 드롭
-- **GitHub Pages**: Settings > Pages에서 설정
-- **AWS S3**: S3 버킷에 `out/` 폴더 업로드
+견적 문의 메일이 서버 함수(`/api/contact`)로 돌기 때문에 정적 파일만 올리는 곳(GitHub Pages, S3 등)에서는 동작하지 않습니다. Next.js 서버를 돌릴 수 있는 곳(Vercel, Netlify 등)에 배포합니다.
 
 ## 🔧 환경 변수
 
-현재 프로젝트는 정적 사이트로 구성되어 있어 환경 변수가 필요하지 않습니다.
-
-폼 제출 기능을 추가하려면 다음 서비스 중 하나를 사용하세요:
-- [Formspree](https://formspree.io/)
-- [EmailJS](https://www.emailjs.com/)
-- [Netlify Forms](https://docs.netlify.com/forms/setup/)
+견적 문의 메일 전송에만 씁니다. 위 [견적 문의 폼 - Resend 메일 전송](#견적-문의-폼---resend-메일-전송) 을 보세요.
 
 ## 📄 라이선스
 
