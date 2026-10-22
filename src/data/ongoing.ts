@@ -16,6 +16,8 @@ export const ongoing: Record<'web' | 'game' | 'edu', OngoingWork[]> = {
   web: [
     { title: '(주)세종호이스트크레인 웹사이트', status: '제작 중' },
     { title: '우화 웹사이트', status: '제작 중' },
+    { title: '고객사 사내 ERD', status: '제작 중' },
+    { title: '고객사 사내 툴 허브', status: '제작 중' },
   ],
   game: [
     { title: 'AR 소설 1건', status: '제작 중' },
