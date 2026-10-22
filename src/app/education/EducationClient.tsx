@@ -11,7 +11,7 @@ import SectionHead from '@/components/ui/SectionHead';
 import { serviceTabs } from '@/data/navigation';
 import { eduCourses, eduAudiences, eduFormat, eduRecord, domainByKey } from '@/data/domains';
 import { fadeUp, staggerTight, staggerRows, rowIn, inView } from '@/lib/motion';
-import { arrowHover, btnPoint, btnSm, chipLine, container, numTile, radiusCard } from '@/lib/styles';
+import { arrowCircle, arrowHover, btnPoint, btnSm, chipLine, container, numTile, radiusCard } from '@/lib/styles';
 
 const d = domainByKey.edu;
 const record = eduRecord.slice(0, 6);
@@ -24,7 +24,7 @@ function Course({ c, defaultOpen }: { c: (typeof eduCourses)[number]; defaultOpe
       className={`overflow-hidden border bg-white transition-colors duration-300 ${open ? 'border-point-200' : 'border-line'} ${radiusCard}`}>
       <button type="button" onClick={() => setOpen(!open)} aria-expanded={open}
         className="flex w-full items-start gap-4 p-6 text-left sm:gap-6 sm:p-8">
-        <span className="pt-1.5 font-mono text-[12px] text-point-200">{c.code}</span>
+        <span className="pt-1 text-[14px] font-bold text-point-200">{c.code}</span>
         <span className="min-w-0 flex-1">
           <span className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <span className="type-h3 text-ink">{c.title}</span>
@@ -32,8 +32,8 @@ function Course({ c, defaultOpen }: { c: (typeof eduCourses)[number]; defaultOpe
           </span>
           <span className="type-b3 mt-3 block text-ink-2">{c.summary}</span>
         </span>
-        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[6px] border transition-colors ${
-          open ? 'border-point-200 bg-point-200 text-white' : 'border-line text-ink-3'
+        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-pill border transition-colors ${
+          open ? 'border-point-200 bg-point-200 text-white' : 'border-[#d1d7de] text-gray-500'
         }`}>
           {open ? <FiMinus size={16} /> : <FiPlus size={16} />}
         </span>
@@ -49,7 +49,7 @@ function Course({ c, defaultOpen }: { c: (typeof eduCourses)[number]; defaultOpe
             <dl className="mx-6 mb-6 border-t border-line sm:mx-8 sm:mb-8 sm:ml-[88px]">
               {c.outline.map((o, i) => (
                 <div key={o.title} className="grid gap-1 border-b border-line py-4 sm:grid-cols-[56px_200px_1fr] sm:gap-4">
-                  <dt className="font-mono text-[12px] tabular-nums text-point-200">{String(i + 1).padStart(2, '0')}</dt>
+                  <dt className="text-[14px] font-bold tabular-nums text-point-200">{String(i + 1).padStart(2, '0')}</dt>
                   <dd className="type-b2 text-ink">{o.title}</dd>
                   <dd className="type-b3 text-ink-2">{o.detail}</dd>
                 </div>
@@ -65,10 +65,10 @@ function Course({ c, defaultOpen }: { c: (typeof eduCourses)[number]; defaultOpe
 export default function EducationClient() {
   return (
     <div data-domain="edu">
-      <PageHeader crumb="Services / Education" title={d.kr} tabs={serviceTabs} active="/education" />
+      <PageHeader eyebrow="사업영역" title={d.kr} tabs={serviceTabs} active="/education" />
 
       <DomainIntro
-        eyebrow="Education:"
+        eyebrow="Education"
         title={<>현업에서 실제로<br /><b>쓰는 것만 가르칩니다</b></>}
         desc={<>{d.summary} 마지막 주에는 수강생 각자의 결과물이 남습니다.</>}
         stats={d.stats}
@@ -80,9 +80,9 @@ export default function EducationClient() {
                 alt="미래산업과학고등학교 수업 현장. 화면에 C# 변수 선언과 초기화 슬라이드가 떠 있다"
                 className="object-cover object-[50%_42%] transition-transform duration-700 group-hover:scale-[1.03]" />
             </div>
-            <p className="mt-4 flex items-center justify-between gap-4 font-mono text-[12px] uppercase tracking-[0.04em] text-ink-3">
-              <span>Class / 미래산업과학고등학교 · 정규 수업</span>
-              <FiArrowUpRight size={14} className={arrowHover} />
+            <p className="mt-5 flex items-center justify-between gap-4">
+              <span className="text-[16px] font-bold text-ink transition-colors group-hover:text-point-200 sm:text-[18px]">미래산업과학고등학교 · 정규 수업</span>
+              <span className={arrowCircle}><FiArrowUpRight size={16} /></span>
             </p>
           </Link>
         )}
@@ -93,7 +93,7 @@ export default function EducationClient() {
         <div className={`${container} grid gap-10 lg:grid-cols-12 lg:gap-8`}>
           <div className="lg:col-span-4">
             <div className="lg:sticky lg:top-32">
-              <SectionHead eyebrow="Curriculum:" title={<><b>표준 커리큘럼</b></>}
+              <SectionHead eyebrow="Curriculum" title={<><b>표준 커리큘럼</b></>}
                 desc="아래 세 과정은 표준안입니다. 실제 과정은 기관의 목표·수준·시수에 맞춰 주차 구성과 난이도를 다시 짜서 제안드립니다." />
               <Link href="/contact?domain=edu" className={`${btnPoint} ${btnSm} mt-8`}>
                 강의 문의하기
@@ -110,7 +110,7 @@ export default function EducationClient() {
       {/* ━━ 교육 대상 ━━ */}
       <section data-header="light" className="bg-white py-24 sm:py-32 xl:py-40">
         <div className={container}>
-          <SectionHead eyebrow="Audience:" title={<><b>교육 대상</b></>} />
+          <SectionHead eyebrow="Audience" title={<><b>교육 대상</b></>} />
           <motion.ul {...inView} variants={staggerTight} className="mt-12 grid gap-4 sm:mt-14 md:grid-cols-3 lg:gap-5">
             {eduAudiences.map((a) => (
               <motion.li key={a.no} variants={fadeUp}
@@ -131,7 +131,7 @@ export default function EducationClient() {
       <section data-header="light" className="bg-gray-100 py-24 sm:py-32 xl:py-40">
         <div className={`${container} grid gap-20 lg:grid-cols-2 lg:gap-16`}>
           <div>
-            <SectionHead eyebrow="Format:" title={<><b>진행 조건</b></>} />
+            <SectionHead eyebrow="Format" title={<><b>진행 조건</b></>} />
             <motion.dl {...inView} variants={staggerRows} className="mt-10 border-t-2 border-ink">
               {eduFormat.map((f) => (
                 <motion.div key={f.k} variants={rowIn}
@@ -144,18 +144,18 @@ export default function EducationClient() {
           </div>
 
           <div>
-            <SectionHead eyebrow="Record:" title={<>기관과 함께한 <b>기록</b></>}
+            <SectionHead eyebrow="Record" title={<>기관과 함께한 <b>기록</b></>}
               desc="강의와 별개로, 교육·연구 기관과 진행한 사업과 수상 이력입니다. 커리큘럼은 이 경험에서 나옵니다." />
             <motion.ul {...inView} variants={staggerRows} className="mt-10 border-t-2 border-ink">
               {record.map((a) => (
                 <motion.li key={a.id} variants={rowIn}
                   className="grid grid-cols-[56px_1fr] gap-x-4 gap-y-1 border-b border-gray-200 py-5 sm:grid-cols-[64px_1fr_auto] sm:items-baseline">
-                  <span className="font-mono text-[13px] tabular-nums text-ink-3">{a.year}</span>
+                  <span className="text-[15px] font-bold tabular-nums text-gray-500">{a.year}</span>
                   <span>
-                    <span className="block text-[16px] font-semibold text-ink">{a.title}</span>
-                    <span className="mt-1 block text-[14px] text-ink-3">{a.organization}</span>
+                    <span className="block text-[16px] font-bold text-ink">{a.title}</span>
+                    <span className="mt-1 block text-[14px] text-gray-500">{a.organization}</span>
                   </span>
-                  <span className="col-start-2 font-mono text-[12px] text-point-200 sm:col-start-auto sm:text-right">{a.rank}</span>
+                  <span className="col-start-2 text-[14px] font-bold text-point-200 sm:col-start-auto sm:text-right">{a.rank}</span>
                 </motion.li>
               ))}
             </motion.ul>

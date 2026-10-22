@@ -11,8 +11,8 @@ interface FAQAccordionProps {
 }
 
 /**
- * 질문 목록 - 굵은 윗선 아래 가는 선으로 나눈 줄마다 오른쪽에 + 칸.
- * 열린 질문은 + 칸이 로고 파랑으로 찬다.
+ * 질문 목록 - 가는 선으로 나눈 줄마다 오른쪽에 + (Figma 기술인증 목록).
+ * 열린 질문은 + 가 로고 파랑 원으로 바뀐다.
  */
 export default function FAQAccordion({ faqs }: FAQAccordionProps) {
   const [openId, setOpenId] = useState<string | null>(null);
@@ -31,16 +31,16 @@ export default function FAQAccordion({ faqs }: FAQAccordionProps) {
             >
               <span className="flex items-baseline gap-3">
                 {faq.category && (
-                  <span className="hidden w-16 shrink-0 font-mono text-[11px] text-ink-3 sm:block">{faq.category}</span>
+                  <span className="hidden w-14 shrink-0 text-[13px] font-bold text-gray-400 sm:block">{faq.category}</span>
                 )}
-                <span className={`text-[16px] font-semibold leading-[1.5] transition-colors sm:text-[17px] ${isOpen ? 'text-point-200' : 'text-ink group-hover:text-point-200'}`}>
+                <span className={`text-[16px] font-bold leading-[1.5] transition-colors sm:text-[17px] ${isOpen ? 'text-point-200' : 'text-ink group-hover:text-point-200'}`}>
                   {faq.question}
                 </span>
               </span>
-              <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-[6px] border transition-colors duration-300 ${
-                isOpen ? 'border-point-200 bg-point-200 text-white' : 'border-line text-ink-3 group-hover:border-point-200 group-hover:text-point-200'
+              <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-pill transition-colors duration-300 ${
+                isOpen ? 'bg-point-200 text-white' : 'text-gray-400 group-hover:text-point-200'
               }`}>
-                {isOpen ? <FiMinus size={15} /> : <FiPlus size={15} />}
+                {isOpen ? <FiMinus size={16} /> : <FiPlus size={20} />}
               </span>
             </button>
             <AnimatePresence initial={false}>
@@ -52,7 +52,7 @@ export default function FAQAccordion({ faqs }: FAQAccordionProps) {
                   transition={{ duration: DUR.standard, ease: easeEnter }}
                   className="overflow-hidden"
                 >
-                  <p className="max-w-2xl pb-6 text-[15px] leading-[1.8] text-ink-2 sm:pl-[76px] sm:text-[16px]">
+                  <p className="max-w-2xl pb-6 text-[15px] leading-[1.8] text-ink-2 sm:pl-[68px] sm:text-[16px]">
                     {faq.answer}
                   </p>
                 </motion.div>

@@ -16,7 +16,7 @@ import { projects } from '@/data/projects';
 import { navItems } from '@/data/navigation';
 import { promises, type WorkPromise } from '@/data/promises';
 import { fadeLeft, fadeRight, fadeUp, stagger, staggerTight, staggerRows, rowIn, inView } from '@/lib/motion';
-import { arrowHover, chipLine, container, radiusCard, CONTACT_EMAIL, CONTACT_PHONE, KAKAO_OPEN_CHAT_URL } from '@/lib/styles';
+import { arrowHover, chipLine, container, iconTile, radiusCard, CONTACT_EMAIL, CONTACT_PHONE, KAKAO_OPEN_CHAT_URL } from '@/lib/styles';
 
 /* 머리 탭 = 상단 메뉴 '회사소개' 의 하위 메뉴. 같은 페이지 안의 칸으로 간다 */
 const TABS = (navItems.find((n) => n.href === '/team')?.children ?? []).map((c) => ({
@@ -51,7 +51,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
 export default function TeamPageClient() {
   return (
     <>
-      <PageHeader crumb="Company" title="회사소개" tabs={TABS} active="#about"
+      <PageHeader eyebrow="Company" title="회사소개" tabs={TABS} active="#about"
         desc="개발 · 디자인 · 운영이 하나의 팀으로 움직입니다. 웹 · 앱, 게임 · XR, 교육 세 영역을 각각 전담합니다." />
 
       {/* ━━ 소개 - 왼쪽 로고 판, 오른쪽 글과 회사 정보 ━━ */}
@@ -66,17 +66,17 @@ export default function TeamPageClient() {
             }}>
             <span aria-hidden className="absolute left-5 top-5 h-6 w-6 border-l-2 border-t-2 border-white/80" />
             <span aria-hidden className="absolute bottom-5 right-5 h-6 w-6 border-b-2 border-r-2 border-white/80" />
-            <span className="font-mono text-[11px] tracking-[0.18em] text-white/80 sm:text-[12px]">WEB · APP · GAME · XR · EDUCATION</span>
+            <span className="text-[11px] font-bold tracking-[0.22em] text-white/80 sm:text-[12px]">WEB · APP · GAME · XR · EDUCATION</span>
             <Image src="/images/logo.png" alt="MATE" width={1991} height={493} className="h-10 w-auto brightness-0 invert sm:h-14" />
-            <span className="font-mono text-[12px] text-white/75">Since {teamCapabilities.stats.since}</span>
+            <span className="text-[13px] text-white/75">Since {teamCapabilities.stats.since}</span>
           </motion.div>
 
           <motion.div {...inView} variants={stagger} className="lg:col-span-6 lg:col-start-7">
-            <motion.p variants={fadeUp} className="eyebrow mb-5">About:</motion.p>
+            <motion.p variants={fadeUp} className="eyebrow mb-3">About</motion.p>
             <motion.h2 variants={fadeUp} className="type-h1 text-ink">
               Unity · 웹 · 앱까지<br /><b>한 팀에서</b>
             </motion.h2>
-            <motion.p variants={fadeUp} className="mt-8 text-[18px] font-medium leading-[1.6] tracking-[-0.008em] text-ink sm:text-[20px]">
+            <motion.p variants={fadeUp} className="mt-8 text-[18px] font-bold leading-[1.6] text-ink sm:text-[20px]">
               MATE는 웹 · 앱, 게임 · XR, 교육 세 영역의 외주 개발과 자체 게임 제작 · 퍼블리싱을 함께 합니다.
             </motion.p>
             <motion.p variants={fadeUp} className="type-b3 mt-5 text-ink-2">
@@ -90,8 +90,8 @@ export default function TeamPageClient() {
             <motion.dl variants={fadeUp} className="mt-10 grid border-t border-line sm:grid-cols-2 sm:gap-x-10">
               {facts.map(([k, v]) => (
                 <div key={k} className="flex items-center justify-between gap-6 border-b border-line py-4">
-                  <dt className="text-[14px] text-ink-3">{k}</dt>
-                  <dd className="text-right text-[15px] font-semibold text-ink">{v}</dd>
+                  <dt className="text-[14px] text-gray-500">{k}</dt>
+                  <dd className="text-right text-[15px] font-bold text-ink">{v}</dd>
                 </div>
               ))}
             </motion.dl>
@@ -102,17 +102,17 @@ export default function TeamPageClient() {
       {/* ━━ 일하는 방식 - 윗선과 번호가 달린 네 단 ━━ */}
       <section id="how" data-header="light" className="bg-gray-100 py-24 sm:py-32 xl:py-40">
         <div className={container}>
-          <SectionHead eyebrow="How we work:" title={<>MATE가 <b>일하는 방식</b></>} />
+          <SectionHead eyebrow="How We Work" title={<>MATE가 <b>일하는 방식</b></>} />
           <motion.ol {...inView} variants={staggerTight} className="mt-12 grid gap-x-8 gap-y-12 sm:mt-16 sm:grid-cols-2 lg:grid-cols-4">
             {promises.map((p, i) => {
               const Icon = ICON[p.id];
               return (
                 <motion.li key={p.id} variants={fadeUp} className="border-t-2 border-ink pt-6">
                   <div className="flex items-center justify-between">
-                    <span className="font-mono text-[12px] text-ink-3">{pad(i + 1)}</span>
-                    <Icon size={20} className="text-point-200" aria-hidden />
+                    <span className="text-[15px] font-bold tabular-nums text-point-200">{pad(i + 1)}</span>
+                    <span aria-hidden className={iconTile}><Icon size={22} /></span>
                   </div>
-                  <h3 className="type-b1 mt-10 text-ink">{p.title}</h3>
+                  <h3 className="type-b1 mt-8 text-ink">{p.title}</h3>
                   <p className="mt-2 text-[14px] leading-[1.7] text-ink-2">{p.desc}</p>
                 </motion.li>
               );
@@ -124,12 +124,12 @@ export default function TeamPageClient() {
       {/* ━━ 역량 - 세 단의 목록 ━━ */}
       <section id="capabilities" data-header="light" className="bg-white py-24 sm:py-32 xl:py-40">
         <div className={container}>
-          <SectionHead eyebrow="Capabilities:"
+          <SectionHead eyebrow="Capabilities"
             title={<>유니티 외주 개발과 강의로 쌓은<br /><b>전문 역량</b></>} />
           <motion.div {...inView} variants={staggerTight} className="mt-14 grid gap-12 md:grid-cols-3 md:gap-8 lg:mt-20">
             {teamCapabilities.capabilities.map((c) => (
               <motion.div key={c.id} variants={fadeUp}>
-                <p className="font-mono text-[12px] uppercase tracking-[0.06em] text-point-200">
+                <p className="text-[14px] font-bold text-point-200">
                   {c.id === 'education' ? '진행 강의' : '납품 프로젝트'} {c.projects}+ · 경력 {c.experience}
                 </p>
                 <h3 className="type-h2 mt-3 text-ink">{c.title}</h3>
@@ -138,7 +138,7 @@ export default function TeamPageClient() {
                   {c.skills.map((s) => (
                     <li key={s} className="flex items-center justify-between gap-4 border-b border-line py-3.5 text-[15px] text-ink-2">
                       {s}
-                      <span aria-hidden className="h-[5px] w-[5px] bg-point-200" />
+                      <span aria-hidden className="h-1.5 w-1.5 rounded-pill bg-point-200" />
                     </li>
                   ))}
                 </ul>
@@ -151,12 +151,12 @@ export default function TeamPageClient() {
       {/* ━━ 조직 ━━ */}
       <section id="organization" data-header="light" className="bg-gray-100 py-24 sm:py-32 xl:py-40">
         <div className={container}>
-          <SectionHead eyebrow="Organization:" title={<><b>조직 구성</b></>}
+          <SectionHead eyebrow="Organization" title={<><b>조직 구성</b></>}
             desc="개발 · 디자인 · 운영 세 축이 하나의 팀으로 움직입니다." />
           <motion.ul {...inView} variants={staggerTight} className="mt-12 grid gap-4 md:grid-cols-3 lg:gap-5">
             {departments.map((d) => (
               <motion.li key={d.id} variants={fadeUp} className={`flex flex-col border border-line bg-white p-6 sm:p-8 ${radiusCard}`}>
-                <p className="font-mono text-[12px] uppercase tracking-[0.06em] text-point-200">{d.label}</p>
+                <p className="text-[14px] font-bold text-point-200">{d.label}</p>
                 <h3 className="type-h2 mt-2 text-ink">{d.name}</h3>
                 <p className="type-b3 mt-4 text-ink-2">{d.description}</p>
                 <ul className="mt-auto flex flex-wrap gap-1.5 pt-6">
@@ -174,15 +174,15 @@ export default function TeamPageClient() {
       {/* ━━ 오시는 길 ━━ */}
       <section id="access" data-header="light" className="bg-white py-24 sm:py-32 xl:py-40">
         <div className={container}>
-          <SectionHead eyebrow="Access:" title={<><b>오시는 길</b></>} />
+          <SectionHead eyebrow="Access" title={<><b>오시는 길</b></>} />
           <div className="mt-12 grid gap-3 lg:mt-14 lg:grid-cols-[minmax(0,868fr)_minmax(0,616fr)] lg:gap-2">
             <motion.div {...inView} variants={fadeLeft}
               className={`night-grid on-night relative flex min-h-[300px] flex-col justify-end overflow-hidden p-7 text-white sm:min-h-[400px] sm:p-10 ${radiusCard}`}>
-              <span aria-hidden className="absolute left-1/2 top-[40%] flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-[10px] bg-point-200 text-white shadow-[0_0_0_10px_rgba(38,68,203,0.25),0_0_0_22px_rgba(38,68,203,0.12)]">
+              <span aria-hidden className="absolute left-1/2 top-[40%] flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-pill bg-point-200 text-white shadow-[0_0_0_10px_rgba(38,68,203,0.25),0_0_0_22px_rgba(38,68,203,0.12)]">
                 <FiMapPin size={24} />
               </span>
-              <p className="eyebrow">{business.addressParts.region} {business.addressParts.locality}</p>
-              <p className="mt-3 text-[20px] font-medium leading-[1.45] tracking-[-0.01em] sm:text-[24px]">{business.address}</p>
+              <p className="text-[14px] font-bold text-point-light">{business.addressParts.region} {business.addressParts.locality}</p>
+              <p className="mt-2 text-[20px] font-bold leading-[1.45] sm:text-[24px]">{business.address}</p>
             </motion.div>
 
             <motion.div {...inView} variants={fadeRight} className="flex flex-col gap-2">
@@ -196,7 +196,7 @@ export default function TeamPageClient() {
                   const Icon = r.icon;
                   return (
                     <li key={r.label}>
-                      <p className="flex items-center gap-2 font-mono text-[12px] uppercase tracking-[0.04em] text-point-200"><Icon size={15} />{r.label}</p>
+                      <p className="flex items-center gap-2 text-[15px] font-bold text-point-200"><Icon size={17} />{r.label}</p>
                       {r.href ? (
                         <a href={r.href} className="mt-1.5 block break-all text-[15px] text-ink-2 hover:text-point-200"
                           {...(r.href.startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
@@ -210,7 +210,7 @@ export default function TeamPageClient() {
                 })}
               </ul>
               <motion.a variants={fadeUp} href={MAP_URL} target="_blank" rel="noopener noreferrer"
-                className="group inline-flex h-14 items-center justify-center gap-2 rounded-[6px] bg-point-200 text-[15px] font-semibold text-white transition-colors hover:bg-point-300">
+                className="group inline-flex h-14 items-center justify-center gap-2 rounded-pill bg-point-200 text-[15px] font-bold text-white transition-colors hover:bg-point-300">
                 <FiMapPin size={17} />
                 카카오맵에서 보기
                 <FiArrowUpRight size={15} className={arrowHover} />

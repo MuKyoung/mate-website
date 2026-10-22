@@ -16,7 +16,7 @@ export default function ProjectsPageClient({ projects }: ProjectsPageClientProps
 
   return (
     <>
-      <PageHeader crumb="Portfolio" title="프로젝트 포트폴리오"
+      <PageHeader eyebrow="Portfolio" title="프로젝트 포트폴리오"
         desc={`게임 · VR ${count('game')}건, 웹 · 앱 ${count('web')}건, 강의 ${count('edu')}건. 전부 납품이 끝난 것들입니다.`} />
 
       <section data-header="light" className="bg-white py-20 sm:py-24 xl:pb-40 xl:pt-28">

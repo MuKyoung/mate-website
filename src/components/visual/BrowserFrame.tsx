@@ -24,7 +24,7 @@ export default function BrowserFrame({
           <span className="h-2.5 w-2.5 rounded-pill bg-gray-300" />
           <span className="h-2.5 w-2.5 rounded-pill bg-gray-300" />
         </span>
-        <span className="truncate rounded-[4px] bg-white px-3 py-1 font-mono text-[11px] tracking-[0.02em] text-ink-3">{url}</span>
+        <span className="truncate rounded-pill bg-white px-3.5 py-1 text-[12px] font-medium text-gray-500">{url}</span>
       </div>
       <div className="relative aspect-[16/10]">
         <SafeImage src={src} alt={alt} fill className="absolute inset-0 [&_img]:!object-top" placeholder={<ThumbFallback />} />

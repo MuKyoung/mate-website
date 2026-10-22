@@ -10,7 +10,7 @@ import ProjectCard from '@/components/ProjectCard';
 import SectionHead from '@/components/ui/SectionHead';
 import { domainLabel, domainOf, projects } from '@/data/projects';
 import { fadeUp, stagger, staggerTight, inView, onMount } from '@/lib/motion';
-import { arrowHover, btnLine, btnPoint, chip, container, radiusCard } from '@/lib/styles';
+import { arrowHover, btnLine, btnPoint, chipLine, container, radiusCard } from '@/lib/styles';
 
 function getYouTubeVideoId(url: string): string | null {
   const patterns = [
@@ -74,17 +74,17 @@ export default function ProjectDetailClient({ params }: Props) {
         <div className={container}>
           <motion.div {...onMount} variants={stagger} className="mx-auto max-w-[920px]">
             <motion.div variants={fadeUp} className="flex items-center justify-between gap-4">
-              <Link href="/projects" className="group inline-flex items-center gap-2 font-mono text-[12px] uppercase tracking-[0.06em] text-ink-3 hover:text-point-200">
-                <FiArrowLeft size={13} className="transition-transform group-hover:-translate-x-0.5" />
+              <Link href="/projects" className="group inline-flex items-center gap-3 text-[15px] font-bold text-gray-500 transition-colors hover:text-point-200">
+                <span aria-hidden className="flex h-9 w-9 items-center justify-center rounded-pill border border-[#d1d7de] transition-colors group-hover:border-point-200">
+                  <FiArrowLeft size={16} className="transition-transform group-hover:-translate-x-0.5" />
+                </span>
                 Projects
               </Link>
-              <span className="font-mono text-[12px] tracking-[0.06em] text-ink-3">Case {no}</span>
+              <span className="text-[15px] font-bold text-point-200">Case {no}</span>
             </motion.div>
 
-            <motion.span variants={fadeUp} className={`${chip} mt-10`}>{domainLabel[domain]}</motion.span>
-            <motion.h1 variants={fadeUp}
-              className="mt-4 font-medium leading-[1.15] tracking-[-0.022em] text-ink"
-              style={{ fontSize: 'clamp(2.125rem, 1.2rem + 2.6vw, 3.75rem)' }}>
+            <motion.span variants={fadeUp} className={`${chipLine} mt-10`}>{domainLabel[domain]}</motion.span>
+            <motion.h1 variants={fadeUp} className="type-h1 mt-4 font-bold text-ink">
               {project.title}
             </motion.h1>
             <motion.p variants={fadeUp} className="mt-5 text-[17px] leading-[1.7] text-ink-2 sm:text-[19px]">
@@ -94,8 +94,8 @@ export default function ProjectDetailClient({ params }: Props) {
             <motion.dl variants={fadeUp} className="mt-8 flex flex-wrap gap-x-10 gap-y-3 border-y border-line py-4">
               {meta.map(([k, v]) => (
                 <div key={k} className="flex items-baseline gap-3 text-[14px]">
-                  <dt className="font-mono text-[11px] uppercase tracking-[0.06em] text-ink-3">{k}</dt>
-                  <dd className="font-medium text-ink">{v}</dd>
+                  <dt className="text-[13px] font-bold text-gray-500">{k}</dt>
+                  <dd className="font-bold text-ink">{v}</dd>
                 </div>
               ))}
             </motion.dl>
@@ -121,7 +121,7 @@ export default function ProjectDetailClient({ params }: Props) {
             {/* 개요 - 내용이 한 줄 소개와 다를 때만 */}
             {overview && (
               <motion.div {...inView} variants={fadeUp} className="mt-16 grid gap-6 sm:mt-20 md:grid-cols-[200px_1fr]">
-                <p className="eyebrow">Overview:</p>
+                <p className="eyebrow">Overview</p>
                 <p className="whitespace-pre-line text-[16px] leading-[1.9] text-ink-2 sm:text-[17px]">{overview}</p>
               </motion.div>
             )}
@@ -165,9 +165,9 @@ export default function ProjectDetailClient({ params }: Props) {
       {/* ── 다른 작업 ── */}
       <section data-header="light" className="bg-gray-100 py-20 sm:py-28 xl:py-32">
         <div className={container}>
-          <SectionHead eyebrow="More work:" title={<>다른 작업 <b>살펴보기</b></>}
+          <SectionHead eyebrow="More Work" title={<>다른 작업 <b>살펴보기</b></>}
             more={{ href: '/projects', label: '목록으로' }} />
-          <motion.div {...inView} variants={staggerTight} className="mt-12 grid gap-x-5 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
+          <motion.div {...inView} variants={staggerTight} className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
             {related.map((p) => <ProjectCard key={p.id} project={p} />)}
           </motion.div>
         </div>

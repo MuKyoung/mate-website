@@ -2,10 +2,10 @@
 
 import { motion } from 'framer-motion';
 import { fadeLeft, fadeUp, stagger, inView } from '@/lib/motion';
-import { chipLine, container } from '@/lib/styles';
+import { chip, container } from '@/lib/styles';
 
 interface DomainIntroProps {
-  /** 칸 이름 - "Web & App:" */
+  /** 섹션의 작은 영문 이름 - "Web & App" */
   eyebrow: string;
   title: React.ReactNode;
   desc: React.ReactNode;
@@ -27,22 +27,22 @@ export default function DomainIntro({ eyebrow, title, desc, media, stats, tags }
         </motion.div>
 
         <motion.div {...inView} variants={stagger} className="lg:col-span-5 lg:col-start-8">
-          <motion.p variants={fadeUp} className="eyebrow mb-5">{eyebrow}</motion.p>
+          <motion.p variants={fadeUp} className="eyebrow mb-3">{eyebrow}</motion.p>
           <motion.h2 variants={fadeUp} className="type-h1 text-ink">{title}</motion.h2>
           <motion.p variants={fadeUp} className="type-b3 mt-6 text-ink-2">{desc}</motion.p>
           {stats && stats.length > 0 && (
-            <motion.dl variants={fadeUp} className="mt-9 grid grid-cols-2 gap-6 border-t border-line pt-6 sm:grid-cols-3">
+            <motion.dl variants={fadeUp} className="mt-9 grid grid-cols-2 gap-6 border-t border-gray-200 pt-6 sm:grid-cols-3">
               {stats.map((s) => (
                 <div key={s.label} className="flex flex-col-reverse">
-                  <dt className="mt-2 text-[13px] text-ink-3">{s.label}</dt>
-                  <dd className="text-[34px] font-medium leading-none tracking-[-0.02em] text-ink">{s.value}</dd>
+                  <dt className="mt-2 text-[13px] font-bold text-gray-500">{s.label}</dt>
+                  <dd className="text-[36px] font-bold leading-none text-ink">{s.value}</dd>
                 </div>
               ))}
             </motion.dl>
           )}
           {tags && tags.length > 0 && (
             <motion.div variants={fadeUp} className="mt-7 flex flex-wrap gap-1.5">
-              {tags.map((t) => <span key={t} className={chipLine}>{t}</span>)}
+              {tags.map((t) => <span key={t} className={chip}>{t}</span>)}
             </motion.div>
           )}
         </motion.div>

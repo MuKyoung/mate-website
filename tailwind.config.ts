@@ -5,8 +5,8 @@ import type { Config } from "tailwindcss";
  *
  * 색은 CSS 변수(globals.css `:root`)가 단일 원천이고 여기서는 이름만 노출한다.
  * 변수 하나만 바꾸면 Tailwind 클래스가 함께 따라온다.
- * 색은 Figma 「(주)세종호이스트크레인 웹사이트 리뉴얼」 사다리에서 주요 색만 로고 파랑으로 바꿨고,
- * 칸의 짜임과 라벨은 그 사이트와 같아 보이지 않게 MATE 것을 섞었다 (2026-10-22).
+ * 모양은 Figma 「(주)세종호이스트크레인 웹사이트 리뉴얼」 디자인 시스템이고, 주요 색만 로고 파랑이다.
+ * 칸의 짜임(섹션 배치)만 그 사이트와 다르게 둔다 (2026-10-22).
  */
 const config: Config = {
   content: [
@@ -31,17 +31,7 @@ const config: Config = {
           "Malgun Gothic",
           "sans-serif",
         ],
-        // 칸 이름 · 번호 · 분류 같은 라벨용 등폭
-        mono: [
-          "Geist Mono",
-          "ui-monospace",
-          "SFMono-Regular",
-          "Menlo",
-          "Consolas",
-          "Pretendard Variable",
-          "Pretendard",
-          "monospace",
-        ],
+        mono: ["ui-monospace", "SFMono-Regular", "Menlo", "Consolas", "monospace"],
       },
 
       // ── Color System ─────────────────────────────────────────
