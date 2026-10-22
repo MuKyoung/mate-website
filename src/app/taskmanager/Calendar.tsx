@@ -1,18 +1,13 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import type { DomainKey, Task } from './types';
-import { ghBtn } from './ui';
+import { DOMAINS, type DomainKey, type Task } from './types';
+import { DOMAIN_FILL, IconArrow, IconPlus, tmGhostBtn, tmIconBtn } from './ui';
 
 const DAY = 86400000;
 const WEEKDAY = ['일', '월', '화', '수', '목', '금', '토'];
 
-const DOT: Record<DomainKey, string> = {
-  web: 'bg-gh-accent',
-  game: 'bg-gh-done',
-  edu: 'bg-gh-attention',
-  ops: 'bg-gh-neutral',
-};
+const DOT: Record<DomainKey, string> = DOMAIN_FILL;
 
 const iso = (d: Date) => {
   const z = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
@@ -66,43 +61,31 @@ export default function Calendar({
   const move = (n: number) => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + n, 1));
   const toThisMonth = () => { const d = new Date(); setCursor(new Date(d.getFullYear(), d.getMonth(), 1)); };
 
-  const navBtn =
-    'flex h-8 w-8 items-center justify-center rounded-md border border-gh-border bg-gh-canvas-subtle ' +
-    'text-gh-fg-muted transition-colors duration-150 hover:bg-gh-canvas-mute hover:text-gh-fg';
-
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      {/* 도구 막대 */}
-      <div className="flex shrink-0 items-center gap-2 border-b border-gh-border bg-gh-canvas px-4 py-2">
-        <button onClick={() => move(-1)} className={navBtn} aria-label="이전 달">
-          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden>
-            <path d="M9.5 4L5.5 8l4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+      {/* 달 넘기기 */}
+      <div className="mb-3.5 flex flex-none flex-wrap items-center gap-2.5">
+        <button type="button" onClick={() => move(-1)} className={tmIconBtn} aria-label="이전 달">
+          <IconArrow dir="left" />
         </button>
-        <button onClick={() => move(1)} className={navBtn} aria-label="다음 달">
-          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden>
-            <path d="M6.5 4l4 4-4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+        <button type="button" onClick={() => move(1)} className={tmIconBtn} aria-label="다음 달">
+          <IconArrow dir="right" />
         </button>
-        <h2 className="ml-1 text-[15px] font-semibold tabular-nums text-gh-fg">
+        <h2 className="mx-1 text-[20px] font-extrabold tabular-nums tracking-[-0.01em] text-tm-deep">
           {cursor.getFullYear()}년 {cursor.getMonth() + 1}월
         </h2>
-        <button onClick={toThisMonth}
-          className={ghBtn}>
+        <button type="button" onClick={toThisMonth} className={tmGhostBtn}>
           이번 달
         </button>
-        <span className="ml-auto text-[12.5px] text-gh-fg-muted">
-          빈 칸을 누르면 새 작업 · 항목을 끌면 마감일이 바뀝니다
-        </span>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-auto p-4">
-        <div className="overflow-hidden rounded-md border border-gh-border bg-gh-canvas">
+      <div className="min-h-0 flex-1 overflow-auto">
+        <div className="overflow-hidden rounded-tm border border-tm-line bg-white shadow-tm">
           {/* 요일 머리 */}
-          <div className="grid grid-cols-7 border-b border-gh-border bg-gh-canvas-subtle">
+          <div className="grid grid-cols-7 border-b border-tm-line bg-tm-bg">
             {WEEKDAY.map((w, i) => (
-              <div key={w} className={`px-2 py-2 text-center text-[12.5px] font-semibold ${
-                i === 0 ? 'text-gh-danger-fg' : i === 6 ? 'text-gh-accent-fg' : 'text-gh-fg-muted'}`}>
+              <div key={w} className={`py-2.5 text-center text-[13px] font-bold ${
+                i === 0 ? 'text-tm-red-deep' : i === 6 ? 'text-tm-blue' : 'text-tm-sub'}`}>
                 {w}
               </div>
             ))}
@@ -134,26 +117,25 @@ export default function Calendar({
                     setDragId(null);
                     setOverKey(null);
                   }}
-                  className={`group min-h-[126px] cursor-pointer border-b border-r border-gh-border-muted p-1.5 transition
-                              last:border-r-0
+                  className={`group min-h-[120px] cursor-pointer border-b border-r border-tm-line p-2 transition-colors duration-150
                               ${i % 7 === 6 ? 'border-r-0' : ''}
                               ${i >= 35 ? 'border-b-0' : ''}
-                              ${outside ? 'bg-gh-canvas-subtle/40' : ''}
-                              ${overKey === key ? 'bg-gh-accent-subtle ring-1 ring-inset ring-gh-accent-border' : 'hover:bg-gh-canvas-subtle/70'}`}>
-                  <div className="mb-1 flex items-center justify-between px-0.5">
-                    <span className={`text-[12.5px] tabular-nums ${
-                      isToday ? 'flex h-[19px] w-[19px] items-center justify-center rounded-full bg-gh-accent font-semibold text-white'
-                        : outside ? 'text-gh-fg-subtle'
-                          : weekend ? (d.getDay() === 0 ? 'text-gh-danger-fg' : 'text-gh-accent-fg')
-                            : 'text-gh-fg-muted'}`}>
+                              ${overKey === key
+                                ? 'bg-tm-tint shadow-[inset_0_0_0_2px_#2644cb]'
+                                : outside ? 'bg-tm-bg/60 hover:bg-tm-tint/60' : 'hover:bg-tm-tint/60'}`}>
+                  <div className="pointer-events-none mb-1 flex items-center justify-between">
+                    <span className={`grid h-6 min-w-6 place-items-center rounded-full px-1 text-[13px] tabular-nums ${
+                      isToday ? 'bg-tm-blue font-bold text-white'
+                        : outside ? 'font-semibold text-tm-edge'
+                          : weekend ? (d.getDay() === 0 ? 'font-bold text-tm-red-deep' : 'font-bold text-tm-blue')
+                            : 'font-semibold text-tm-ink'}`}>
                       {d.getDate()}
                     </span>
-                    <button onClick={(e) => { e.stopPropagation(); onCreateAt(key); }}
+                    <button type="button" onClick={(e) => { e.stopPropagation(); onCreateAt(key); }}
                       aria-label={`${d.getMonth() + 1}월 ${d.getDate()}일에 작업 추가`}
-                      className="rounded p-0.5 text-gh-fg-subtle opacity-0 transition group-hover:opacity-100 hover:bg-gh-border hover:text-gh-fg-muted">
-                      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden>
-                        <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                      </svg>
+                      className="pointer-events-auto grid h-6 w-6 place-items-center rounded-md text-tm-sub opacity-0 transition
+                                 hover:bg-white hover:text-tm-blue focus-visible:opacity-100 group-hover:opacity-100">
+                      <IconPlus size={15} />
                     </button>
                   </div>
 
@@ -162,7 +144,7 @@ export default function Calendar({
                       const done = t.status === 'done';
                       const overdue = !done && key < todayKey;
                       return (
-                        <button key={t.id} onClick={(e) => { e.stopPropagation(); onOpen(t.id); }}
+                        <button key={t.id} type="button" onClick={(e) => { e.stopPropagation(); onOpen(t.id); }}
                           title={`${t.title} · 다른 날로 끌어다 놓으면 마감일이 바뀝니다`}
                           draggable
                           onDragStart={(e) => {
@@ -172,18 +154,18 @@ export default function Calendar({
                             setDragId(t.id);
                           }}
                           onDragEnd={() => { setDragId(null); setOverKey(null); }}
-                          className={`flex w-full items-center gap-1 rounded px-1 py-[3px] text-left text-[12px] transition
-                                      hover:bg-gh-canvas-mute ${done ? 'opacity-50' : ''} ${dragId === t.id ? 'opacity-40' : ''}`}>
+                          className={`flex w-full items-center gap-1.5 rounded-md px-1.5 py-1 text-left text-[13px] leading-[1.35] transition-colors
+                                      hover:bg-white hover:shadow-tm ${done ? 'opacity-55' : ''} ${dragId === t.id ? 'opacity-40' : ''}`}>
                           <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${DOT[t.domain]}`} />
                           <span className={`truncate ${
-                            done ? 'text-gh-fg-muted line-through' : overdue ? 'font-medium text-gh-danger-fg' : 'text-gh-fg'}`}>
+                            done ? 'font-semibold text-tm-sub line-through' : overdue ? 'font-bold text-tm-red-deep' : 'font-semibold text-tm-ink'}`}>
                             {t.title}
                           </span>
                         </button>
                       );
                     })}
                     {items.length > 3 && (
-                      <p className="px-1 text-[11.5px] text-gh-fg-muted">+{items.length - 3}건 더</p>
+                      <p className="pointer-events-none px-1.5 text-[12.5px] font-semibold text-tm-sub">+{items.length - 3}건 더</p>
                     )}
                   </div>
                 </div>
@@ -193,15 +175,15 @@ export default function Calendar({
         </div>
 
         {/* 범례 + 마감 없는 작업 */}
-        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 px-1">
-          {(Object.keys(DOT) as DomainKey[]).map((d) => (
-            <span key={d} className="inline-flex items-center gap-1.5 text-[12.5px] text-gh-fg-muted">
-              <span className={`h-1.5 w-1.5 rounded-full ${DOT[d]}`} />
-              {d === 'web' ? '웹 · 앱' : d === 'game' ? '게임 · XR' : d === 'edu' ? '교육 · 강의' : '내부 · 운영'}
+        <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 px-1">
+          {DOMAINS.map((d) => (
+            <span key={d.id} className="inline-flex items-center gap-2 text-[13.5px] font-semibold text-tm-sub">
+              <span className={`h-2 w-2 rounded-full ${DOT[d.id]}`} />
+              {d.label}
             </span>
           ))}
           {undated.length > 0 && (
-            <span className="ml-auto text-[12.5px] text-gh-fg-muted">
+            <span className="ml-auto text-[13.5px] text-tm-sub">
               마감일 없는 작업 {undated.length}건은 캘린더에 올라오지 않습니다
             </span>
           )}

@@ -72,32 +72,25 @@ const config: Config = {
         success: "var(--success)",
         danger: "var(--danger)",
 
-        // ── GitHub Primer (light) — /taskmanager 전용 ──────────
-        // 사내 도구는 마케팅 사이트와 완전히 다른 체계를 쓴다.
-        // 고정 HEX 인 이유: 테마 토글이 없는 라이트 전용 화면이고,
-        // GitHub 색을 그대로 쓰는 것이 목적이라 파생값을 두지 않는다.
-        gh: {
-          canvas: { DEFAULT: "#ffffff", subtle: "#f6f8fa", mute: "#eaeef2" },
-          border: { DEFAULT: "#d1d9e0", muted: "#e4e8ec", strong: "#afb8c1" },
-          fg: { DEFAULT: "#1f2328", muted: "#59636e", subtle: "#818b98", on: "#ffffff" },
-          accent: {
-            DEFAULT: "#0969da", hover: "#0860ca", active: "#0757ba",
-            fg: "#0969da", subtle: "#ddf4ff", border: "#54aeff",
-          },
-          success: {
-            DEFAULT: "#1f883d", hover: "#1a7f37", fg: "#1a7f37",
-            subtle: "#dafbe1", border: "#4ac26b",
-          },
-          done: { DEFAULT: "#8250df", fg: "#8250df", subtle: "#fbefff", border: "#c297ff" },
-          danger: {
-            DEFAULT: "#cf222e", hover: "#a40e26", fg: "#cf222e",
-            subtle: "#ffebe9", border: "#ff818a",
-          },
-          attention: {
-            DEFAULT: "#bf8700", fg: "#9a6700",
-            subtle: "#fff8c5", border: "#d4a72c",
-          },
-          neutral: { DEFAULT: "#6e7781", muted: "#818b9826" },
+        // ── 작업 관리 도구(/taskmanager) 전용 ──────────────────
+        // 세종호이스트크레인 리뉴얼 관리자의 틀과 값을 옮겼다(2026-10-22).
+        // 세종 네이비 자리에는 로고 파랑 #2644CB 를, 제목 글자에는 한 단계 짙은 파랑을 쓴다.
+        // 빨강 · 호박색 · 초록은 급함 · 임박 · 끝남에만, 보라 · 청록은 영역을 가르는 데만 쓴다.
+        // 고정 HEX 인 이유: 라이트 전용 화면이고, bg-tm-blue/20 같은 투명도 표기가 먹어야 한다.
+        tm: {
+          blue: { DEFAULT: "#2644cb", hover: "#2e5bf0" }, // 채움 · 고른 메뉴 · 초점 - 흰 글자 7.6:1
+          deep: "#18308f", // 제목 글자 · 알림 바탕
+          tint: "#eef2ff", // 마우스를 올린 칸 · 숫자 알약 바탕 - 파란 글자 6.8:1
+          ink: "#1b2430",  // 본문
+          sub: "#5b6676",  // 보조 글자 - 흰 바탕 5.8:1, bg 5.4:1
+          line: "#d7dce4", // 구분선 · 카드 테두리
+          edge: "#7f8b9e", // 입력 칸 · 버튼 테두리 - 흰 바탕 3.4:1
+          bg: "#f4f6f9",   // 바탕
+          red: { DEFAULT: "#d32d27", deep: "#a81f1b", tint: "#fdeeec", line: "#dc8f8b" },
+          ok: { DEFAULT: "#17805a", deep: "#0f5d41", tint: "#e3f4ec" },
+          warn: { DEFAULT: "#8a5a00", deep: "#553d0c", tint: "#fff7e8" },
+          violet: { DEFAULT: "#6a4c93", deep: "#4f3772", tint: "#f1ecf8" },
+          teal: { DEFAULT: "#0f766e", deep: "#115e59", tint: "#e2f3f1" },
         },
       },
 
@@ -108,16 +101,37 @@ const config: Config = {
         card: "10px",
         "card-sm": "8px",
         pill: "9999px",
+        // /taskmanager - 세종 관리자의 모서리
+        "tm-sm": "10px", // 메뉴 줄 · 작은 버튼 · 입력 칸
+        "tm-btn": "12px", // 큰 버튼
+        tm: "14px", // 카드
+        "tm-lg": "18px", // 창
       },
       boxShadow: {
         // Figma effect - 0 0 15px rgba(0,0,0,.15). 목록 카드처럼 흰 면 위에 뜨는 판
         float: "0 0 15px rgba(0, 0, 0, 0.08)",
         "float-lg": "0 10px 30px rgba(22, 29, 60, 0.12)",
-        // GitHub 은 그림자를 아끼고 1px 테두리로 면을 나눈다. 띄우는 건 오버레이뿐.
-        "gh-sm": "0 1px 3px rgba(31, 35, 40, 0.06)",
-        "gh-md": "0 3px 8px rgba(31, 35, 40, 0.15)",
-        "gh-lg": "0 8px 24px rgba(31, 35, 40, 0.12)",
-        "gh-inset": "inset 0 1px 0 0 rgba(0, 33, 85, 0.2)",
+        // /taskmanager - 평소에는 거의 없고, 마우스를 올리거나 띄울 때만 깊어진다
+        tm: "0 1px 2px rgba(22, 39, 60, 0.06)",
+        "tm-up": "0 14px 32px rgba(22, 39, 60, 0.14)",
+        "tm-pop": "0 28px 72px rgba(15, 26, 41, 0.34)",
+        "tm-toast": "0 14px 36px rgba(15, 26, 41, 0.36)",
+      },
+      // /taskmanager - 창 · 알림 · 옆 패널이 나타나는 움직임 (세종 관리자 값)
+      keyframes: {
+        "tm-fade": { from: { opacity: "0" }, to: { opacity: "1" } },
+        "tm-pop": {
+          from: { opacity: "0", transform: "translateY(8px) scale(0.985)" },
+          to: { opacity: "1", transform: "none" },
+        },
+        "tm-rise": { from: { opacity: "0", transform: "translateY(12px)" }, to: { opacity: "1", transform: "none" } },
+        "tm-slide": { from: { opacity: "0", transform: "translateX(24px)" }, to: { opacity: "1", transform: "none" } },
+      },
+      animation: {
+        "tm-fade": "tm-fade 120ms linear",
+        "tm-pop": "tm-pop 200ms cubic-bezier(0.2, 0.6, 0.25, 1)",
+        "tm-rise": "tm-rise 200ms cubic-bezier(0.2, 0.6, 0.25, 1)",
+        "tm-slide": "tm-slide 200ms cubic-bezier(0.2, 0.6, 0.25, 1)",
       },
 
       // 12칼럼 그리드 / gutter 16px

@@ -4,14 +4,14 @@ import { useMemo, useState } from 'react';
 import {
   DOMAINS, MEMBERS, memberById, type DomainKey, type Task,
 } from './types';
-import { Avatar, DueBadge, PriorityDot, STATUS_STYLE, ghField } from './ui';
+import { Avatar, DOMAIN_FILL, DueBadge, PriorityDot, STATUS_STYLE, tmCount, tmSelect } from './ui';
 
 /**
  * 로드맵 - 영역 × 시간대 격자.
  *
  * 보드는 "지금 어느 단계냐", 타임라인은 "며칠에 걸쳐 있냐"를 본다.
- * 로드맵은 그 둘 다 아닌 "언제쯤 나가느냐"만 본다. 날짜를 달 단위로
- * 뭉개고 영역별로 줄을 세우면, 어느 영역이 어느 달에 비어 있는지가
+ * 로드맵은 그 둘 다 아닌 "언제쯤 나가느냐"만 본다. 날짜를 주 단위로
+ * 뭉개고 영역별로 줄을 세우면, 어느 영역이 어느 주에 비어 있는지가
  * 한 눈에 들어온다 - 일정 협의와 인력 배치는 이 그림으로 한다.
  */
 
@@ -107,90 +107,85 @@ export default function Roadmap({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      {/* 도구 막대 */}
-      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-gh-border bg-gh-canvas px-4 py-2">
+      {/* 보기 설정 */}
+      <div className="mb-3.5 flex flex-none flex-wrap items-center gap-2.5">
         <label className="sr-only" htmlFor="rm-group">묶는 기준</label>
         <select id="rm-group" value={groupBy} onChange={(e) => setGroupBy(e.target.value as GroupBy)}
-          className={ghField}>
+          className={tmSelect}>
           <option value="domain">영역별</option>
           <option value="assignee">담당자별</option>
         </select>
-        <span className="ml-auto text-[12.5px] text-gh-fg-muted">
-          마감일 기준입니다 · 지난 일정은 이번 주에 모아 둡니다
-        </span>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-auto p-4">
+      <div className="min-h-0 flex-1 overflow-auto">
         {lanes.length === 0 ? (
-          <p className="py-20 text-center text-[14px] text-gh-fg-muted">조건에 맞는 작업이 없습니다.</p>
+          <div className="flex flex-col items-center gap-2 rounded-tm border border-tm-line bg-white px-6 py-[72px] text-center shadow-tm">
+            <p className="text-[20px] font-extrabold text-tm-deep">조건에 맞는 작업이 없습니다</p>
+            <p className="text-[15.5px] text-tm-ink">걸러 보기를 풀거나 다른 범위를 골라 보세요.</p>
+          </div>
         ) : (
-          <div className="min-w-[860px]">
+          <div className="min-w-[900px] pb-1">
             {/* 시간대 머리 */}
-            <div className="grid grid-cols-[168px_repeat(4,minmax(0,1fr))] gap-3 pb-2">
+            <div className="grid grid-cols-[184px_repeat(4,minmax(0,1fr))] gap-3.5 pb-2.5">
               <span />
               {HORIZONS.map((h, i) => (
-                <div key={h.id} className="flex items-baseline gap-2 px-1">
-                  <h2 className="text-[14px] font-semibold text-gh-fg">{h.label}</h2>
+                <div key={h.id} className="flex items-center gap-2 px-1">
+                  <h2 className="text-[15.5px] font-extrabold text-tm-deep">{h.label}</h2>
                   {i < 2 && (
-                    <span className="text-[12px] tabular-nums text-gh-fg-subtle">{weekLabel(i)}</span>
+                    <span className="text-[13px] font-semibold tabular-nums text-tm-sub">{weekLabel(i)}</span>
                   )}
-                  <span className="ml-auto text-[12px] tabular-nums text-gh-fg-muted">
-                    {perHorizon[h.id]}
-                  </span>
+                  <span className={`ml-auto ${tmCount}`}>{perHorizon[h.id]}</span>
                 </div>
               ))}
             </div>
 
             {/* 영역 × 시간대 */}
-            <div className="space-y-3">
+            <div className="space-y-3.5">
               {lanes.map((lane) => (
                 <div key={lane.id}
-                  className="grid grid-cols-[168px_repeat(4,minmax(0,1fr))] items-stretch gap-3">
-                  <div className="flex items-start gap-2 pt-3">
+                  className="grid grid-cols-[184px_repeat(4,minmax(0,1fr))] items-stretch gap-3.5">
+                  <div className="flex items-start gap-2.5 pt-3.5">
                     {groupBy === 'domain' ? (
-                      <span className={`mt-[5px] h-2 w-2 shrink-0 rounded-sm ${
-                        lane.id === 'web' ? 'bg-gh-accent'
-                          : lane.id === 'game' ? 'bg-gh-done'
-                            : lane.id === 'edu' ? 'bg-gh-attention'
-                              : 'bg-gh-neutral'}`} />
+                      <span className={`mt-[7px] h-2.5 w-2.5 shrink-0 rounded-[3px] ${DOMAIN_FILL[lane.id as DomainKey]}`} />
                     ) : (
-                      <Avatar id={lane.id === '__none' ? null : lane.id} size={18} />
+                      <Avatar id={lane.id === '__none' ? null : lane.id} size={26} />
                     )}
                     <div className="min-w-0">
-                      <p className="truncate text-[14px] font-semibold text-gh-fg">
+                      <p className="truncate text-[15px] font-bold text-tm-ink">
                         {groupBy === 'domain' ? lane.label : memberById(lane.id)?.name ?? '미배정'}
                       </p>
-                      <p className="text-[12px] tabular-nums text-gh-fg-muted">{lane.total}건</p>
+                      <p className="text-[13px] font-semibold tabular-nums text-tm-sub">{lane.total}건</p>
                     </div>
                   </div>
 
                   {lane.cells.map((cell) => (
                     <div key={cell.horizon}
-                      className={`min-h-[76px] rounded-md border p-2 ${
+                      className={`min-h-[84px] rounded-tm p-2 ${
                         cell.items.length
-                          ? 'border-gh-border bg-gh-canvas'
-                          : 'border-dashed border-gh-border bg-gh-canvas-subtle'}`}>
+                          ? 'border border-tm-line bg-white shadow-tm'
+                          : 'border-2 border-dashed border-tm-line'}`}>
                       {cell.items.length === 0 ? (
                         <span className="sr-only">없음</span>
                       ) : (
                         <ul className="space-y-1.5">
                           {cell.items.map((t) => (
                             <li key={t.id}>
-                              <button onClick={() => onOpen(t.id)}
-                                className="group w-full rounded-md border border-gh-border bg-gh-canvas px-2 py-1.5 text-left
-                                           transition-colors duration-150 hover:border-gh-border-strong hover:bg-gh-canvas-subtle">
-                                <span className="mb-1 flex items-center gap-1.5">
+                              {/* 흰 칸 안의 항목은 세종 관리자 홈의 할 일 줄처럼 회색 바탕 */}
+                              <button type="button" onClick={() => onOpen(t.id)}
+                                className="w-full rounded-tm-sm bg-tm-bg px-3 py-2.5 text-left transition-[background-color,box-shadow] duration-150
+                                           hover:bg-tm-tint hover:shadow-[inset_0_0_0_1px_#2644cb]">
+                                <span className="mb-1 flex items-center gap-2">
                                   <span className={`h-2 w-2 shrink-0 rounded-full ${STATUS_STYLE[t.status].dot}`} />
-                                  <span className="gh-mono text-[11.5px] tabular-nums text-gh-fg-muted">{t.key}</span>
+                                  <span className="text-[12.5px] font-bold tabular-nums text-tm-sub">{t.key}</span>
                                   <span className="ml-auto"><PriorityDot p={t.priority} /></span>
                                 </span>
-                                <span className={`block text-[13px] leading-[1.4] ${
-                                  t.status === 'done' ? 'text-gh-fg-muted line-through' : 'text-gh-fg'}`}>
+                                <span className={`block text-[14px] font-bold leading-[1.45] ${
+                                  t.status === 'done' ? 'text-tm-sub line-through' : 'text-tm-ink'}`}>
                                   {t.title}
                                 </span>
-                                <span className="mt-1 flex items-center justify-between gap-2">
+                                <span className="mt-1.5 flex min-h-[22px] items-center justify-between gap-2">
                                   <DueBadge due={t.due} done={t.status === 'done'} />
-                                  <Avatar id={t.assignee} size={18} />
+                                  <span className="ml-auto"><Avatar id={t.assignee} size={22} /></span>
                                 </span>
                               </button>
                             </li>

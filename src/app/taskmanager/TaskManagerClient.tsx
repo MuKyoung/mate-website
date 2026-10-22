@@ -1,16 +1,19 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { isUntouchedSample, useTaskStore } from './store';
 import {
   DOMAINS, MEMBERS, PRIORITIES, STATUSES,
-  domainLabel, priorityLabel,
+  domainLabel, memberById, priorityLabel,
   type DomainKey, type Priority, type Status, type Task,
 } from './types';
 import {
-  Avatar, Chip, DOMAIN_STYLE, DueBadge, PRIORITY_STYLE, PriorityDot, STATUS_STYLE, TaskCard,
-  ghBtn, ghBtnPrimary, ghCounter, ghField,
+  Avatar, Chip, DOMAIN_FILL, DOMAIN_STYLE, DueBadge, IconChevron, IconNav, IconPlus, IconSearch, Modal,
+  PRIORITY_STYLE, PageHead, PriorityDot, STATUS_STYLE, StatusPill, TaskCard, Toast,
+  tmBtn, tmBtnPrimary, tmCallout, tmCount, tmGhostBtn, tmIconBtnSm, tmInput, tmSelect, tmTab, tmTextBtn,
+  type NavIcon,
 } from './ui';
 import { NewTaskDialog, TaskPanel, type Draft } from './TaskPanel';
 import Timeline from './Timeline';
@@ -19,17 +22,27 @@ import Roadmap from './Roadmap';
 import Docs from './Docs';
 import { useDocStore } from './docStore';
 
+/*
+ * 작업 관리 도구의 틀 - 세종호이스트크레인 리뉴얼 관리자의 틀을 옮겼다(2026-10-22).
+ * 넓은 화면: 왼쪽 흰 메뉴(로고 · 범위 · 영역 · 위키, 아래에 홈페이지와 지금 쓰는 사람) + 오른쪽 본문.
+ * 좁은 화면(900 이하): 위쪽 띠(로고 · 사람 메뉴) + 본문 + 아래쪽 메뉴(자주 쓰는 셋 + 전체 메뉴 창).
+ * 본문은 화면 높이에 맞춰 두고, 보드 칸 · 표 · 타임라인이 저마다 안에서 스크롤한다.
+ */
+
 type View = 'board' | 'list' | 'timeline' | 'calendar' | 'roadmap';
 type Section = 'tasks' | 'docs';
 
-const VIEWS: { id: View; label: string; key: string }[] = [
-  { id: 'board', label: '보드', key: 'b' },
-  { id: 'list', label: '목록', key: 'l' },
-  { id: 'timeline', label: '타임라인', key: 't' },
-  { id: 'calendar', label: '캘린더', key: 'c' },
-  { id: 'roadmap', label: '로드맵', key: 'r' },
+/** 보기 - hint 는 쪽 머리의 설명 줄에 나온다 */
+const VIEWS: { id: View; label: string; key: string; hint: string }[] = [
+  { id: 'board', label: '보드', key: 'b', hint: '카드를 끌어 다른 단계로 옮깁니다. 카드를 누르면 오른쪽에서 자세히 고칩니다.' },
+  { id: 'list', label: '목록', key: 'l', hint: '열 이름을 누르면 그 순서로 줄을 세웁니다.' },
+  { id: 'timeline', label: '타임라인', key: 't', hint: '시작일부터 마감일까지를 막대로 봅니다. 막대를 누르면 작업이 열립니다.' },
+  { id: 'calendar', label: '캘린더', key: 'c', hint: '빈 칸을 누르면 그날 마감인 작업을 만들고, 항목을 끌어 놓으면 마감일이 바뀝니다.' },
+  { id: 'roadmap', label: '로드맵', key: 'r', hint: '마감일을 주 단위로 나눠 봅니다. 지난 일정은 이번 주에 모아 둡니다.' },
 ];
 type Scope = { kind: 'all' } | { kind: 'mine' } | { kind: 'domain'; id: DomainKey };
+
+type NavItem = { key: string; label: string; icon?: NavIcon; dot?: DomainKey; count: number; active: boolean; go(): void };
 
 const ME_KEY = 'mate.taskmanager.me';
 const PREF_KEY = 'mate.taskmanager.prefs.v1';
@@ -41,6 +54,27 @@ function readPrefs(): Partial<Prefs> | null {
     const raw = window.localStorage.getItem(PREF_KEY);
     return raw ? JSON.parse(raw) : null;
   } catch { return null; }
+}
+
+/** 지금 쓰는 사람 - 이름 칸 전체가 고르기 칸이다(보이지 않는 select 를 위에 겹쳤다) */
+function MePicker({ me, onPick, id }: { me: string; onPick(id: string): void; id: string }) {
+  const m = memberById(me);
+  return (
+    <div className="relative flex items-center gap-2.5 rounded-tm-sm px-2.5 py-1.5 transition-colors duration-150 hover:bg-tm-tint
+                    has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-tm-blue">
+      <Avatar id={me} size={36} />
+      <span className="flex min-w-0 flex-col leading-[1.35]">
+        <b className="truncate text-[14.5px] font-bold text-tm-ink">{m?.name ?? '사용자'}</b>
+        <small className="text-[12.5px] text-tm-sub">{m ? `${m.role} · ` : ''}바꾸기</small>
+      </span>
+      <span className="ml-auto flex-none text-tm-sub"><IconChevron /></span>
+      <label className="sr-only" htmlFor={id}>지금 쓰는 사람</label>
+      <select id={id} value={me} onChange={(e) => onPick(e.target.value)}
+        className="absolute inset-0 h-full w-full cursor-pointer appearance-none opacity-0">
+        {MEMBERS.map((x) => <option key={x.id} value={x.id}>{x.name} · {x.role}</option>)}
+      </select>
+    </div>
+  );
 }
 
 export default function TaskManagerClient() {
@@ -60,10 +94,15 @@ export default function TaskManagerClient() {
   const [creatingDue, setCreatingDue] = useState<string | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
   const [sort, setSort] = useState<{ by: 'title' | 'status' | 'priority' | 'domain' | 'due' | 'assignee'; dir: 1 | -1 } | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
+  /** undo 가 참이면 '실행 취소'를 함께 띄운다 */
+  const [toast, setToast] = useState<{ text: string; undo: boolean } | null>(null);
   const [dropAt, setDropAt] = useState<{ status: Status; beforeId: string | null } | null>(null);
+  /** 좁은 화면의 전체 메뉴 창 */
+  const [menu, setMenu] = useState(false);
 
   const searchRef = useRef<HTMLInputElement>(null);
+  /** 좁은 화면의 사람 메뉴 - 다른 곳을 누르거나 Esc, 화면을 바꾸면 닫는다 */
+  const acct = useRef<HTMLDetailsElement>(null);
   const storeRef = useRef(store);
   storeRef.current = store;
 
@@ -100,20 +139,43 @@ export default function TaskManagerClient() {
     try { window.localStorage.setItem(ME_KEY, id); } catch { /* noop */ }
   };
 
-  /* 되돌릴 수 있는 동작이 생기면 알리고, 잠시 뒤 거둔다 */
+  /* 되돌릴 수 있는 동작이 생기면 알린다 */
   useEffect(() => {
     if (!store.undoLabel) return;
-    setToast(store.undoLabel);
-    const t = setTimeout(() => setToast(null), 7000);
-    return () => clearTimeout(t);
+    setToast({ text: store.undoLabel, undo: true });
   }, [store.undoLabel]);
 
-  /* ── 단축키 - 입력 중에는 가로채지 않는다 ── */
+  /* 알림은 잠시 뒤 거둔다 */
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 7000);
+    return () => clearTimeout(t);
+  }, [toast]);
+
+  useEffect(() => {
+    if (acct.current) acct.current.open = false;
+  }, [section, scope, view]);
+  useEffect(() => {
+    const close = (e: PointerEvent | KeyboardEvent) => {
+      const el = acct.current;
+      if (!el?.open) return;
+      if (e instanceof KeyboardEvent ? e.key === 'Escape' : !el.contains(e.target as Node)) el.open = false;
+    };
+    document.addEventListener('pointerdown', close);
+    document.addEventListener('keydown', close);
+    return () => {
+      document.removeEventListener('pointerdown', close);
+      document.removeEventListener('keydown', close);
+    };
+  }, []);
+
+  /* ── 단축키 - 입력 중이거나 창이 떠 있으면 가로채지 않는다 ── */
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const el = e.target as HTMLElement | null;
       const typing = !!el && (/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.isContentEditable);
       if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (document.querySelector('[aria-modal="true"]')) return;
 
       if (e.key === 'n') { e.preventDefault(); setCreatingDue(null); setCreating('todo'); }
       if (e.key === '/') { e.preventDefault(); setSection('tasks'); searchRef.current?.focus(); }
@@ -149,7 +211,7 @@ export default function TaskManagerClient() {
       .sort((a, b) => a.order - b.order);
   }, [store.tasks, scope, me, priorityFilter, hideDone, query]);
 
-  /** 목록 뷰 정렬 - 머리글을 누르면 그 열 기준으로 선다 */
+  /** 목록 보기 정렬 - 열 이름을 누르면 그 열 기준으로 선다 */
   const sorted = useMemo(() => {
     if (!sort) return visible;
     const rank = { urgent: 0, high: 1, normal: 2, low: 3 } as Record<Priority, number>;
@@ -209,9 +271,12 @@ export default function TaskManagerClient() {
     setCreating('todo');
   }, []);
 
-  const filtersOn = query.trim() !== '' || priorityFilter !== 'all' || hideDone || scope.kind !== 'all';
+  const newTask = () => { setCreatingDue(null); setCreating('todo'); };
+
+  /* 범위(왼쪽 메뉴)는 걸러 보기가 아니라 지금 있는 곳이라 초기화에 넣지 않는다 */
+  const filtersOn = query.trim() !== '' || priorityFilter !== 'all' || hideDone;
   const clearFilters = () => {
-    setQuery(''); setPriorityFilter('all'); setHideDone(false); setScope({ kind: 'all' });
+    setQuery(''); setPriorityFilter('all'); setHideDone(false);
   };
 
   /* ── 드래그 ── */
@@ -238,419 +303,405 @@ export default function TaskManagerClient() {
     scope.kind === 'all' ? '모든 작업'
       : scope.kind === 'mine' ? '내 작업'
         : domainLabel(scope.id);
+  const currentView = VIEWS.find((v) => v.id === view) ?? VIEWS[0];
 
-  const navItem = (active: boolean) =>
-    `relative flex w-full items-center gap-2 rounded-md py-[7px] pl-3 pr-2.5 text-[14px] transition-colors duration-150 ${
-      active
-        ? 'bg-gh-canvas-mute font-semibold text-gh-fg before:absolute before:left-0 before:top-1/2 ' +
-          'before:h-[18px] before:w-[3px] before:-translate-y-1/2 before:rounded-full before:bg-gh-accent'
-        : 'text-gh-fg-muted hover:bg-gh-canvas-subtle hover:text-gh-fg'
-    }`;
+  /* ── 메뉴 ── */
+  const goTasks = (s: Scope) => { setSection('tasks'); setScope(s); };
+  const nav: { label?: string; items: NavItem[] }[] = [
+    {
+      items: [
+        { key: 'all', label: '모든 작업', icon: 'board', count: counts.open,
+          active: section === 'tasks' && scope.kind === 'all', go: () => goTasks({ kind: 'all' }) },
+        { key: 'mine', label: '내 작업', icon: 'mine', count: counts.mine,
+          active: section === 'tasks' && scope.kind === 'mine', go: () => goTasks({ kind: 'mine' }) },
+      ],
+    },
+    {
+      label: '영역',
+      items: DOMAINS.map((d) => ({
+        key: d.id, label: d.label, dot: d.id, count: counts.perDomain[d.id],
+        active: section === 'tasks' && scope.kind === 'domain' && scope.id === d.id,
+        go: () => goTasks({ kind: 'domain', id: d.id }),
+      })),
+    },
+    {
+      label: '문서',
+      items: [{ key: 'docs', label: '팀 위키', icon: 'wiki', count: docStore.docs.length,
+        active: section === 'docs', go: () => setSection('docs') }],
+    },
+  ];
+
+  const navLinks = (after?: () => void) =>
+    nav.map((g, gi) => (
+      <div key={gi} className="contents">
+        {g.label && <p className="mx-3 mb-1 mt-3 text-[12.5px] font-bold text-tm-sub">{g.label}</p>}
+        {g.items.map((it) => (
+          <button key={it.key} type="button" aria-current={it.active ? 'page' : undefined}
+            onClick={() => { it.go(); after?.(); }}
+            className={`group flex min-h-[42px] w-full items-center gap-3 rounded-tm-sm px-3 text-left text-[15px] transition-colors duration-150
+                        [@media(pointer:coarse)]:min-h-11 ${
+              it.active ? 'bg-tm-blue font-bold text-white' : 'font-semibold text-tm-ink hover:bg-tm-tint'}`}>
+            {it.icon ? <IconNav name={it.icon} /> : (
+              <span className="grid h-5 w-5 flex-none place-items-center" aria-hidden>
+                <span className={`h-2.5 w-2.5 rounded-[3px] ${it.dot ? DOMAIN_FILL[it.dot] : ''} ${it.active ? 'ring-2 ring-white' : ''}`} />
+              </span>
+            )}
+            <span className="min-w-0 truncate">{it.label}</span>
+            <span className={`ml-auto inline-grid h-[22px] min-w-[26px] flex-none place-items-center rounded-full px-2 text-[12.5px] font-bold tabular-nums ${
+              it.active ? 'bg-white/20 text-white' : 'bg-tm-tint text-tm-deep group-hover:bg-white'}`}>
+              {it.count}
+            </span>
+          </button>
+        ))}
+      </div>
+    ));
+
+  /* 좁은 화면 아래쪽 - 자주 쓰는 셋 + 전체 메뉴 */
+  const tabs = nav.flatMap((g) => g.items).filter((it) => it.key === 'all' || it.key === 'mine' || it.key === 'docs');
+  const inTabs = tabs.some((t) => t.active);
+  const tabItem = (active: boolean) =>
+    `flex min-h-[54px] flex-col items-center justify-center gap-[3px] rounded-tm-sm text-[12.5px] ${
+      active ? 'bg-tm-tint font-bold text-tm-blue' : 'font-semibold text-tm-sub'}`;
 
   if (!store.ready) {
     return (
-      <div className="flex h-screen items-center justify-center text-[14px] text-gh-fg-muted">
+      <div className="flex h-[100dvh] items-center justify-center bg-tm-bg text-[15px] font-semibold text-tm-sub">
         불러오는 중…
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-gh-canvas-subtle text-gh-fg">
+    <div className="grid h-[100dvh] grid-cols-[268px_minmax(0,1fr)] grid-rows-[minmax(0,1fr)] overflow-hidden bg-tm-bg text-[15.5px] leading-[1.6] text-tm-ink
+                    max-[900px]:grid-cols-[minmax(0,1fr)]">
 
-      {/* ── 전역 헤더 - GitHub 은 제품 전체를 어두운 띠 하나로 묶는다 ── */}
-      <header className="flex h-12 shrink-0 items-center gap-3 bg-[#1f2328] px-4 text-white">
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-[13px] font-bold text-[#1f2328]">
-          M
-        </span>
-        <span className="truncate text-[15px] font-semibold tracking-tight">MATE Tasks</span>
-        <span className="hidden text-[14px] text-white/40 sm:inline">/</span>
-        <span className="hidden truncate text-[14px] text-white/70 sm:inline">
-          {section === 'docs' ? '팀 위키' : scopeTitle}
-        </span>
+      {/* ── 넓은 화면: 왼쪽 메뉴 ── */}
+      <aside className="flex min-h-0 flex-col overflow-y-auto border-r border-tm-line bg-white px-4 pb-3.5 pt-[22px] max-[900px]:hidden">
+        <button type="button" onClick={() => goTasks({ kind: 'all' })} aria-label="작업 관리 처음 화면"
+          className="mb-1 flex flex-col items-start gap-2.5 rounded-tm-sm px-2.5 pb-3.5 text-left">
+          <Image src="/images/logo.png" alt="" width={124} height={31} priority className="h-auto w-[124px]" />
+          <span className="rounded-full bg-tm-tint px-[11px] py-[3px] text-[12.5px] font-bold text-tm-deep">작업 관리</span>
+        </button>
 
-        <Link href="/"
-          className="ml-auto inline-flex h-7 shrink-0 items-center gap-1.5 rounded-md border border-white/20
-                     px-2.5 text-[13px] font-medium text-white/80 transition-colors duration-150
-                     hover:border-white/40 hover:bg-white/10 hover:text-white">
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden>
-            <path d="M9.5 4L5.5 8l4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          홈페이지
-        </Link>
-        <Avatar id={me} size={26} />
-      </header>
-
-      <div className="flex min-h-0 flex-1 overflow-hidden">
-
-      {/* ── 사이드바 ── */}
-      <aside className="hidden w-[232px] shrink-0 flex-col border-r border-gh-border bg-gh-canvas lg:flex">
-
-        <nav className="flex-1 overflow-y-auto p-3">
-          <button className={navItem(section === 'tasks' && scope.kind === 'all')}
-            onClick={() => { setSection('tasks'); setScope({ kind: 'all' }); }}>
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden>
-              <rect x="2" y="2.5" width="5" height="11" rx="1.3" stroke="currentColor" strokeWidth="1.4" />
-              <rect x="9" y="2.5" width="5" height="7" rx="1.3" stroke="currentColor" strokeWidth="1.4" />
-            </svg>
-            모든 작업
-            <span className={`ml-auto ${ghCounter}`}>{counts.open}</span>
-          </button>
-          <button className={navItem(section === 'tasks' && scope.kind === 'mine')}
-            onClick={() => { setSection('tasks'); setScope({ kind: 'mine' }); }}>
-            <Avatar id={me} size={14} />
-            내 작업
-            <span className={`ml-auto ${ghCounter}`}>{counts.mine}</span>
-          </button>
-
-          <p className="mb-1 mt-5 px-3 text-[12px] font-semibold text-gh-fg-muted">영역</p>
-          {DOMAINS.map((d) => (
-            <button key={d.id} className={navItem(section === 'tasks' && scope.kind === 'domain' && scope.id === d.id)}
-              onClick={() => { setSection('tasks'); setScope({ kind: 'domain', id: d.id }); }}>
-              <span className={`h-2 w-2 shrink-0 rounded-sm ${
-                d.id === 'web' ? 'bg-gh-accent' : d.id === 'game' ? 'bg-gh-done'
-                  : d.id === 'edu' ? 'bg-gh-attention' : 'bg-gh-neutral'}`} />
-              {d.label}
-              <span className={`ml-auto ${ghCounter}`}>{counts.perDomain[d.id]}</span>
-            </button>
-          ))}
-
-          <p className="mb-1 mt-5 px-3 text-[12px] font-semibold text-gh-fg-muted">문서</p>
-          <button className={navItem(section === 'docs')} onClick={() => setSection('docs')}>
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden>
-              <path d="M4 2h5l3 3v9H4V2z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
-              <path d="M9 2v3h3" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
-            </svg>
-            팀 위키
-            <span className={`ml-auto ${ghCounter}`}>{docStore.docs.length}</span>
-          </button>
-
-          <p className="mb-1 mt-5 px-3 text-[12px] font-semibold text-gh-fg-muted">나</p>
-          <div className="px-1">
-            <label className="sr-only" htmlFor="tm-me">현재 사용자</label>
-            <select id="tm-me" value={me} onChange={(e) => pickMe(e.target.value)}
-              className={`w-full ${ghField}`}>
-              {MEMBERS.map((m) => <option key={m.id} value={m.id}>{m.name} · {m.role}</option>)}
-            </select>
-          </div>
+        <nav className="flex flex-col gap-1" aria-label="작업 관리 메뉴">
+          {navLinks()}
         </nav>
 
+        <div className="mt-auto flex flex-col gap-1.5 border-t border-tm-line pt-2.5">
+          <Link href="/"
+            className="flex min-h-[42px] items-center gap-3 rounded-tm-sm px-3 text-[15px] font-semibold text-tm-ink transition-colors duration-150 hover:bg-tm-tint">
+            <IconNav name="home" />
+            <span>홈페이지로</span>
+          </Link>
+          <MePicker me={me} onPick={pickMe} id="tm-me" />
+        </div>
       </aside>
 
-      {/* ── 본문 ── */}
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+      <div className="flex min-h-0 min-w-0 flex-col">
 
-        {/* 상단 바 */}
-        <header className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-b border-gh-border bg-gh-canvas px-4 py-2.5 sm:h-14 sm:flex-nowrap sm:py-0">
-          <div className={`relative order-2 w-full min-w-0 sm:order-none sm:w-auto sm:flex-1 sm:max-w-md ${
-            section === 'docs' ? 'hidden' : ''}`}>
-            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden
-              className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-gh-fg-muted">
-              <circle cx="7" cy="7" r="4.5" stroke="currentColor" strokeWidth="1.5" />
-              <path d="M10.5 10.5L14 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-            <input ref={searchRef} value={query} onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Escape') { setQuery(''); e.currentTarget.blur(); }
-              }}
-              placeholder="작업 검색"
-              aria-label="작업 검색"
-              className="h-8 w-full rounded-md border border-gh-border bg-gh-canvas-subtle pl-8 pr-14 text-[14px] text-gh-fg
-                         outline-none transition-shadow duration-150 placeholder:text-gh-fg-subtle
-                         focus:border-gh-accent focus:bg-gh-canvas focus:shadow-[0_0_0_3px_rgba(9,105,218,0.1)]" />
-            <kbd className="pointer-events-none absolute right-2 top-1/2 hidden -translate-y-1/2 rounded border border-gh-border bg-gh-canvas px-1.5 py-0.5 text-[11px] font-medium text-gh-fg-muted sm:block">
-              /
-            </kbd>
-          </div>
-
-          {section === 'docs' && (
-            <p className="order-2 min-w-0 flex-1 truncate text-[14px] font-semibold text-gh-fg sm:order-none">팀 위키</p>
-          )}
-
-          <div className="order-1 ml-auto flex w-full shrink-0 items-center justify-between gap-2 sm:order-none sm:w-auto sm:justify-end">
-            {section === 'tasks' && (
-              <div className="flex h-8 items-center rounded-md border border-gh-border bg-gh-canvas-mute p-[3px]">
-                {VIEWS.map((v) => (
-                  <button key={v.id} onClick={() => setView(v.id)}
-                    aria-pressed={view === v.id}
-                    title={`${v.label} (${v.key})`}
-                    className={`rounded-[5px] px-2.5 py-[3px] text-[14px] transition-colors duration-150 ${
-                      view === v.id
-                        ? 'border border-gh-border bg-gh-canvas font-semibold text-gh-fg shadow-gh-sm'
-                        : 'border border-transparent font-medium text-gh-fg-muted hover:text-gh-fg'
-                    }`}>
-                    {v.label}
-                  </button>
-                ))}
-              </div>
-            )}
-            {section === 'tasks' && (
-              <button onClick={() => { setCreatingDue(null); setCreating('todo'); }}
-                aria-label="새 작업"
-                className={`${ghBtnPrimary} max-[430px]:px-2`}>
-                <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden>
-                  <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                </svg>
-                {/* 뷰가 다섯 개가 되면서 좁은 화면에서는 글자까지 들어갈 자리가 없다 */}
-                <span className="max-[430px]:sr-only">새 작업</span>
-              </button>
-            )}
-          </div>
+        {/* ── 좁은 화면: 위쪽 띠 ── */}
+        <header className="relative z-30 flex h-[58px] flex-none items-center justify-between gap-3 border-b border-tm-line bg-white px-4 min-[901px]:hidden">
+          <button type="button" onClick={() => goTasks({ kind: 'all' })} aria-label="작업 관리 처음 화면"
+            className="flex min-w-0 items-center gap-2.5 rounded-tm-sm">
+            <Image src="/images/logo.png" alt="" width={96} height={24} className="h-auto w-[96px]" />
+            <span className="whitespace-nowrap rounded-full bg-tm-tint px-[9px] py-0.5 text-[12px] font-bold text-tm-deep">작업 관리</span>
+          </button>
+          <details ref={acct} className="relative">
+            <summary aria-label="사람 메뉴"
+              className="grid h-11 w-11 cursor-pointer list-none place-items-center rounded-full [&::-webkit-details-marker]:hidden">
+              <Avatar id={me} size={34} />
+            </summary>
+            <div className="absolute right-0 top-[50px] z-40 flex w-[256px] flex-col gap-3 rounded-tm border border-tm-line bg-white p-4 shadow-tm-up">
+              <MePicker me={me} onPick={pickMe} id="tm-me-m" />
+              <Link href="/"
+                className="flex min-h-[44px] items-center justify-between gap-2 rounded-tm-sm bg-tm-tint px-3 text-[14px] font-semibold text-tm-ink">
+                홈페이지로 <IconNav name="home" size={18} />
+              </Link>
+            </div>
+          </details>
         </header>
 
-        {/* 제목 + 필터 - 작업 섹션에서만 */}
-        {section === 'tasks' && (
-        <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-gh-border bg-gh-canvas px-4 py-2.5">
-          <h1 className="mr-1 text-[15px] font-semibold text-gh-fg">{scopeTitle}</h1>
-          <span className="text-[13px] tabular-nums text-gh-fg-muted">{visible.length}건 표시</span>
+        {/* ── 본문 ── */}
+        <div className="flex min-h-0 flex-1 flex-col px-11 pb-7 pt-10 max-[1500px]:px-8 max-[900px]:px-4 max-[900px]:pb-4 max-[900px]:pt-5">
+          <div className="mx-auto flex min-h-0 w-full max-w-[1560px] flex-1 flex-col">
 
-          <div className="ml-2 flex flex-wrap items-center gap-1.5">
-            {/* 사이드바가 숨는 구간에서도 범위를 바꿀 수 있어야 한다 */}
-            <label className="sr-only" htmlFor="tm-scope">범위</label>
-            <select id="tm-scope" className={`${ghField} lg:hidden`}
-              value={scope.kind === 'domain' ? scope.id : scope.kind}
-              onChange={(e) => {
-                const v = e.target.value;
-                if (v === 'all' || v === 'mine') setScope({ kind: v });
-                else setScope({ kind: 'domain', id: v as DomainKey });
-              }}>
-              <option value="all">모든 작업</option>
-              <option value="mine">내 작업</option>
-              {DOMAINS.map((d) => <option key={d.id} value={d.id}>{d.label}</option>)}
-            </select>
+            {section === 'docs' ? (
+              <Docs store={docStore} me={me}
+                onTaskClick={(key) => {
+                  const hit = store.tasks.find((t) => t.key === key);
+                  if (hit) { setSection('tasks'); setOpenId(hit.id); }
+                  else setToast({ text: `${key} 작업을 찾을 수 없습니다`, undo: false });
+                }} />
+            ) : (
+              <>
+                <PageHead
+                  title={scopeTitle}
+                  lead={currentView.hint}
+                  saved={store.persistent
+                    ? { tone: 'ok', text: '이 브라우저에만 저장됩니다' }
+                    : { tone: 'warn', text: '브라우저 저장이 막혀 있어 새로고침하면 사라집니다' }}
+                >
+                  <div role="group" aria-label="보기"
+                    className="no-scrollbar -my-1 flex min-w-0 items-center gap-1.5 overflow-x-auto py-1 max-[720px]:flex-1">
+                    {VIEWS.map((v) => (
+                      <button key={v.id} type="button" onClick={() => setView(v.id)}
+                        aria-pressed={view === v.id}
+                        title={`${v.label} (${v.key.toUpperCase()})`}
+                        className={tmTab}>
+                        {v.label}
+                      </button>
+                    ))}
+                  </div>
+                  <button type="button" onClick={newTask} className={`${tmBtnPrimary} flex-none max-[720px]:px-4`}>
+                    <IconPlus />
+                    새 작업
+                  </button>
+                </PageHead>
 
-            <label className="sr-only" htmlFor="tm-filter-priority">우선순위 필터</label>
-            <select id="tm-filter-priority" value={priorityFilter}
-              onChange={(e) => setPriorityFilter(e.target.value as Priority | 'all')}
-              className={ghField}>
-              <option value="all">우선순위 전체</option>
-              {PRIORITIES.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
-            </select>
+                {/* 찾기 · 걸러 보기 */}
+                <div className="mb-[18px] flex flex-none flex-wrap items-center gap-2.5 max-[720px]:mb-3.5">
+                  <div className="relative min-w-0 max-w-[420px] flex-[1_1_260px] max-[720px]:max-w-none max-[720px]:basis-full">
+                    <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-tm-sub">
+                      <IconSearch />
+                    </span>
+                    <input ref={searchRef} value={query} onChange={(e) => setQuery(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Escape') { setQuery(''); e.currentTarget.blur(); }
+                      }}
+                      placeholder="작업 검색"
+                      aria-label="작업 검색"
+                      className={`${tmInput} pl-11 pr-12`} />
+                    <kbd className="pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 rounded-md border border-tm-line bg-tm-bg px-2 py-0.5 text-[12px] font-bold text-tm-sub sm:block">
+                      /
+                    </kbd>
+                  </div>
 
-            <button onClick={() => setHideDone(!hideDone)}
-              aria-pressed={hideDone}
-              className={`${ghBtn} ${
-                hideDone ? 'border-gh-accent-border bg-gh-accent-subtle text-gh-accent-fg hover:bg-gh-accent-subtle' : ''
-              }`}>
-              완료 숨기기
-            </button>
+                  <label className="sr-only" htmlFor="tm-filter-priority">우선순위로 걸러 보기</label>
+                  <select id="tm-filter-priority" value={priorityFilter}
+                    onChange={(e) => setPriorityFilter(e.target.value as Priority | 'all')}
+                    className={`${tmSelect} min-w-0 flex-[0_1_200px]`}>
+                    <option value="all">우선순위 전체</option>
+                    {PRIORITIES.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
+                  </select>
 
-            {filtersOn && (
-              <button onClick={clearFilters}
-                className="h-8 rounded-md px-2 text-[14px] text-gh-accent-fg transition-colors duration-150 hover:underline">
-                초기화
-              </button>
+                  <button type="button" onClick={() => setHideDone(!hideDone)} aria-pressed={hideDone} className={tmTab}>
+                    완료 숨기기
+                  </button>
+
+                  {filtersOn && (
+                    <button type="button" onClick={clearFilters} className={tmTextBtn}>
+                      필터 초기화
+                    </button>
+                  )}
+
+                  <span className="ml-auto text-[14px] font-semibold tabular-nums text-tm-sub max-[720px]:hidden">{visible.length}건 표시</span>
+                </div>
+
+                {/* 예시 작업 안내 - 실제 프로젝트 이름이 들어 있어, 말해 주지 않으면 진짜 작업으로 읽힌다 */}
+                {sampleCount > 0 && (
+                  <div role="status" className={`${tmCallout} mb-[18px] flex-none max-[720px]:mb-3.5`}>
+                    <p className="min-w-0 flex-[1_1_320px] max-[720px]:flex-[1_1_180px]">
+                      <b className="font-bold text-tm-deep">예시 작업 {sampleCount}건</b>이 들어 있습니다.{' '}
+                      <span className="max-[720px]:hidden">쓰는 법을 보여 주려고 넣어 둔 것이고 </span>실제 작업이 아닙니다.
+                    </p>
+                    <button type="button" onClick={store.clearSamples} className={tmGhostBtn}>
+                      예시 지우기
+                    </button>
+                  </div>
+                )}
+
+                {/* ── 타임라인 ── */}
+                {view === 'timeline' && <Timeline tasks={visible} onOpen={setOpenId} />}
+
+                {/* ── 캘린더 ── */}
+                {view === 'calendar' && (
+                  <Calendar tasks={visible} onOpen={setOpenId} onCreateAt={createAt}
+                    onReschedule={(id, due) => store.update(id, { due })} />
+                )}
+
+                {/* ── 로드맵 ── */}
+                {view === 'roadmap' && <Roadmap tasks={visible} onOpen={setOpenId} />}
+
+                {/* ── 보드 ── */}
+                {view === 'board' && (
+                  <div className="-mx-1 -mb-1 min-h-0 flex-1 overflow-x-auto overflow-y-hidden px-1 pb-1">
+                    {/* 넓은 화면(1280~)에서는 다섯 칸을 나눠 채운다 - 1366 노트북에서도 가로 스크롤 없이 다 보이게 */}
+                    <div className="flex h-full min-w-max items-stretch gap-3 xl:min-w-0">
+                      {STATUSES.map((s) => {
+                        const items = byStatus[s.id];
+                        const active = dropAt?.status === s.id;
+                        return (
+                          <section key={s.id} aria-label={s.label}
+                            onDragOver={(e) => onColumnDragOver(e, s.id, null)}
+                            onDrop={(e) => onDrop(e, s.id, null)}
+                            className={`flex h-full min-h-0 w-[288px] shrink-0 flex-col rounded-tm border shadow-tm transition-colors duration-150
+                                        max-[900px]:w-[272px] xl:w-auto xl:min-w-[196px] xl:flex-1 ${
+                              active ? 'border-tm-blue bg-tm-tint' : 'border-tm-line bg-white'
+                            }`}>
+                            <div className="flex flex-none items-center gap-2.5 py-3 pl-4 pr-2.5">
+                              <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${STATUS_STYLE[s.id].dot}`} aria-hidden />
+                              <h2 className="text-[16px] font-extrabold text-tm-deep">{s.label}</h2>
+                              <span className={tmCount}>{items.length}</span>
+                              <button type="button" onClick={() => setCreating(s.id)}
+                                aria-label={`${s.label}에 작업 추가`}
+                                className={`ml-auto ${tmIconBtnSm}`}>
+                                <IconPlus size={17} />
+                              </button>
+                            </div>
+
+                            <div className="min-h-0 flex-1 space-y-2.5 overflow-y-auto px-2.5 pb-3 pt-1">
+                              {items.map((t) => (
+                                /* 삽입 표시선은 absolute 로 띄운다 - 레이아웃을 밀면 드롭 직전에
+                                   커서 아래 요소가 바뀌어 drop 이 취소된다 */
+                                <div key={t.id} className="relative"
+                                  onDragOver={(e) => { e.stopPropagation(); onColumnDragOver(e, s.id, t.id); }}
+                                  onDrop={(e) => onDrop(e, s.id, t.id)}>
+                                  {active && dropAt?.beforeId === t.id && (
+                                    <span className="pointer-events-none absolute -top-[7px] left-1 right-1 h-[3px] rounded-full bg-tm-blue" />
+                                  )}
+                                  <TaskCard task={t} dragging={dragId === t.id}
+                                    mine={t.assignee === me}
+                                    onMove={(st) => store.move(t.id, st, null)}
+                                    onOpen={() => setOpenId(t.id)}
+                                    onDragStart={(e) => {
+                                      e.dataTransfer.effectAllowed = 'move';
+                                      e.dataTransfer.setData('text/plain', t.id);
+                                      setDragId(t.id);
+                                    }}
+                                    onDragEnd={() => { setDragId(null); setDropAt(null); }} />
+                                </div>
+                              ))}
+
+                              {items.length === 0 && !active && (
+                                <button type="button" onClick={() => setCreating(s.id)}
+                                  className="flex w-full flex-col items-center gap-1.5 rounded-tm-btn border-2 border-dashed border-tm-edge/50 px-3 py-6 text-center
+                                             transition-colors duration-150 hover:border-tm-blue hover:bg-tm-tint">
+                                  <span className="mb-1 grid h-8 w-8 place-items-center rounded-full bg-tm-blue text-white">
+                                    <IconPlus size={16} />
+                                  </span>
+                                  <span className="text-[14.5px] font-bold text-tm-blue">작업 추가</span>
+                                  <span className="text-[13px] text-tm-sub">{s.hint}</span>
+                                </button>
+                              )}
+
+                              {/* 칼럼 끝에 놓을 자리 - 항상 자리를 차지해 레이아웃이 흔들리지 않는다 */}
+                              <div className="relative h-6"
+                                onDragOver={(e) => { e.stopPropagation(); onColumnDragOver(e, s.id, null); }}
+                                onDrop={(e) => onDrop(e, s.id, null)}>
+                                {active && dropAt?.beforeId === null && (
+                                  <span className="pointer-events-none absolute left-1 right-1 top-1 h-[3px] rounded-full bg-tm-blue" />
+                                )}
+                              </div>
+                            </div>
+                          </section>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* ── 목록 ── */}
+                {view === 'list' && (
+                  <div className="min-h-0 flex-1 overflow-auto rounded-tm border border-tm-line bg-white shadow-tm">
+                    <table className="w-full min-w-[780px] border-collapse text-[15px]">
+                      <thead>
+                        <tr className="text-left text-[13px] text-tm-sub">
+                          {([
+                            ['title', '작업', ''],
+                            ['status', '상태', 'w-[118px]'],
+                            ['priority', '우선순위', 'w-[110px]'],
+                            ['domain', '영역', 'w-[132px]'],
+                            ['due', '마감', 'w-[118px]'],
+                            ['assignee', '담당', 'w-[72px] text-center'],
+                          ] as const).map(([by, label, cls]) => (
+                            <th key={by}
+                              className={`sticky top-0 z-10 bg-tm-bg px-4 py-3 font-bold shadow-[inset_0_-1px_0_#d7dce4] ${cls}`}
+                              aria-sort={sort?.by === by ? (sort.dir === 1 ? 'ascending' : 'descending') : 'none'}>
+                              <button type="button" onClick={() => toggleSort(by)}
+                                className="group/sort inline-flex items-center gap-1 rounded-md transition-colors duration-150 hover:text-tm-ink">
+                                {label}
+                                {/* 정렬 표시는 고른 열에만 - 흐린 화살표를 모든 열에 두면 어느 열 기준인지 안 보인다 */}
+                                <span className={`text-[10px] leading-none text-tm-blue transition-opacity duration-150 ${
+                                  sort?.by === by ? 'opacity-100' : 'opacity-0 group-hover/sort:opacity-50'}`}>
+                                  {sort?.by === by && sort.dir === -1 ? '▼' : '▲'}
+                                </span>
+                              </button>
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {sorted.map((t) => (
+                          <tr key={t.id} onClick={() => setOpenId(t.id)} tabIndex={0}
+                            onKeyDown={(e) => { if (e.key === 'Enter') setOpenId(t.id); }}
+                            className="cursor-pointer border-b border-tm-line transition-colors duration-150 last:border-0 hover:bg-tm-tint
+                                       focus-visible:bg-tm-tint focus-visible:outline-offset-[-2px]">
+                            <td className="px-4 py-3.5">
+                              <div className="flex min-w-0 items-center gap-2.5">
+                                <span className="flex-none text-[13px] font-bold tabular-nums text-tm-sub">{t.key}</span>
+                                <span className={`min-w-0 font-semibold ${t.status === 'done' ? 'text-tm-sub line-through' : 'text-tm-ink'}`}>
+                                  {t.title}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3.5"><StatusPill s={t.status} /></td>
+                            <td className="px-4 py-3.5">
+                              <span className={`inline-flex items-center gap-2 whitespace-nowrap text-[14px] ${PRIORITY_STYLE[t.priority].text}`}>
+                                <PriorityDot p={t.priority} />
+                                {priorityLabel(t.priority)}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3.5">
+                              <Chip className={DOMAIN_STYLE[t.domain]}>{domainLabel(t.domain)}</Chip>
+                            </td>
+                            <td className="px-4 py-3.5">
+                              <DueBadge due={t.due} done={t.status === 'done'} />
+                            </td>
+                            <td className="px-4 py-3.5 text-center">
+                              <span className="inline-flex"><Avatar id={t.assignee} size={28} /></span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+
+                    {visible.length === 0 && (
+                      <div className="flex flex-col items-center gap-2.5 px-6 py-[72px] text-center">
+                        <p className="text-[20px] font-extrabold text-tm-deep">
+                          {filtersOn ? '조건에 맞는 작업이 없습니다' : '아직 작업이 없습니다'}
+                        </p>
+                        <p className="mb-3 max-w-[44ch] text-[15.5px] leading-[1.7] text-tm-ink">
+                          {filtersOn ? '걸러 보기를 풀면 다른 작업도 다시 보입니다.' : '새 작업을 만들면 여기에 줄로 쌓입니다.'}
+                        </p>
+                        <button type="button" onClick={() => (filtersOn ? clearFilters() : newTask())}
+                          className={filtersOn ? tmBtn : tmBtnPrimary}>
+                          {filtersOn ? '필터 초기화' : '새 작업 만들기'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </>
             )}
           </div>
-
-          {!store.persistent && (
-            <span className="ml-auto rounded bg-gh-attention-subtle px-2 py-1 text-[12.5px] text-gh-attention-fg ring-1 ring-inset ring-gh-attention-border">
-              브라우저 저장이 막혀 있어 새로고침하면 사라집니다
-            </span>
-          )}
         </div>
-        )}
 
-        {/* 예시 작업 안내 - 실제 프로젝트 이름이 들어 있어, 말해 주지 않으면 진짜 작업으로 읽힌다 */}
-        {section === 'tasks' && sampleCount > 0 && (
-          <div role="status"
-            className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1.5 border-b border-gh-attention-border bg-gh-attention-subtle px-4 py-2 text-[13.5px] text-gh-fg">
-            <span>
-              <strong className="font-semibold">예시 작업 {sampleCount}건</strong>이 들어 있습니다.
-              쓰는 법을 보여 주려고 넣어 둔 것이고 실제 작업이 아닙니다.
-            </span>
-            <button onClick={store.clearSamples} className={`${ghBtn} ml-auto h-7 px-2.5 text-[13px]`}>
-              예시 지우기
+        {/* ── 좁은 화면: 아래쪽 메뉴 ── */}
+        <nav aria-label="작업 관리 메뉴"
+          className="grid flex-none grid-cols-4 gap-1 border-t border-tm-line bg-white px-2 pb-[calc(6px+env(safe-area-inset-bottom))] pt-1.5 min-[901px]:hidden">
+          {tabs.map((t) => (
+            <button key={t.key} type="button" onClick={t.go} aria-current={t.active ? 'page' : undefined} className={tabItem(t.active)}>
+              {t.icon && <IconNav name={t.icon} />}
+              <span>{t.label}</span>
             </button>
-          </div>
-        )}
-
-        {/* ── 문서 ── */}
-        {section === 'docs' && (
-          <Docs store={docStore} me={me}
-            onTaskClick={(key) => {
-              const hit = store.tasks.find((t) => t.key === key);
-              if (hit) { setSection('tasks'); setOpenId(hit.id); }
-              else setToast(`${key} 작업을 찾을 수 없습니다`);
-            }} />
-        )}
-
-        {/* ── 타임라인 ── */}
-        {section === 'tasks' && view === 'timeline' && (
-          <Timeline tasks={visible} onOpen={setOpenId} />
-        )}
-
-        {/* ── 캘린더 ── */}
-        {section === 'tasks' && view === 'calendar' && (
-          <Calendar tasks={visible} onOpen={setOpenId} onCreateAt={createAt}
-            onReschedule={(id, due) => store.update(id, { due })} />
-        )}
-
-        {/* ── 로드맵 ── */}
-        {section === 'tasks' && view === 'roadmap' && (
-          <Roadmap tasks={visible} onOpen={setOpenId} />
-        )}
-
-        {/* ── 보드 ── */}
-        {section === 'tasks' && view === 'board' ? (
-          <div className="min-h-0 flex-1 overflow-x-auto overflow-y-hidden">
-            <div className="flex h-full min-w-max items-stretch gap-3 p-4 xl:min-w-0">
-              {STATUSES.map((s) => {
-                const items = byStatus[s.id];
-                const active = dropAt?.status === s.id;
-                return (
-                  <section key={s.id}
-                    onDragOver={(e) => onColumnDragOver(e, s.id, null)}
-                    onDrop={(e) => onDrop(e, s.id, null)}
-                    className={`flex h-full min-h-0 w-[258px] shrink-0 flex-col rounded-md border bg-gh-canvas-subtle transition-colors duration-150 sm:w-[300px] xl:w-auto xl:min-w-[252px] xl:flex-1 ${
-                      active ? 'border-gh-accent bg-gh-accent-subtle/60' : 'border-gh-border'
-                    }`}>
-                    <div className="flex items-center gap-2 px-3 py-2.5">
-                      <span className={`h-2 w-2 shrink-0 rounded-full ${STATUS_STYLE[s.id].dot}`} />
-                      <h2 className="text-[14px] font-semibold text-gh-fg">{s.label}</h2>
-                      <span className={ghCounter}>
-                        {items.length}
-                      </span>
-                      <button onClick={() => setCreating(s.id)}
-                        aria-label={`${s.label}에 작업 추가`}
-                        className="ml-auto rounded p-1 text-gh-fg-muted transition hover:bg-gh-border/60 hover:text-gh-fg">
-                        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden>
-                          <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                        </svg>
-                      </button>
-                    </div>
-
-                    <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-2 pb-3">
-                      {items.map((t) => (
-                        /* 삽입 표시선은 absolute 로 띄운다 - 레이아웃을 밀면 드롭 직전에
-                           커서 아래 요소가 바뀌어 drop 이 취소된다 */
-                        <div key={t.id} className="relative"
-                          onDragOver={(e) => { e.stopPropagation(); onColumnDragOver(e, s.id, t.id); }}
-                          onDrop={(e) => onDrop(e, s.id, t.id)}>
-                          {active && dropAt?.beforeId === t.id && (
-                            <span className="pointer-events-none absolute -top-[5px] left-0 right-0 h-0.5 rounded-full bg-gh-accent" />
-                          )}
-                          <TaskCard task={t} dragging={dragId === t.id}
-                            mine={t.assignee === me}
-                            onMove={(st) => store.move(t.id, st, null)}
-                            onOpen={() => setOpenId(t.id)}
-                            onDragStart={(e) => {
-                              e.dataTransfer.effectAllowed = 'move';
-                              e.dataTransfer.setData('text/plain', t.id);
-                              setDragId(t.id);
-                            }}
-                            onDragEnd={() => { setDragId(null); setDropAt(null); }} />
-                        </div>
-                      ))}
-
-                      {/* 칼럼 끝에 놓을 자리 - 항상 자리를 차지해 레이아웃이 흔들리지 않는다 */}
-                      <div className="relative h-6"
-                        onDragOver={(e) => { e.stopPropagation(); onColumnDragOver(e, s.id, null); }}
-                        onDrop={(e) => onDrop(e, s.id, null)}>
-                        {active && dropAt?.beforeId === null && (
-                          <span className="pointer-events-none absolute left-0 right-0 top-1 h-0.5 rounded-full bg-gh-accent" />
-                        )}
-                      </div>
-
-                      {items.length === 0 && !active && (
-                        <button onClick={() => setCreating(s.id)}
-                          className="w-full rounded-md border border-dashed border-gh-border-strong px-1 py-5 text-center text-[13px] leading-relaxed text-gh-fg-muted transition hover:border-gh-border-strong hover:bg-gh-canvas hover:text-gh-fg-muted">
-                          {s.hint}
-                        </button>
-                      )}
-                    </div>
-                  </section>
-                );
-              })}
-            </div>
-          </div>
-        ) : section === 'tasks' && view === 'list' ? (
-          /* ── 목록 ── */
-          <div className="min-h-0 flex-1 overflow-auto p-4">
-            <div className="overflow-hidden rounded-md border border-gh-border bg-gh-canvas">
-              <table className="w-full border-collapse text-[14px]">
-                <thead>
-                  <tr className="border-b border-gh-border bg-gh-canvas-subtle text-left text-[12px] text-gh-fg-muted">
-                    {([
-                      ['title', '작업', ''],
-                      ['status', '상태', 'w-[100px]'],
-                      ['priority', '우선순위', 'w-[92px]'],
-                      ['domain', '영역', 'w-[104px]'],
-                      ['due', '마감', 'w-[104px]'],
-                      ['assignee', '담당', 'w-[56px] text-center'],
-                    ] as const).map(([by, label, cls]) => (
-                      <th key={by} className={`px-3 py-2.5 font-semibold ${cls}`}
-                        aria-sort={sort?.by === by ? (sort.dir === 1 ? 'ascending' : 'descending') : 'none'}>
-                        <button onClick={() => toggleSort(by)}
-                          className="group/sort inline-flex items-center gap-1 transition-colors duration-150 hover:text-gh-fg">
-                          {label}
-                          {/* 정렬 표시는 활성 열에서만 - 흐린 화살표를 모든 열에 두면
-                              글자 대비도 못 맞추고 어느 열 기준인지도 안 보인다 */}
-                          <span className={`text-[10px] leading-none text-gh-accent-fg transition-opacity duration-150 ${
-                            sort?.by === by ? 'opacity-100' : 'opacity-0 group-hover/sort:opacity-40'}`}>
-                            {sort?.by === by && sort.dir === -1 ? '▼' : '▲'}
-                          </span>
-                        </button>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {sorted.map((t) => (
-                    <tr key={t.id} onClick={() => setOpenId(t.id)} tabIndex={0}
-                      onKeyDown={(e) => { if (e.key === 'Enter') setOpenId(t.id); }}
-                      className="cursor-pointer border-b border-gh-border-muted transition last:border-0 hover:bg-gh-canvas-subtle
-                                 focus:outline-none focus-visible:bg-gh-accent-subtle">
-                      <td className="px-3 py-2.5">
-                        <div className="flex items-center gap-2">
-                          <span className="gh-mono text-[12px] tabular-nums text-gh-fg-muted">{t.key}</span>
-                          <span className={t.status === 'done' ? 'text-gh-fg-muted line-through' : 'text-gh-fg'}>
-                            {t.title}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-3 py-2.5">
-                        <span className={`inline-flex items-center whitespace-nowrap rounded-full px-2 py-[2px]
-                                          text-[12px] font-medium text-white ${STATUS_STYLE[t.status].fill}`}>
-                          {STATUSES.find((s) => s.id === t.status)?.label}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2.5">
-                        <span className={`inline-flex items-center gap-1.5 text-[13px] ${PRIORITY_STYLE[t.priority].text}`}>
-                          <PriorityDot p={t.priority} />
-                          {priorityLabel(t.priority)}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2.5">
-                        <Chip className={DOMAIN_STYLE[t.domain]}>{domainLabel(t.domain)}</Chip>
-                      </td>
-                      <td className="px-3 py-2.5">
-                        <DueBadge due={t.due} done={t.status === 'done'} />
-                      </td>
-                      <td className="px-3 py-2.5 text-center">
-                        <Avatar id={t.assignee} size={22} />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-
-              {visible.length === 0 && (
-                <div className="px-4 py-14 text-center">
-                  <p className="text-[14px] text-gh-fg-muted">
-                    {filtersOn ? '조건에 맞는 작업이 없습니다.' : '아직 작업이 없습니다.'}
-                  </p>
-                  <button onClick={() => (filtersOn ? clearFilters() : setCreating('todo'))}
-                    className={`mt-3 ${ghBtn}`}>
-                    {filtersOn ? '필터 초기화' : '첫 작업 만들기'}
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        ) : null}
+          ))}
+          <button type="button" aria-haspopup="dialog" aria-current={!inTabs ? 'page' : undefined}
+            onClick={() => setMenu(true)} className={tabItem(!inTabs)}>
+            <IconNav name="menu" />
+            <span>전체 메뉴</span>
+          </button>
+        </nav>
       </div>
-      </div>{/* 분할 끝 */}
 
       {open && (
         <TaskPanel task={open}
@@ -659,28 +710,23 @@ export default function TaskManagerClient() {
           onClose={() => setOpenId(null)} />
       )}
 
-      {toast && (
-        <div role="status" aria-live="polite"
-          className="fixed bottom-5 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-md border border-white/15 bg-[#1f2328] px-4 py-2.5 text-[14px] text-white shadow-gh-lg">
-          <span className="max-w-[320px] truncate">{toast}</span>
-          <button onClick={() => { store.undo(); setToast(null); }}
-            className="shrink-0 rounded-md px-2 py-1 text-[13.5px] font-semibold text-[#79c0ff] transition-colors duration-150 hover:bg-white/10 hover:text-white">
-            실행 취소
-            <kbd className="ml-1.5 rounded border border-white/20 px-1 text-[11px] font-medium text-white/50">Z</kbd>
-          </button>
-          <button onClick={() => setToast(null)} aria-label="알림 닫기"
-            className="shrink-0 rounded p-1 text-white/40 transition hover:bg-gh-canvas/10 hover:text-white">
-            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden>
-              <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-            </svg>
-          </button>
-        </div>
-      )}
+      <Toast
+        text={toast?.text ?? null}
+        action={toast?.undo ? { label: '실행 취소', kbd: 'Z', onClick: () => { store.undo(); setToast(null); } } : undefined}
+        onClose={() => setToast(null)} />
 
       {creating && (
         <NewTaskDialog defaultStatus={creating} defaultDue={creatingDue}
           onCreate={handleCreate}
           onClose={() => { setCreating(null); setCreatingDue(null); }} />
+      )}
+
+      {menu && (
+        <Modal title="전체 메뉴" size="sm" onClose={() => setMenu(false)}>
+          <nav className="flex flex-col gap-1" aria-label="전체 메뉴">
+            {navLinks(() => setMenu(false))}
+          </nav>
+        </Modal>
       )}
     </div>
   );

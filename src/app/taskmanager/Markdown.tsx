@@ -48,11 +48,12 @@ const TaskLinkContext = React.createContext<((key: string) => void) | null>(null
 function TaskChip({ taskKey }: { taskKey: string }) {
   const onTask = React.useContext(TaskLinkContext);
   if (!onTask) {
-    return <code className="rounded bg-gh-canvas-mute px-1 gh-mono text-[0.86em] text-gh-fg-muted">{taskKey}</code>;
+    return <code className="rounded-md bg-tm-tint px-1.5 py-0.5 text-[0.86em] font-bold tabular-nums text-tm-deep">{taskKey}</code>;
   }
   return (
-    <button onClick={() => onTask(taskKey)}
-      className="gh-mono mx-[1px] rounded-md bg-gh-neutral-muted px-[0.4em] py-[0.2em] align-baseline text-[85%] font-medium text-gh-accent-fg transition-colors duration-150 hover:bg-gh-accent-subtle">
+    <button type="button" onClick={() => onTask(taskKey)}
+      className="mx-[1px] rounded-full bg-tm-tint px-[0.6em] py-[0.15em] align-baseline text-[88%] font-bold tabular-nums text-tm-blue
+                 transition-colors duration-150 hover:bg-tm-blue hover:text-white">
       {taskKey}
     </button>
   );
@@ -62,11 +63,11 @@ function inline(text: string, keyPrefix: string): React.ReactNode[] {
   return text.split(INLINE).filter(Boolean).map((part, i) => {
     const k = `${keyPrefix}-${i}`;
     if (part.startsWith('**') && part.endsWith('**')) {
-      return <strong key={k} className="font-semibold text-gh-fg">{part.slice(2, -2)}</strong>;
+      return <strong key={k} className="font-bold text-tm-deep">{part.slice(2, -2)}</strong>;
     }
     if (part.startsWith('`') && part.endsWith('`')) {
       return (
-        <code key={k} className="gh-mono rounded-md bg-gh-neutral-muted px-[0.4em] py-[0.2em] text-[85%] text-gh-fg">
+        <code key={k} className="tm-mono rounded-md bg-tm-tint px-[0.4em] py-[0.15em] text-[85%] text-tm-deep">
           {part.slice(1, -1)}
         </code>
       );
@@ -83,7 +84,7 @@ function inline(text: string, keyPrefix: string): React.ReactNode[] {
       // javascript: 같은 스킴은 링크로 만들지 않는다
       const safe = /^(https?:|mailto:|#|\/)/i.test(href);
       return safe ? (
-        <a key={k} href={href} className="text-gh-accent-fg hover:underline"
+        <a key={k} href={href} className="font-semibold text-tm-blue underline underline-offset-[3px] hover:text-tm-deep"
           {...(href.startsWith('http') ? { target: '_blank', rel: 'noreferrer' } : {})}>
           {link[1]}
         </a>
@@ -106,9 +107,10 @@ export default function Markdown({
   const out: React.ReactNode[] = [];
   let i = 0;
 
-  const H = ['', 'text-[24px] mt-6 mb-4 pb-[0.3em] border-b border-gh-border',
-    'text-[20px] mt-6 mb-4 pb-[0.3em] border-b border-gh-border',
-    'text-[16px] mt-6 mb-4', 'text-[14px] mt-6 mb-4'];
+  /* 세종 관리자 글자 결 - 제목은 짙은 파랑 굵게, 큰 제목 둘은 아래 구분선 */
+  const H = ['', 'text-[24px] font-extrabold tracking-[-0.02em] text-tm-deep mt-8 mb-4 pb-2.5 border-b border-tm-line',
+    'text-[20px] font-extrabold tracking-[-0.01em] text-tm-deep mt-8 mb-3.5 pb-2 border-b border-tm-line',
+    'text-[17px] font-bold text-tm-deep mt-6 mb-3', 'text-[15.5px] font-bold text-tm-ink mt-5 mb-2.5'];
 
   while (i < lines.length) {
     const line = lines[i];
@@ -121,9 +123,9 @@ export default function Markdown({
       while (i < lines.length && !lines[i].trimStart().startsWith('```')) { buf.push(lines[i]); i += 1; }
       i += 1;
       out.push(
-        <pre key={`c${i}`} className="my-4 overflow-x-auto rounded-md bg-gh-canvas-subtle p-4">
-          {lang && <span className="mb-2 block text-[12px] font-semibold text-gh-fg-subtle">{lang}</span>}
-          <code className="gh-mono text-[13px] leading-[1.45] text-gh-fg">{buf.join('\n')}</code>
+        <pre key={`c${i}`} className="my-4 overflow-x-auto rounded-tm-sm border border-tm-line bg-tm-bg p-4">
+          {lang && <span className="mb-2 block text-[12.5px] font-bold text-tm-sub">{lang}</span>}
+          <code className="tm-mono text-[13.5px] leading-[1.6] text-tm-ink">{buf.join('\n')}</code>
         </pre>,
       );
       continue;
@@ -136,7 +138,7 @@ export default function Markdown({
       const Tag = (`h${Math.min(level + 1, 6)}`) as keyof JSX.IntrinsicElements;
       out.push(
         <Tag key={`h${i}`} id={slug(h[2], i)}
-          className={`scroll-mt-20 font-semibold leading-[1.25] text-gh-fg ${H[level]}`}>
+          className={`scroll-mt-6 leading-[1.3] first:mt-0 ${H[level]}`}>
           {inline(h[2].trim(), `h${i}`)}
         </Tag>,
       );
@@ -146,7 +148,7 @@ export default function Markdown({
 
     // 구분선
     if (/^---+$/.test(line.trim())) {
-      out.push(<hr key={`r${i}`} className="my-6 border-gh-border" />);
+      out.push(<hr key={`r${i}`} className="my-7 border-tm-line" />);
       i += 1;
       continue;
     }
@@ -159,12 +161,12 @@ export default function Markdown({
       const body: string[][] = [];
       while (i < lines.length && lines[i].trim().startsWith('|')) { body.push(cells(lines[i])); i += 1; }
       out.push(
-        <div key={`t${i}`} className="my-4 overflow-x-auto rounded-md border border-gh-border">
-          <table className="w-full border-collapse text-[14px]">
+        <div key={`t${i}`} className="my-4 overflow-x-auto rounded-tm-sm border border-tm-line">
+          <table className="w-full border-collapse text-[15px]">
             <thead>
               <tr>
                 {head.map((c, n) => (
-                  <th key={n} className="border-b border-gh-border px-3 py-[6px] text-left font-semibold text-gh-fg">
+                  <th key={n} className="border-b border-tm-line bg-tm-bg px-3.5 py-2.5 text-left text-[13.5px] font-bold text-tm-sub">
                     {inline(c, `th${i}-${n}`)}
                   </th>
                 ))}
@@ -172,9 +174,9 @@ export default function Markdown({
             </thead>
             <tbody>
               {body.map((row, r) => (
-                <tr key={r} className="border-b border-gh-border-muted last:border-0 even:bg-gh-canvas-subtle">
+                <tr key={r} className="border-b border-tm-line last:border-0">
                   {head.map((_, n) => (
-                    <td key={n} className="px-3 py-[6px] align-top text-gh-fg">
+                    <td key={n} className="px-3.5 py-2.5 align-top leading-[1.6] text-tm-ink">
                       {inline(row[n] ?? '', `td${i}-${r}-${n}`)}
                     </td>
                   ))}
@@ -196,7 +198,7 @@ export default function Markdown({
       }
       out.push(
         <blockquote key={`q${i}`}
-          className="my-4 border-l-[0.25em] border-gh-border pl-4 text-[14px] leading-[1.6] text-gh-fg-muted">
+          className="my-4 rounded-tm-sm border border-l-4 border-tm-line border-l-tm-blue bg-tm-bg px-[18px] py-3.5 text-[15px] leading-[1.7] text-tm-ink">
           {buf.map((b, n) => <p key={n} className={n ? 'mt-1.5' : ''}>{inline(b, `q${i}-${n}`)}</p>)}
         </blockquote>,
       );
@@ -213,23 +215,23 @@ export default function Markdown({
       }
       const Tag = ordered ? 'ol' : 'ul';
       out.push(
-        <Tag key={`l${i}`} className={`my-4 space-y-1 pl-6 text-[14px] leading-[1.6] text-gh-fg ${
-          ordered ? 'list-decimal' : 'list-disc'} marker:text-gh-fg-muted`}>
+        <Tag key={`l${i}`} className={`my-3.5 space-y-1.5 pl-6 text-[15.5px] leading-[1.7] text-tm-ink ${
+          ordered ? 'list-decimal' : 'list-disc'} marker:text-tm-sub`}>
           {items.map((it, n) => {
             const box = /^\[([ xX])\]\s*(.*)$/.exec(it);
             if (box) {
               const checked = box[1].toLowerCase() === 'x';
               return (
                 <li key={n} className="list-none -ml-5 flex items-start gap-2">
-                  <span className={`mt-[3px] flex h-[14px] w-[14px] shrink-0 items-center justify-center rounded-[3px] border ${
-                    checked ? 'border-gh-accent bg-gh-accent text-white' : 'border-gh-border-strong bg-gh-canvas'}`}>
+                  <span className={`mt-[5px] flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border-[1.5px] ${
+                    checked ? 'border-tm-blue bg-tm-blue text-white' : 'border-tm-edge bg-white'}`}>
                     {checked && (
                       <svg width="9" height="9" viewBox="0 0 12 12" fill="none" aria-hidden>
                         <path d="M2.5 6.2l2.3 2.3 4.7-4.8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     )}
                   </span>
-                  <span className={checked ? 'text-gh-fg-muted line-through' : ''}>{inline(box[2], `li${i}-${n}`)}</span>
+                  <span className={checked ? 'text-tm-sub line-through' : ''}>{inline(box[2], `li${i}-${n}`)}</span>
                 </li>
               );
             }
@@ -255,7 +257,7 @@ export default function Markdown({
     }
     if (buf.length) {
       out.push(
-        <p key={`p${i}`} className="my-4 text-[14px] leading-[1.6] text-gh-fg">
+        <p key={`p${i}`} className="my-3.5 text-[15.5px] leading-[1.75] text-tm-ink">
           {inline(buf.join(' '), `p${i}`)}
         </p>,
       );
@@ -263,7 +265,7 @@ export default function Markdown({
   }
 
   const body = out.length === 0
-    ? <p className="py-10 text-center text-[14px] text-gh-fg-muted">내용이 비어 있습니다. 편집을 눌러 작성하세요.</p>
+    ? <p className="py-12 text-center text-[15.5px] text-tm-sub">내용이 비어 있습니다. 편집을 눌러 작성하세요.</p>
     : <>{out}</>;
 
   return <TaskLinkContext.Provider value={onTaskClick ?? null}>{body}</TaskLinkContext.Provider>;

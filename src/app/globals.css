@@ -73,48 +73,48 @@
 }
 
 /* ── App Shell ────────────────────────────────────────
-   /taskmanager 는 마케팅 사이트와 다른 제품이다.
-   다크 캔버스 · 관성 스크롤을 모두 끄고 자체 셸에 맡긴다. */
+   /taskmanager 는 마케팅 사이트와 다른 제품이다. 관성 스크롤을 끄고 자체 셸에 맡긴다.
+   모양은 세종호이스트크레인 리뉴얼 관리자를 옮겼다(2026-10-22) - 글꼴 Pretendard, 회색 바탕에 흰 카드,
+   세종 네이비 자리에 로고 파랑. 색 값은 tailwind.config.ts 의 tm 에 있다. */
 html[data-shell='app'] {
-  background: #ffffff;
+  background: #f4f6f9;
   scroll-behavior: auto;
-  /* 라틴은 GitHub 의 시스템 스택 그대로, 한글은 Pretendard 로 떨어뜨린다.
-     Mona Sans 는 GitHub 사유 서체라 쓰지 않고, 대부분의 방문자가 실제로
-     보게 되는 폴백 스택을 그대로 재현한다. */
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans',
-    'Pretendard Variable', Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic',
-    Helvetica, Arial, sans-serif;
+  font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    'Malgun Gothic', sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 html[data-shell='app'] body {
-  background: #ffffff;
-  color: #1f2328;
+  background: #f4f6f9;
+  color: #1b2430;
   overflow: hidden;
   font-family: inherit;
   letter-spacing: 0;
 }
 html[data-shell='app'] body > main { min-height: 0; }
-html[data-shell='app'] ::selection { background: #0969da; color: #fff; }
+html[data-shell='app'] ::selection { background: #2644cb; color: #fff; }
 
-/* 숫자·식별자는 등폭으로 - 작업 키와 날짜가 세로로 맞는다 */
-html[data-shell='app'] .gh-mono {
+/* 코드와 문서 편집 칸만 등폭 - 작업 번호와 날짜는 고정폭 숫자(tabular-nums)로 맞춘다 */
+html[data-shell='app'] .tm-mono {
   font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas,
     'Liberation Mono', monospace;
 }
 
-/* GitHub 은 포커스를 파란 윤곽선 하나로 통일한다 */
-html[data-shell='app'] :focus-visible {
-  outline: 2px solid #0969da;
-  outline-offset: -1px;
-  box-shadow: none;
+/* 초점은 파란 윤곽선 하나 - 세종 관리자처럼 2px 바깥에 둔다.
+   :where 로 무게를 낮춰 두어 칸마다 focus-visible:outline-* 으로 덮을 수 있다.
+   입력 칸은 윤곽선 대신 파란 테두리와 옅은 띠를 쓴다(ui.tsx 의 tmInput). */
+:where(html[data-shell='app']) :focus-visible {
+  outline: 2px solid #2644cb;
+  outline-offset: 2px;
 }
+:where(html[data-shell='app']) :is(input, textarea, select):focus-visible { outline: none; }
+:where(html[data-shell='app']) [role='dialog']:focus-visible { outline: none; }
 
 html[data-shell='app'] ::-webkit-scrollbar { width: 10px; height: 10px; }
 html[data-shell='app'] ::-webkit-scrollbar-track { background: transparent; }
 html[data-shell='app'] ::-webkit-scrollbar-thumb {
-  background: #d1d9e0; border-radius: 9999px; border: 2px solid #ffffff;
+  background: #d7dce4; border-radius: 9999px; border: 2px solid transparent; background-clip: padding-box;
 }
-html[data-shell='app'] ::-webkit-scrollbar-thumb:hover { background: #afb8c1; }
+html[data-shell='app'] ::-webkit-scrollbar-thumb:hover { background: #7f8b9e; background-clip: padding-box; }
 
 /* ── Grid - 12칼럼 레이아웃 유틸 ─────────────────────── */
 .grid-12 {
@@ -139,8 +139,9 @@ html.lenis, html.lenis body { height: auto; }
   color: #ffffff;
 }
 
-/* 키보드 포커스 - 마우스 클릭에는 나타나지 않음 */
-:focus-visible {
+/* 키보드 포커스 - 마우스 클릭에는 나타나지 않음
+   작업 관리 도구(data-shell='app')는 자기 규칙을 쓴다 - 여기 border-radius 가 둥근 버튼 모서리를 깎는다 */
+:where(html:not([data-shell='app'])) :focus-visible {
   outline: 2px solid var(--point-200);
   outline-offset: 3px;
   border-radius: 2px;
