@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiClipboard, FiChevronUp } from 'react-icons/fi';
+import { isToolScreen } from '@/lib/shell';
 
 /**
  * 오른쪽 아래 동그란 버튼 둘 - 로고 파랑 '문의하기'와 흰 '맨 위로' (Figma Key Results 화면).
@@ -21,7 +22,7 @@ export default function FloatingContactButton() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  if (pathname.startsWith('/taskmanager')) return null;
+  if (isToolScreen(pathname)) return null;
   const isContact = /^\/contact\/?$/.test(pathname);
 
   const circle = 'flex h-14 w-14 items-center justify-center rounded-pill sm:h-[68px] sm:w-[68px]';

@@ -9,6 +9,7 @@ import { ctaFor } from '@/data/cta';
 import { navItems } from '@/data/navigation';
 import { fadeUp, stagger, inView } from '@/lib/motion';
 import { arrowHover, container, CONTACT_EMAIL, CONTACT_PHONE, KAKAO_OPEN_CHAT_URL } from '@/lib/styles';
+import { isToolScreen } from '@/lib/shell';
 
 /**
  * 모든 페이지의 마지막 화면 - Figma footer.
@@ -20,7 +21,7 @@ export default function Footer() {
   const year = new Date().getFullYear();
 
   // 작업 관리 도구는 자체 셸을 쓴다
-  if (pathname.startsWith('/taskmanager')) return null;
+  if (isToolScreen(pathname)) return null;
 
   // 문의 페이지에서는 문의 칸을 다시 띄우지 않는다
   const isContact = /^\/contact\/?$/.test(pathname);

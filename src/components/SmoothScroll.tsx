@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Lenis from 'lenis';
+import { isToolScreen } from '@/lib/shell';
 
 /**
  * 관성 스무스 스크롤.
@@ -15,7 +16,7 @@ export default function SmoothScroll() {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const coarse = window.matchMedia('(pointer: coarse)').matches;
     // 관성 스크롤은 읽는 화면용이다. 작업 도구에서는 스크롤이 정확해야 한다.
-    if (reduced || coarse || pathname.startsWith('/taskmanager')) return;
+    if (reduced || coarse || isToolScreen(pathname)) return;
 
     const lenis = new Lenis({
       duration: 1.05,

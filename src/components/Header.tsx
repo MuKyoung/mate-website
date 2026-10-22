@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiMenu, FiX, FiPhone, FiMail, FiChevronDown, FiArrowUpRight } from 'react-icons/fi';
 import { navItems, type NavItem } from '@/data/navigation';
 import { CONTACT_EMAIL, CONTACT_PHONE, btnPoint, container } from '@/lib/styles';
+import { isToolScreen } from '@/lib/shell';
 
 /** '/web/' 처럼 끝에 붙는 빗금을 떼고 해시를 버린다 */
 const norm = (p: string) => (p.split('#')[0].replace(/\/$/, '') || '/');
@@ -74,7 +75,7 @@ export default function Header() {
   }, [open]);
 
   // 작업 관리 도구는 자체 셸을 쓴다 - 마케팅 헤더가 끼어들지 않게 한다
-  if (pathname.startsWith('/taskmanager')) return null;
+  if (isToolScreen(pathname)) return null;
 
   const current = norm(pathname);
   const isActive = (item: NavItem) =>
