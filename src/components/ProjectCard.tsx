@@ -1,56 +1,50 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { FiArrowUpRight } from 'react-icons/fi';
-import { Project } from '@/types';
+import { motion } from 'framer-motion';
+import { FiChevronRight } from 'react-icons/fi';
 import SafeImage from '@/components/SafeImage';
 import ThumbFallback from '@/components/ThumbFallback';
-import { fadeUp, maskUp, inView } from '@/lib/motion';
-
-interface ProjectCardProps {
-  project: Project;
-  index: number;
-  /** 썸네일 비율 - 큰 칸은 넓게, 작은 칸은 4:3 */
-  aspect?: string;
-}
+import { domainLabel, domainOf } from '@/data/projects';
+import type { Project } from '@/types';
+import { fadeUp } from '@/lib/motion';
+import { arrowCircle, chip, radiusCard } from '@/lib/styles';
 
 /**
- * 포트폴리오 카드. 작업 화면은 원래 색 그대로 둔다 - 고객이 보는 것은 결과물이다.
- * 카드 위 등폭 줄에 번호와 분류를 적는다.
+ * 포트폴리오 카드 - Figma 「case card」.
+ * 사진 · 회색 칩(영역) · 굵은 제목과 남색 화살표 원 · 한 줄 소개 · 가는 선 아래 분류와 주소.
+ * 작업 화면은 원래 색 그대로 둔다 - 고객이 보는 것은 결과물이다.
  */
-export default function ProjectCard({ project, index, aspect = 'aspect-[4/3]' }: ProjectCardProps) {
+export default function ProjectCard({ project, className = '' }: { project: Project; className?: string }) {
+  const host = project.liveUrl?.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
   return (
-    <motion.div {...inView} variants={fadeUp} className="group">
-      <Link href={`/projects/${project.id}`} className="block">
-        <div className="relative mb-4 flex items-center justify-between gap-4 border-t border-white/15 pt-3">
-          <span aria-hidden className="absolute left-0 top-[-1px] h-px w-full origin-left scale-x-0 bg-[var(--blue-glow)]
-                                       transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-x-100" />
-          <p className="mono-label">
-            <span className="text-white/40 tabular-nums">{String(index + 1).padStart(2, '0')}</span>
-            {project.category}
-          </p>
-          <FiArrowUpRight size={15}
-            className="text-white/40 transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-white" />
-        </div>
-
-        <motion.div variants={maskUp} className={`relative ${aspect} mb-5 overflow-hidden bg-[var(--surface)]`}>
+    <motion.article variants={fadeUp} className={`group h-full ${className}`}>
+      <Link href={`/projects/${project.id}`}
+        className={`flex h-full flex-col overflow-hidden border border-line bg-white transition-shadow duration-300 hover:shadow-float-lg ${radiusCard}`}>
+        <div className="relative aspect-[490/252] overflow-hidden bg-gray-100">
           <SafeImage
             src={project.thumbnail}
             alt={project.title}
             fill
-            className="absolute inset-0 transition-transform duration-[900ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.03]"
+            className="transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04]"
             placeholder={<ThumbFallback label={project.category} />}
           />
-        </motion.div>
-
-        <h3 className="mb-2 text-[21px] font-medium leading-[1.25] tracking-[-0.02em] text-[var(--text-1)] transition-colors duration-300 group-hover:text-[var(--point)] sm:text-[24px]">
-          {project.title}
-        </h3>
-        <p className="line-clamp-2 max-w-xl text-[15px] leading-[1.7] text-white/55">
-          {project.description}
-        </p>
+        </div>
+        <div className="flex flex-1 flex-col px-5 pb-5 pt-5 sm:px-6">
+          <span className={`${chip} self-start`}>{domainLabel[domainOf(project.category)]}</span>
+          <div className="mt-3 flex items-start justify-between gap-4">
+            <h3 className="text-[19px] font-bold leading-[1.35] text-ink sm:text-[22px]">{project.title}</h3>
+            <span aria-hidden className={arrowCircle}><FiChevronRight size={20} /></span>
+          </div>
+          <p className="mt-3 line-clamp-2 text-[14px] leading-[1.6] text-ink-2">{project.description}</p>
+          <div className="mt-auto pt-5">
+            <div className="flex items-center justify-between gap-3 border-t border-line pt-3.5 text-[12px]">
+              <span className="font-bold text-ink">{project.category}</span>
+              {host && <span className="truncate text-gray-500">{host}</span>}
+            </div>
+          </div>
+        </div>
       </Link>
-    </motion.div>
+    </motion.article>
   );
 }

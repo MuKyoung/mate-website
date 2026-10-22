@@ -1,21 +1,19 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { FiArrowUpRight } from 'react-icons/fi';
-import { domains } from '@/data/domains';
-import { teamCapabilities } from '@/data/teamCapabilities';
-import { business } from '@/data/business';
 import { motion } from 'framer-motion';
-import HorizonGlow from '@/components/visual/HorizonGlow';
-import Scramble from '@/components/motion/Scramble';
-import { easeEnter } from '@/lib/motion';
-import { container, CONTACT_EMAIL, CONTACT_PHONE, KAKAO_OPEN_CHAT_URL } from '@/lib/styles';
+import { FiArrowUpRight } from 'react-icons/fi';
+import { business } from '@/data/business';
+import { ctaFor } from '@/data/cta';
+import { navItems } from '@/data/navigation';
+import { fadeUp, stagger, inView } from '@/lib/motion';
+import { arrowHover, container, CONTACT_EMAIL, CONTACT_PHONE, KAKAO_OPEN_CHAT_URL } from '@/lib/styles';
 
 /**
- * 모든 페이지의 마지막 화면.
- * 위에는 칸마다 이름을 붙인 정보 줄, 아래에는 로고 뒤로 파란 수평선이 떠오른다.
+ * 모든 페이지의 마지막 화면 - Figma footer.
+ * 위에는 문의 칸(문구는 페이지마다 src/data/cta.ts), 아래에는 사업자 정보.
+ * 그 사이로 어두운 행성이 떠오르고 가장자리에서 로고 파랑 빛이 번진다.
  */
 export default function Footer() {
   const pathname = usePathname();
@@ -24,108 +22,77 @@ export default function Footer() {
   // 작업 관리 도구는 자체 셸을 쓴다
   if (pathname.startsWith('/taskmanager')) return null;
 
-  const nav = [
-    { href: '/',         label: '홈' },
-    { href: '/services', label: '서비스' },
-    { href: '/projects', label: '프로젝트' },
-    { href: '/team',     label: '팀' },
-    { href: '/contact',  label: '문의' },
-  ];
-
-  // 실제로 연결되는 채널만 노출한다 (미개설 SNS 링크는 두지 않음)
-  const channels = [
-    { href: `mailto:${CONTACT_EMAIL}`, label: CONTACT_EMAIL },
-    { href: `tel:${CONTACT_PHONE}`, label: CONTACT_PHONE },
-    { href: KAKAO_OPEN_CHAT_URL, label: '카카오톡 오픈채팅', external: true },
-  ];
-
-  const linkCls = 'group inline-flex items-center gap-1.5 text-[14px] text-white/60 hover:text-white transition-colors';
+  // 문의 페이지에서는 문의 칸을 다시 띄우지 않는다
+  const isContact = /^\/contact\/?$/.test(pathname);
+  const cta = ctaFor(pathname);
+  const linkCls = 'transition-colors hover:text-white';
 
   return (
-    <footer className="relative overflow-hidden border-t border-white/10">
-      <div className={`${container} pt-16 sm:pt-20`}>
-        <div className="grid grid-cols-2 gap-x-6 gap-y-12 lg:grid-cols-12">
-          <div className="col-span-2 lg:col-span-3">
-            <p className="mono-label text-white/80"><Scramble text="DEVTEAMMATE.CO.KR" duration={900} /></p>
-          </div>
+    <footer data-header="dark" className="relative isolate overflow-hidden bg-night text-white">
+      <div aria-hidden className="stars" />
 
-          <div className="col-span-2 lg:col-span-4">
-            <p className="mono-label mb-3"><Scramble text="Overview:" /></p>
-            <p className="max-w-sm text-[14px] leading-[1.7] text-white/60">
-              웹 · 앱, 게임 · XR, 교육 세 영역의 외주 개발과 자체 게임 제작 · 퍼블리싱을 함께 합니다.
-            </p>
-          </div>
-
-          <div className="lg:col-span-2">
-            <p className="mono-label mb-3"><Scramble text="Pages:" /></p>
-            <ul className="space-y-2">
-              {nav.map((l) => (
-                <li key={l.href}><Link href={l.href} className={linkCls}>{l.label}</Link></li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="lg:col-span-2">
-            <p className="mono-label mb-3"><Scramble text="Domains:" /></p>
-            <ul className="space-y-2">
-              {domains.map((d) => (
-                <li key={d.key}><Link href={`/${d.slug}`} className={linkCls}>{d.kr}</Link></li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="col-span-2 lg:col-span-1 lg:text-right">
-            <p className="mono-label lg:justify-end"><Scramble text={`©${year}`} /></p>
-          </div>
-
-          <div className="col-span-2 lg:col-span-4 lg:col-start-4">
-            <p className="mono-label mb-3"><Scramble text="Contact:" /></p>
-            <ul className="space-y-2">
-              {channels.map((c) => (
-                <li key={c.href}>
-                  <a href={c.href} className={`${linkCls} break-all`}
-                    {...(c.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
-                    {c.label}
-                    <FiArrowUpRight size={12} className="opacity-0 transition-opacity group-hover:opacity-100" />
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="col-span-2 lg:col-span-5">
-            <p className="mono-label mb-3"><Scramble text="Business:" /></p>
-            <dl className="space-y-2 text-[13px] text-white/55">
-              {[
-                ['상호', `${business.name} (${business.brand})`],
-                ['대표', business.owner],
-                ['사업자등록번호', business.regNo],
-                ['주소', business.address],
-                ['시작한 해', `${teamCapabilities.stats.since}`],
-              ].map(([k, v]) => (
-                <div key={k} className="flex gap-3">
-                  <dt className="w-24 shrink-0 text-white/45">{k}</dt>
-                  <dd>{v}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-        </div>
-      </div>
-
-      {/* 마무리 - 로고 뒤로 수평선이 떠오른다 */}
-      <div className="relative mt-20 h-[58vw] max-h-[560px] min-h-[300px] sm:mt-28">
-        <HorizonGlow side="bottom" rim="62%" radius="max(92vw, 720px)" />
-        <div className="relative flex h-full flex-col items-center pt-[10%] sm:pt-[7%]">
-          <motion.div initial={{ opacity: 0, y: 48 }} whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-10% 0px' }} transition={{ duration: 1.4, ease: easeEnter }}>
-            <Image src="/images/logo.png" alt="MATE" width={1991} height={493}
-              className="h-auto w-[min(52vw,420px)] brightness-0 invert" />
+      {!isContact && (
+        <div className={`${container} relative pt-24 sm:pt-32 xl:pt-[200px]`}>
+          <motion.div {...inView} variants={stagger}
+            className="flex flex-col gap-12 lg:flex-row lg:items-center lg:justify-between">
+            <div className="max-w-[640px]">
+              <motion.p variants={fadeUp} className="eyebrow on-night mb-3">Contact</motion.p>
+              <motion.h2 variants={fadeUp} className="type-h1 font-bold text-white">
+                {cta.line1}<br />{cta.line2}
+              </motion.h2>
+              <motion.p variants={fadeUp} className="mt-6 max-w-[30em] text-[16px] leading-[1.6] text-gray-200 sm:text-[18px]">
+                {cta.desc}
+              </motion.p>
+            </div>
+            <motion.div variants={fadeUp} className="shrink-0">
+              <Link href={cta.href}
+                className="group flex h-[150px] w-[150px] flex-col items-center justify-center gap-3 rounded-pill bg-point-200 text-center text-white shadow-[0_20px_60px_rgba(38,68,203,0.45)] transition-[background-color,transform] duration-300 hover:scale-[1.04] hover:bg-point-300 sm:h-[180px] sm:w-[180px] xl:h-[210px] xl:w-[210px]">
+                <span className="text-[18px] font-bold leading-[1.2] sm:text-[21px] xl:text-[24px]">
+                  {cta.button[0]}<br />{cta.button[1]}
+                </span>
+                <FiArrowUpRight size={28} className={arrowHover} />
+              </Link>
+            </motion.div>
           </motion.div>
         </div>
-        <p className="absolute bottom-5 left-0 right-0 text-center font-mono text-[11px] tracking-[0.02em] text-black/60">
-          © {year} MATE. All rights reserved.
-        </p>
+      )}
+
+      <div className={`relative ${isContact ? 'pt-32 sm:pt-36' : 'mt-28 sm:mt-40 xl:mt-[230px]'}`}>
+        {/* 행성 - 가장자리가 구분선 조금 위를 지난다. 문의 칸이 없으면 푸터 안으로 내려 양 끝이 잘리지 않게 한다 */}
+        <div aria-hidden className={`planet-anchor ${isContact ? 'top-[64px] sm:top-[72px]' : 'top-[-64px] sm:top-[-80px]'}`}>
+          <div className="planet" />
+          <div className="planet-flare" />
+        </div>
+
+        <div className={`${container} relative pb-14 sm:pb-20`}>
+          <div className="h-px bg-[rgba(123,138,167,0.6)]" />
+
+          <div className="mt-10 flex flex-col gap-8 lg:flex-row lg:justify-between">
+            <div className="flex flex-col gap-2.5">
+              <p className="type-b2 text-white">{business.name} ({business.brand})</p>
+              <p className="text-[14px] leading-[1.6] text-gray-200">
+                {business.address}<br />
+                대표 {business.owner} · 사업자등록번호 {business.regNo}
+              </p>
+            </div>
+            <div className="flex flex-col gap-2.5 text-[14px] text-gray-200 lg:text-right">
+              <a href={`tel:${CONTACT_PHONE}`} className={linkCls}>TEL {CONTACT_PHONE}</a>
+              <a href={`mailto:${CONTACT_EMAIL}`} className={`${linkCls} break-all`}>{CONTACT_EMAIL}</a>
+              <p>© {year} {business.brand}. All rights reserved.</p>
+            </div>
+          </div>
+
+          <ul className="mt-10 flex flex-wrap items-center gap-x-7 gap-y-2 text-[14px] text-gray-200">
+            {navItems.map((n) => (
+              <li key={n.href}><Link href={n.href} className={linkCls}>{n.label}</Link></li>
+            ))}
+            <li>
+              <a href={KAKAO_OPEN_CHAT_URL} target="_blank" rel="noopener noreferrer" className={linkCls}>
+                카카오톡 오픈채팅
+              </a>
+            </li>
+          </ul>
+        </div>
       </div>
     </footer>
   );

@@ -11,30 +11,36 @@ interface FAQAccordionProps {
 }
 
 /**
- * 질문 한 줄마다 오른쪽에 각진 +/− 칸. 열린 질문은 칸이 파랗게 찬다.
+ * 질문 목록 - 가는 선으로 나눈 줄마다 오른쪽에 + (Figma 기술인증 목록).
+ * 열린 질문은 + 가 로고 파랑 원으로 바뀐다.
  */
 export default function FAQAccordion({ faqs }: FAQAccordionProps) {
   const [openId, setOpenId] = useState<string | null>(null);
 
   return (
-    <motion.div {...inView} variants={staggerTight} className="space-y-2">
+    <motion.ul {...inView} variants={staggerTight} className="border-t-2 border-ink">
       {faqs.map((faq) => {
         const isOpen = openId === faq.id;
         return (
-          <motion.div key={faq.id} variants={fadeUp}
-            className={`sweep border transition-colors duration-300 ${isOpen ? 'border-white/25 bg-[var(--surface)]' : 'border-white/10 hover:border-white/25'}`}>
+          <motion.li key={faq.id} variants={fadeUp} className="border-b border-gray-300">
             <button
+              type="button"
               onClick={() => setOpenId(isOpen ? null : faq.id)}
               aria-expanded={isOpen}
-              className="group flex w-full items-center justify-between gap-6 px-5 py-5 text-left sm:px-6"
+              className="group flex w-full items-center justify-between gap-6 py-5 text-left sm:py-6"
             >
-              <span className="text-[16px] font-medium leading-[1.45] tracking-[-0.012em] text-[var(--text-1)] sm:text-[18px]">
-                {faq.question}
+              <span className="flex items-baseline gap-3">
+                {faq.category && (
+                  <span className="hidden w-14 shrink-0 text-[13px] font-bold text-gray-400 sm:block">{faq.category}</span>
+                )}
+                <span className={`text-[16px] font-bold leading-[1.5] transition-colors sm:text-[17px] ${isOpen ? 'text-point-200' : 'text-ink group-hover:text-point-200'}`}>
+                  {faq.question}
+                </span>
               </span>
-              <span className={`flex h-7 w-7 shrink-0 items-center justify-center border transition-colors duration-300 ${
-                isOpen ? 'border-primary-200 bg-primary-200 text-white' : 'border-white/25 text-white/70 group-hover:border-white/60'
+              <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-pill transition-colors duration-300 ${
+                isOpen ? 'bg-point-200 text-white' : 'text-gray-400 group-hover:text-point-200'
               }`}>
-                {isOpen ? <FiMinus size={14} /> : <FiPlus size={14} />}
+                {isOpen ? <FiMinus size={16} /> : <FiPlus size={20} />}
               </span>
             </button>
             <AnimatePresence initial={false}>
@@ -46,15 +52,15 @@ export default function FAQAccordion({ faqs }: FAQAccordionProps) {
                   transition={{ duration: DUR.standard, ease: easeEnter }}
                   className="overflow-hidden"
                 >
-                  <p className="max-w-2xl px-5 pb-6 text-[15px] leading-[1.8] text-white/60 sm:px-6 sm:text-[16px]">
+                  <p className="max-w-2xl pb-6 text-[15px] leading-[1.8] text-ink-2 sm:pl-[68px] sm:text-[16px]">
                     {faq.answer}
                   </p>
                 </motion.div>
               )}
             </AnimatePresence>
-          </motion.div>
+          </motion.li>
         );
       })}
-    </motion.div>
+    </motion.ul>
   );
 }

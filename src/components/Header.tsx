@@ -1,183 +1,231 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { motion, AnimatePresence, useScroll, useSpring } from 'framer-motion';
-import { FiMenu, FiX, FiArrowUpRight } from 'react-icons/fi';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FiMenu, FiX, FiPhone, FiMail, FiChevronDown, FiArrowUpRight } from 'react-icons/fi';
+import { navItems, type NavItem } from '@/data/navigation';
+import { CONTACT_EMAIL, CONTACT_PHONE, btnPoint, container } from '@/lib/styles';
 
-const navItems = [
-  { href: '/services',  label: '서비스' },
-  { href: '/web',       label: '웹 · 앱' },
-  { href: '/game',      label: '게임 · XR' },
-  { href: '/education', label: '교육' },
-  { href: '/projects',  label: '프로젝트' },
-  { href: '/team',      label: '팀' },
-];
+/** '/web/' 처럼 끝에 붙는 빗금을 떼고 해시를 버린다 */
+const norm = (p: string) => (p.split('#')[0].replace(/\/$/, '') || '/');
 
+/**
+ * 상단 바 - 로고 · 가운데 메뉴 넷 · 오른쪽 전화와 메일.
+ *
+ * 밑에 깔린 면을 보고 두 모습 중 하나가 된다 (Figma 헤더 light · dark).
+ *   data-header="dark" 면 위  - 투명 바탕, 흰 글자, 흰 로고. 내려오면 남색 유리가 깔린다
+ *   그 밖                      - 흰 바탕, 진회색 글자, 파란 로고
+ * 메뉴에 마우스를 올리면 아래로 하위 메뉴 칸이 열린다.
+ */
 export default function Header() {
-  const [isScrolled, setIsScrolled]         = useState(false);
-  const [isHidden, setHidden]               = useState(false);
-  const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [overLight, setOverLight]           = useState(false);
   const pathname = usePathname();
-  // 페이지를 얼마나 내려왔는지 - 헤더가 숨어도 보이도록 헤더 밖 맨 위에 따로 둔다
-  const { scrollYProgress } = useScroll();
-  const progress = useSpring(scrollYProgress, { stiffness: 140, damping: 28, mass: 0.4 });
+  const [scrolled, setScrolled] = useState(false);
+  const [hidden, setHidden] = useState(false);
+  const [overDark, setOverDark] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [expanded, setExpanded] = useState<string | null>(null);
 
   useEffect(() => {
     let last = window.scrollY;
-    /* 흰 면(data-header="light")이 헤더 밑을 지나는 동안만 헤더를 밝게 뒤집는다.
-       페이지 단위로 정하면 검은 첫 화면 위에 흰 헤더가 뜬다. */
-    const checkLight = () => {
-      const els = document.querySelectorAll('[data-header="light"]');
-      setOverLight(Array.from(els).some((el) => {
+    // 헤더 한가운데 높이에 걸린 면이 어두운지 본다
+    const probe = () => {
+      const line = 40;
+      let dark = false;
+      document.querySelectorAll<HTMLElement>('[data-header]').forEach((el) => {
         const r = el.getBoundingClientRect();
-        return r.top <= 32 && r.bottom >= 32;
-      }));
+        if (r.top <= line && r.bottom > line) dark = el.dataset.header === 'dark';
+      });
+      setOverDark(dark);
     };
     const onScroll = () => {
       const y = window.scrollY;
-      setIsScrolled(y > 16);
-      checkLight();
+      setScrolled(y > 8);
+      probe();
       // 아래로 내리면 헤더를 감추고, 위로 올리면 즉시 되돌린다 (콘텐츠에 화면을 양보)
       if (Math.abs(y - last) > 6) {
-        setHidden(y > last && y > 160);
+        setHidden(y > last && y > 240);
         last = y;
       }
     };
-    checkLight();
+    onScroll();
+    // 새 페이지의 면이 그려진 뒤 한 번 더 본다
+    const t = window.setTimeout(probe, 80);
     window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    window.addEventListener('resize', probe);
+    return () => {
+      window.clearTimeout(t);
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', probe);
+    };
   }, [pathname]);
 
-  useEffect(() => { setMobileMenuOpen(false); }, [pathname]);
+  useEffect(() => {
+    setOpen(false);
+    setExpanded(null);
+  }, [pathname]);
+
+  // 모바일 메뉴가 열려 있는 동안 뒤 페이지가 밀리지 않게
+  useEffect(() => {
+    document.body.style.overflow = open ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [open]);
 
   // 작업 관리 도구는 자체 셸을 쓴다 - 마케팅 헤더가 끼어들지 않게 한다
   if (pathname.startsWith('/taskmanager')) return null;
 
-  const solid = isScrolled || isMobileMenuOpen;
-  const hidden = isHidden && !isMobileMenuOpen;
-  const light = overLight && !isMobileMenuOpen;
-  const isActive = (href: string) => pathname === href || pathname === `${href}/`;
+  const current = norm(pathname);
+  const isActive = (item: NavItem) =>
+    current === norm(item.href) ||
+    current.startsWith(`${norm(item.href)}/`) ||
+    Boolean(item.children?.some((c) => norm(c.href) === current));
 
-  const surface = light ? 'rgba(255,255,255,0.86)' : 'rgba(0,0,0,0.72)';
-  const hairline = light ? '1px solid rgba(0,0,0,0.10)' : '1px solid rgba(255,255,255,0.10)';
-  const txtIdle = light ? 'text-black/60 hover:text-black' : 'text-white/75 hover:text-white';
-  const txtActive = light ? 'text-black' : 'text-white';
+  const dark = overDark && !open;
+  const surface = open
+    ? 'bg-white'
+    : dark
+      ? scrolled ? 'bg-[rgba(7,11,29,0.72)] backdrop-blur-md' : 'bg-transparent'
+      : scrolled ? 'bg-white/95 backdrop-blur-md shadow-[0_1px_0_var(--line)]' : 'bg-transparent';
+  const text = dark ? 'text-white' : 'text-gray-600';
 
   return (
-    <>
-    <motion.div aria-hidden style={{ scaleX: progress }}
-      className="fixed left-0 right-0 top-0 z-[60] h-[2px] origin-left bg-[var(--blue-glow)]" />
     <header
-      className="fixed top-0 left-0 right-0 z-50 transition-[transform,background,border-color] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
-      style={{
-        transform: hidden ? 'translateY(-100%)' : 'translateY(0)',
-        /* 첫 화면의 빛이 화면 위쪽 모서리까지 휘어 올라온다. 맨 위에서도 어두운 유리를 깔아
-           로고와 메뉴가 빛에 묻히지 않게 한다 */
-        background: solid ? surface : (light ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)'),
-        backdropFilter: 'blur(14px)',
-        borderBottom: solid ? hairline : '1px solid transparent',
-      }}
+      className={`fixed inset-x-0 top-0 z-50 transition-[transform,background-color,box-shadow] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${surface}`}
+      style={{ transform: hidden && !open ? 'translateY(-100%)' : 'translateY(0)' }}
     >
-      <nav className="container mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-
-        <Link href="/" className="inline-flex items-center hover:opacity-75 transition-opacity">
-          <Image
-            src="/images/logo.png"
-            alt="MATE"
-            width={88}
-            height={22}
-            className={`h-[22px] w-auto ${light ? 'brightness-0' : 'brightness-0 invert'}`}
-            priority
-          />
+      <nav className={`${container} grid h-[72px] grid-cols-[1fr_auto] items-center lg:h-20 lg:grid-cols-[1fr_auto_1fr]`}>
+        <Link href="/" aria-label="MATE 홈" className="inline-flex w-fit items-center transition-opacity hover:opacity-75">
+          <Image src="/images/logo.png" alt="MATE" width={1991} height={493} priority
+            className={`h-6 w-auto transition-[filter] duration-300 lg:h-7 ${dark ? 'brightness-0 invert' : ''}`} />
         </Link>
 
-        {/* 데스크톱 네비 - 지금 있는 곳은 파란 정사각형 점으로 표시 */}
-        <div className="hidden md:flex items-center gap-1">
+        {/* 데스크톱 메뉴 - 큰 갈래 넷, 마우스를 올리면 하위 메뉴 칸 */}
+        <ul className="hidden items-center gap-[clamp(2.5rem,5.2vw,6.875rem)] lg:flex">
           {navItems.map((item) => {
-            const active = isActive(item.href);
+            const on = isActive(item);
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`relative inline-flex items-center gap-2 px-3 py-1.5 text-[14px] transition-colors duration-150 ${
-                  active ? txtActive : txtIdle
-                }`}
-              >
-                {active && (
-                  <motion.span layoutId="nav-active" className="h-[5px] w-[5px] bg-[var(--blue-glow)]"
-                    initial={false} transition={{ duration: 0.2, ease: [0.2, 0.6, 0.25, 1] }} />
+              <li key={item.href} className="group relative">
+                <Link href={item.href}
+                  className={`relative block py-7 text-[16px] font-bold transition-colors duration-200 xl:text-[18px] ${
+                    on ? (dark ? 'text-white' : 'text-point-200') : `${text} ${dark ? 'hover:text-white/70' : 'hover:text-point-200'}`
+                  }`}>
+                  {item.label}
+                  {on && dark && <span aria-hidden className="absolute inset-x-0 bottom-5 h-0.5 bg-point-light" />}
+                </Link>
+                {item.children && (
+                  <div className="invisible absolute left-1/2 top-full -translate-x-1/2 -translate-y-1 pt-1 opacity-0 transition-all duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
+                    <ul className="min-w-[152px] rounded-card bg-white py-3.5 shadow-float-lg ring-1 ring-line">
+                      {item.children.map((c) => (
+                        <li key={c.href}>
+                          <Link href={c.href}
+                            className={`block whitespace-nowrap px-6 py-2 text-[15px] transition-colors ${
+                              norm(c.href) === current && !c.href.includes('#') ? 'font-bold text-ink' : 'text-gray-400 hover:text-ink'
+                            }`}>
+                            {c.label}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
-                {item.label}
-              </Link>
+              </li>
             );
           })}
+        </ul>
 
-          <Link
-            href="/contact"
-            className="group ml-4 inline-flex h-9 items-center gap-2 rounded-[2px] bg-primary-200 px-4 text-[13px] font-medium text-white transition-colors duration-200 hover:bg-[var(--blue-glow)]"
+        <div className="flex items-center justify-end gap-1">
+          <a href={`tel:${CONTACT_PHONE}`} aria-label={`전화 ${CONTACT_PHONE}`}
+            className={`hidden h-10 w-10 items-center justify-center rounded-pill transition-colors lg:flex ${text} ${dark ? 'hover:bg-white/10' : 'hover:text-point-200'}`}>
+            <FiPhone size={20} />
+          </a>
+          <a href={`mailto:${CONTACT_EMAIL}`} aria-label={`메일 ${CONTACT_EMAIL}`}
+            className={`hidden h-10 w-10 items-center justify-center rounded-pill transition-colors lg:flex ${text} ${dark ? 'hover:bg-white/10' : 'hover:text-point-200'}`}>
+            <FiMail size={20} />
+          </a>
+
+          {/* 모바일 메뉴 버튼 */}
+          <button
+            className={`-mr-2 flex h-11 w-11 items-center justify-center lg:hidden ${dark ? 'text-white' : 'text-ink'}`}
+            onClick={() => setOpen(!open)}
+            aria-label={open ? '메뉴 닫기' : '메뉴 열기'}
+            aria-expanded={open}
+            aria-controls="mobile-nav"
           >
-            상담 신청
-            <FiArrowUpRight size={14} className="transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-          </Link>
+            {open ? <FiX size={24} /> : <FiMenu size={24} />}
+          </button>
         </div>
-
-        {/* 모바일 버튼 - 각진 칸 */}
-        <button
-          className={`md:hidden w-9 h-9 flex items-center justify-center border transition-colors ${
-            light ? 'border-black/15 text-black/70' : 'border-white/20 text-white/80 hover:border-white/50'
-          }`}
-          onClick={() => setMobileMenuOpen(!isMobileMenuOpen)}
-          aria-label={isMobileMenuOpen ? '메뉴 닫기' : '메뉴 열기'}
-          aria-expanded={isMobileMenuOpen}
-          aria-controls="mobile-nav"
-        >
-          {isMobileMenuOpen ? <FiX size={18} /> : <FiMenu size={18} />}
-        </button>
       </nav>
 
-      {/* 모바일 메뉴 */}
+      {/* 모바일 메뉴 - 갈래를 누르면 하위 메뉴가 펼쳐진다 */}
       <AnimatePresence>
-        {isMobileMenuOpen && (
+        {open && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
             id="mobile-nav"
-            className="md:hidden overflow-hidden"
-            style={{ background: 'rgba(0,0,0,0.96)', backdropFilter: 'blur(14px)', borderTop: hairline }}
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
+            // 헤더가 transform 을 쓰므로 fixed 로 띄우면 헤더 상자에 갇힌다 - 헤더 아래로 이어 붙여 화면을 채운다
+            className="h-[calc(100svh-72px)] overflow-y-auto overscroll-contain border-t border-line bg-white lg:hidden"
           >
-            <div className="container mx-auto px-4 py-4 flex flex-col">
-              {navItems.map((item, i) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-baseline gap-4 border-b border-white/10 py-3.5 text-[18px] transition-colors ${
-                    isActive(item.href) ? 'text-white' : 'text-white/60 hover:text-white'
-                  }`}
-                >
-                  <span className="font-mono text-[11px] text-white/40 tabular-nums">0{i + 1}</span>
-                  {item.label}
-                </Link>
-              ))}
-              <Link
-                href="/contact"
-                onClick={() => setMobileMenuOpen(false)}
-                className="mt-5 mb-1 flex h-12 items-center justify-center gap-2 rounded-[2px] bg-primary-200 text-[15px] font-medium text-white"
-              >
-                무료 상담 신청
-                <FiArrowUpRight size={15} />
+            <ul className={`${container} py-4`}>
+              {navItems.map((item) => {
+                const isOpen = expanded === item.href;
+                return (
+                  <li key={item.href} className="border-b border-line">
+                    <div className="flex items-center justify-between">
+                      <Link href={item.href}
+                        className={`flex-1 py-5 text-[20px] font-bold ${isActive(item) ? 'text-point-200' : 'text-ink'}`}>
+                        {item.label}
+                      </Link>
+                      {item.children && (
+                        <button type="button" onClick={() => setExpanded(isOpen ? null : item.href)}
+                          aria-expanded={isOpen} aria-label={`${item.label} 하위 메뉴`}
+                          className="flex h-11 w-11 items-center justify-center text-gray-400">
+                          <FiChevronDown size={20} className={`transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+                        </button>
+                      )}
+                    </div>
+                    <AnimatePresence initial={false}>
+                      {item.children && isOpen && (
+                        <motion.ul
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                          className="overflow-hidden"
+                        >
+                          {item.children.map((c) => (
+                            <li key={c.href}>
+                              <Link href={c.href} onClick={() => setOpen(false)}
+                                className="block py-2.5 pl-1 text-[16px] text-gray-500">
+                                {c.label}
+                              </Link>
+                            </li>
+                          ))}
+                          <li className="h-4" aria-hidden />
+                        </motion.ul>
+                      )}
+                    </AnimatePresence>
+                  </li>
+                );
+              })}
+            </ul>
+            <div className={`${container} pb-10`}>
+              <div className="flex flex-col gap-1 text-[15px] text-gray-500">
+                <a href={`tel:${CONTACT_PHONE}`} className="inline-flex items-center gap-2 py-1"><FiPhone size={16} />{CONTACT_PHONE}</a>
+                <a href={`mailto:${CONTACT_EMAIL}`} className="inline-flex items-center gap-2 py-1"><FiMail size={16} />{CONTACT_EMAIL}</a>
+              </div>
+              <Link href="/contact" onClick={() => setOpen(false)} className={`${btnPoint} mt-6 w-full`}>
+                프로젝트 문의하기
+                <FiArrowUpRight size={16} />
               </Link>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
     </header>
-    </>
   );
 }

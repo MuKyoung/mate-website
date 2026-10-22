@@ -1,47 +1,56 @@
 'use client';
 
+import Image from 'next/image';
 import { motion } from 'framer-motion';
-import HorizonGlow from '@/components/visual/HorizonGlow';
-import { fadeUp, lineDraw, onMount, stagger } from '@/lib/motion';
-import Scramble from '@/components/motion/Scramble';
-import { SplitText } from '@/components/motion/SplitText';
+import PillTabs from '@/components/ui/PillTabs';
+import type { NavLink } from '@/data/navigation';
+import { fadeUp, onMount, stagger } from '@/lib/motion';
+import { container } from '@/lib/styles';
 
 interface PageHeaderProps {
-  title: string;
-  description: string;
+  /** 제목 위 작은 이름 - 영역 페이지에서 '사업영역' */
   eyebrow?: string;
+  title: React.ReactNode;
+  desc?: string;
+  /** 머리 아래 알약 탭 - 같은 갈래의 다른 페이지나 이 페이지의 칸으로 간다 */
+  tabs?: NavLink[];
+  /** 지금 페이지에 해당하는 탭의 href */
+  active?: string;
+  /** 깔 사진. 없으면 남색 격자 면 */
+  image?: { src: string; position?: string };
 }
 
 /**
- * 하위 페이지 첫 화면 - 위에서 휘어 내려오는 빛 아래에 제목과 설명.
- * 홈의 첫 화면보다 빛을 낮고 옅게 둔다.
+ * 하위 페이지 머리 - 사진 위에 남색을 80% 깔고 가운데 제목, 아래에 알약 탭.
+ * Figma 사업영역 · 회사소개 머리와 같은 구성이다. 헤더는 이 위에서 흰 글자가 된다.
  */
-export default function PageHeader({ title, description, eyebrow }: PageHeaderProps) {
+export default function PageHeader({ eyebrow, title, desc, tabs, active, image }: PageHeaderProps) {
   return (
-    <section className="relative overflow-hidden border-b border-white/10 pt-40 pb-14 sm:pt-56 sm:pb-20">
-      <HorizonGlow side="top" rim="clamp(110px, 13vw, 200px)" radius="max(120vw, 900px)" />
-      <div className="container relative mx-auto px-4 sm:px-6">
-        {eyebrow && (
-          <div className="relative mb-12 pb-4 sm:mb-16">
-            <motion.p {...onMount} variants={fadeUp} className="mono-label">
-              <span className="text-white/45"><Scramble text="MATE /" /></span> <Scramble text={`${eyebrow}:`} delay={120} />
-            </motion.p>
-            <motion.span {...onMount} variants={lineDraw}
-              className="absolute bottom-0 left-0 right-0 block h-px bg-white/[0.12]" />
-          </div>
+    <section data-header="dark"
+      className={`relative isolate flex min-h-[440px] items-center overflow-hidden pb-14 pt-32 sm:min-h-[520px] lg:min-h-[600px] ${image ? 'bg-night' : 'night-grid'}`}>
+      {image && (
+        <>
+          <motion.div aria-hidden className="absolute inset-0 -z-10"
+            initial={{ scale: 1.08 }} animate={{ scale: 1 }} transition={{ duration: 2.4, ease: [0.16, 1, 0.3, 1] }}>
+            <Image src={image.src} alt="" fill priority sizes="100vw" className="object-cover"
+              style={{ objectPosition: image.position ?? 'center' }} />
+          </motion.div>
+          <div aria-hidden className="absolute inset-0 -z-10 bg-[rgba(7,11,29,0.8)]" />
+        </>
+      )}
+
+      <motion.div {...onMount} variants={stagger} className={`${container} relative text-center`}>
+        {eyebrow && <motion.p variants={fadeUp} className="eyebrow on-night mb-3">{eyebrow}</motion.p>}
+        <motion.h1 variants={fadeUp} className="type-h1 font-bold text-white">{title}</motion.h1>
+        {desc && (
+          <motion.p variants={fadeUp} className="type-b3 mx-auto mt-5 max-w-xl text-gray-200">{desc}</motion.p>
         )}
-        <div className="grid items-end gap-x-8 gap-y-8 lg:grid-cols-12">
-          <motion.h1 {...onMount} variants={stagger}
-            className="font-medium leading-[1.02] tracking-[-0.028em] text-[var(--text-1)] lg:col-span-8"
-            style={{ fontSize: 'clamp(2.5rem, 6.4vw, 5.5rem)' }}>
-            <SplitText text={title} className="block" delay={0.15} />
-          </motion.h1>
-          <motion.p {...onMount} variants={fadeUp}
-            className="text-[16px] leading-[1.7] text-white/65 sm:text-[17px] lg:col-span-4 lg:pb-3">
-            {description}
-          </motion.p>
-        </div>
-      </div>
+        {tabs && tabs.length > 0 && (
+          <motion.div variants={fadeUp} className="mt-10 sm:mt-14">
+            <PillTabs tabs={tabs.map((t) => ({ key: t.href, label: t.label, href: t.href }))} active={active ?? ''} />
+          </motion.div>
+        )}
+      </motion.div>
     </section>
   );
 }

@@ -1,5 +1,20 @@
 import { Project } from '@/types';
 
+/* 사이트 전체가 같은 세 영역으로 사례를 나눈다 - 메뉴 · 필터 · 카드 칩이 이 기준 하나를 쓴다 */
+export type ProjectDomain = 'web' | 'game' | 'edu';
+
+export function domainOf(category: string): ProjectDomain {
+  if (/Web|Website|Mobile/.test(category)) return 'web';
+  if (/Education/.test(category)) return 'edu';
+  return 'game';
+}
+
+export const domainLabel: Record<ProjectDomain, string> = {
+  web: '웹 · 앱',
+  game: '게임 · XR',
+  edu: '교육',
+};
+
 /**
  * 공개 포트폴리오.
  *

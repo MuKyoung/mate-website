@@ -51,6 +51,8 @@ export interface ProcessStep {
   id: string;
   title: string;
   description: string;
+  /** 공정 원의 단계 이름 아래 한 줄 - 회사소개서의 단계 설명을 줄인 것 */
+  keywords: string;
   order: number;
 }
 

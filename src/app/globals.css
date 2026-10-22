@@ -1,11 +1,8 @@
 /* ── 폰트 ─────────────────────────────────────────────────
    @import 는 반드시 파일 맨 위에 둔다. 다른 규칙 뒤에 오면 브라우저가 통째로 무시한다.
-   라틴 - Geist. 라벨 - Geist Mono. 한글 - IBM Plex Sans KR.
-   Geist 에는 한글이 없어 한글 글자는 자연스럽게 Plex Sans KR 로 떨어진다. Pretendard 는
-   작업 관리 도구가 쓰고, 혹시 Plex 를 못 받았을 때의 대신으로 남겨 둔다.
-   (2026-10-19 Pretendard 가 흔하고 '짜치다'는 말을 듣고 바꿨다 - 획 끝이 또렷한 Plex 가 등폭 라벨과 맞는다) */
+   Figma(세종호이스트크레인 리뉴얼) 체계를 따라 국문 · 영문 · 숫자 모두 Pretendard 하나로 쓴다.
+   2026-10-22 이 체계로 바꾸면서 Geist · IBM Plex Sans KR 은 내려놨다. */
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300..600&family=Geist+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -13,98 +10,67 @@
 
 /* ═══════════════════════════════════════════════════════
    MATE DESIGN SYSTEM - 토큰 단일 원천
-   검은 바탕 + 로고 파랑의 빛. 색은 파랑 하나만 쓰고, 나머지는 흑백으로 푼다.
-   여기 값만 바꾸면 Tailwind 클래스와 소재 클래스가 함께 따라온다.
+   Figma 「(주)세종호이스트크레인 웹사이트 리뉴얼」 의 디자인 시스템을 그대로 가져오고,
+   주요 색(포인트 빨강 · 남색)만 MATE 로고 파랑 #2644CB 로 바꿨다.
+   - point   : 빨강 #D32D27 사다리 → 로고 파랑 사다리
+   - primary : 남색 #16273C 사다리 → 로고 파랑과 같은 색상각(229°)으로 옮긴 남색
+   - gray    : Figma 값 그대로
    ═══════════════════════════════════════════════════════ */
 :root {
-  /* ── Blue - 로고 #2644CB 를 기준으로 밝기만 옮긴 사다리 ──
-     100 은 검은 바탕 위 글자, 200 은 버튼 면, 300 이 로고 색 그대로다. */
-  --primary-100: #8fb0ff;
-  --primary-200: #2e5bf0;
-  --primary-300: #2644cb;
-  --primary-400: #18308f;
-  --primary-500: #0d1b57;
-  --primary-600: #000000;
+  /* point - 로고 색. 버튼 면 · 강조 글자 · 활성 표시 */
+  --point-100: #eceffe;
+  --point-200: #2644cb;   /* 로고 색 그대로 */
+  --point-300: #1e369e;   /* 누름 · 호버 */
+  /* 어두운 면 위 강조 글자 - 로고 파랑은 남색 바탕에서 대비가 2.6:1 이라 밝힌 값을 쓴다 (7:1) */
+  --point-on-dark: #7d95ff;
 
-  --blue-glow:  #4c7dff;   /* 빛의 가장 밝은 파랑 */
-  --blue-ice:   #dce7ff;   /* 빛의 심 - 흰빛에 가까운 파랑 */
+  /* primary - 남색. 400 이 텍스트 블랙 */
+  --primary-100: #3d497f;
+  --primary-200: #2c386d;
+  --primary-300: #202a55;
+  --primary-400: #161d3c;
+  --primary-500: #242a42;
+  --primary-600: #22263a;
 
-  /* gray - 순흑에서 순백까지. 회색은 글자 위계로만 쓴다 */
+  /* gray - Figma 그대로 */
   --gray-50:  #ffffff;
-  --gray-100: #ffffff;
-  --gray-200: #e4e6ea;
-  --gray-300: #b4b8c0;
-  --gray-400: #858a94;
-  --gray-500: #5a5f69;
-  --gray-600: #000000;
+  --gray-100: #f6f7f9;
+  --gray-200: #d7dce4;
+  --gray-300: #b9c0d0;
+  --gray-400: #9aa5bc;
+  --gray-500: #7b8aa7;
+  --gray-600: #333333;
 
-  /* point - 강조. 파랑 하나만 쓰는 체계라 글자용 밝은 파랑이다 */
-  --point-100: #c9d8ff;
-  --point-200: #5b86ff;
-  --point-300: #2e5bf0;
+  /* 어두운 면 - Figma #07111C 를 같은 색상각으로 */
+  --night:   #070b1d;
+  --night-2: #0e1532;
 
-  /* ── 시맨틱 별칭 ───────────────────────────────────── */
-  --canvas:     #000000;
-  --background: #000000;
-  --surface:    #0b0c0f;
-  --surface-2:  #14161b;
+  /* 첫 화면 큐브와 수평선 빛의 가장 밝은 파랑 */
+  --blue-glow: #4c7dff;
 
-  --border:   rgba(255, 255, 255, 0.12);
-  --border-2: rgba(255, 255, 255, 0.24);
+  /* ── 시맨틱 별칭 ─────────────────────────────────── */
+  --canvas:  #ffffff;
+  --surface: var(--gray-100);
+  --line:        #e0e3e8;
+  --line-strong: var(--gray-200);
 
-  --text-1:     #ffffff;
-  --text-2:     rgba(255, 255, 255, 0.74);
-  --text-3:     rgba(255, 255, 255, 0.58);   /* 검정 위 6.9:1 */
-  --text-faint: rgba(255, 255, 255, 0.5);    /* 검정 위 5.3:1 */
+  --text-1: var(--primary-400);   /* 제목 */
+  --text-2: #1f2937;              /* 본문 */
+  --text-3: var(--gray-500);      /* 메타 */
 
-  --accent:        var(--primary-200);
-  --accent-strong: var(--primary-100);
-  --accent-link:   var(--primary-100);
-  --accent-tint:   rgba(46, 91, 240, 0.18);
-  --accent-dim:    rgba(46, 91, 240, 0.12);
-
-  --point:      var(--point-200);
-  --point-tint: rgba(91, 134, 255, 0.16);
-
-  --success:      #12b76a;
-  --success-tint: rgba(18, 183, 106, 0.16);
-  --success-on-dark: #4ade80;
-  --danger:       #f04438;
-  --danger-tint:  rgba(240, 68, 56, 0.16);
-  --danger-on-dark:  #f87171;
-
-  --ink-band: var(--primary-300);
+  --success: #12b76a;
+  --danger:  #e5484d;
 
   /* ── Grid System - PC 1920 / inner 1500 / 12col / gutter 16 ── */
   --grid-inner:  1500px;
   --grid-gutter: 16px;
   --grid-cols:   12;
 
-  /* ── Shape - 모서리는 각지게. 둥근 알약과 카드는 쓰지 않는다 ── */
-  --radius-sm:   2px;
-  --radius:      2px;
-  --radius-lg:   3px;
-
   /* ── 글꼴 스택 ── */
-  --font-sans: 'Geist', 'IBM Plex Sans KR', 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont,
-    'Apple SD Gothic Neo', 'Noto Sans KR', 'Segoe UI', Roboto, sans-serif;
-  --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas,
-    'IBM Plex Sans KR', 'Pretendard Variable', Pretendard, monospace;
-
-  /* 기존 코드 호환용 별칭 */
-  --foreground:   var(--text-1);
-  --primary:      var(--primary-200);
-  --primary-dark: var(--primary-300);
-  --secondary:    var(--primary-300);
-  --accent-2:     var(--blue-glow);
-  --lime:         var(--point-200);
-  --lime-ink:     var(--primary-600);
-  --info-tint:    var(--accent-tint);
-  --warning-tint: var(--point-tint);
+  --font-sans: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui,
+    'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
-
-/* 영역(웹 · 게임 · 교육)마다 색을 따로 두던 체계는 접었다.
-   파랑 하나로 사이트 전체를 묶는다. data-domain 은 페이지 구분에만 남는다. */
 
 /* ── App Shell ────────────────────────────────────────
    /taskmanager 는 마케팅 사이트와 다른 제품이다.
@@ -150,43 +116,11 @@ html[data-shell='app'] ::-webkit-scrollbar-thumb {
 }
 html[data-shell='app'] ::-webkit-scrollbar-thumb:hover { background: #afb8c1; }
 
-/* ── Light Surface ───────────────────────────────────
-   검은 사이트 안에서 문서처럼 읽히는 면(교육 페이지, 흰 카드)을 뒤집을 때 쓴다.
-   표면과 글자 토큰만 반전하고 파랑은 그대로 둔다. */
-[data-surface='light'] {
-  --canvas:     #ffffff;
-  --background: #ffffff;
-  --surface:    #f3f4f6;
-  --surface-2:  #e9ebef;
-
-  --border:   rgba(0, 0, 0, 0.12);
-  --border-2: rgba(0, 0, 0, 0.24);
-
-  --text-1:     #000000;
-  --text-2:     rgba(0, 0, 0, 0.72);
-  --text-3:     rgba(0, 0, 0, 0.6);
-  --text-faint: rgba(0, 0, 0, 0.45);
-
-  /* 흰 바탕에서는 로고 파랑을 그대로 글자에 쓴다 (흰 바탕 7.5:1) */
-  --accent-strong: var(--primary-300);
-  --accent-link:   var(--primary-300);
-
-  /* 반드시 다시 선언해야 한다 - 커스텀 속성의 var() 는 '선언한 요소'에서
-     값이 확정되므로, 바깥 값이 그대로 굳어 들어와 흰 배경에 흰 글자가 찍힌다. */
-  --point:      var(--primary-300);
-  --point-tint: rgba(38, 68, 203, 0.08);
-}
-
 /* ── Grid - 12칼럼 레이아웃 유틸 ─────────────────────── */
 .grid-12 {
   display: grid;
   grid-template-columns: repeat(var(--grid-cols), minmax(0, 1fr));
   gap: var(--grid-gutter);
-}
-.inner {
-  width: 100%;
-  max-width: var(--grid-inner);
-  margin-inline: auto;
 }
 
 /* ── 기본 ───────────────────────────────────────────── */
@@ -201,22 +135,22 @@ html.lenis, html.lenis body { height: auto; }
 .lenis.lenis-stopped { overflow: hidden; }
 
 ::selection {
-  background: var(--accent);
-  color: var(--gray-50);
+  background: var(--point-200);
+  color: #ffffff;
 }
 
 /* 키보드 포커스 - 마우스 클릭에는 나타나지 않음 */
 :focus-visible {
-  outline: 2px solid var(--blue-glow);
+  outline: 2px solid var(--point-200);
   outline-offset: 3px;
-  border-radius: 1px;
+  border-radius: 2px;
 }
 
 body {
   color: var(--text-1);
-  background: transparent;
+  background: var(--canvas);
   font-family: var(--font-sans);
-  letter-spacing: -0.004em;
+  letter-spacing: -0.003em;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -234,135 +168,122 @@ body {
 
 /* ── 스크롤바 ─────────────────────────────────────── */
 ::-webkit-scrollbar { width: 10px; }
-::-webkit-scrollbar-track { background: #000; }
+::-webkit-scrollbar-track { background: var(--gray-100); }
 ::-webkit-scrollbar-thumb {
-  background: #2a2d33;
-  border: 2px solid #000;
+  background: var(--gray-300);
+  border: 2px solid var(--gray-100);
+  border-radius: 9999px;
 }
-::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+::-webkit-scrollbar-thumb:hover { background: var(--point-200); }
 
 /* ── 컴포넌트 클래스 ──────────────────────────────────
-   @layer components 안에 두어야 Tailwind 유틸리티(items-start, text-[..], leading-[..])가
-   이 클래스들을 덮어쓸 수 있다. 밖에 두면 나중에 선언된 이쪽이 항상 이긴다. */
+   @layer components 안에 두어야 Tailwind 유틸리티가 이 클래스들을 덮어쓸 수 있다. */
 @layer components {
-/* ── Typography ───────────────────────────────────────
-   제목도 굵게 누르지 않는다. 큰 글자는 보통 굵기와 좁은 자간으로 세운다. */
-.type-d1 { font-size: clamp(2.75rem, 8vw, 7rem);    font-weight: 500; line-height: 1.02; letter-spacing: -0.028em; }
-.type-d2 { font-size: clamp(2.25rem, 5vw, 4.25rem); font-weight: 500; line-height: 1.08; letter-spacing: -0.025em; }
-.type-h1 { font-size: clamp(2rem, 4vw, 3.25rem);    font-weight: 500; line-height: 1.18; letter-spacing: -0.022em; }
-.type-h2 { font-size: clamp(1.375rem, 2.2vw, 1.75rem); font-weight: 500; line-height: 1.3;  letter-spacing: -0.016em; }
-.type-h3 { font-size: clamp(1.375rem, 2.2vw, 1.75rem); font-weight: 400; line-height: 1.3;  letter-spacing: -0.016em; }
-.type-b1 { font-size: 18px; font-weight: 500; line-height: 1.6;  letter-spacing: -0.006em; }
-.type-b2 { font-size: 16px; font-weight: 500; line-height: 1.6;  letter-spacing: -0.004em; }
-.type-b3 { font-size: 16px; font-weight: 400; line-height: 1.7;  letter-spacing: -0.004em; }
-.type-b4 { font-size: 14px; font-weight: 500; line-height: 1.6;  letter-spacing: 0; }
-.type-c1 { font-size: 13px; font-weight: 400; line-height: 1.55; letter-spacing: -0.003em; }
-.type-c2 { font-size: 12px; font-weight: 400; line-height: 1.5;  letter-spacing: 0; }
+  /* ── Typography - Figma 타입 스케일 (Pretendard / LS -0.3%) ──
+     PC 1920 기준 값을 최댓값으로 두고 화면이 좁아지면 줄인다.
+     제목은 보통 굵기로 두고 강조할 낱말만 <b> 로 굵게 누른다 (Figma 의 Bold + Regular 섞어 쓰기). */
+  .type-h1 { font-size: clamp(1.75rem, 0.9rem + 2.4vw, 3.5rem); font-weight: 400; line-height: 1.3; letter-spacing: -0.003em; }
+  .type-h2 { font-size: clamp(1.375rem, 0.95rem + 1.05vw, 2rem); font-weight: 700; line-height: 1.25; letter-spacing: -0.003em; }
+  .type-h3 { font-size: clamp(1.375rem, 0.95rem + 1.05vw, 2rem); font-weight: 500; line-height: 1.25; letter-spacing: -0.003em; }
+  .type-b1 { font-size: clamp(1rem, 0.9rem + 0.25vw, 1.125rem); font-weight: 700; line-height: 1.5; letter-spacing: -0.003em; }
+  .type-b2 { font-size: 16px; font-weight: 700; line-height: 1.5; letter-spacing: -0.003em; }
+  .type-b3 { font-size: clamp(0.9375rem, 0.9rem + 0.1vw, 1rem); font-weight: 400; line-height: 1.65; letter-spacing: -0.003em; }
+  .type-b4 { font-size: 14px; font-weight: 700; line-height: 1.5; letter-spacing: -0.003em; }
+  .type-c1 { font-size: 13px; font-weight: 400; line-height: 1.5; letter-spacing: -0.003em; }
+  .type-c2 { font-size: 12px; font-weight: 400; line-height: 1.5; letter-spacing: -0.003em; }
 
-/* ── 라틴 · 숫자 조판 ── */
-.font-en {
-  font-feature-settings: 'tnum';
-  letter-spacing: -0.03em;
-}
-.font-mono-stat {
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: 'tnum';
-}
+  /* 섹션 머리의 작은 영문 이름 - "Key Results" */
+  .eyebrow {
+    display: block;
+    font-size: clamp(0.875rem, 0.8rem + 0.3vw, 1.125rem);
+    font-weight: 700;
+    line-height: 1.5;
+    letter-spacing: -0.003em;
+    color: var(--point-200);
+  }
+  .on-night .eyebrow,
+  .eyebrow.on-night { color: var(--point-on-dark); }
 
-/* 국문 캡션 - 큰 제목 아래 가벼운 한 줄 */
-.caption-kr {
-  font-size: clamp(15px, 1.5vw, 18px);
-  font-weight: 400;
-  letter-spacing: -0.004em;
-  color: var(--text-2);
+  /* 큰 숫자 - Key Results 카드 */
+  .type-num { font-size: clamp(4rem, 2.6rem + 3.4vw, 6rem); font-weight: 700; line-height: 1.1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
 }
 
-/* ── 모노 라벨 ───────────────────────────────────────
-   "OVERVIEW:" 처럼 작은 등폭 대문자로 칸의 이름을 붙인다.
-   한글이 섞이면 한글만 Pretendard 로 떨어진다. */
-.index-num,
-.mono-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  font-weight: 400;
-  font-size: 12px;
-  line-height: 1.4;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: var(--text-3);
-}
-.index-num-lg {
-  display: block;
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  font-weight: 400;
-  font-size: 12px;
-  line-height: 1;
-  letter-spacing: 0.04em;
-  color: var(--text-faint);
-}
-/* 모노 목록의 머리 점 - "• VISUAL DIRECTION" */
-.mono-bullet::before {
-  content: '•';
-  display: inline-block;
-  width: 1em;
-  color: var(--text-faint);
+/* ── 어두운 면 - 남색 바탕 위 가는 격자와 아래에서 번지는 로고 파랑 ──
+   사진이 없는 어두운 칸(하위 페이지 머리, 수상 칸, 일하는 방식)에 깐다. */
+.night-grid {
+  background-color: var(--night);
+  background-image:
+    radial-gradient(90% 70% at 50% 120%, rgba(38, 68, 203, 0.38), transparent 70%),
+    linear-gradient(rgba(125, 149, 255, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(125, 149, 255, 0.07) 1px, transparent 1px);
+  background-size: 100% 100%, 72px 72px, 72px 72px;
+  background-position: center, center, center;
 }
 
-/* 상단 규칙선이 있는 인덱스 행 */
-.rule-top {
-  border-top: 1px solid var(--border);
-  padding-top: 24px;
+/* ── 푸터의 행성 - 아래에서 떠오르는 어두운 원과 그 가장자리의 파란 빛 ──
+   Figma 는 빨간 행성 사진을 깔았다. 사진 대신 원 하나와 그림자로 같은 장면을 만든다.
+   원 꼭대기(가장자리)가 .planet-anchor 의 top 에 온다. */
+.planet-anchor {
+  position: absolute;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+}
+.planet {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  /* 아주 큰 원이라 화면 양 끝에서도 조금만 내려간다 (1920 에서 130px 남짓) */
+  width: max(1400px, 376vw);
+  aspect-ratio: 1;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: #02040c;
+  box-shadow:
+    0 -1px 0 0 rgba(196, 208, 255, 0.85),
+    0 -6px 26px 2px rgba(125, 149, 255, 0.55),
+    0 -40px 120px 24px rgba(38, 68, 203, 0.42),
+    0 -120px 260px 80px rgba(38, 68, 203, 0.18);
+}
+/* 가장자리 한가운데 가장 밝은 빛 */
+.planet-flare {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: min(1100px, 78vw);
+  height: 180px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(50% 50% at 50% 50%,
+    rgba(240, 244, 255, 0.95) 0%,
+    rgba(160, 180, 255, 0.7) 9%,
+    rgba(76, 110, 245, 0.35) 30%,
+    rgba(38, 68, 203, 0.12) 52%,
+    transparent 72%);
+  mix-blend-mode: screen;
+}
+/* 별 - 몇 점만. 깜빡이지 않는다 */
+.stars {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(1.5px 1.5px at 8% 18%, rgba(255, 255, 255, 0.7), transparent 100%),
+    radial-gradient(1px 1px at 17% 52%, rgba(255, 255, 255, 0.5), transparent 100%),
+    radial-gradient(2px 2px at 24% 9%, rgba(125, 149, 255, 0.9), transparent 100%),
+    radial-gradient(1px 1px at 35% 34%, rgba(255, 255, 255, 0.45), transparent 100%),
+    radial-gradient(1.5px 1.5px at 46% 14%, rgba(255, 255, 255, 0.6), transparent 100%),
+    radial-gradient(1px 1px at 57% 41%, rgba(255, 255, 255, 0.4), transparent 100%),
+    radial-gradient(2.5px 2.5px at 71% 12%, rgba(125, 149, 255, 0.85), transparent 100%),
+    radial-gradient(1px 1px at 79% 47%, rgba(255, 255, 255, 0.5), transparent 100%),
+    radial-gradient(1.5px 1.5px at 88% 24%, rgba(255, 255, 255, 0.65), transparent 100%),
+    radial-gradient(1px 1px at 94% 58%, rgba(255, 255, 255, 0.4), transparent 100%),
+    radial-gradient(1px 1px at 4% 63%, rgba(255, 255, 255, 0.4), transparent 100%),
+    radial-gradient(2px 2px at 63% 27%, rgba(255, 255, 255, 0.35), transparent 100%);
 }
 
-.eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 400;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: var(--text-3);
-}
-
-.on-dark    { color: var(--gray-50); }
-.text-faint { color: var(--text-faint); }
-
-.section-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 400;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: var(--text-3);
-  margin-bottom: 16px;
-}
-
-/* ── 태그 - 각진 테두리 칩 ── */
-.tag {
-  display: inline-flex;
-  align-items: center;
-  padding: 5px 9px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 400;
-  line-height: 1.3;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border-2);
-  color: var(--text-2);
-  background: transparent;
-}
-}
+/* ━━ 첫 화면 큐브 · 수평선 빛 · 스크롤 유도 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   2026-10-19 Sui 체계 때 만든 홈 첫 화면을 세종 Figma 체계 위에 되살렸다 (2026-10-22, 사용자 요청).
+   검은 캔버스용이던 빛의 바깥 끝만 남색(--night)으로 바꿨다. */
 
 /* ── 빛 - 수평선처럼 휘는 파란 띠 ──────────────────────
    아주 큰 원의 가장자리만 화면에 걸리게 둔다. 원의 반지름(--glow-r)과
@@ -391,20 +312,7 @@ body {
     #3672ff 90.4%,
     #143aae 92.4%,
     #07184f 94.8%,
-    #000 97.5%);
-}
-.glow-horizon--bottom {
-  top: calc(var(--glow-rim) - var(--glow-r) * 0.15);
-  background: radial-gradient(closest-side,
-    #f4f8ff 0%,
-    #dfe9ff 52%,
-    #93b6ff 68%,
-    #3e76ff 79%,
-    #1f55ee 85%,
-    #1747d6 86.9%,
-    #0e2f9a 89.3%,
-    #061650 92.2%,
-    #000 95.5%);
+    var(--night) 97.5%);
 }
 
 /* ── 입자 ─────────────────────────────────────────────
@@ -425,6 +333,11 @@ body {
   mix-blend-mode: overlay;
   opacity: 0.55;
 }
+/* 빛의 입자는 원 안에만 - 남색 바탕에서는 원 밖 네모 칸에 깔린 입자가 칸의 아래 변을 선처럼 드러낸다 */
+.glow-horizon::after {
+  -webkit-mask-image: radial-gradient(closest-side, #000 88%, transparent 97%);
+  mask-image: radial-gradient(closest-side, #000 88%, transparent 97%);
+}
 
 /* ── 계속 도는 움직임 ───────────────────────────────────
    전부 transform · opacity 만 바꿔 합성 단계에서 끝나게 한다 (다시 그리지 않는다).
@@ -443,69 +356,12 @@ body {
 .glow-breathe-top    { transform-origin: 50% 0%; }
 .glow-breathe-bottom { transform-origin: 50% 100%; }
 
-/* 줄무늬 막대의 숨 - 가운데를 축으로 위아래가 조금 줄었다 돌아온다 */
-@keyframes bar-breathe {
-  from { transform: scaleY(1); }
-  to   { transform: scaleY(0.72); }
-}
-.bar-breathe {
-  transform-box: fill-box;
-  transform-origin: 50% 50%;
-  animation: bar-breathe 7s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate;
-}
 
-/* 블록 모자이크의 줄 - 좌우로 천천히 흐른다 */
 @keyframes row-drift {
   from { transform: translateX(-3px); }
   to   { transform: translateX(4px); }
 }
 .row-drift { animation: row-drift 12s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate; }
-
-/* 줄무늬 위를 가로로 훑는 빛. overlay 라 검은 틈에서는 보이지 않는다 */
-@keyframes stripe-sweep {
-  0%   { transform: translateX(-120%); }
-  55%  { transform: translateX(420%); }
-  100% { transform: translateX(420%); }
-}
-.stripe-sweep {
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 26%;
-  pointer-events: none;
-  background: linear-gradient(90deg, transparent, rgba(220, 231, 255, 0.55) 50%, transparent);
-  mix-blend-mode: overlay;
-  animation: stripe-sweep 7s cubic-bezier(0.65, 0, 0.35, 1) infinite;
-  animation-delay: 1.6s;
-}
-
-/* 파란 칸 · 회색 칸 안에서 천천히 떠도는 밝은 얼룩 - 면이 멈춰 있지 않게 */
-@keyframes card-drift {
-  0%   { transform: translate(-18%, -12%); }
-  50%  { transform: translate(22%, 14%); }
-  100% { transform: translate(-18%, -12%); }
-}
-.card-drift {
-  position: absolute;
-  inset: -30%;
-  pointer-events: none;
-  background: radial-gradient(closest-side, rgba(255, 255, 255, 0.22), transparent 70%);
-  animation: card-drift 16s cubic-bezier(0.45, 0, 0.55, 1) infinite;
-}
-
-@layer components {
-  /* 패널 호버 - 파란 빛 한 줄이 왼쪽에서 오른쪽으로 지나간다 */
-  .sweep { position: relative; overflow: hidden; }
-  .sweep::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background: linear-gradient(100deg, transparent 30%, rgba(76, 125, 255, 0.16) 50%, transparent 70%);
-    transform: translateX(-110%);
-    transition: transform 0.95s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  .sweep:hover::before { transform: translateX(110%); }
-}
 
 /* ── 첫 화면 큐브 ────────────────────────────────────────
    --s 가 한 변. 옆면 넷이 세로축으로 돌고, 위에서 살짝 내려다보도록 기울인다.
@@ -723,7 +579,7 @@ body {
 }
 .cube-chip {
   padding: calc(var(--s) * 0.012) calc(var(--s) * 0.024);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: clamp(9px, calc(var(--s) * 0.031), 12px);
   letter-spacing: 0.02em;
 }
@@ -767,13 +623,13 @@ body {
 .cube-list-row > span:last-child {
   flex-shrink: 0;
   white-space: nowrap;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: 0.78em;
   letter-spacing: 0.02em;
   opacity: 0.72;
 }
 .cube-tone--light .cube-list { border-bottom-color: rgba(0, 0, 0, 0.16); }
-.cube-tone--light .cube-list-row > span:first-child::before { background: #2E5BF0; }
+.cube-tone--light .cube-list-row > span:first-child::before { background: var(--point-200); }
 .cube-tone--blue .cube-list-row > span:first-child::before { background: #fff; }
 /* 윗면 · 밑면 그림 큐브 - 로고 한 장만 가운데 */
 .cube-face--cap {
@@ -792,7 +648,7 @@ body {
 }
 .cube-meta {
   position: relative;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: clamp(9px, calc(var(--s) * 0.031), 12px);
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -835,124 +691,12 @@ body {
 .scroll-cue-arrow { animation: cue-bob 2.4s cubic-bezier(0.45, 0, 0.55, 1) infinite; }
 @keyframes cue-bob { 0%, 100% { transform: translateY(-2px); } 50% { transform: translateY(3px); } }
 
-/* 라우트 진입 - template.tsx 가 페이지마다 새로 마운트되며 재생된다 */
-@keyframes route-enter {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-.route-enter { animation: route-enter 0.45s cubic-bezier(0.16, 1, 0.3, 1) both; }
-
-/* ━━ Resend 홈에서 가져온 연출 (2026-10-19, 홈에서 쓴다) ━━━━━━━━━━━━━━━━━━━━━━━━━━
-   흰빛이 흐르는 제목, 머리카락 테두리 틀과 그 윗변에 닿은 빛줄,
-   아래로 녹아 사라지는 미리보기, 가운데 세우는 입체 아이콘 칸.
-   색은 사이트의 파랑 하나만 쓴다 (Resend 는 구간마다 주황 · 보라 · 초록을 쓴다). */
-
-/* 제목 글자 - 왼쪽 위 흰색에서 오른쪽 아래로 반쯤 투명해진다.
-   글자 조각이 따로 움직이는(transform) 제목 안에는 걸지 않는다 - 조각마다 끊겨 보인다 */
-.sheen {
-  background-image: linear-gradient(to right bottom, #fff 30%, rgba(255, 255, 255, 0.5));
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-}
-
-/* 틀 - 머리카락 테두리, 위쪽만 조금 밝은 면, 윗변에 닿은 빛줄(::before)과 그 아래 번짐(::after).
-   빛줄 자리는 --beam-x, 길이는 --beam-w 로 바꾼다. .beam-top 은 테두리 없이 윗선에만 빛을 얹는다 */
-.beam-frame,
-.beam-top {
-  --beam-x: 50%;
-  --beam-w: min(56%, 560px);
-  position: relative;
-  isolation: isolate;
-}
-.beam-frame {
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 2px;
-  background:
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0) 120px),
-    var(--canvas);
-}
-.beam-frame::before,
-.beam-frame::after,
-.beam-top::before,
-.beam-top::after {
-  content: '';
+/* ── 공정 원 - 바탕에 비스듬히 지나가는 궤도선 ── */
+.orbit-lines {
   position: absolute;
-  left: var(--beam-x);
-  width: var(--beam-w);
-  transform: translateX(-50%);
+  inset: 0;
   pointer-events: none;
-}
-.beam-frame::before,
-.beam-top::before {
-  top: -1px;
-  height: 1px;
-  z-index: 2;
-  background: linear-gradient(90deg, transparent, var(--blue-ice) 50%, transparent);
-}
-.beam-frame::after,
-.beam-top::after {
-  top: 0;
-  height: 140px;
-  z-index: -1;
-  background: radial-gradient(50% 100% at 50% 0%, rgba(76, 125, 255, 0.16), transparent 72%);
-}
-
-/* 아래로 녹아 사라지는 미리보기 - 틀 안 화면이 계속 이어지는 것처럼 */
-.fade-b {
-  -webkit-mask-image: linear-gradient(to bottom, #000 45%, transparent 96%);
-  mask-image: linear-gradient(to bottom, #000 45%, transparent 96%);
-}
-/* 양 끝이 녹는 띠 - 틀 안에 든 흐르는 띠 */
-.fade-x {
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent);
-  mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent);
-}
-
-/* 입체 아이콘 칸 - 어두운 유리 덩어리. 윗모서리 반사, 아랫모서리에 닿은 파란 빛줄, 바닥에 번진 빛.
-   모서리는 사이트 규칙대로 2px - 첫 화면 큐브의 작은 면처럼 보이게 */
-.icon-tile {
-  position: relative;
-  isolation: isolate;
-  display: grid;
-  place-items: center;
-  width: 84px;
-  height: 84px;
-  border-radius: 2px;
-  color: #fff;
-  background:
-    radial-gradient(120% 90% at 28% 0%, rgba(255, 255, 255, 0.16), transparent 55%),
-    linear-gradient(165deg, #23262d 0%, #0d0e12 52%, #040506 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.22),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.06),
-    0 24px 48px -16px rgba(0, 0, 0, 0.9);
-}
-.icon-tile::before {
-  content: '';
-  position: absolute;
-  left: 14%;
-  right: 14%;
-  bottom: -1px;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--blue-glow), transparent);
-}
-.icon-tile::after {
-  content: '';
-  position: absolute;
-  left: 6%;
-  right: 6%;
-  bottom: -24px;
-  height: 36px;
-  z-index: -1;
-  background: radial-gradient(50% 50% at 50% 30%, rgba(76, 125, 255, 0.38), transparent 75%);
-  filter: blur(8px);
-}
-.icon-tile svg {
-  width: 32px;
-  height: 32px;
-  filter: drop-shadow(0 2px 8px rgba(76, 125, 255, 0.35));
+  color: #e6e9ef;
 }
 
 /* ── 키프레임 ──────────────────────────────────── */
@@ -961,6 +705,19 @@ body {
   100% { transform: translateX(-50%); }
 }
 .animate-marquee { animation: marquee 30s linear infinite; }
+
+/* 첫 화면 슬라이드 진행 막대가 차오른다 */
+@keyframes bar-fill {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+/* 라우트 진입 - template.tsx 가 페이지마다 새로 마운트되며 재생된다 */
+@keyframes route-enter {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.route-enter { animation: route-enter 0.45s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -977,4 +734,3 @@ body {
   [class*="fixed"],
   [class*="z-50"] { display: none !important; }
 }
-

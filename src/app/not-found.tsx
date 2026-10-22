@@ -1,58 +1,33 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { FiArrowLeft, FiHome } from 'react-icons/fi';
-import { fadeUp, fadeRight, clipLeft, lineDraw, stagger, onMount } from '@/lib/motion';
-import { btnPrimary, displaySize, linkUnderline } from '@/lib/styles';
+import { fadeUp, stagger, onMount } from '@/lib/motion';
+import { btnLine, btnPoint } from '@/lib/styles';
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen flex items-center px-4 sm:px-6">
-      <motion.div {...onMount} variants={stagger} className="container mx-auto max-w-3xl">
-        {/* 로고 */}
-        <motion.div variants={fadeUp} className="mb-14">
-          <Link href="/" className="inline-block hover:opacity-80 transition-opacity">
-            <Image src="/images/logo.png" alt="MATE" width={120} height={38} className="h-8 w-auto brightness-0 invert" />
-          </Link>
-        </motion.div>
-
-        {/* 라벨 행 - 헤어라인 라인 드로우 */}
-        <div className="relative pb-6 mb-10 sm:mb-12">
-          <motion.p variants={fadeRight} className="mono-label">
-            404 / Not found:
-          </motion.p>
-          <motion.span variants={lineDraw}
-            className="absolute bottom-0 left-0 right-0 h-px bg-white/10 block" />
-        </div>
-
-        {/* 대형 타이틀 */}
-        <motion.h1 variants={stagger}
-          className="mb-6 font-medium leading-[1.06] tracking-[-0.028em] text-[var(--text-1)]"
-          style={displaySize}>
-          <span className="block overflow-hidden pb-[0.08em]">
-            <motion.span variants={clipLeft} className="block">페이지를 찾을 수 없습니다</motion.span>
-          </span>
-        </motion.h1>
-
-        <motion.p variants={fadeRight} className="text-[15px] sm:text-[16px] text-white/55 leading-[1.75] mb-12 max-w-md">
+    <section data-header="light" className="flex min-h-screen items-center justify-center px-5 pb-24 pt-32">
+      <motion.div {...onMount} variants={stagger} className="text-center">
+        <motion.p variants={fadeUp} className="text-[clamp(5rem,3rem+8vw,10rem)] font-bold leading-none tracking-[-0.03em] text-point-200">
+          404
+        </motion.p>
+        <motion.h1 variants={fadeUp} className="type-h2 mt-6 text-ink">페이지를 찾을 수 없습니다</motion.h1>
+        <motion.p variants={fadeUp} className="type-b3 mx-auto mt-4 max-w-md text-ink-2">
           요청하신 페이지가 존재하지 않거나 이동되었을 수 있습니다.
         </motion.p>
-
-        <motion.div variants={fadeUp} className="flex flex-wrap items-center gap-8">
-          <Link href="/" className={btnPrimary}>
+        <motion.div variants={fadeUp} className="mt-10 flex flex-wrap items-center justify-center gap-2">
+          <Link href="/" className={btnPoint}>
             <FiHome size={16} />
             홈으로 돌아가기
           </Link>
-          <button
-            onClick={() => window.history.back()}
-            className={`inline-flex items-center gap-1.5 ${linkUnderline}`}>
-            <FiArrowLeft size={14} />
+          <button type="button" onClick={() => window.history.back()} className={btnLine}>
+            <FiArrowLeft size={16} />
             이전 페이지
           </button>
         </motion.div>
       </motion.div>
-    </div>
+    </section>
   );
 }

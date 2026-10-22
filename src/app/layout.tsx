@@ -10,9 +10,9 @@ import { business } from "@/data/business";
 
 const siteUrl = "https://devteammate.co.kr";
 
-/* 모바일 브라우저 크롬(주소창 등)을 다크 캔버스에 맞춤 */
+/* 모바일 브라우저 크롬(주소창 등)을 흰 헤더에 맞춤 */
 export const viewport: Viewport = {
-  themeColor: "#000000",
+  themeColor: "#ffffff",
 };
 
 export const metadata: Metadata = {
