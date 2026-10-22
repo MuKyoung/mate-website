@@ -2,14 +2,17 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Doc } from './types';
+import type { StoreOptions, SyncState } from './store';
 
 /**
- * 문서 저장소.
- * 작업과 같은 제약을 따른다 - 정적 배포라 브라우저 localStorage 에만 남는다.
- * 원격으로 옮길 때는 read/write 두 함수만 교체하면 된다.
+ * 문서 저장소 - 브라우저 저장 모드.
+ * 작업 저장소(store.ts)와 같은 처지다 - Supabase 키 없이 빌드했을 때 localStorage 에만 남는다.
+ * 팀이 함께 쓰는 저장소는 remote.ts 이고, 둘은 아래 DocStore 모양을 함께 쓴다.
  */
 
 const KEY = 'mate.taskmanager.docs.v1';
+/** Supabase 로 옮길 때 예전 데이터를 찾는 자리 */
+export const LOCAL_DOCS_KEY = KEY;
 
 const NL = '\n';
 const lines = (...xs: string[]) => xs.join(NL);
@@ -208,9 +211,20 @@ export interface DocStore {
   remove(id: string): void;
   /** 손대지 않은 예시 문서를 지운다. 그 아래에 사람이 쓴 문서가 있으면 위로 올려 남긴다 */
   clearSamples(): void;
+  /** Supabase 모드 - 보내는 중 · 실패 */
+  sync?: SyncState;
+  /** Supabase 모드 - 처음 목록을 읽지 못했을 때의 문구. 한 번 읽은 뒤에는 생기지 않는다 */
+  loadError?: string | null;
+  /** Supabase 모드 - 다른 곳에서 지워 화면에서 뺀 문서 → 보내지 못한 고침이 있었는가 */
+  deletedElsewhere?: ReadonlyMap<string, boolean>;
+  /** Supabase 모드 - 기다리는 저장을 모두 보낸다(로그아웃 전에) */
+  flush?(): Promise<void>;
+  /** Supabase 모드 - 서버 목록을 다시 읽는다 */
+  reload?(): Promise<void>;
 }
 
-export function useDocStore(): DocStore {
+/** _opts 는 Supabase 저장소와 같은 모양으로 부르기 위한 자리 */
+export function useDocStore(_opts?: StoreOptions): DocStore {
   const [docs, setDocs] = useState<Doc[]>([]);
   const [ready, setReady] = useState(false);
   const seq = useRef(0);

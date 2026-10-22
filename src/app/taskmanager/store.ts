@@ -1,25 +1,36 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { Task, Status } from './types';
+import { localISO, type Task, type Status } from './types';
 
 /**
- * 작업 저장소.
+ * 작업 저장소 - 브라우저 저장 모드.
  *
- * 이 사이트는 `output: 'export'` 정적 배포라 서버도 DB도 없다.
- * 따라서 데이터는 브라우저의 localStorage 에 남고 **기기 밖으로 나가지 않는다.**
- * 같은 탭을 여러 개 열어 두면 storage 이벤트로 서로 동기화된다.
+ * Supabase 키 없이 빌드했을 때 쓴다(로컬 개발 · 미리보기). 데이터는 브라우저의
+ * localStorage 에 남고 **기기 밖으로 나가지 않는다.** 같은 탭을 여러 개 열어 두면
+ * storage 이벤트로 서로 동기화된다.
  *
- * 여러 사람이 같은 보드를 보려면 원격 저장소가 필요하다 -
- * 아래 read/write 두 지점만 교체하면 되도록 입출력을 한곳에 모아 두었다.
+ * 팀이 함께 쓰는 저장소는 remote.ts(Supabase) 이고, 둘은 아래 Store 모양을 함께 쓴다.
  */
 
 const KEY = 'mate.taskmanager.v1';
+/** Supabase 로 옮길 때 예전 데이터를 찾는 자리 */
+export const LOCAL_TASKS_KEY = KEY;
+/** 브라우저 저장 모드에서 '나'로 고른 사람 */
+export const LOCAL_ME_KEY = 'mate.taskmanager.me';
+
+/** 서버에 보내는 중인지 - Supabase 모드에서만 바뀐다 */
+export type SyncState = 'idle' | 'saving' | 'error';
+export interface StoreOptions {
+  /** 저장 · 불러오기에 실패했을 때 화면에 알릴 문구 */
+  onError?(text: string): void;
+}
 
 function todayISO(offsetDays = 0): string {
   const d = new Date();
   d.setDate(d.getDate() + offsetDays);
-  return d.toISOString().slice(0, 10);
+  // 이 기기의 날짜로 - toISOString 은 UTC 라 한국에서 아침 9시 전에는 하루 앞 날짜가 된다
+  return localISO(d);
 }
 
 /**
@@ -99,13 +110,26 @@ function write(tasks: Task[]) {
   }
 }
 
+/** 지운 작업을 원래 자리에 다시 끼운다 - 이미 있는 것은 건너뛰고, 하나도 끼우지 못하면 null */
+function restore(cur: Task[], gone: { task: Task; at: number }[]): Task[] | null {
+  const next = [...cur];
+  let n = 0;
+  gone.forEach(({ task, at }) => {
+    if (next.some((t) => t.id === task.id)) return;
+    next.splice(Math.min(at, next.length), 0, task);
+    n += 1;
+  });
+  return n ? next : null;
+}
+
 export interface Store {
   tasks: Task[];
   ready: boolean;
   /** 저장이 막힌 환경인지 - 배너로 알려 준다 */
   persistent: boolean;
   create(input: Partial<Task> & { title: string }): Task;
-  update(id: string, patch: Partial<Task>): void;
+  /** undoLabel 을 주면 되돌릴 수 있는 동작으로 남긴다(캘린더에서 마감일을 옮길 때) */
+  update(id: string, patch: Partial<Task>, undoLabel?: string): void;
   remove(id: string): void;
   /** 드래그로 상태·순서를 함께 바꾼다 */
   move(id: string, status: Status, beforeId: string | null): void;
@@ -114,20 +138,45 @@ export interface Store {
   clearSamples(): void;
   /** 되돌릴 수 있는 마지막 동작의 설명 - 없으면 null */
   undoLabel: string | null;
-  undo(): void;
+  /** 되돌릴 동작을 기록할 때마다 1씩 커진다 - 같은 이름의 동작도 구별한다 */
+  undoSeq: number;
+  /** 마지막 한 동작만 되돌린다. 그사이 그 작업이 바뀌었거나 없으면 손대지 않고 false */
+  undo(): boolean;
+  /** 기다리는 되돌리기를 잊는다(알림이 닫힐 때) */
+  dropUndo(): void;
+  /** Supabase 모드 - 보내는 중 · 실패 */
+  sync?: SyncState;
+  /** Supabase 모드 - 처음 목록을 읽지 못했을 때의 문구. 한 번 읽은 뒤에는 생기지 않는다 */
+  loadError?: string | null;
+  /** Supabase 모드 - 다른 곳에서 지워 화면에서 뺀 줄 → 보내지 못한 고침이 있었는가 */
+  deletedElsewhere?: ReadonlyMap<string, boolean>;
+  /** Supabase 모드 - 기다리는 저장을 모두 보낸다(로그아웃 전에) */
+  flush?(): Promise<void>;
+  /** Supabase 모드 - 서버 목록을 다시 읽는다(가져오기 뒤처럼 실시간을 기다리지 않을 때) */
+  reload?(): Promise<void>;
 }
 
-export function useTaskStore(): Store {
+/** _opts 는 Supabase 저장소와 같은 모양으로 부르기 위한 자리 - 브라우저 모드에서는 실패할 일이 없다 */
+export function useTaskStore(_opts?: StoreOptions): Store {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [ready, setReady] = useState(false);
   const [persistent, setPersistent] = useState(true);
   const seq = useRef(0);
 
-  /* 되돌리기 - 지우거나 옮기는 동작 직전의 전체 상태를 쌓아 둔다.
-     양이 적은 데이터라 스냅샷이 가장 단순하고 틀릴 여지가 없다. */
-  const [history, setHistory] = useState<{ label: string; tasks: Task[] }[]>([]);
-  const pushHistory = useCallback((label: string, snapshot: Task[]) => {
-    setHistory((prev) => [...prev.slice(-19), { label, tasks: snapshot }]);
+  /* 되돌리기 - 마지막 한 동작(지우기 · 상태 옮기기 · 마감일 옮기기 · 예시 지우기)만, 그 작업만 거꾸로 되돌린다.
+     목록 전체를 통째로 되돌리면 그 뒤에 만들거나 고친 것, 다른 탭에서 바꾼 것까지 사라진다.
+     revert 는 지금 목록을 받아 되돌린 목록을 주고, 그사이 바뀌어 되돌릴 수 없으면 null 을 준다. */
+  const live = useRef(tasks);
+  live.current = tasks;
+  const last = useRef<((cur: Task[]) => Task[] | null) | null>(null);
+  const [undoState, setUndoState] = useState<{ label: string | null; seq: number }>({ label: null, seq: 0 });
+  const push = useCallback((label: string, revert: (cur: Task[]) => Task[] | null) => {
+    last.current = revert;
+    setUndoState((s) => ({ label, seq: s.seq + 1 }));
+  }, []);
+  const dropUndo = useCallback(() => {
+    last.current = null;
+    setUndoState((s) => (s.label === null ? s : { ...s, label: null }));
   }, []);
 
   useEffect(() => {
@@ -195,33 +244,64 @@ export function useTaskStore(): Store {
     [],
   );
 
-  const update = useCallback<Store['update']>((id, patch) => {
+  const update = useCallback<Store['update']>((id, patch, undoLabel) => {
+    const now = new Date().toISOString();
+    const was = undoLabel ? live.current.find((t) => t.id === id) : undefined;
+    if (undoLabel && was) {
+      const keys = Object.keys(patch) as (keyof Task)[];
+      const back = Object.fromEntries(keys.map((k) => [k, was[k]])) as Partial<Task>;
+      push(undoLabel, (cur) => {
+        const t = cur.find((x) => x.id === id);
+        // 그사이 다른 탭에서 그 칸을 또 바꿨거나 지웠으면 되돌리지 않는다
+        if (!t || keys.some((k) => t[k] !== patch[k])) return null;
+        // 바꾼 뒤 고친 것이 없으면 수정 시각도 되돌린다 - 손대지 않은 예시는 예시로 남는다
+        const updatedAt = t.updatedAt === now ? was.updatedAt : t.updatedAt;
+        return cur.map((x) => (x.id === id ? { ...x, ...back, updatedAt } : x));
+      });
+    }
     setTasks((prev) => {
       const next = prev.map((t) =>
-        t.id === id ? { ...t, ...patch, updatedAt: new Date().toISOString() } : t,
+        t.id === id ? { ...t, ...patch, updatedAt: now } : t,
       );
       write(next);
       return next;
     });
-  }, []);
+  }, [push]);
 
   const remove = useCallback<Store['remove']>((id) => {
+    const at = live.current.findIndex((t) => t.id === id);
+    if (at >= 0) {
+      const gone = live.current[at];
+      // 원래 값 · 순서 그대로 다시 끼운다. 그사이 같은 작업이 다시 생겼으면 두 번 넣지 않는다
+      push(`'${gone.title || '작업'}' 삭제`, (cur) => restore(cur, [{ task: gone, at }]));
+    }
     setTasks((prev) => {
-      const gone = prev.find((t) => t.id === id);
-      pushHistory(`'${gone?.title ?? '작업'}' 삭제`, prev);
       const next = prev.filter((t) => t.id !== id);
       write(next);
       return next;
     });
-  }, [pushHistory]);
+  }, [push]);
 
   const move = useCallback<Store['move']>((id, status, beforeId) => {
+    // 제 카드 위에 놓은 것은 제자리다
+    if (beforeId === id) return;
+    const now = new Date().toISOString();
+    const was = live.current.find((t) => t.id === id);
+    if (was && was.status !== status) {
+      const back = { status: was.status, order: was.order };
+      push(`'${was.title || '작업'}' 상태 변경`, (cur) => {
+        const t = cur.find((x) => x.id === id);
+        // 그사이 다른 탭에서 다시 옮겼거나 지웠으면 되돌리지 않는다
+        if (!t || t.status !== status) return null;
+        // 옮긴 뒤 고친 것이 없으면 수정 시각도 되돌린다 - 손대지 않은 예시는 예시로 남는다
+        const updatedAt = t.updatedAt === now ? was.updatedAt : t.updatedAt;
+        return cur.map((x) => (x.id === id ? { ...x, ...back, updatedAt } : x));
+      });
+    }
+
     setTasks((prev) => {
       const moving = prev.find((t) => t.id === id);
       if (!moving) return prev;
-      if (moving.status !== status) {
-        pushHistory(`'${moving.title}' 상태 변경`, prev);
-      }
 
       // 목적지 칼럼을 현재 순서대로 세운 뒤, 놓을 자리에 끼워 넣고 다시 번호를 매긴다
       const column = prev
@@ -231,10 +311,16 @@ export function useTaskStore(): Store {
       const idx = at < 0 ? column.length : at;
       column.splice(idx, 0, { ...moving, status });
 
+      // 같은 칸의 같은 자리면 아무것도 바꾸지 않는다(수정 시각도 그대로)
+      if (moving.status === status) {
+        const before = prev.filter((t) => t.status === status).sort((a, b) => a.order - b.order);
+        if (before.every((t, i) => t.id === column[i]?.id)) return prev;
+      }
+
       const reordered = new Map(column.map((t, i) => [t.id, (i + 1) * 1000]));
       const next = prev.map((t) => {
         if (t.id === id) {
-          return { ...t, status, order: reordered.get(id) ?? 0, updatedAt: new Date().toISOString() };
+          return { ...t, status, order: reordered.get(id) ?? 0, updatedAt: now };
         }
         const o = reordered.get(t.id);
         return o === undefined ? t : { ...t, order: o };
@@ -242,17 +328,20 @@ export function useTaskStore(): Store {
       write(next);
       return next;
     });
-  }, [pushHistory]);
+  }, [push]);
 
   const undo = useCallback(() => {
-    setHistory((prev) => {
-      const last = prev[prev.length - 1];
-      if (!last) return prev;
-      setTasks(last.tasks);
-      write(last.tasks);
-      return prev.slice(0, -1);
+    const revert = last.current;
+    dropUndo();
+    if (!revert || !revert(live.current)) return false;
+    setTasks((prev) => {
+      const next = revert(prev);
+      if (!next) return prev;
+      write(next);
+      return next;
     });
-  }, []);
+    return true;
+  }, [dropUndo]);
 
   const reset = useCallback(() => {
     const fresh = seed();
@@ -260,19 +349,18 @@ export function useTaskStore(): Store {
   }, [commit]);
 
   const clearSamples = useCallback(() => {
+    const gone = live.current.flatMap((task, at) => (isUntouchedSample(task) ? [{ task, at }] : []));
+    if (gone.length === 0) return;
+    push(`예시 작업 ${gone.length}건 삭제`, (cur) => restore(cur, gone));
     setTasks((prev) => {
-      const samples = prev.filter(isUntouchedSample);
-      if (samples.length === 0) return prev;
-      pushHistory(`예시 작업 ${samples.length}건 삭제`, prev);
       const next = prev.filter((t) => !isUntouchedSample(t));
       write(next);
       return next;
     });
-  }, [pushHistory]);
+  }, [push]);
 
   return {
     tasks, ready, persistent, create, update, remove, move, reset, clearSamples,
-    undoLabel: history.length ? history[history.length - 1].label : null,
-    undo,
+    undoLabel: undoState.label, undoSeq: undoState.seq, undo, dropUndo,
   };
 }

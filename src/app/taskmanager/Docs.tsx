@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { DOC_TEMPLATES, MEMBERS, memberById, type Doc } from './types';
+import { DOC_TEMPLATES, MEMBERS, localDay, type Doc } from './types';
+import { useMember } from './members';
 import { isUntouchedSampleDoc, type DocStore } from './docStore';
 import Markdown, { extractHeadings } from './Markdown';
 import {
@@ -13,6 +14,9 @@ import {
 /* ── 문서 트리 ────────────────────────────────────── */
 
 interface Node extends Doc { children: Node[] }
+
+/** 화면에 적는 제목 - 예전 편집기가 빈 제목을 저장한 문서도 목록 · 경로에서 빈 줄로 보이지 않게 */
+const titleOf = (d: { title: string }) => d.title.trim() || '제목 없는 문서';
 
 function buildTree(docs: Doc[]): Node[] {
   const byId = new Map<string, Node>(docs.map((d) => [d.id, { ...d, children: [] }]));
@@ -73,7 +77,7 @@ function TreeItem({
           className={`flex min-w-0 flex-1 items-center gap-2 self-stretch rounded-md text-left text-[14.5px] ${
             active ? 'font-bold focus-visible:outline-white' : 'font-semibold'}`}>
           <span className={active ? 'text-white' : 'text-tm-sub'}>{docIcon}</span>
-          <span className="truncate">{node.title}</span>
+          <span className="truncate">{titleOf(node)}</span>
         </button>
       </div>
       {hasKids && expanded && (
@@ -98,11 +102,18 @@ function NewDocDialog({
   onClose(): void;
 }) {
   const [picked, setPicked] = useState('meeting');
-  const [title, setTitle] = useState('');
+  const [title, setTitle] = useState(() => DOC_TEMPLATES.find((x) => x.id === 'meeting')?.title ?? '');
+  const titleRef = useRef<HTMLInputElement>(null);
+  /* 양식을 마우스 · 손가락으로 골랐는가. 화살표로 양식을 넘겨 보는 중에는 초점을 옮기지 않는다
+     (그때는 Tab 으로 제목 칸에 들어오면 브라우저가 글자를 모두 골라 준다) */
+  const byPointer = useRef(true);
 
+  /* 창을 열 때와 양식을 고를 때 - 양식이 채운 제목을 골라 둔다. 그대로 치면 바뀐다 */
   useEffect(() => {
-    const t = DOC_TEMPLATES.find((x) => x.id === picked);
-    if (t) setTitle(t.title);
+    const el = titleRef.current;
+    if (!el || !byPointer.current) return;
+    el.focus();
+    el.select();
   }, [picked]);
 
   const create = () => { if (title.trim()) onCreate(picked, title.trim()); };
@@ -126,14 +137,17 @@ function NewDocDialog({
     >
       <p className={tmLabel} id="doc-template-label">양식</p>
       {/* 세종 관리자의 분류 고르기 칸 - 고른 것은 파란 테두리에 옅은 파랑 바탕 */}
-      <div role="radiogroup" aria-labelledby="doc-template-label" className="mb-[22px] grid gap-2.5 sm:grid-cols-2">
+      <div role="radiogroup" aria-labelledby="doc-template-label" className="mb-[22px] grid gap-2.5 sm:grid-cols-2"
+        onPointerDown={() => { byPointer.current = true; }}
+        onKeyDown={() => { byPointer.current = false; }}>
         {DOC_TEMPLATES.map((t) => {
           const on = picked === t.id;
           return (
             <label key={t.id}
               className={`flex cursor-pointer items-start gap-2.5 rounded-tm-sm border p-3.5 transition-[border-color,box-shadow,background-color] duration-150 ${
                 on ? 'border-tm-blue bg-tm-tint shadow-[inset_0_0_0_1px_#2644cb]' : 'border-tm-edge bg-white hover:border-tm-blue'}`}>
-              <input type="radio" name="doc-template" value={t.id} checked={on} onChange={() => setPicked(t.id)}
+              <input type="radio" name="doc-template" value={t.id} checked={on}
+                onChange={() => { setPicked(t.id); setTitle(t.title); }}
                 className="mt-[3px] h-[18px] w-[18px] flex-none accent-tm-blue" />
               <span className="min-w-0">
                 <b className="block text-[15px] font-bold text-tm-ink">{t.name}</b>
@@ -147,11 +161,51 @@ function NewDocDialog({
       <label className={tmLabel} htmlFor="doc-title">
         제목 <b className="text-[12.5px] font-bold text-tm-red">필수</b>
       </label>
-      <input id="doc-title" value={title} onChange={(e) => setTitle(e.target.value)}
-        onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) create(); }}
+      {/* Enter 의 기본 동작을 막는다 - 창이 닫히며 초점이 '새 문서' 단추로 돌아간 뒤
+          같은 Enter 가 그 단추를 눌러 창을 다시 여는 일이 없게 */}
+      <input id="doc-title" ref={titleRef} value={title} onChange={(e) => setTitle(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key !== 'Enter' || e.nativeEvent.isComposing) return;
+          e.preventDefault();
+          create();
+        }}
         placeholder="검색해서 찾을 수 있는 이름으로"
         className={tmInput} />
     </Modal>
+  );
+}
+
+/* ── 편집기 제목 칸 ───────────────────────────────── */
+
+/* 제목은 빈 채로 저장하지 않는다. 칸의 글자는 따로 들고, 비어 있는 동안은 저장을 건너뛰고
+   칸을 떠나면 마지막 제목으로 돌린다. 문서가 바뀌면 key 로 새로 세운다 */
+function TitleField({ saved, onSave }: { saved: string; onSave(title: string): void }) {
+  const [title, setTitle] = useState(saved);
+  const focused = useRef(false);
+  useEffect(() => {
+    // 치고 있지 않을 때 들어온 제목(다른 팀원의 수정)은 그대로 따른다
+    if (!focused.current) setTitle(saved);
+  }, [saved]);
+
+  return (
+    <>
+      <input id="doc-edit-title" value={title}
+        aria-invalid={!title.trim() || undefined}
+        aria-describedby={title.trim() ? undefined : 'doc-edit-title-hint'}
+        onFocus={() => { focused.current = true; }}
+        onChange={(e) => {
+          const v = e.target.value;
+          setTitle(v);
+          if (v.trim()) onSave(v);
+        }}
+        onBlur={() => { focused.current = false; setTitle(saved); }}
+        className={`${tmFieldBase} mb-[18px] block h-12 w-full px-3.5 text-[17px] font-bold`} />
+      {!title.trim() && (
+        <p id="doc-edit-title-hint" className="-mt-3 mb-[18px] text-[13.5px] font-semibold leading-[1.5] text-tm-red-deep">
+          제목은 비워 둘 수 없습니다. 칸을 떠나면 마지막으로 저장된 제목으로 돌아갑니다.
+        </p>
+      )}
+    </>
   );
 }
 
@@ -179,10 +233,20 @@ export default function Docs({ store, me, onTaskClick }: {
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [openSet, setOpenSet] = useState<Set<string>>(new Set());
-  const [editing, setEditing] = useState(false);
+  /* 편집 중인 문서 - 다른 문서를 고르면 저절로 편집이 풀린다.
+     (예전에는 고른 문서가 바뀔 때 편집을 끄는 효과가 새 문서를 만들자마자 연 편집기까지 닫았다) */
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const editing = editingId !== null && editingId === activeId;
   const [creatingUnder, setCreatingUnder] = useState<string | null | undefined>(undefined);
   const [query, setQuery] = useState('');
   const [confirm, confirmNode] = useConfirm();
+  const author = useMember(store.docs.find((d) => d.id === activeId)?.author ?? null);
+  /* 보던 문서를 다른 팀원이 지웠다(Supabase 모드). 쓰던 글을 새 문서로 남길 수 있게 마지막 모습을 들고 있는다 */
+  const [lost, setLost] = useState<{ doc: Doc; unsaved: boolean; editing: boolean } | null>(null);
+  const lastDoc = useRef<Doc | null>(null);
+  /** 새로 만든 문서는 편집기 본문에서 시작한다 */
+  const focusBody = useRef(false);
+  const [retrying, setRetrying] = useState(false);
 
   const tree = useMemo(() => buildTree(store.docs), [store.docs]);
 
@@ -194,7 +258,7 @@ export default function Docs({ store, me, onTaskClick }: {
     const out: { id: string; label: string }[] = [];
     const walk = (ns: Node[], depth: number) => {
       ns.forEach((n) => {
-        out.push({ id: n.id, label: `${'  '.repeat(depth)}${depth ? '└ ' : ''}${n.title}` });
+        out.push({ id: n.id, label: `${'  '.repeat(depth)}${depth ? '└ ' : ''}${titleOf(n)}` });
         walk(n.children, depth + 1);
       });
     };
@@ -205,14 +269,38 @@ export default function Docs({ store, me, onTaskClick }: {
   useEffect(() => {
     if (!store.ready) return;
     if (activeId && store.docs.some((d) => d.id === activeId)) return;
-    const firstRoot = tree[0];
+    // 다른 곳에서 지운 문서였다 - 알리고 편집을 푼다. 고른 것도 비워 같은 일을 두 번 알리지 않는다
+    const unsaved = activeId ? store.deletedElsewhere?.get(activeId) : undefined;
+    if (activeId && unsaved !== undefined) {
+      const last = lastDoc.current;
+      if (last?.id === activeId) {
+        const next = { doc: last, unsaved, editing: editingId === activeId };
+        // 쓰던 글을 남길 수 있는 알림은 보기만 하던 문서의 알림으로 덮지 않는다(위 문서를 지우면 아래 문서가 줄줄이 지워진다)
+        setLost((prev) => (prev && (prev.unsaved || prev.editing) && !next.unsaved && !next.editing ? prev : next));
+      }
+      setEditingId(null);
+      setActiveId(null);
+    }
+    // 위 문서가 먼저 지워져 떠 있는 아래 문서보다 진짜 맨 위 문서로 간다 - 곧 함께 지워질 문서로 가지 않게
+    const firstRoot = tree.find((n) => !n.parentId) ?? tree[0];
     if (firstRoot) {
       setActiveId(firstRoot.id);
       setOpenSet(new Set(store.docs.filter((d) => !d.parentId).map((d) => d.id)));
     }
-  }, [store.ready, store.docs, tree, activeId]);
+  }, [store.ready, store.docs, store.deletedElsewhere, tree, activeId, editingId]);
 
   const doc = activeId ? store.docs.find((d) => d.id === activeId) ?? null : null;
+
+  useEffect(() => {
+    if (doc) lastDoc.current = doc;
+  }, [doc]);
+
+  /* 새 문서 창이 닫히면 초점이 '새 문서' 단추로 돌아온다. 편집기 본문으로 옮겨 그 단추가 다시 눌리지 않게 한다 */
+  useEffect(() => {
+    if (!focusBody.current || !editing) return;
+    focusBody.current = false;
+    bodyRef.current?.focus();
+  }, [editing, editingId]);
 
   const breadcrumb = useMemo(() => {
     const out: Doc[] = [];
@@ -251,10 +339,33 @@ export default function Docs({ store, me, onTaskClick }: {
     if (creatingUnder) setOpenSet((prev) => new Set(prev).add(creatingUnder));
     setCreatingUnder(undefined);
     setActiveId(created.id);
-    setEditing(true);
+    setEditingId(created.id);
+    focusBody.current = true;
   };
 
-  useEffect(() => { setEditing(false); }, [activeId]);
+  /* 지워진 문서의 마지막 글을 새 문서로 남긴다. 위 문서도 지워졌으면 맨 위에 둔다 */
+  const keepLost = () => {
+    if (!lost) return;
+    const { doc: d } = lost;
+    const parentId = d.parentId && store.docs.some((x) => x.id === d.parentId) ? d.parentId : null;
+    const created = store.create({ title: d.title.trim() || '제목 없는 문서', body: d.body, parentId, author: me });
+    if (parentId) setOpenSet((prev) => new Set(prev).add(parentId));
+    setLost(null);
+    setActiveId(created.id);
+    setEditingId(created.id);
+    focusBody.current = true;
+  };
+
+  /* 처음 목록을 읽지 못했을 때 - 저장소가 저절로도 다시 읽지만 바로 해 볼 수 있게 */
+  const retryLoad = async () => {
+    setRetrying(true);
+    try {
+      await store.reload?.();
+    } finally {
+      setRetrying(false);
+    }
+  };
+
 
   /* 하위 문서가 고아로 남지 않게 저장소가 가지째 지운다 - 문서에는 실행 취소가 없어 먼저 묻는다 */
   const removeDoc = async () => {
@@ -264,7 +375,7 @@ export default function Docs({ store, me, onTaskClick }: {
       title: '이 문서를 삭제할까요?',
       body: (
         <>
-          <b>{doc.title}</b> 문서{hasKids ? '와 그 아래 문서가 모두' : '가'} 지워집니다. 삭제한 뒤에는 되돌릴 수 없습니다.
+          <b>{titleOf(doc)}</b> 문서{hasKids ? '와 그 아래 문서가 모두' : '가'} 지워집니다. 삭제한 뒤에는 되돌릴 수 없습니다.
         </>
       ),
       ok: '삭제',
@@ -312,8 +423,6 @@ export default function Docs({ store, me, onTaskClick }: {
     );
   }
 
-  const author = memberById(doc?.author ?? null);
-
   return (
     <>
       <PageHead
@@ -337,6 +446,27 @@ export default function Docs({ store, me, onTaskClick }: {
           <button type="button" onClick={() => { store.clearSamples(); setActiveId(null); }} className={tmGhostBtn}>
             예시 지우기
           </button>
+        </div>
+      )}
+
+      {/* 보던 문서를 다른 팀원이 지웠다 - 말없이 다른 문서로 넘어가지 않게 알린다 */}
+      {lost && (
+        <div role="alert" className={`${tmCallout} mb-[18px] flex-none max-[720px]:mb-3.5`}>
+          <p className="min-w-0 flex-[1_1_320px] max-[720px]:flex-[1_1_180px]">
+            다른 팀원이 <b className="font-bold text-tm-deep">{lost.doc.title.trim() || '제목 없는 문서'}</b> 문서를 지웠습니다.
+            {lost.unsaved && ' 고치던 내용은 저장되지 않았습니다.'}
+            {(lost.editing || lost.unsaved) && ' 쓰던 글은 새 문서로 남길 수 있습니다.'}
+          </p>
+          <div className="flex flex-none gap-2">
+            <button type="button" onClick={() => setLost(null)} className={tmGhostBtn}>
+              닫기
+            </button>
+            {(lost.editing || lost.unsaved) && (
+              <button type="button" onClick={keepLost} className={tmEditBtn}>
+                새 문서로 남기기
+              </button>
+            )}
+          </div>
         </div>
       )}
 
@@ -366,7 +496,7 @@ export default function Docs({ store, me, onTaskClick }: {
                         className={`flex min-h-[38px] w-full items-center gap-2 rounded-tm-sm px-2.5 text-left text-[14.5px] transition-colors duration-150 ${
                           d.id === activeId ? 'bg-tm-blue font-bold text-white focus-visible:outline-white' : 'font-semibold text-tm-ink hover:bg-tm-tint'}`}>
                         <span className={d.id === activeId ? 'text-white' : 'text-tm-sub'}>{docIcon}</span>
-                        <span className="truncate">{d.title}</span>
+                        <span className="truncate">{titleOf(d)}</span>
                       </button>
                     </li>
                   ))}
@@ -384,7 +514,16 @@ export default function Docs({ store, me, onTaskClick }: {
         </aside>
 
         {/* 본문 */}
-        {!doc ? (
+        {!doc && store.loadError ? (
+          /* 처음 목록을 읽지 못했다 - '문서가 없습니다'로 보이면 다 지워진 줄 안다 */
+          <div role="alert" className="flex min-w-0 flex-1 flex-col items-center justify-center gap-2.5 rounded-tm border border-tm-line bg-white px-6 py-16 text-center shadow-tm">
+            <p className="text-[20px] font-extrabold text-tm-deep">문서를 불러오지 못했습니다</p>
+            <p className="mb-3 max-w-[44ch] text-[15.5px] leading-[1.7] text-tm-ink">{store.loadError}</p>
+            <button type="button" onClick={() => void retryLoad()} disabled={retrying} className={tmBtnPrimary}>
+              {retrying ? '다시 읽는 중…' : '다시 시도'}
+            </button>
+          </div>
+        ) : !doc ? (
           <div className="flex min-w-0 flex-1 flex-col items-center justify-center gap-2.5 rounded-tm border border-tm-line bg-white px-6 py-16 text-center shadow-tm">
             <p className="text-[20px] font-extrabold text-tm-deep">문서가 없습니다</p>
             <p className="mb-3 max-w-[44ch] text-[15.5px] leading-[1.7] text-tm-ink">
@@ -414,7 +553,7 @@ export default function Docs({ store, me, onTaskClick }: {
                     {i > 0 && <span className="text-tm-edge" aria-hidden>/</span>}
                     <button type="button" onClick={() => setActiveId(b.id)}
                       className={`rounded-md ${i === breadcrumb.length - 1 ? 'text-tm-sub' : 'transition-colors hover:text-tm-blue hover:underline'}`}>
-                      {b.title}
+                      {titleOf(b)}
                     </button>
                   </span>
                 ))}
@@ -422,13 +561,13 @@ export default function Docs({ store, me, onTaskClick }: {
 
               <div className="flex flex-wrap items-center gap-2.5">
                 <h2 className="mr-auto min-w-0 text-[22px] font-extrabold leading-[1.3] tracking-[-0.01em] text-tm-deep [overflow-wrap:anywhere]">
-                  {doc.title}
+                  {titleOf(doc)}
                 </h2>
                 <button type="button" onClick={() => setCreatingUnder(doc.id)} className={tmGhostBtn}>
                   <IconPlus size={16} />
                   하위 문서
                 </button>
-                <button type="button" onClick={() => setEditing(!editing)} data-on={editing ? '' : undefined} className={tmEditBtn}>
+                <button type="button" onClick={() => setEditingId(editing ? null : doc.id)} data-on={editing ? '' : undefined} className={tmEditBtn}>
                   {editing ? '편집 끝내기' : '편집'}
                 </button>
               </div>
@@ -438,7 +577,7 @@ export default function Docs({ store, me, onTaskClick }: {
                   <Avatar id={doc.author} size={22} />
                   {author?.name ?? '알 수 없음'}
                 </span>
-                <span className="tabular-nums">마지막 수정 {doc.updatedAt.slice(0, 10)}</span>
+                <span className="tabular-nums">마지막 수정 {localDay(doc.updatedAt)}</span>
                 {doc.labels.map((l) => (
                   <span key={l} className="rounded-full bg-tm-tint px-2.5 py-0.5 text-[12.5px] font-bold text-tm-deep">{l}</span>
                 ))}
@@ -450,9 +589,7 @@ export default function Docs({ store, me, onTaskClick }: {
               {editing ? (
                 <div className="mx-auto max-w-[920px] px-7 py-6 max-[720px]:px-4 max-[720px]:py-5">
                   <label className={tmLabel} htmlFor="doc-edit-title">제목</label>
-                  <input id="doc-edit-title" value={doc.title}
-                    onChange={(e) => store.update(doc.id, { title: e.target.value })}
-                    className={`${tmFieldBase} mb-[18px] block h-12 w-full px-3.5 text-[17px] font-bold`} />
+                  <TitleField key={doc.id} saved={doc.title} onSave={(title) => store.update(doc.id, { title })} />
 
                   <div className="mb-2 flex flex-wrap items-center gap-1.5">
                     <label className="mr-1.5 text-[14px] font-bold text-tm-ink" htmlFor="doc-edit-body">
@@ -465,9 +602,11 @@ export default function Docs({ store, me, onTaskClick }: {
                         {t.label}
                       </button>
                     ))}
-                    <span className="ml-auto inline-flex items-center gap-2 text-[13px] font-semibold text-tm-sub">
-                      <i className="h-2 w-2 rounded-full bg-tm-ok" aria-hidden />
-                      자동 저장됨
+                    <span className="ml-auto inline-flex items-center gap-2 text-[13px] font-semibold text-tm-sub" aria-live="polite">
+                      <i className={`h-2 w-2 rounded-full ${
+                        store.sync === 'error' ? 'bg-tm-red' : store.sync === 'saving' ? 'bg-tm-edge' : 'bg-tm-ok'}`} aria-hidden />
+                      {/* error = 아직 서버에 닿지 않은 고침이 있다(저절로 다시 보내는 중이거나 서버가 거절했다) */}
+                      {store.sync === 'error' ? '저장하지 못한 변경이 있습니다' : store.sync === 'saving' ? '저장 중…' : '자동 저장됨'}
                     </span>
                   </div>
                   <textarea id="doc-edit-body" ref={bodyRef} value={doc.body}
@@ -520,7 +659,7 @@ export default function Docs({ store, me, onTaskClick }: {
 
       {creatingUnder !== undefined && (
         <NewDocDialog
-          parentTitle={creatingUnder ? store.docs.find((d) => d.id === creatingUnder)?.title ?? null : null}
+          parentTitle={store.docs.filter((d) => d.id === creatingUnder).map(titleOf)[0] ?? null}
           onCreate={handleCreate}
           onClose={() => setCreatingUnder(undefined)} />
       )}

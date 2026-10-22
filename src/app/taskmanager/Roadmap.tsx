@@ -1,9 +1,9 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import {
-  DOMAINS, MEMBERS, memberById, type DomainKey, type Task,
-} from './types';
+import { DOMAINS, type DomainKey, type Task } from './types';
+import { useMembers } from './members';
+import { useToday } from './Timeline';
 import { Avatar, DOMAIN_FILL, DueBadge, PriorityDot, STATUS_STYLE, tmCount, tmSelect } from './ui';
 
 /**
@@ -58,20 +58,28 @@ export default function Roadmap({
   onOpen(id: string): void;
 }) {
   const [groupBy, setGroupBy] = useState<GroupBy>('domain');
-  const now = useMemo(() => new Date(), []);
+  const now = useToday();
+  const members = useMembers();
+
+  /* 지난주까지 마감된 완료 작업은 '이번 주'에 계속 쌓이므로 올리지 않는다 */
+  const shown = useMemo(() => {
+    const w0 = weekStart(now).getTime();
+    return tasks.filter((t) => !(t.status === 'done' && t.due && new Date(`${t.due}T00:00:00`).getTime() < w0));
+  }, [tasks, now]);
+  const hiddenDone = tasks.length - shown.length;
 
   const lanes = useMemo(() => {
     const base =
       groupBy === 'domain'
         ? DOMAINS.map((d) => ({ id: d.id as string, label: d.label }))
         : [
-            ...MEMBERS.map((m) => ({ id: m.id, label: `${m.name} · ${m.role}` })),
+            ...members.map((m) => ({ id: m.id, label: m.name })),
             { id: '__none', label: '미배정' },
           ];
 
     return base
       .map((lane) => {
-        const mine = tasks.filter((t) =>
+        const mine = shown.filter((t) =>
           groupBy === 'domain'
             ? t.domain === (lane.id as DomainKey)
             : (t.assignee ?? '__none') === lane.id);
@@ -88,14 +96,14 @@ export default function Roadmap({
       })
       // 할 일이 하나도 없는 줄은 격자를 늘리기만 한다
       .filter((lane) => lane.total > 0);
-  }, [tasks, groupBy, now]);
+  }, [shown, groupBy, now, members]);
 
   const perHorizon = useMemo(
     () =>
       Object.fromEntries(
-        HORIZONS.map((h) => [h.id, tasks.filter((t) => horizonOf(t.due, now) === h.id).length]),
+        HORIZONS.map((h) => [h.id, shown.filter((t) => horizonOf(t.due, now) === h.id).length]),
       ) as Record<Horizon, number>,
-    [tasks, now],
+    [shown, now],
   );
 
   /** 'M.D~M.D' - 어느 주를 말하는지 숫자로 못박는다 */
@@ -115,13 +123,22 @@ export default function Roadmap({
           <option value="domain">영역별</option>
           <option value="assignee">담당자별</option>
         </select>
+        {hiddenDone > 0 && (
+          <span className="ml-auto text-[13.5px] text-tm-sub">
+            지난주까지 마감된 완료 작업 {hiddenDone}건은 로드맵에 올라오지 않습니다
+          </span>
+        )}
       </div>
 
       <div className="min-h-0 flex-1 overflow-auto">
         {lanes.length === 0 ? (
           <div className="flex flex-col items-center gap-2 rounded-tm border border-tm-line bg-white px-6 py-[72px] text-center shadow-tm">
             <p className="text-[20px] font-extrabold text-tm-deep">조건에 맞는 작업이 없습니다</p>
-            <p className="text-[15.5px] text-tm-ink">걸러 보기를 풀거나 다른 범위를 골라 보세요.</p>
+            <p className="text-[15.5px] text-tm-ink">
+              {hiddenDone > 0
+                ? '지난주까지 마감된 완료 작업만 남아 있습니다. 보드나 목록에서 볼 수 있습니다.'
+                : '걸러 보기를 풀거나 다른 범위를 골라 보세요.'}
+            </p>
           </div>
         ) : (
           <div className="min-w-[900px] pb-1">
@@ -152,7 +169,7 @@ export default function Roadmap({
                     )}
                     <div className="min-w-0">
                       <p className="truncate text-[15px] font-bold text-tm-ink">
-                        {groupBy === 'domain' ? lane.label : memberById(lane.id)?.name ?? '미배정'}
+                        {lane.label}
                       </p>
                       <p className="text-[13px] font-semibold tabular-nums text-tm-sub">{lane.total}건</p>
                     </div>

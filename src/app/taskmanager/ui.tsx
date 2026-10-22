@@ -1,10 +1,12 @@
 'use client';
 
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
-  STATUSES, memberById, domainShort, statusLabel,
+  STATUSES, domainShort, statusLabel,
   type DomainKey, type Priority, type Status, type Task,
 } from './types';
+import { useMember } from './members';
 
 /*
  * 작업 관리 도구의 화면 부품.
@@ -267,8 +269,13 @@ export function IconNav({ name, size = 20 }: { name: NavIcon; size?: number }) {
 
 /* ── 작은 조각 ─────────────────────────────────────── */
 
+/** 같은 사람은 늘 같은 색 - 자리표시 팀원(m1…)은 번호로, Supabase 계정(uuid)은 글자 값으로 */
+const toneOf = (id: string) =>
+  (/^m\d+$/.test(id) ? Number(id.slice(1)) : [...id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 0))
+  % AVATAR_TONE.length;
+
 export function Avatar({ id, size = 24 }: { id: string | null; size?: number }) {
-  const m = memberById(id);
+  const m = useMember(id);
   if (!m) {
     return (
       <span
@@ -280,7 +287,7 @@ export function Avatar({ id, size = 24 }: { id: string | null; size?: number }) 
       </span>
     );
   }
-  const tone = AVATAR_TONE[Number(m.id.replace(/\D/g, '')) % AVATAR_TONE.length];
+  const tone = AVATAR_TONE[toneOf(m.id)];
   return (
     <span
       className={`inline-flex shrink-0 items-center justify-center rounded-full font-bold tracking-[-0.02em] ${tone}`}
@@ -350,13 +357,14 @@ export function PageHead({
 }: {
   title: string;
   lead?: React.ReactNode;
-  /** 저장 상태 - ok 는 초록 점, warn 은 빨간 점 */
-  saved?: { tone: 'ok' | 'warn'; text: string };
+  /** 저장 상태 - ok 는 초록 점, busy 는 회색 점(보내는 중), warn 은 빨간 점 */
+  saved?: { tone: 'ok' | 'busy' | 'warn'; text: string };
   /** 오른쪽 버튼들 */
   children?: React.ReactNode;
 }) {
   return (
-    /* 좁은 화면: 버튼이 하나면 제목 옆에 붙고, 보기 알약처럼 길면 다음 줄을 다 쓴다 */
+    /* 좁은 화면: 오른쪽 묶음을 풀어(contents) 버튼은 제목 옆에 붙인다. 보기 알약처럼 긴 줄은
+       쓰는 쪽에서 order · basis-full 을 주어 다음 줄을 다 쓰게 한다 - 버튼 밑에 깔리지 않는다 */
     <div className="mb-6 flex flex-none flex-wrap items-end justify-between gap-x-7 gap-y-4 max-[720px]:mb-4 max-[720px]:items-center">
       <div className="min-w-0 max-w-[68ch] flex-[1_1_360px] max-[720px]:basis-[150px]">
         <h1 className="text-[28px] font-extrabold leading-[1.25] tracking-[-0.02em] text-tm-deep max-[900px]:text-[24px]">{title}</h1>
@@ -364,14 +372,15 @@ export function PageHead({
         {saved && (
           <p
             className={`mt-3.5 inline-flex items-center gap-2 rounded-full border border-tm-line bg-white px-3 py-[5px] text-[13px] font-semibold text-tm-sub ${
-              saved.tone === 'ok' ? 'max-[720px]:hidden' : 'max-[720px]:mt-2.5'}`}
+              saved.tone === 'warn' ? 'max-[720px]:mt-2.5' : 'max-[720px]:hidden'}`}
           >
-            <i className={`h-2 w-2 rounded-full ${saved.tone === 'ok' ? 'bg-tm-ok' : 'bg-tm-red'}`} aria-hidden />
+            <i className={`h-2 w-2 rounded-full ${
+              saved.tone === 'ok' ? 'bg-tm-ok' : saved.tone === 'busy' ? 'bg-tm-edge' : 'bg-tm-red'}`} aria-hidden />
             {saved.text}
           </p>
         )}
       </div>
-      {children && <div className="flex min-w-0 max-w-full flex-none items-center gap-2 max-[720px]:flex-[1_1_auto]">{children}</div>}
+      {children && <div className="flex min-w-0 max-w-full flex-none items-center gap-2 max-[720px]:contents">{children}</div>}
     </div>
   );
 }
@@ -411,10 +420,13 @@ export function Modal({
   useEffect(() => {
     live.current = { onClose, busy };
   });
+  /* 열기 전 자리는 처음 그릴 때 잡는다 - effect 때는 안쪽 autoFocus 가 이미 초점을 가져가 있다 */
+  const [opener] = useState(() =>
+    typeof document !== 'undefined' && document.activeElement instanceof HTMLElement ? document.activeElement : null,
+  );
 
   useEffect(() => {
     stack.push(id);
-    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     if (locks++ === 0) {
       bodyOverflow = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
@@ -455,7 +467,7 @@ export function Modal({
       /* 닫히면 열기 전에 있던 자리로 초점을 돌려준다 */
       if (opener?.isConnected) opener.focus({ preventScroll: true });
     };
-  }, [id]);
+  }, [id, opener]);
 
   /* 좁은 화면에서 입력 창은 화면을 다 쓰고, 확인 창은 양옆을 16px 남긴다 */
   const width =
@@ -554,10 +566,13 @@ export function useConfirm(): [Confirm, React.ReactNode] {
 /* ── 알림(화면 아래 가운데) ──────────────────────────── */
 export function Toast({
   text,
+  tone = 'ok',
   action,
   onClose,
 }: {
   text: string | null;
+  /** err 는 실패를 알리는 빨간 알림 */
+  tone?: 'ok' | 'err';
   /** 알림 안의 버튼 - 실행 취소 같은 것 */
   action?: { label: string; kbd?: string; onClick(): void };
   onClose(): void;
@@ -570,8 +585,10 @@ export function Toast({
       aria-live="polite"
     >
       {text && (
-        <div className="pointer-events-auto flex max-w-[min(640px,100%)] animate-tm-rise items-center gap-3.5 rounded-tm bg-tm-deep py-[11px] pl-5 pr-3 text-[15px] font-semibold leading-[1.5] text-white shadow-tm-toast">
-          <span className="min-w-0 truncate">{text}</span>
+        <div className={`pointer-events-auto flex max-w-[min(640px,100%)] animate-tm-rise items-center gap-3.5 rounded-tm py-[11px] pl-5 pr-3 text-[15px] font-semibold leading-[1.5] text-white shadow-tm-toast ${
+          tone === 'err' ? 'bg-tm-red-deep' : 'bg-tm-deep'}`}>
+          {/* 실패 알림은 문장이 길어 줄을 넘기고, 보통 알림은 한 줄로 자른다 */}
+          <span className={`min-w-0 ${tone === 'err' ? '' : 'truncate'}`}>{text}</span>
           {action && (
             <button
               type="button"
@@ -608,30 +625,87 @@ export function Toast({
  * HTML5 드래그는 터치 기기에서 아예 동작하지 않는다. 메뉴가 없으면
  * 휴대폰으로는 보드가 읽기 전용이 되므로, 드래그와 같은 일을 하는
  * 손가락용 경로를 따로 둔다.
+ *
+ * 메뉴는 body 에 띄워 버튼 자리에 맞춘다(아래가 모자라면 위로). 카드 안에 두면 아래 카드에
+ * 덮이고 칸의 스크롤에 잘려, 아래쪽 항목을 누를 수 없었다.
  */
-function StatusMenu({ task, onMove }: { task: Task; onMove(s: Status): void }) {
+function StatusMenu({ task, onMove }: { task: Task; onMove(s: Status, keyboard: boolean): void }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const btn = useRef<HTMLButtonElement>(null);
+  const menu = useRef<HTMLDivElement | null>(null);
+  /** 키보드로 열었는가 - 그러면 첫 항목에 초점을 둔다 */
+  const byKey = useRef(false);
+
+  const close = useCallback((refocus: boolean) => {
+    setOpen(false);
+    if (refocus) btn.current?.focus();
+  }, []);
 
   useEffect(() => {
     if (!open) return;
-    const onDown = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    const inside = (t: EventTarget | null) =>
+      t instanceof Node && (!!btn.current?.contains(t) || !!menu.current?.contains(t));
+    const onDown = (e: MouseEvent) => { if (!inside(e.target)) close(false); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close(true); };
+    // 칸이나 화면이 움직이면 메뉴가 버튼에서 떨어지므로 닫는다
+    const onShift = (e: Event) => { if (!inside(e.target)) close(false); };
     document.addEventListener('mousedown', onDown);
     window.addEventListener('keydown', onKey);
+    window.addEventListener('scroll', onShift, true);
+    window.addEventListener('resize', onShift);
     return () => {
       document.removeEventListener('mousedown', onDown);
       window.removeEventListener('keydown', onKey);
+      window.removeEventListener('scroll', onShift, true);
+      window.removeEventListener('resize', onShift);
     };
-  }, [open]);
+  }, [open, close]);
+
+  /* 그려진 직후(칠하기 전)에 자리를 잡는다 */
+  const place = useCallback((m: HTMLDivElement | null) => {
+    menu.current = m;
+    const b = btn.current?.getBoundingClientRect();
+    if (!m || !b) return;
+    const gap = 4;
+    const edge = 8;
+    const h = m.offsetHeight;
+    const w = m.offsetWidth;
+    const below = b.bottom + gap;
+    const top = below + h <= window.innerHeight - edge || b.top - gap - h < edge
+      ? Math.max(edge, Math.min(below, window.innerHeight - edge - h))
+      : b.top - gap - h;
+    m.style.top = `${top}px`;
+    m.style.left = `${Math.max(edge, Math.min(b.right - w, window.innerWidth - edge - w))}px`;
+    if (byKey.current) m.querySelector<HTMLElement>('[role="menuitem"]:not(:disabled)')?.focus({ preventScroll: true });
+  }, []);
+
+  /* ↑/↓ 로 항목을 오가고, Tab 은 메뉴를 닫고 버튼으로 돌아간다 */
+  const onMenuKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      close(true);
+      return;
+    }
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+    e.preventDefault();
+    const items = [...e.currentTarget.querySelectorAll<HTMLElement>('[role="menuitem"]:not(:disabled)')];
+    const n = items.length;
+    if (n === 0) return;
+    const i = items.indexOf(document.activeElement as HTMLElement);
+    const down = e.key === 'ArrowDown';
+    items[i < 0 ? (down ? 0 : n - 1) : (i + (down ? 1 : n - 1)) % n].focus();
+  };
 
   return (
-    <div ref={ref} className="relative" onClick={(e) => e.stopPropagation()}>
+    <div className="relative" onClick={(e) => e.stopPropagation()}>
       <button
+        ref={btn}
         type="button"
-        onClick={() => setOpen(!open)}
+        onClick={(e) => {
+          // detail 0 = Enter · Space 로 누른 것
+          byKey.current = e.detail === 0;
+          setOpen(!open);
+        }}
         aria-label="상태 바꾸기"
         aria-haspopup="menu"
         aria-expanded={open}
@@ -646,8 +720,9 @@ function StatusMenu({ task, onMove }: { task: Task; onMove(s: Status): void }) {
         </svg>
       </button>
 
-      {open && (
-        <div role="menu" className="absolute right-0 top-8 z-30 w-[156px] animate-tm-fade overflow-hidden rounded-tm border border-tm-line bg-white py-1.5 shadow-tm-up">
+      {open && createPortal(
+        <div ref={place} role="menu" aria-label="상태 바꾸기" onKeyDown={onMenuKey}
+          className="fixed left-0 top-0 z-50 w-[156px] animate-tm-fade overflow-hidden rounded-tm border border-tm-line bg-white py-1.5 shadow-tm-up">
           <p className="px-3 pb-1 pt-0.5 text-[12px] font-bold text-tm-sub">상태 바꾸기</p>
           {STATUSES.map((st) => {
             const cur = st.id === task.status;
@@ -656,7 +731,7 @@ function StatusMenu({ task, onMove }: { task: Task; onMove(s: Status): void }) {
                 key={st.id}
                 type="button"
                 role="menuitem"
-                onClick={() => { onMove(st.id); setOpen(false); }}
+                onClick={(e) => { close(false); onMove(st.id, e.detail === 0); }}
                 disabled={cur}
                 className={`flex min-h-[38px] w-full items-center gap-2.5 px-3 text-left text-[14px] transition-colors [@media(pointer:coarse)]:min-h-11 ${
                   cur ? 'cursor-default font-bold text-tm-deep' : 'font-semibold text-tm-ink hover:bg-tm-tint'}`}
@@ -667,7 +742,8 @@ function StatusMenu({ task, onMove }: { task: Task; onMove(s: Status): void }) {
               </button>
             );
           })}
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );
@@ -679,8 +755,8 @@ interface CardProps {
   onDragStart(e: React.DragEvent): void;
   onDragEnd(): void;
   dragging: boolean;
-  /** 카드 메뉴와 ←/→ 키로 상태를 옮긴다 */
-  onMove(s: Status): void;
+  /** 카드 메뉴와 ←/→ 키로 상태를 옮긴다. keyboard = 키보드로 옮겼다(옮긴 카드에 초점을 다시 둘 때) */
+  onMove(s: Status, keyboard: boolean): void;
   /** 내 작업이면 왼쪽에 파란 표시선을 둔다 */
   mine?: boolean;
 }
@@ -690,23 +766,27 @@ export function TaskCard({ task, onOpen, onDragStart, onDragEnd, dragging, onMov
   const idx = STATUSES.findIndex((s) => s.id === task.status);
   return (
     <article
+      data-task={task.id}
       draggable
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
       onClick={onOpen}
       onKeyDown={(e) => {
+        // 안쪽 상태 메뉴의 버튼 · 항목에서 올라온 키는 그쪽 몫이다(Enter 로 패널이 열리거나 ←/→ 로 카드가 옮겨지지 않게)
+        if (e.target !== e.currentTarget) return;
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
           onOpen();
         }
-        // 드래그 없이도 칼럼을 옮길 수 있어야 한다
+        // 드래그 없이도 칼럼을 옮길 수 있어야 한다. 누르고 있어 되풀이되는 키로는 옮기지 않는다
+        // (옮긴 카드가 걸러져 사라지면 초점이 옆 카드로 가서 칸의 카드가 줄줄이 옮겨진다)
         if (e.key === 'ArrowRight' && idx < STATUSES.length - 1) {
           e.preventDefault();
-          onMove(STATUSES[idx + 1].id);
+          if (!e.repeat) onMove(STATUSES[idx + 1].id, true);
         }
         if (e.key === 'ArrowLeft' && idx > 0) {
           e.preventDefault();
-          onMove(STATUSES[idx - 1].id);
+          if (!e.repeat) onMove(STATUSES[idx - 1].id, true);
         }
       }}
       tabIndex={0}

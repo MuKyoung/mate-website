@@ -28,7 +28,7 @@ export function slug(text: string, i: number): string {
 export function extractHeadings(src: string): Heading[] {
   const out: Heading[] = [];
   let fence = false;
-  src.split('\n').forEach((line, i) => {
+  src.split(/\r?\n/).forEach((line, i) => {
     if (line.trimStart().startsWith('```')) { fence = !fence; return; }
     if (fence) return;
     const m = /^(#{1,4})\s+(.*)$/.exec(line);
@@ -59,6 +59,32 @@ function TaskChip({ taskKey }: { taskKey: string }) {
   );
 }
 
+/**
+ * 링크로 둘 주소 - http(s) · mailto · tel, 이 사이트 안의 경로(/…), 문서 안 목차(#…)만.
+ * 브라우저와 같은 규칙(URL)으로 읽어 고른다. //host, /\host, 중간에 탭을 끼운 주소처럼
+ * 경로로 보이지만 밖으로 나가는 것과 javascript: 같은 스킴은 링크로 만들지 않는다.
+ */
+function linkTo(raw: string): { href: string; external: boolean } | null {
+  const s = raw.trim();
+  if (s.startsWith('#')) return { href: s, external: false };
+  const here = typeof window === 'undefined' ? 'http://localhost' : window.location.origin;
+  let url: URL;
+  try {
+    url = new URL(s, here);
+  } catch {
+    return null;
+  }
+  const web = url.protocol === 'http:' || url.protocol === 'https:';
+  // http(s) 를 적은 주소는 예전처럼 새 탭에서 연다(대문자 스킴도)
+  if (/^https?:/i.test(s) && web) return { href: url.href, external: true };
+  if (/^(mailto|tel):/i.test(s)) return { href: url.href, external: false };
+  // 경로는 이 사이트 안에 머물 때만. 앞의 / 를 하나로 줄여 //host 로 읽힐 틈을 없앤다
+  if (s.startsWith('/') && web && url.origin === here) {
+    return { href: `/${url.pathname.replace(/^\/+/, '')}${url.search}${url.hash}`, external: false };
+  }
+  return null;
+}
+
 function inline(text: string, keyPrefix: string): React.ReactNode[] {
   return text.split(INLINE).filter(Boolean).map((part, i) => {
     const k = `${keyPrefix}-${i}`;
@@ -80,12 +106,10 @@ function inline(text: string, keyPrefix: string): React.ReactNode[] {
     }
     const link = /^\[([^\]]+)\]\(([^)]+)\)$/.exec(part);
     if (link) {
-      const href = link[2];
-      // javascript: 같은 스킴은 링크로 만들지 않는다
-      const safe = /^(https?:|mailto:|#|\/)/i.test(href);
-      return safe ? (
-        <a key={k} href={href} className="font-semibold text-tm-blue underline underline-offset-[3px] hover:text-tm-deep"
-          {...(href.startsWith('http') ? { target: '_blank', rel: 'noreferrer' } : {})}>
+      const to = linkTo(link[2]);
+      return to ? (
+        <a key={k} href={to.href} className="font-semibold text-tm-blue underline underline-offset-[3px] hover:text-tm-deep"
+          {...(to.external ? { target: '_blank', rel: 'noreferrer' } : {})}>
           {link[1]}
         </a>
       ) : <span key={k}>{link[1]}</span>;
@@ -103,9 +127,16 @@ export default function Markdown({
   /** 본문의 MATE-### 칩을 눌렀을 때 */
   onTaskClick?: (key: string) => void;
 }) {
-  const lines = source.split('\n');
+  const lines = source.split(/\r?\n/);
   const out: React.ReactNode[] = [];
   let i = 0;
+  /** 앞 바퀴를 시작한 줄 - 어느 갈래도 줄을 넘기지 못하고 돌아왔는지 본다 */
+  let last = -1;
+  const para = (text: string, key: string) => (
+    <p key={key} className="my-3.5 text-[15.5px] leading-[1.75] text-tm-ink">
+      {inline(text, key)}
+    </p>
+  );
 
   /* 세종 관리자 글자 결 - 제목은 짙은 파랑 굵게, 큰 제목 둘은 아래 구분선 */
   const H = ['', 'text-[24px] font-extrabold tracking-[-0.02em] text-tm-deep mt-8 mb-4 pb-2.5 border-b border-tm-line',
@@ -113,6 +144,13 @@ export default function Markdown({
     'text-[17px] font-bold text-tm-deep mt-6 mb-3', 'text-[15.5px] font-bold text-tm-ink mt-5 mb-2.5'];
 
   while (i < lines.length) {
+    // 같은 줄에서 다시 시작했다 - 그 줄을 글로 두고 넘어간다. 본문이 어떻든 탭이 멈추지 않게
+    if (i === last) {
+      out.push(para(lines[i], `g${i}`));
+      i += 1;
+      continue;
+    }
+    last = i;
     const line = lines[i];
 
     // 코드 블록
@@ -245,8 +283,10 @@ export default function Markdown({
     // 빈 줄
     if (!line.trim()) { i += 1; continue; }
 
-    // 문단 - 다음 빈 줄까지 묶는다
-    const buf: string[] = [];
+    // 문단 - 다음 빈 줄까지 묶는다. 첫 줄은 위 갈래 어디에도 맞지 않았으니 무엇이든 글로 받는다
+    // (구분행 없는 '|' 줄, 줄바꿈 문자가 섞여 제목이 못 된 '#' 줄도 여기서 글이 된다)
+    const buf: string[] = [line];
+    i += 1;
     while (
       i < lines.length && lines[i].trim() &&
       !/^(#{1,4}\s|\s*>|\s*([-*]|\d+\.)\s|---+$)/.test(lines[i]) &&
@@ -255,13 +295,7 @@ export default function Markdown({
       buf.push(lines[i]);
       i += 1;
     }
-    if (buf.length) {
-      out.push(
-        <p key={`p${i}`} className="my-3.5 text-[15.5px] leading-[1.75] text-tm-ink">
-          {inline(buf.join(' '), `p${i}`)}
-        </p>,
-      );
-    }
+    out.push(para(buf.join(' '), `p${i}`));
   }
 
   const body = out.length === 0

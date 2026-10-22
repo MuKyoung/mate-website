@@ -2,9 +2,10 @@
 
 import { useEffect, useId, useRef, useState } from 'react';
 import {
-  DOMAINS, MEMBERS, PRIORITIES, STATUSES,
+  DOMAINS, PRIORITIES, STATUSES, localDay,
   type DomainKey, type Priority, type Status, type Task,
 } from './types';
+import { assignable, useMember, useMembers } from './members';
 import {
   Avatar, Chip, DOMAIN_STYLE, IconClose, Modal, PriorityDot,
   tmBtn, tmBtnPrimary, tmFieldBase, tmGhostDanger, tmIconBtn, tmInput, tmLabel, tmSelect, tmTextarea,
@@ -37,9 +38,22 @@ const emptyDraft = (status: Status = 'todo'): Draft => ({
   labels: [],
 });
 
+/* 날짜 칸에 연도를 치는 동안에는 0002-, 0020- 같은 값이 잠깐 들어온다 - 그때는 다른 날짜를 옮기지 않는다 */
+const settled = (v: string) => v >= '1000';
+
 /** 세종 관리자 수정 창의 칸 배치 - 두 줄씩, 좁은 화면에서는 한 줄 */
-function Fields({ draft, set }: { draft: Draft; set: (p: Partial<Draft>) => void }) {
+function Fields({ draft, set, knownLabels = [] }: {
+  draft: Draft;
+  set: (p: Partial<Draft>) => void;
+  /** 다른 작업에 이미 쓰인 라벨 - 라벨 칸의 추천 목록 */
+  knownLabels?: string[];
+}) {
   const [labelInput, setLabelInput] = useState('');
+  /** 거꾸로 된 기간을 막으려고 옮긴 쪽 */
+  const [moved, setMoved] = useState<'start' | 'due' | null>(null);
+  const people = assignable(useMembers(), draft.assignee);
+  const listId = useId();
+  const suggest = knownLabels.filter((l) => !draft.labels.includes(l));
 
   const addLabel = () => {
     const v = labelInput.trim();
@@ -47,6 +61,30 @@ function Fields({ draft, set }: { draft: Draft; set: (p: Partial<Draft>) => void
     set({ labels: [...draft.labels, v] });
     setLabelInput('');
   };
+
+  /* 시작일이 마감일을 넘어가면 다른 쪽을 같은 날로 맞춘다.
+     날짜는 한 자리 칠 때마다 들어온다(18일을 치면 1일이 먼저 온다). 그래서 다른 쪽을 옮겼으면 옮기기 전 날짜를
+     칸을 떠날 때까지 들고 있다가, 뒤이어 들어온 날짜와 맞으면 그 날짜로 되돌린다 */
+  const before = useRef<{ field: 'start' | 'due'; other: string } | null>(null);
+  const setStart = (v: string | null) => {
+    const held = before.current?.field === 'start' ? before.current.other : null;
+    const due = held ?? draft.due;
+    const flip = !!(v && due && settled(v) && v > due);
+    if (flip && !held && draft.due) before.current = { field: 'start', other: draft.due };
+    const nextDue = flip ? v : due;
+    set(nextDue === draft.due ? { start: v } : { start: v, due: nextDue });
+    setMoved(flip ? 'due' : null);
+  };
+  const setDue = (v: string | null) => {
+    const held = before.current?.field === 'due' ? before.current.other : null;
+    const start = held ?? draft.start;
+    const flip = !!(v && start && settled(v) && v < start);
+    if (flip && !held && draft.start) before.current = { field: 'due', other: draft.start };
+    const nextStart = flip ? v : start;
+    set(nextStart === draft.start ? { due: v } : { due: v, start: nextStart });
+    setMoved(flip ? 'start' : null);
+  };
+  const release = () => { before.current = null; };
 
   const badRange = !!(draft.start && draft.due && draft.start > draft.due);
 
@@ -78,33 +116,45 @@ function Fields({ draft, set }: { draft: Draft; set: (p: Partial<Draft>) => void
         <select id="tm-assignee" className={`${tmSelect} w-full`}
           value={draft.assignee ?? ''} onChange={(e) => set({ assignee: e.target.value || null })}>
           <option value="">미배정</option>
-          {MEMBERS.map((m) => <option key={m.id} value={m.id}>{m.name} · {m.role}</option>)}
+          {people.map((m) => <option key={m.id} value={m.id}>{m.role ? `${m.name} · ${m.role}` : m.name}</option>)}
         </select>
       </div>
 
       <div>
         <label className={tmLabel} htmlFor="tm-start">시작일</label>
         <input id="tm-start" type="date" className={tmInput} aria-invalid={badRange || undefined}
-          value={draft.start ?? ''} onChange={(e) => set({ start: e.target.value || null })} />
+          value={draft.start ?? ''} onChange={(e) => setStart(e.target.value || null)} onBlur={release} />
       </div>
       <div>
         <label className={tmLabel} htmlFor="tm-due">마감일</label>
         <input id="tm-due" type="date" className={tmInput} aria-invalid={badRange || undefined}
-          value={draft.due ?? ''} onChange={(e) => set({ due: e.target.value || null })} />
+          value={draft.due ?? ''} onChange={(e) => setDue(e.target.value || null)} onBlur={release} />
       </div>
-      {badRange && (
+      {badRange ? (
         <p className="col-span-full -mt-2 text-[13.5px] font-semibold leading-[1.5] text-tm-red-deep">
-          시작일이 마감일보다 늦습니다.
+          시작일이 마감일보다 늦습니다. 둘 중 한 날짜를 다시 고르면 맞춰집니다.
+        </p>
+      ) : moved && (
+        <p role="status" className="col-span-full -mt-2 text-[13.5px] font-semibold leading-[1.5] text-tm-sub">
+          {moved === 'due' ? '마감일을 시작일과 같은 날로 옮겼습니다.' : '시작일을 마감일과 같은 날로 옮겼습니다.'}
         </p>
       )}
 
       <div className="col-span-full">
         <label className={tmLabel} htmlFor="tm-label">라벨</label>
         <div className="flex items-center gap-2">
+          {/* 치다가 칸을 떠나면(만들기 · 닫기를 눌러도) 그대로 붙인다 */}
           <input id="tm-label" className={tmInput} placeholder="입력 후 Enter"
+            list={suggest.length ? listId : undefined}
             value={labelInput}
             onChange={(e) => setLabelInput(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addLabel(); } }} />
+            onBlur={addLabel}
+            onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) { e.preventDefault(); addLabel(); } }} />
+          {suggest.length > 0 && (
+            <datalist id={listId}>
+              {suggest.map((l) => <option key={l} value={l} />)}
+            </datalist>
+          )}
           <button type="button" onClick={addLabel} className={`${tmBtn} flex-none`}>
             추가
           </button>
@@ -130,17 +180,20 @@ function Fields({ draft, set }: { draft: Draft; set: (p: Partial<Draft>) => void
 /* ── 새 작업 ──────────────────────────────────────── */
 
 export function NewTaskDialog({
-  defaultStatus, defaultDue, onCreate, onClose,
+  defaultStatus, defaultDue, knownLabels, onCreate, onClose,
 }: {
   defaultStatus: Status;
   /** 캘린더에서 날짜를 눌러 들어온 경우 미리 채운다 */
   defaultDue?: string | null;
+  /** 이미 쓰인 라벨 - 라벨 칸 추천 목록 */
+  knownLabels?: string[];
   onCreate(d: Draft): void;
   onClose(): void;
 }) {
   const [draft, setDraft] = useState<Draft>(() => ({ ...emptyDraft(defaultStatus), due: defaultDue ?? null }));
   const titleRef = useRef<HTMLInputElement>(null);
   const formId = useId();
+  const [confirm, confirmNode] = useConfirm();
 
   useEffect(() => { titleRef.current?.focus(); }, []);
 
@@ -150,44 +203,60 @@ export function NewTaskDialog({
     onCreate({ ...draft, title: draft.title.trim() });
   };
 
+  /* 적은 제목 · 설명이 있으면 묻고 닫는다. 미리 채운 상태 · 마감일은 적은 것으로 보지 않는다 */
+  const tryClose = async () => {
+    if (!draft.title.trim() && !draft.description.trim()) return onClose();
+    const yes = await confirm({
+      title: '작성 중인 작업을 버릴까요?',
+      body: '지금까지 적은 내용이 지워집니다.',
+      ok: '버리기',
+      cancel: '계속 쓰기',
+      tone: 'danger',
+    });
+    if (yes) onClose();
+  };
+
   return (
-    <Modal
-      title="새 작업"
-      onClose={onClose}
-      foot={
-        <>
-          <span className="flex-1" />
-          <button type="button" onClick={onClose} className={tmBtn}>
-            취소
-          </button>
-          <button type="submit" form={formId} disabled={!draft.title.trim()} className={tmBtnPrimary}>
-            만들기
-          </button>
-        </>
-      }
-    >
-      <form id={formId} onSubmit={submit} className="flex flex-col gap-[18px]">
-        <div>
-          <label className={tmLabel} htmlFor="tm-title">
-            제목 <b className="text-[12.5px] font-bold text-tm-red">필수</b>
-          </label>
-          <input id="tm-title" ref={titleRef} className={tmInput} required
-            placeholder="무엇을 해야 하나요?"
-            value={draft.title}
-            onChange={(e) => setDraft({ ...draft, title: e.target.value })} />
-        </div>
-        <div>
-          <label className={tmLabel} htmlFor="tm-desc">
-            설명 <em className="text-[12.5px] font-medium not-italic text-tm-sub">선택</em>
-          </label>
-          <textarea id="tm-desc" rows={3} className={tmTextarea}
-            placeholder="배경, 완료 조건, 참고 링크"
-            value={draft.description}
-            onChange={(e) => setDraft({ ...draft, description: e.target.value })} />
-        </div>
-        <Fields draft={draft} set={(p) => setDraft({ ...draft, ...p })} />
-      </form>
-    </Modal>
+    <>
+      <Modal
+        title="새 작업"
+        onClose={() => void tryClose()}
+        foot={
+          <>
+            <span className="flex-1" />
+            <button type="button" onClick={() => void tryClose()} className={tmBtn}>
+              취소
+            </button>
+            <button type="submit" form={formId} disabled={!draft.title.trim()} className={tmBtnPrimary}>
+              만들기
+            </button>
+          </>
+        }
+      >
+        <form id={formId} onSubmit={submit} className="flex flex-col gap-[18px]">
+          <div>
+            <label className={tmLabel} htmlFor="tm-title">
+              제목 <b className="text-[12.5px] font-bold text-tm-red">필수</b>
+            </label>
+            <input id="tm-title" ref={titleRef} className={tmInput} required
+              placeholder="무엇을 해야 하나요?"
+              value={draft.title}
+              onChange={(e) => setDraft({ ...draft, title: e.target.value })} />
+          </div>
+          <div>
+            <label className={tmLabel} htmlFor="tm-desc">
+              설명 <em className="text-[12.5px] font-medium not-italic text-tm-sub">선택</em>
+            </label>
+            <textarea id="tm-desc" rows={3} className={tmTextarea}
+              placeholder="배경, 완료 조건, 참고 링크"
+              value={draft.description}
+              onChange={(e) => setDraft({ ...draft, description: e.target.value })} />
+          </div>
+          <Fields draft={draft} set={(p) => setDraft((d) => ({ ...d, ...p }))} knownLabels={knownLabels} />
+        </form>
+      </Modal>
+      {confirmNode}
+    </>
   );
 }
 
@@ -196,21 +265,42 @@ export function NewTaskDialog({
    머리 · 본문 · 바닥의 짜임은 세종 관리자의 수정 창과 같다. */
 
 export function TaskPanel({
-  task, onUpdate, onRemove, onClose,
+  task, knownLabels, unsaved, onUpdate, onRemove, onClose,
 }: {
   task: Task;
+  /** 이미 쓰인 라벨 - 라벨 칸 추천 목록 */
+  knownLabels?: string[];
+  /** 서버에 아직 보내지 못한 변경이 있다 - 바닥 줄도 쪽 머리 알약과 같은 말을 한다 */
+  unsaved?: boolean;
   onUpdate(patch: Partial<Task>): void;
   onRemove(): void;
   onClose(): void;
 }) {
   const trapRef = useFocusTrap<HTMLElement>();
   const [confirm, confirmNode] = useConfirm();
+  const owner = useMember(task.assignee);
   /* 확인 창이 떠 있는 동안의 Esc 는 확인 창 몫이다 */
   const asking = useRef(false);
   asking.current = confirmNode !== null;
 
+  /* 제목은 빈 채로 저장하지 않는다. 칸의 글자는 따로 들고, 비어 있는 동안은 저장을 건너뛰고
+     칸을 떠나면 마지막 제목으로 돌린다 */
+  const [title, setTitle] = useState(task.title);
+  const titleFocused = useRef(false);
+  const titleFor = useRef(task.id);
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape' && !asking.current) onClose(); };
+    // 다른 작업을 열었거나, 치고 있지 않을 때 들어온 제목(다른 팀원의 수정)은 그대로 따른다
+    if (titleFor.current !== task.id || !titleFocused.current) setTitle(task.title);
+    titleFor.current = task.id;
+  }, [task.id, task.title]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || asking.current) return;
+      // 칸에서 먼저 빠져나와 치던 라벨을 붙이고 빈 제목을 되돌린 뒤 닫는다
+      if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+      onClose();
+    };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
@@ -260,8 +350,21 @@ export function TaskPanel({
           <label className={tmLabel} htmlFor="tm-edit-title">제목</label>
           <input id="tm-edit-title"
             className={`${tmFieldBase} mb-[18px] block h-auto w-full px-3.5 py-2.5 text-[19px] font-bold leading-[1.4]`}
-            value={task.title}
-            onChange={(e) => onUpdate({ title: e.target.value })} />
+            aria-invalid={!title.trim() || undefined}
+            aria-describedby={title.trim() ? undefined : 'tm-edit-title-hint'}
+            value={title}
+            onFocus={() => { titleFocused.current = true; }}
+            onChange={(e) => {
+              const v = e.target.value;
+              setTitle(v);
+              if (v.trim()) onUpdate({ title: v });
+            }}
+            onBlur={() => { titleFocused.current = false; setTitle(task.title); }} />
+          {!title.trim() && (
+            <p id="tm-edit-title-hint" className="-mt-3 mb-[18px] text-[13.5px] font-semibold leading-[1.5] text-tm-red-deep">
+              제목은 비워 둘 수 없습니다. 칸을 떠나면 마지막으로 저장된 제목으로 돌아갑니다.
+            </p>
+          )}
 
           <label className={tmLabel} htmlFor="tm-edit-desc">설명</label>
           <textarea id="tm-edit-desc" rows={5}
@@ -270,18 +373,18 @@ export function TaskPanel({
             value={task.description}
             onChange={(e) => onUpdate({ description: e.target.value })} />
 
-          <Fields draft={draft} set={(p) => onUpdate(p as Partial<Task>)} />
+          <Fields draft={draft} set={(p) => onUpdate(p as Partial<Task>)} knownLabels={knownLabels} />
 
           <dl className="mt-6 grid grid-cols-[96px_minmax(0,1fr)] gap-x-4 gap-y-2.5 border-t border-tm-line pt-[18px] text-[14.5px] leading-[1.6]">
             <dt className="font-bold text-tm-sub">담당</dt>
             <dd className="flex min-w-0 items-center gap-2 text-tm-ink">
               <Avatar id={task.assignee} size={22} />
-              {MEMBERS.find((m) => m.id === task.assignee)?.name ?? '미배정'}
+              {owner?.name ?? '미배정'}
             </dd>
             <dt className="font-bold text-tm-sub">만든 날</dt>
-            <dd className="tabular-nums text-tm-ink">{task.createdAt.slice(0, 10)}</dd>
+            <dd className="tabular-nums text-tm-ink">{localDay(task.createdAt)}</dd>
             <dt className="font-bold text-tm-sub">마지막 수정</dt>
-            <dd className="tabular-nums text-tm-ink">{task.updatedAt.slice(0, 10)}</dd>
+            <dd className="tabular-nums text-tm-ink">{localDay(task.updatedAt)}</dd>
           </dl>
         </div>
 
@@ -291,8 +394,8 @@ export function TaskPanel({
           </button>
           <span className="flex-1" />
           <span className="inline-flex items-center gap-2 text-[13px] font-semibold text-tm-sub max-[480px]:hidden">
-            <i className="h-2 w-2 rounded-full bg-tm-ok" aria-hidden />
-            고치면 바로 저장됩니다
+            <i className={`h-2 w-2 rounded-full ${unsaved ? 'bg-tm-red' : 'bg-tm-ok'}`} aria-hidden />
+            {unsaved ? '저장하지 못한 변경이 있습니다' : '고치면 바로 저장됩니다'}
           </span>
           <button type="button" onClick={onClose} className={tmBtn}>
             닫기

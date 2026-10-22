@@ -3,16 +3,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { isUntouchedSample, useTaskStore } from './store';
+import { LOCAL_ME_KEY, isUntouchedSample, useTaskStore, type Store, type StoreOptions } from './store';
+import { useDocStore, type DocStore } from './docStore';
 import {
   DOMAINS, MEMBERS, PRIORITIES, STATUSES,
   domainLabel, memberById, priorityLabel,
-  type DomainKey, type Priority, type Status, type Task,
+  type DomainKey, type Member, type Priority, type Status, type Task,
 } from './types';
 import {
   Avatar, Chip, DOMAIN_FILL, DOMAIN_STYLE, DueBadge, IconChevron, IconNav, IconPlus, IconSearch, Modal,
   PRIORITY_STYLE, PageHead, PriorityDot, STATUS_STYLE, StatusPill, TaskCard, Toast,
-  tmBtn, tmBtnPrimary, tmCallout, tmCount, tmGhostBtn, tmIconBtnSm, tmInput, tmSelect, tmTab, tmTextBtn,
+  tmBtn, tmBtnPrimary, tmCallout, tmCount, tmEditBtn, tmGhostBtn, tmIconBtnSm, tmInput, tmSelect, tmTab, tmTextBtn,
   type NavIcon,
 } from './ui';
 import { NewTaskDialog, TaskPanel, type Draft } from './TaskPanel';
@@ -20,14 +21,37 @@ import Timeline from './Timeline';
 import Calendar from './Calendar';
 import Roadmap from './Roadmap';
 import Docs from './Docs';
-import { useDocStore } from './docStore';
+import { isRemote } from './supabase';
+import { RETRY, importLocal, localLeftovers, skipImport, useRemoteDocStore, useRemoteTaskStore } from './remote';
+import { signOut, useAuth, useTeam, type MemberPatch } from './team';
+import { MembersContext, useMembers } from './members';
+import { LoadingScreen, LoginScreen, PendingScreen, TroubleScreen } from './Gate';
+import { TeamDialog } from './TeamDialog';
 
 /*
  * 작업 관리 도구의 틀 - 세종호이스트크레인 리뉴얼 관리자의 틀을 옮겼다(2026-10-22).
  * 넓은 화면: 왼쪽 흰 메뉴(로고 · 범위 · 영역 · 위키, 아래에 홈페이지와 지금 쓰는 사람) + 오른쪽 본문.
  * 좁은 화면(900 이하): 위쪽 띠(로고 · 사람 메뉴) + 본문 + 아래쪽 메뉴(자주 쓰는 셋 + 전체 메뉴 창).
  * 본문은 화면 높이에 맞춰 두고, 보드 칸 · 표 · 타임라인이 저마다 안에서 스크롤한다.
+ *
+ * 저장소는 빌드할 때 정해진다(supabase.ts 의 isRemote).
+ *   · Supabase 키가 있으면 로그인 → 승인 확인을 거쳐 팀이 함께 쓰는 표(remote.ts)를 읽고 쓴다.
+ *     로그인한 계정이 곧 '나'이고, 담당자 목록은 승인된 팀원이다.
+ *   · 없으면 예전처럼 이 브라우저에만 저장하고, 자리표시 팀원 가운데 '나'를 고른다(로컬 개발용).
  */
+
+/** 빌드마다 하나로 정해지므로 렌더 사이에 훅 순서가 바뀌지 않는다 */
+const useTasks: (opts: StoreOptions) => Store = isRemote ? useRemoteTaskStore : useTaskStore;
+const useDocs: (opts: StoreOptions) => DocStore = isRemote ? useRemoteDocStore : useDocStore;
+
+/** Supabase 모드에서 로그인한 사람 */
+interface Account {
+  me: Member;
+  members: Member[];
+  update(id: string, patch: MemberPatch): Promise<string | null>;
+  /** 비밀번호 재설정 메일의 링크로 들어왔다 - 팀원 창을 열어 새 비밀번호를 정하게 한다 */
+  recovery?: boolean;
+}
 
 type View = 'board' | 'list' | 'timeline' | 'calendar' | 'roadmap';
 type Section = 'tasks' | 'docs';
@@ -38,13 +62,12 @@ const VIEWS: { id: View; label: string; key: string; hint: string }[] = [
   { id: 'list', label: '목록', key: 'l', hint: '열 이름을 누르면 그 순서로 줄을 세웁니다.' },
   { id: 'timeline', label: '타임라인', key: 't', hint: '시작일부터 마감일까지를 막대로 봅니다. 막대를 누르면 작업이 열립니다.' },
   { id: 'calendar', label: '캘린더', key: 'c', hint: '빈 칸을 누르면 그날 마감인 작업을 만들고, 항목을 끌어 놓으면 마감일이 바뀝니다.' },
-  { id: 'roadmap', label: '로드맵', key: 'r', hint: '마감일을 주 단위로 나눠 봅니다. 지난 일정은 이번 주에 모아 둡니다.' },
+  { id: 'roadmap', label: '로드맵', key: 'r', hint: '마감일을 주 단위로 나눠 봅니다. 지난 일정은 이번 주에 모아 둡니다. 지난주까지 마감된 완료 작업은 올리지 않습니다.' },
 ];
 type Scope = { kind: 'all' } | { kind: 'mine' } | { kind: 'domain'; id: DomainKey };
 
 type NavItem = { key: string; label: string; icon?: NavIcon; dot?: DomainKey; count: number; active: boolean; go(): void };
 
-const ME_KEY = 'mate.taskmanager.me';
 const PREF_KEY = 'mate.taskmanager.prefs.v1';
 
 type Prefs = { section: Section; view: View; scope: Scope; priority: Priority | 'all'; hideDone: boolean };
@@ -77,9 +100,77 @@ function MePicker({ me, onPick, id }: { me: string; onPick(id: string): void; id
   );
 }
 
+/** 로그인한 사람 - 누르면 팀원 창(내 정보 · 비밀번호 · 승인). 승인 대기가 있으면 빨간 숫자 */
+function AccountButton({ member, pending, onOpen }: { member: Member; pending: number; onOpen(): void }) {
+  return (
+    <button type="button" onClick={onOpen} aria-haspopup="dialog"
+      className="flex w-full items-center gap-2.5 rounded-tm-sm px-2.5 py-1.5 text-left transition-colors duration-150 hover:bg-tm-tint">
+      <span className="relative flex-none">
+        <Avatar id={member.id} size={36} />
+        {pending > 0 && (
+          <span className="absolute -right-1 -top-1 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-tm-red px-1 text-[11px] font-bold leading-none text-white ring-2 ring-white">
+            {pending}
+          </span>
+        )}
+      </span>
+      <span className="flex min-w-0 flex-col leading-[1.35]">
+        <b className="truncate text-[14.5px] font-bold text-tm-ink">{member.name}</b>
+        <small className="truncate text-[12.5px] text-tm-sub">
+          {pending > 0 ? `승인 대기 ${pending}명 · 팀원` : member.role ? `${member.role} · 팀원` : '팀원 · 내 정보'}
+        </small>
+      </span>
+      <span className="ml-auto flex-none -rotate-90 text-tm-sub"><IconChevron /></span>
+    </button>
+  );
+}
+
+const logoutBtn =
+  'h-[42px] w-full rounded-tm-sm border border-tm-edge bg-white text-[14px] font-semibold text-tm-ink transition-colors duration-150 ' +
+  'hover:border-tm-blue hover:bg-tm-tint disabled:cursor-default disabled:opacity-50 [@media(pointer:coarse)]:h-11';
+
 export default function TaskManagerClient() {
-  const store = useTaskStore();
-  const docStore = useDocStore();
+  return isRemote ? <RemoteApp /> : <Workspace />;
+}
+
+/** Supabase 모드의 문 - 로그인 → 표가 있는지 → 승인됐는지를 차례로 확인한다 */
+function RemoteApp() {
+  const auth = useAuth();
+  const userId = auth.status === 'in' ? auth.user.id : null;
+  const team = useTeam(userId);
+  const leave = () => void signOut();
+
+  /* 승인 대기 중에는 실시간 알림과 별도로 10초마다 다시 확인한다 - 알림이 끊겨도 승인되면 열린다 */
+  const waiting = team.status === 'ready' && !!team.me && !team.me.active;
+  const { reload } = team;
+  useEffect(() => {
+    if (!waiting) return;
+    const t = setInterval(() => void reload(), 10000);
+    return () => clearInterval(t);
+  }, [waiting, reload]);
+
+  if (auth.status === 'loading') return <LoadingScreen />;
+  if (auth.status === 'out') return <LoginScreen />;
+  if (team.status === 'loading') return <LoadingScreen />;
+  if (team.status === 'missing' || team.status === 'error') {
+    return <TroubleScreen kind={team.status} onRetry={() => void team.reload()} onSignOut={leave} />;
+  }
+  const email = auth.user.email ?? '';
+  if (!team.me) return <PendingScreen email={email} missing onSignOut={leave} />;
+  if (!team.me.active) return <PendingScreen email={email} onSignOut={leave} />;
+
+  return (
+    <MembersContext.Provider value={team.members}>
+      <Workspace account={{ me: team.me, members: team.members, update: team.update, recovery: auth.recovery }} />
+    </MembersContext.Provider>
+  );
+}
+
+function Workspace({ account }: { account?: Account }) {
+  /** undo 에 번호(저장소의 undoSeq)가 있으면 그 동작의 '실행 취소'를 함께 띄운다. err 는 저장 실패 같은 빨간 알림 */
+  const [toast, setToast] = useState<{ text: string; undo: number | false; tone?: 'ok' | 'err' } | null>(null);
+  const notify = useCallback((text: string) => setToast({ text, undo: false, tone: 'err' }), []);
+  const store = useTasks({ onError: notify });
+  const docStore = useDocs({ onError: notify });
 
   const [section, setSection] = useState<Section>('tasks');
   const [view, setView] = useState<View>('board');
@@ -87,31 +178,46 @@ export default function TaskManagerClient() {
   const [query, setQuery] = useState('');
   const [priorityFilter, setPriorityFilter] = useState<Priority | 'all'>('all');
   const [hideDone, setHideDone] = useState(false);
-  const [me, setMe] = useState<string>('m7');
+  /** 브라우저 저장 모드에서 고른 '나'. Supabase 모드에서는 로그인한 계정이 '나'다 */
+  const [localMe, setLocalMe] = useState<string>('m7');
+  const me = account ? account.me.id : localMe;
 
   const [openId, setOpenId] = useState<string | null>(null);
   const [creating, setCreating] = useState<Status | null>(null);
   const [creatingDue, setCreatingDue] = useState<string | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
   const [sort, setSort] = useState<{ by: 'title' | 'status' | 'priority' | 'domain' | 'due' | 'assignee'; dir: 1 | -1 } | null>(null);
-  /** undo 가 참이면 '실행 취소'를 함께 띄운다 */
-  const [toast, setToast] = useState<{ text: string; undo: boolean } | null>(null);
   const [dropAt, setDropAt] = useState<{ status: Status; beforeId: string | null } | null>(null);
+  /** 키보드로 옮긴 카드 - 다시 그린 뒤 초점을 돌려준다. alt 는 그 카드가 걸러져 사라졌을 때 갈 원래 칸의 옆 카드 */
+  const [refocus, setRefocus] = useState<{ id: string; alt: string | null } | null>(null);
   /** 좁은 화면의 전체 메뉴 창 */
   const [menu, setMenu] = useState(false);
+  /** Supabase 모드 - 팀원 창 */
+  const [teamOpen, setTeamOpen] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+  /** Supabase 모드 - 이 브라우저에 남은 예전 데이터 */
+  const [leftover, setLeftover] = useState<{ tasks: number; docs: number } | null>(null);
+  const [importing, setImporting] = useState(false);
+  /** Supabase 모드 - 처음 목록 읽기를 다시 시도하는 중 */
+  const [retrying, setRetrying] = useState(false);
 
   const searchRef = useRef<HTMLInputElement>(null);
+  /** 문서 화면에서 / 를 눌러 작업 화면으로 왔다 - 검색 칸이 그려지면 초점을 준다 */
+  const searchNext = useRef(false);
+  const viewTabs = useRef<HTMLDivElement>(null);
   /** 좁은 화면의 사람 메뉴 - 다른 곳을 누르거나 Esc, 화면을 바꾸면 닫는다 */
   const acct = useRef<HTMLDetailsElement>(null);
   const storeRef = useRef(store);
   storeRef.current = store;
+  /** 지금 떠 있는 알림 - 단축키 Z 는 실행 취소 알림이 떠 있을 때만 듣는다 */
+  const toastRef = useRef(toast);
 
   const [prefsLoaded, setPrefsLoaded] = useState(false);
 
   useEffect(() => {
     try {
-      const saved = window.localStorage.getItem(ME_KEY);
-      if (saved && MEMBERS.some((m) => m.id === saved)) setMe(saved);
+      const saved = window.localStorage.getItem(LOCAL_ME_KEY);
+      if (saved && MEMBERS.some((m) => m.id === saved)) setLocalMe(saved);
     } catch { /* 저장이 막힌 환경 */ }
 
     // 마지막으로 보던 화면으로 돌아온다
@@ -135,15 +241,90 @@ export default function TaskManagerClient() {
   }, [prefsLoaded, section, view, scope, priorityFilter, hideDone]);
 
   const pickMe = (id: string) => {
-    setMe(id);
-    try { window.localStorage.setItem(ME_KEY, id); } catch { /* noop */ }
+    setLocalMe(id);
+    try { window.localStorage.setItem(LOCAL_ME_KEY, id); } catch { /* noop */ }
   };
 
-  /* 되돌릴 수 있는 동작이 생기면 알린다 */
+  /* Supabase 모드 - 예전에 이 브라우저에 쓴 작업 · 문서가 남아 있으면 옮길지 묻는다 */
+  const accountId = account?.me.id;
   useEffect(() => {
-    if (!store.undoLabel) return;
-    setToast({ text: store.undoLabel, undo: true });
-  }, [store.undoLabel]);
+    if (!accountId) return;
+    const left = localLeftovers();
+    setLeftover(left ? { tasks: left.tasks.length, docs: left.docs.length } : null);
+  }, [accountId]);
+
+  const runImport = async () => {
+    if (!accountId || importing) return;
+    setImporting(true);
+    try {
+      const done = await importLocal(accountId);
+      setLeftover(null);
+      // 실시간 알림을 기다리지 않고 바로 다시 읽어 옮긴 것을 보여 준다
+      await Promise.all([store.reload?.(), docStore.reload?.()]);
+      setToast({ text: `작업 ${done.tasks}건 · 문서 ${done.docs}건을 팀 저장소로 옮겼습니다.`, undo: false });
+    } catch {
+      notify('옮기지 못했습니다. 인터넷 연결을 확인한 뒤 다시 눌러 주세요. 이미 옮긴 것은 두 번 올리지 않습니다.');
+      const left = localLeftovers();
+      setLeftover(left ? { tasks: left.tasks.length, docs: left.docs.length } : null);
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  /* 로그아웃 - 아직 보내지 못한 저장을 먼저 끝낸다(로그인이 풀리면 더는 보낼 수 없다) */
+  const logout = async () => {
+    if (leaving) return;
+    setLeaving(true);
+    await Promise.all([store.flush?.(), docStore.flush?.()]).catch(() => {});
+    await signOut();
+  };
+
+  /* 승인은 관리자만 하므로 승인 대기 숫자도 관리자에게만 보인다 */
+  const pendingCount = account?.me.isAdmin ? account.members.filter((m) => m.active === false).length : 0;
+
+  /* 비밀번호 재설정 링크로 들어왔으면 팀원 창(새 비밀번호 칸)을 연다 */
+  const recovery = account?.recovery;
+  useEffect(() => {
+    if (recovery) setTeamOpen(true);
+  }, [recovery]);
+
+  /* 되돌릴 수 있는 동작이 생기면 알린다 - 이름이 같은 동작이 이어져도 번호(undoSeq)로 가른다 */
+  const { undoSeq, undoLabel } = store;
+  useEffect(() => {
+    if (!undoSeq || !undoLabel) return;
+    setToast({ text: undoLabel, undo: undoSeq });
+  }, [undoSeq, undoLabel]);
+
+  /* 실행 취소 알림이 닫히거나 다른 알림으로 바뀌면 그 되돌리기는 잊는다 - 알림 없이 Z 로 옛 동작을 되돌리지 않게 */
+  useEffect(() => {
+    const was = toastRef.current;
+    toastRef.current = toast;
+    if (was?.undo && was !== toast && storeRef.current.undoSeq === was.undo) storeRef.current.dropUndo();
+  }, [toast]);
+
+  /* 실행 취소 - 알림이 떠 있는 동안만 부른다. 그사이 바뀌어 되돌리지 못했으면 그렇다고 알린다 */
+  const runUndo = useCallback(() => {
+    const ok = storeRef.current.undo();
+    setToast(ok ? null : { text: '그 사이 바뀌어서 되돌리지 않았습니다', undo: false });
+  }, []);
+
+  /* 저장 상태 알약 - 브라우저 저장인지, 팀 저장소에 다 들어갔는지(작업과 문서를 함께 본다) */
+  const sync = store.sync === 'error' || docStore.sync === 'error' ? 'error'
+    : store.sync === 'saving' || docStore.sync === 'saving' ? 'saving' : 'idle';
+  const saved: { tone: 'ok' | 'busy' | 'warn'; text: string } = account
+    ? sync === 'error'
+      ? { tone: 'warn', text: '저장하지 못한 변경이 있습니다' }
+      : sync === 'saving'
+        ? { tone: 'busy', text: '저장 중…' }
+        : { tone: 'ok', text: '모두 저장됨 · 팀이 함께 봅니다' }
+    : store.persistent
+      ? { tone: 'ok', text: '이 브라우저에만 저장됩니다' }
+      : { tone: 'warn', text: '브라우저 저장이 막혀 있어 새로고침하면 사라집니다' };
+
+  /* 연결이 돌아와 다 보냈으면 '아직 저장하지 못했습니다' 알림은 바로 거둔다 - 알약과 어긋나지 않게 */
+  useEffect(() => {
+    if (sync === 'idle') setToast((t) => (t?.text === RETRY ? null : t));
+  }, [sync]);
 
   /* 알림은 잠시 뒤 거둔다 */
   useEffect(() => {
@@ -169,29 +350,58 @@ export default function TaskManagerClient() {
     };
   }, []);
 
-  /* ── 단축키 - 입력 중이거나 창이 떠 있으면 가로채지 않는다 ── */
+  /* ── 단축키 - 입력 중(한글 조합 중 포함)이거나 창이 떠 있으면 가로채지 않는다 ── */
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const el = e.target as HTMLElement | null;
       const typing = !!el && (/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.isContentEditable);
-      if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (typing || e.isComposing || e.metaKey || e.ctrlKey || e.altKey) return;
       if (document.querySelector('[aria-modal="true"]')) return;
 
-      if (e.key === 'n') { e.preventDefault(); setCreatingDue(null); setCreating('todo'); }
-      if (e.key === '/') { e.preventDefault(); setSection('tasks'); searchRef.current?.focus(); }
-      const v = VIEWS.find((x) => x.key === e.key);
-      if (v) { setSection('tasks'); setView(v.id); }
-      if (e.key === 'd') setSection('docs');
-      // Ctrl/Cmd 조합은 위에서 걸러지므로 되돌리기는 여기서 따로 받는다
-      if (e.key === 'z' && storeRef.current.undoLabel) {
+      // 한글 자판 · Shift · Caps Lock 에서도 같은 글쇠로 받는다. 라틴 글자는 e.key 를 먼저 봐서 다른 배열에서도 표시와 맞춘다
+      const k = /^[a-z/]$/i.test(e.key) ? e.key.toLowerCase()
+        : e.code.startsWith('Key') ? e.code.slice(3).toLowerCase()
+          : e.code === 'Slash' ? '/' : '';
+      if (!k) return;
+
+      if (k === 'n') { e.preventDefault(); setCreatingDue(null); setCreating('todo'); }
+      if (k === '/') {
         e.preventDefault();
-        storeRef.current.undo();
-        setToast(null);
+        // 문서 화면에서는 문서 검색으로. 그 칸이 없거나(좁은 화면) 숨어 있으면 작업 화면으로 가서 그려진 뒤 검색 칸에
+        const docSearch = document.querySelector<HTMLInputElement>('input[aria-label="문서 검색"]');
+        if (docSearch?.offsetParent) docSearch.focus();
+        else if (searchRef.current) searchRef.current.focus();
+        else { searchNext.current = true; setSection('tasks'); }
+      }
+      const v = VIEWS.find((x) => x.key === k);
+      if (v) { setSection('tasks'); setView(v.id); }
+      if (k === 'd') setSection('docs');
+      // Ctrl/Cmd 조합은 위에서 걸러지므로 되돌리기는 여기서 따로 받는다 - 실행 취소 알림이 떠 있을 때만
+      if (k === 'z' && toastRef.current?.undo) {
+        e.preventDefault();
+        runUndo();
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, []);
+  }, [runUndo]);
+
+  useEffect(() => {
+    if (section !== 'tasks' || !searchNext.current || !searchRef.current) return;
+    searchNext.current = false;
+    searchRef.current.focus();
+  }, [section, store.ready]);
+
+  /* 좁은 화면에서 보기 알약 줄이 넘치면 고른 보기가 보이게 그만큼만 민다(새로고침한 뒤에도) */
+  useEffect(() => {
+    const row = viewTabs.current;
+    const on = row?.querySelector<HTMLElement>('[aria-pressed="true"]');
+    if (!row || !on) return;
+    const r = row.getBoundingClientRect();
+    const b = on.getBoundingClientRect();
+    if (b.left < r.left) row.scrollLeft -= r.left - b.left;
+    else if (b.right > r.right) row.scrollLeft += b.right - r.right;
+  }, [view, section, store.ready]);
 
   /* ── 필터 ── */
   const visible = useMemo(() => {
@@ -212,27 +422,33 @@ export default function TaskManagerClient() {
   }, [store.tasks, scope, me, priorityFilter, hideDone, query]);
 
   /** 목록 보기 정렬 - 열 이름을 누르면 그 열 기준으로 선다 */
+  const members = useMembers();
   const sorted = useMemo(() => {
-    if (!sort) return visible;
-    const rank = { urgent: 0, high: 1, normal: 2, low: 3 } as Record<Priority, number>;
     const statusRank = Object.fromEntries(STATUSES.map((s2, i) => [s2.id, i])) as Record<Status, number>;
-    const key = (t: Task) => {
+    // 고르지 않았을 때는 보드와 같은 순서 - 상태 순, 같은 상태 안에서는 칸 안의 순서. 같은 값끼리도 이 순서로 선다
+    const base = [...visible].sort((a, b) => statusRank[a.status] - statusRank[b.status] || a.order - b.order);
+    if (!sort) return base;
+    const rank = { urgent: 0, high: 1, normal: 2, low: 3 } as Record<Priority, number>;
+    const domainRank = Object.fromEntries(DOMAINS.map((d, i) => [d.id, i])) as Record<DomainKey, number>;
+    const key = (t: Task): string | number => {
       switch (sort.by) {
         case 'title': return t.title;
         case 'status': return statusRank[t.status];
         case 'priority': return rank[t.priority];
-        case 'domain': return t.domain;
+        // 메뉴에 놓인 영역 순서대로
+        case 'domain': return domainRank[t.domain];
         // 마감일 없는 것은 항상 뒤로
         case 'due': return t.due ?? '9999-12-31';
-        case 'assignee': return t.assignee ?? 'zzz';
+        // 담당자 이름 순. 미배정 · 없어진 계정은 뒤로
+        case 'assignee': return (t.assignee && members.find((m) => m.id === t.assignee)?.name) || '￿';
       }
     };
-    return [...visible].sort((a, b) => {
+    return base.sort((a, b) => {
       const x = key(a), y = key(b);
-      if (x === y) return 0;
-      return (x < y ? -1 : 1) * sort.dir;
+      const d = typeof x === 'string' && typeof y === 'string' ? x.localeCompare(y, 'ko') : Number(x) - Number(y);
+      return d * sort.dir;
     });
-  }, [visible, sort]);
+  }, [visible, sort, members]);
 
   const toggleSort = (by: NonNullable<typeof sort>['by']) =>
     setSort((prev) => (prev?.by === by ? (prev.dir === 1 ? { by, dir: -1 } : null) : { by, dir: 1 }));
@@ -247,6 +463,12 @@ export default function TaskManagerClient() {
   /** 아무도 손대지 않은 예시 작업 수 - 안내 띠를 띄울지 정한다 */
   const sampleCount = useMemo(() => store.tasks.filter(isUntouchedSample).length, [store.tasks]);
 
+  /** 이미 쓰인 라벨 - 라벨 칸의 제안 목록 */
+  const knownLabels = useMemo(
+    () => Array.from(new Set(store.tasks.flatMap((t) => t.labels))).sort((a, b) => a.localeCompare(b, 'ko')),
+    [store.tasks],
+  );
+
   const counts = useMemo(() => {
     const mine = store.tasks.filter((t) => t.assignee === me && t.status !== 'done').length;
     const perDomain = Object.fromEntries(
@@ -257,6 +479,31 @@ export default function TaskManagerClient() {
   }, [store.tasks, me]);
 
   const open = openId ? store.tasks.find((t) => t.id === openId) ?? null : null;
+
+  /* 열어 둔 작업이 다른 곳에서 지워지면 창을 닫고 알린다. openId 도 비워 나중에 되살아나도 저절로 열리지 않게 한다 */
+  const openMissing = !!openId && store.ready && !open;
+  const deletedElsewhere = store.deletedElsewhere;
+  useEffect(() => {
+    if (!openMissing || !openId) return;
+    setOpenId(null);
+    // Supabase 모드에서 지운 기록이 없으면 서버가 만들기를 받지 않은 줄이다 - 저장소가 이미 알렸다
+    if (isRemote && !deletedElsewhere?.has(openId)) return;
+    setToast({
+      text: isRemote
+        ? `다른 팀원이 이 작업을 지웠습니다.${deletedElsewhere?.get(openId) ? ' 고치던 내용은 저장되지 않았습니다.' : ''}`
+        : '다른 탭에서 이 작업을 지웠습니다.',
+      undo: false,
+      tone: 'err',
+    });
+  }, [openMissing, openId, deletedElsewhere]);
+
+  /* 키보드로 옮긴 카드에 초점을 돌려준다 - 다른 칸으로 가며 새로 그려져 초점을 잃기 때문에 이어서 옮길 수 없었다 */
+  useEffect(() => {
+    if (!refocus) return;
+    setRefocus(null);
+    const card = (id: string | null) => (id ? document.querySelector<HTMLElement>(`[data-task="${CSS.escape(id)}"]`) : null);
+    (card(refocus.id) ?? card(refocus.alt))?.focus();
+  }, [refocus]);
 
   const handleCreate = useCallback((d: Draft) => {
     const t = store.create(d);
@@ -279,6 +526,61 @@ export default function TaskManagerClient() {
     setQuery(''); setPriorityFilter('all'); setHideDone(false);
   };
 
+  /** 걸러 보기 중에 지금 범위의 작업이 하나라도 있는 상태 - 그 칸이 비어 보이면 걸러 보기가 가린 것이라 '작업 추가' 대신 그렇다고 적는다 */
+  const hiddenIn = useMemo(() => {
+    const out = new Set<Status>();
+    if (!filtersOn) return out;
+    store.tasks.forEach((t) => {
+      if (scope.kind === 'mine' && t.assignee !== me) return;
+      if (scope.kind === 'domain' && t.domain !== scope.id) return;
+      out.add(t.status);
+    });
+    return out;
+  }, [filtersOn, store.tasks, scope, me]);
+
+  /* Supabase 모드 - 처음 목록을 읽지 못했으면 빈 보드 대신 그 까닭과 다시 시도를 보인다 */
+  const slot: View | 'error' = store.loadError ? 'error' : view;
+  const retryLoad = async () => {
+    if (retrying) return;
+    setRetrying(true);
+    try {
+      await store.reload?.();
+    } finally {
+      setRetrying(false);
+    }
+  };
+
+  /* 보이는 작업이 없을 때 - 목록과 보드(걸러 보기 중)가 같은 안내를 쓴다 */
+  const emptyState = (
+    <div className="flex flex-col items-center gap-2.5 px-6 py-[72px] text-center">
+      <p className="text-[20px] font-extrabold text-tm-deep">
+        {filtersOn ? '조건에 맞는 작업이 없습니다' : '아직 작업이 없습니다'}
+      </p>
+      <p className="mb-3 max-w-[44ch] text-[15.5px] leading-[1.7] text-tm-ink">
+        {filtersOn ? '걸러 보기를 풀면 다른 작업도 다시 보입니다.' : '새 작업을 만들면 여기에 줄로 쌓입니다.'}
+      </p>
+      <button type="button" onClick={() => (filtersOn ? clearFilters() : newTask())}
+        className={filtersOn ? tmBtn : tmBtnPrimary}>
+        {filtersOn ? '필터 초기화' : '새 작업 만들기'}
+      </button>
+    </div>
+  );
+
+  /* 캘린더에서 끌어 마감일을 바꿀 때 - 시작일이 마감일보다 늦어지지 않게 기간째 같은 날수만큼 민다 */
+  const reschedule = (id: string, due: string) => {
+    const t = store.tasks.find((x) => x.id === id);
+    if (!t || t.due === due) return;
+    let start = t.start;
+    // 'YYYY-MM-DD' 는 UTC 자정으로 읽히고 toISOString 으로 같은 날짜가 돌아온다 - 지역 시각 Date 를 섞지 않는다
+    const shift = t.due ? Date.parse(due) - Date.parse(t.due) : NaN;
+    const from = start ? Date.parse(start) : NaN;
+    if (Number.isFinite(shift) && Number.isFinite(from)) start = new Date(from + shift).toISOString().slice(0, 10);
+    // 마감일이 없던 작업이거나 이미 어긋나 있던 것은 시작일을 마감일로 맞춘다
+    if (start && start > due) start = due;
+    // 바뀌지 않은 시작일은 보내지 않는다 - 그사이 다른 팀원이 고친 시작일을 덮지 않게
+    store.update(id, start === t.start ? { due } : { due, start }, `'${t.title || '작업'}' 마감일 변경`);
+  };
+
   /* ── 드래그 ── */
   const onColumnDragOver = (e: React.DragEvent, status: Status, beforeId: string | null) => {
     // 드롭을 허용하려면 dragover 마다 preventDefault 가 필요하다.
@@ -294,7 +596,8 @@ export default function TaskManagerClient() {
     e.stopPropagation();
     // dataTransfer 를 1순위로 읽는다 - 리렌더 타이밍과 무관하게 집은 카드를 알 수 있다
     const id = e.dataTransfer.getData('text/plain') || dragId;
-    if (id) store.move(id, status, beforeId);
+    // 제 카드 위에 놓은 것은 제자리다 - 칸 끝으로 밀려나지 않게
+    if (id && id !== beforeId) store.move(id, status, beforeId);
     setDragId(null);
     setDropAt(null);
   };
@@ -393,7 +696,16 @@ export default function TaskManagerClient() {
             <IconNav name="home" />
             <span>홈페이지로</span>
           </Link>
-          <MePicker me={me} onPick={pickMe} id="tm-me" />
+          {account ? (
+            <>
+              <AccountButton member={account.me} pending={pendingCount} onOpen={() => setTeamOpen(true)} />
+              <button type="button" onClick={() => void logout()} disabled={leaving} className={logoutBtn}>
+                {leaving ? '로그아웃 중…' : '로그아웃'}
+              </button>
+            </>
+          ) : (
+            <MePicker me={me} onPick={pickMe} id="tm-me" />
+          )}
         </div>
       </aside>
 
@@ -408,15 +720,28 @@ export default function TaskManagerClient() {
           </button>
           <details ref={acct} className="relative">
             <summary aria-label="사람 메뉴"
-              className="grid h-11 w-11 cursor-pointer list-none place-items-center rounded-full [&::-webkit-details-marker]:hidden">
+              className="relative grid h-11 w-11 cursor-pointer list-none place-items-center rounded-full [&::-webkit-details-marker]:hidden">
               <Avatar id={me} size={34} />
+              {pendingCount > 0 && (
+                <span className="absolute right-0 top-0 h-3 w-3 rounded-full bg-tm-red ring-2 ring-white" aria-label={`승인 대기 ${pendingCount}명`} />
+              )}
             </summary>
             <div className="absolute right-0 top-[50px] z-40 flex w-[256px] flex-col gap-3 rounded-tm border border-tm-line bg-white p-4 shadow-tm-up">
-              <MePicker me={me} onPick={pickMe} id="tm-me-m" />
+              {account ? (
+                <AccountButton member={account.me} pending={pendingCount}
+                  onOpen={() => { if (acct.current) acct.current.open = false; setTeamOpen(true); }} />
+              ) : (
+                <MePicker me={me} onPick={pickMe} id="tm-me-m" />
+              )}
               <Link href="/"
                 className="flex min-h-[44px] items-center justify-between gap-2 rounded-tm-sm bg-tm-tint px-3 text-[14px] font-semibold text-tm-ink">
                 홈페이지로 <IconNav name="home" size={18} />
               </Link>
+              {account && (
+                <button type="button" onClick={() => void logout()} disabled={leaving} className={logoutBtn}>
+                  {leaving ? '로그아웃 중…' : '로그아웃'}
+                </button>
+              )}
             </div>
           </details>
         </header>
@@ -437,12 +762,11 @@ export default function TaskManagerClient() {
                 <PageHead
                   title={scopeTitle}
                   lead={currentView.hint}
-                  saved={store.persistent
-                    ? { tone: 'ok', text: '이 브라우저에만 저장됩니다' }
-                    : { tone: 'warn', text: '브라우저 저장이 막혀 있어 새로고침하면 사라집니다' }}
+                  saved={saved}
                 >
-                  <div role="group" aria-label="보기"
-                    className="no-scrollbar -my-1 flex min-w-0 items-center gap-1.5 overflow-x-auto py-1 max-[720px]:flex-1">
+                  {/* 좁은 화면: 새 작업 버튼은 제목 옆으로 가고, 보기 알약은 아래 줄을 혼자 다 쓴다(넘치면 가로로 민다) */}
+                  <div ref={viewTabs} role="group" aria-label="보기"
+                    className="no-scrollbar -my-1 flex min-w-0 items-center gap-1.5 overflow-x-auto py-1 max-[720px]:order-1 max-[720px]:basis-full">
                     {VIEWS.map((v) => (
                       <button key={v.id} type="button" onClick={() => setView(v.id)}
                         aria-pressed={view === v.id}
@@ -497,6 +821,27 @@ export default function TaskManagerClient() {
                   <span className="ml-auto text-[14px] font-semibold tabular-nums text-tm-sub max-[720px]:hidden">{visible.length}건 표시</span>
                 </div>
 
+                {/* Supabase 모드 - 예전에 이 브라우저에 쓴 것을 팀 저장소로 옮길지 */}
+                {leftover && (
+                  <div role="status" className={`${tmCallout} mb-[18px] flex-none max-[720px]:mb-3.5`}>
+                    <p className="min-w-0 flex-[1_1_320px] max-[720px]:flex-[1_1_180px]">
+                      이 브라우저에 예전에 쓴{' '}
+                      <b className="font-bold text-tm-deep">
+                        {[leftover.tasks && `작업 ${leftover.tasks}건`, leftover.docs && `문서 ${leftover.docs}건`].filter(Boolean).join(' · ')}
+                      </b>
+                      이 남아 있습니다.<span className="max-[720px]:hidden"> 옮기면 팀원 모두가 함께 봅니다. 예시 데이터는 옮기지 않습니다.</span>
+                    </p>
+                    <div className="flex flex-none gap-2">
+                      <button type="button" onClick={() => { skipImport(); setLeftover(null); }} disabled={importing} className={tmGhostBtn}>
+                        그만 보기
+                      </button>
+                      <button type="button" onClick={() => void runImport()} disabled={importing} className={tmEditBtn}>
+                        {importing ? '옮기는 중…' : '가져오기'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {/* 예시 작업 안내 - 실제 프로젝트 이름이 들어 있어, 말해 주지 않으면 진짜 작업으로 읽힌다 */}
                 {sampleCount > 0 && (
                   <div role="status" className={`${tmCallout} mb-[18px] flex-none max-[720px]:mb-3.5`}>
@@ -510,20 +855,33 @@ export default function TaskManagerClient() {
                   </div>
                 )}
 
+                {/* ── 목록을 읽지 못함(Supabase 모드) - 빈 보드처럼 보이지 않게 ── */}
+                {slot === 'error' && (
+                  <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2.5 rounded-tm border border-tm-line bg-white px-6 py-16 text-center shadow-tm">
+                    <p className="text-[20px] font-extrabold text-tm-deep">작업을 불러오지 못했습니다</p>
+                    <p className="mb-3 max-w-[44ch] text-[15.5px] leading-[1.7] text-tm-ink">{store.loadError}</p>
+                    <button type="button" onClick={() => void retryLoad()} disabled={retrying} className={tmBtn}>
+                      {retrying ? '다시 읽는 중…' : '다시 시도'}
+                    </button>
+                  </div>
+                )}
+
                 {/* ── 타임라인 ── */}
-                {view === 'timeline' && <Timeline tasks={visible} onOpen={setOpenId} />}
+                {slot === 'timeline' && <Timeline tasks={visible} onOpen={setOpenId} />}
 
                 {/* ── 캘린더 ── */}
-                {view === 'calendar' && (
-                  <Calendar tasks={visible} onOpen={setOpenId} onCreateAt={createAt}
-                    onReschedule={(id, due) => store.update(id, { due })} />
+                {slot === 'calendar' && (
+                  <Calendar tasks={visible} onOpen={setOpenId} onCreateAt={createAt} onReschedule={reschedule} />
                 )}
 
                 {/* ── 로드맵 ── */}
-                {view === 'roadmap' && <Roadmap tasks={visible} onOpen={setOpenId} />}
+                {slot === 'roadmap' && <Roadmap tasks={visible} onOpen={setOpenId} />}
 
-                {/* ── 보드 ── */}
-                {view === 'board' && (
+                {/* ── 보드 - 걸러 보기에 맞는 것이 하나도 없으면 칸마다 '작업 추가'를 늘어놓지 않고 한 번만 알린다 ── */}
+                {slot === 'board' && filtersOn && visible.length === 0 && (
+                  <div className="min-h-0 flex-1 overflow-auto rounded-tm border border-tm-line bg-white shadow-tm">{emptyState}</div>
+                )}
+                {slot === 'board' && !(filtersOn && visible.length === 0) && (
                   <div className="-mx-1 -mb-1 min-h-0 flex-1 overflow-x-auto overflow-y-hidden px-1 pb-1">
                     {/* 넓은 화면(1280~)에서는 다섯 칸을 나눠 채운다 - 1366 노트북에서도 가로 스크롤 없이 다 보이게 */}
                     <div className="flex h-full min-w-max items-stretch gap-3 xl:min-w-0">
@@ -550,7 +908,7 @@ export default function TaskManagerClient() {
                             </div>
 
                             <div className="min-h-0 flex-1 space-y-2.5 overflow-y-auto px-2.5 pb-3 pt-1">
-                              {items.map((t) => (
+                              {items.map((t, i) => (
                                 /* 삽입 표시선은 absolute 로 띄운다 - 레이아웃을 밀면 드롭 직전에
                                    커서 아래 요소가 바뀌어 drop 이 취소된다 */
                                 <div key={t.id} className="relative"
@@ -561,7 +919,11 @@ export default function TaskManagerClient() {
                                   )}
                                   <TaskCard task={t} dragging={dragId === t.id}
                                     mine={t.assignee === me}
-                                    onMove={(st) => store.move(t.id, st, null)}
+                                    onMove={(st, keyboard) => {
+                                      store.move(t.id, st, null);
+                                      // 키보드로 옮겼으면 옮겨 간 카드에 초점을 다시 둔다 - 이어서 또 옮길 수 있게
+                                      if (keyboard) setRefocus({ id: t.id, alt: (items[i + 1] ?? items[i - 1])?.id ?? null });
+                                    }}
                                     onOpen={() => setOpenId(t.id)}
                                     onDragStart={(e) => {
                                       e.dataTransfer.effectAllowed = 'move';
@@ -572,7 +934,13 @@ export default function TaskManagerClient() {
                                 </div>
                               ))}
 
-                              {items.length === 0 && !active && (
+                              {/* 걸러 보기로 비었으면 '작업 추가' 대신 그렇다고만 적는다 - 정말 빈 칸처럼 보이지 않게 */}
+                              {items.length === 0 && !active && hiddenIn.has(s.id) && (
+                                <p className="rounded-tm-btn border-2 border-dashed border-tm-edge/50 px-3 py-6 text-center text-[13.5px] font-semibold text-tm-sub">
+                                  {s.id === 'done' && hideDone ? '완료 숨기기가 켜져 있습니다' : '조건에 맞는 작업 없음'}
+                                </p>
+                              )}
+                              {items.length === 0 && !active && !hiddenIn.has(s.id) && (
                                 <button type="button" onClick={() => setCreating(s.id)}
                                   className="flex w-full flex-col items-center gap-1.5 rounded-tm-btn border-2 border-dashed border-tm-edge/50 px-3 py-6 text-center
                                              transition-colors duration-150 hover:border-tm-blue hover:bg-tm-tint">
@@ -601,7 +969,7 @@ export default function TaskManagerClient() {
                 )}
 
                 {/* ── 목록 ── */}
-                {view === 'list' && (
+                {slot === 'list' && (
                   <div className="min-h-0 flex-1 overflow-auto rounded-tm border border-tm-line bg-white shadow-tm">
                     <table className="w-full min-w-[780px] border-collapse text-[15px]">
                       <thead>
@@ -633,7 +1001,10 @@ export default function TaskManagerClient() {
                       <tbody>
                         {sorted.map((t) => (
                           <tr key={t.id} onClick={() => setOpenId(t.id)} tabIndex={0}
-                            onKeyDown={(e) => { if (e.key === 'Enter') setOpenId(t.id); }}
+                            onKeyDown={(e) => {
+                              // 기본 동작을 막아야 같은 Enter 가 새로 열린 패널의 닫기 단추를 누르지 않는다
+                              if (e.key === 'Enter') { e.preventDefault(); setOpenId(t.id); }
+                            }}
                             className="cursor-pointer border-b border-tm-line transition-colors duration-150 last:border-0 hover:bg-tm-tint
                                        focus-visible:bg-tm-tint focus-visible:outline-offset-[-2px]">
                             <td className="px-4 py-3.5">
@@ -665,20 +1036,7 @@ export default function TaskManagerClient() {
                       </tbody>
                     </table>
 
-                    {visible.length === 0 && (
-                      <div className="flex flex-col items-center gap-2.5 px-6 py-[72px] text-center">
-                        <p className="text-[20px] font-extrabold text-tm-deep">
-                          {filtersOn ? '조건에 맞는 작업이 없습니다' : '아직 작업이 없습니다'}
-                        </p>
-                        <p className="mb-3 max-w-[44ch] text-[15.5px] leading-[1.7] text-tm-ink">
-                          {filtersOn ? '걸러 보기를 풀면 다른 작업도 다시 보입니다.' : '새 작업을 만들면 여기에 줄로 쌓입니다.'}
-                        </p>
-                        <button type="button" onClick={() => (filtersOn ? clearFilters() : newTask())}
-                          className={filtersOn ? tmBtn : tmBtnPrimary}>
-                          {filtersOn ? '필터 초기화' : '새 작업 만들기'}
-                        </button>
-                      </div>
-                    )}
+                    {visible.length === 0 && emptyState}
                   </div>
                 )}
               </>
@@ -704,7 +1062,7 @@ export default function TaskManagerClient() {
       </div>
 
       {open && (
-        <TaskPanel task={open}
+        <TaskPanel task={open} knownLabels={knownLabels} unsaved={sync === 'error'}
           onUpdate={(patch) => store.update(open.id, patch)}
           onRemove={() => { store.remove(open.id); setOpenId(null); }}
           onClose={() => setOpenId(null)} />
@@ -712,11 +1070,17 @@ export default function TaskManagerClient() {
 
       <Toast
         text={toast?.text ?? null}
-        action={toast?.undo ? { label: '실행 취소', kbd: 'Z', onClick: () => { store.undo(); setToast(null); } } : undefined}
+        tone={toast?.tone}
+        action={toast?.undo ? { label: '실행 취소', kbd: 'Z', onClick: runUndo } : undefined}
         onClose={() => setToast(null)} />
 
+      {account && teamOpen && (
+        <TeamDialog me={account.me} members={account.members} recovery={account.recovery}
+          onUpdate={account.update} onClose={() => setTeamOpen(false)} />
+      )}
+
       {creating && (
-        <NewTaskDialog defaultStatus={creating} defaultDue={creatingDue}
+        <NewTaskDialog defaultStatus={creating} defaultDue={creatingDue} knownLabels={knownLabels}
           onCreate={handleCreate}
           onClose={() => { setCreating(null); setCreatingDue(null); }} />
       )}

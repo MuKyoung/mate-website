@@ -28,6 +28,11 @@ Trust this map. Do not scan the file tree to rediscover structure.
 - `src/data/`        — static content sources (projects, team, services, faq, …)
 - `src/types/`       — shared TypeScript types (`index.ts`)
 - `public/`          — static assets, images, robots.txt, sitemap.xml
+- `src/app/taskmanager/` — internal task manager (Sejong admin design, `tm-*`
+  tokens). With `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+  at build time it uses Supabase (login, `remote.ts`, `team.ts`; schema/RLS in
+  `supabase/taskmanager.sql`); without them it falls back to localStorage.
+  Setup: `TASKMANAGER_SETUP.md`.
 - Config: `next.config.js`, `tailwind.config.ts`, `tsconfig.json`,
   `postcss.config.mjs`, `.eslintrc.json`
 

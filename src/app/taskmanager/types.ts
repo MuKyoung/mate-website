@@ -10,6 +10,21 @@ export interface Member {
   /** 아바타에 쓰는 이니셜 */
   initial: string;
   role: string;
+  /** Supabase 계정일 때만 - 로그인 메일 */
+  email?: string;
+  /** Supabase 계정일 때만 - 다른 팀원이 승인했는지. 브라우저 저장 모드의 자리표시 목록은 늘 참으로 본다 */
+  active?: boolean;
+  /** Supabase 계정일 때만 - 승인 · 승인 취소 · 관리자 지정을 할 수 있는지 */
+  isAdmin?: boolean;
+}
+
+/** 이름에서 아바타 글자를 만든다 - 한글은 이름 두 글자(박무경 → 무경), 영문은 머리글자 */
+export function initialOf(name: string): string {
+  const n = name.trim();
+  if (!n) return '?';
+  if (/[가-힣]/.test(n)) return n.length >= 3 ? n.slice(-2) : n;
+  const words = n.split(/\s+/).filter(Boolean);
+  return (words.length > 1 ? words[0][0] + words[1][0] : n.slice(0, 2)).toUpperCase();
 }
 
 export interface Task {
@@ -73,6 +88,21 @@ export const statusLabel = (s: Status) => STATUSES.find((x) => x.id === s)?.labe
 export const priorityLabel = (p: Priority) => PRIORITIES.find((x) => x.id === p)?.label ?? p;
 export const domainLabel = (d: DomainKey) => DOMAINS.find((x) => x.id === d)?.label ?? d;
 export const domainShort = (d: DomainKey) => DOMAINS.find((x) => x.id === d)?.short ?? d;
+
+/* ── 날짜 ─────────────────────────────────────────── */
+
+/** Date → 이 기기 시간대의 YYYY-MM-DD. toISOString 은 UTC 라 한국에서는 오전 9시 전이 전날로 나온다 */
+export const localISO = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+/** 오늘(이 기기 시간대) YYYY-MM-DD */
+export const localToday = () => localISO(new Date());
+
+/** createdAt · updatedAt 같은 시각 문자열 → 이 기기 시간대의 날짜. 읽지 못하면 앞 10글자 */
+export const localDay = (stamp: string) => {
+  const d = new Date(stamp);
+  return Number.isNaN(d.getTime()) ? stamp.slice(0, 10) : localISO(d);
+};
 
 /* ── 문서 ─────────────────────────────────────────── */
 

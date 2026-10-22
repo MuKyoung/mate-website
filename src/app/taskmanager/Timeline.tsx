@@ -1,8 +1,9 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { DOMAINS, MEMBERS, domainLabel, type Task } from './types';
-import { Avatar, DOMAIN_FILL, PriorityDot, tmCount, tmSelect, tmTab } from './ui';
+import { useEffect, useMemo, useState } from 'react';
+import { DOMAINS, domainLabel, localToday, type Task } from './types';
+import { useMembers } from './members';
+import { Avatar, DOMAIN_FILL, IconArrow, PriorityDot, tmCount, tmGhostBtn, tmIconBtn, tmSelect, tmTab } from './ui';
 
 const DAY = 86400000;
 const WEEKDAY = ['일', '월', '화', '수', '목', '금', '토'];
@@ -10,9 +11,23 @@ const WEEKDAY = ['일', '월', '화', '수', '목', '금', '토'];
 /** 막대 위에 흰 글자를 올리므로 4.5:1 을 넘는 영역 채움 색을 그대로 쓴다 */
 const BAR = DOMAIN_FILL;
 
-const iso = (d: Date) => d.toISOString().slice(0, 10);
 const parse = (s: string) => new Date(`${s}T00:00:00`);
 const startOfToday = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; };
+
+/** 오늘 0시. 탭을 밤새 열어 두었다가 돌아오면 날짜를 다시 잰다 */
+function useToday(): Date {
+  const [key, setKey] = useState(localToday);
+  useEffect(() => {
+    const check = () => { if (document.visibilityState === 'visible') setKey(localToday()); };
+    document.addEventListener('visibilitychange', check);
+    window.addEventListener('focus', check);
+    return () => {
+      document.removeEventListener('visibilitychange', check);
+      window.removeEventListener('focus', check);
+    };
+  }, []);
+  return useMemo(() => parse(key), [key]);
+}
 
 type GroupBy = 'domain' | 'assignee';
 
@@ -30,18 +45,18 @@ export default function Timeline({
   onOpen(id: string): void;
 }) {
   const [weeks, setWeeks] = useState(6);
+  /** 앞뒤로 넘긴 주 수 - 보이는 기간 밖에 있는 막대도 넘겨서 본다 */
+  const [shift, setShift] = useState(0);
   const [groupBy, setGroupBy] = useState<GroupBy>('domain');
+  const members = useMembers();
+  const today = useToday();
 
-  const { days, today } = useMemo(() => {
-    const t = startOfToday();
+  const days = useMemo(() => {
     // 지난 한 주를 함께 보여 줘야 지연된 작업이 화면 밖으로 밀리지 않는다
-    const from = new Date(t.getTime() - 7 * DAY);
+    const from = new Date(today.getTime() + (shift - 1) * 7 * DAY);
     const total = weeks * 7;
-    return {
-      days: Array.from({ length: total }, (_, i) => new Date(from.getTime() + i * DAY)),
-      today: t,
-    };
-  }, [weeks]);
+    return Array.from({ length: total }, (_, i) => new Date(from.getTime() + i * DAY));
+  }, [weeks, today, shift]);
 
   const { groups, undated } = useMemo(() => {
     const dated = tasks.filter((t) => t.start || t.due);
@@ -49,7 +64,7 @@ export default function Timeline({
 
     const keys = groupBy === 'domain'
       ? DOMAINS.map((d) => ({ id: d.id as string, label: d.label }))
-      : [...MEMBERS.map((m) => ({ id: m.id, label: `${m.name} · ${m.role}` })),
+      : [...members.map((m) => ({ id: m.id, label: m.role ? `${m.name} · ${m.role}` : m.name })),
          { id: '__none', label: '미배정' }];
 
     return {
@@ -62,7 +77,7 @@ export default function Timeline({
         .filter((g) => g.items.length > 0),
       undated: undatedList,
     };
-  }, [tasks, groupBy]);
+  }, [tasks, groupBy, members]);
 
   const first = days[0];
   const span = days.length;
@@ -104,6 +119,18 @@ export default function Timeline({
             </button>
           ))}
         </div>
+        {/* 기간 넘기기 - 캘린더의 달 넘기기와 같은 꼴 */}
+        <div className="flex items-center gap-1.5">
+          <button type="button" onClick={() => setShift(shift - weeks)} className={tmIconBtn} aria-label="이전 기간">
+            <IconArrow dir="left" />
+          </button>
+          <button type="button" onClick={() => setShift(shift + weeks)} className={tmIconBtn} aria-label="다음 기간">
+            <IconArrow dir="right" />
+          </button>
+          <button type="button" onClick={() => setShift(0)} className={tmGhostBtn}>
+            오늘
+          </button>
+        </div>
       </div>
 
       <div className="min-h-0 flex-1 overflow-auto rounded-tm border border-tm-line bg-white shadow-tm">
@@ -120,13 +147,15 @@ export default function Timeline({
                   <span className={tmCount}>{g.items.length}</span>
                 </div>
                 {g.items.map((t) => (
-                  <div key={t.id} className="flex h-11 items-center gap-2 border-b border-tm-line px-4">
+                  /* 막대가 화면 밖에 있어도 여기서 열 수 있다 - 높이는 격자 줄과 같아야 한다 */
+                  <button key={t.id} type="button" onClick={() => onOpen(t.id)}
+                    className="flex h-11 w-full items-center gap-2 border-b border-tm-line px-4 text-left transition-colors duration-150 hover:bg-tm-tint">
                     <PriorityDot p={t.priority} />
                     <span className={`truncate text-[14.5px] font-semibold ${t.status === 'done' ? 'text-tm-sub line-through' : 'text-tm-ink'}`}
                       title={t.title}>
                       {t.title}
                     </span>
-                  </div>
+                  </button>
                 ))}
               </div>
             ))}
@@ -237,4 +266,4 @@ export default function Timeline({
   );
 }
 
-export { iso, parse, startOfToday, DAY, WEEKDAY, BAR, domainLabel };
+export { parse, startOfToday, useToday, DAY, WEEKDAY, BAR, domainLabel };

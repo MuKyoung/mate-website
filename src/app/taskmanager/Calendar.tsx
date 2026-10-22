@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { DOMAINS, type DomainKey, type Task } from './types';
+import { DOMAINS, localISO, type DomainKey, type Task } from './types';
 import { DOMAIN_FILL, IconArrow, IconPlus, tmGhostBtn, tmIconBtn } from './ui';
 
 const DAY = 86400000;
@@ -9,10 +9,7 @@ const WEEKDAY = ['일', '월', '화', '수', '목', '금', '토'];
 
 const DOT: Record<DomainKey, string> = DOMAIN_FILL;
 
-const iso = (d: Date) => {
-  const z = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
-  return z.toISOString().slice(0, 10);
-};
+const iso = localISO;
 
 /**
  * 월간 캘린더. 마감일을 기준으로 작업을 올린다.
@@ -29,6 +26,8 @@ export default function Calendar({
 }) {
   const [dragId, setDragId] = useState<string | null>(null);
   const [overKey, setOverKey] = useState<string | null>(null);
+  /** 세 건 넘는 날 중 펼쳐 둔 날 */
+  const [openDay, setOpenDay] = useState<string | null>(null);
   const [cursor, setCursor] = useState(() => {
     const d = new Date();
     return new Date(d.getFullYear(), d.getMonth(), 1);
@@ -58,8 +57,8 @@ export default function Calendar({
   }, [tasks]);
 
   const undated = tasks.filter((t) => !t.due);
-  const move = (n: number) => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + n, 1));
-  const toThisMonth = () => { const d = new Date(); setCursor(new Date(d.getFullYear(), d.getMonth(), 1)); };
+  const move = (n: number) => { setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + n, 1)); setOpenDay(null); };
+  const toThisMonth = () => { const d = new Date(); setCursor(new Date(d.getFullYear(), d.getMonth(), 1)); setOpenDay(null); };
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -140,7 +139,7 @@ export default function Calendar({
                   </div>
 
                   <div className="space-y-1">
-                    {items.slice(0, 3).map((t) => {
+                    {(openDay === key ? items : items.slice(0, 3)).map((t) => {
                       const done = t.status === 'done';
                       const overdue = !done && key < todayKey;
                       return (
@@ -165,7 +164,16 @@ export default function Calendar({
                       );
                     })}
                     {items.length > 3 && (
-                      <p className="pointer-events-none px-1.5 text-[12.5px] font-semibold text-tm-sub">+{items.length - 3}건 더</p>
+                      /* 칸을 누르면 새 작업이 열리므로 여기서 멈춘다 */
+                      <button type="button" aria-expanded={openDay === key}
+                        aria-label={openDay === key
+                          ? `${d.getMonth() + 1}월 ${d.getDate()}일 작업 접기`
+                          : `${d.getMonth() + 1}월 ${d.getDate()}일 작업 ${items.length - 3}건 더 보기`}
+                        onClick={(e) => { e.stopPropagation(); setOpenDay(openDay === key ? null : key); }}
+                        className="block rounded-md px-1.5 py-0.5 text-[12.5px] font-semibold text-tm-sub transition-colors
+                                   hover:bg-white hover:text-tm-blue">
+                        {openDay === key ? '접기' : `+${items.length - 3}건 더`}
+                      </button>
                     )}
                   </div>
                 </div>
