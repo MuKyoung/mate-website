@@ -1,37 +1,50 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { fadeLeft, fadeRight, fadeUp, stagger, inView } from '@/lib/motion';
-import { container, radiusCard } from '@/lib/styles';
+import { fadeLeft, fadeUp, stagger, inView } from '@/lib/motion';
+import { chipLine, container } from '@/lib/styles';
 
 interface DomainIntroProps {
-  /** 제목 위 작은 이름 - '웹 · 앱' */
+  /** 칸 이름 - "Web & App:" */
   eyebrow: string;
   title: React.ReactNode;
   desc: React.ReactNode;
-  /** 오른쪽 그림 칸 (742 × 500 비율) */
+  /** 왼쪽 그림 칸 - 비율과 모양은 넘기는 쪽이 정한다 */
   media: React.ReactNode;
-  /** 설명 아래에 붙는 것 - 태그 등 */
-  children?: React.ReactNode;
+  stats?: { value: string; label: string }[];
+  tags?: string[];
 }
 
 /**
- * 영역 페이지 첫 칸 - 회색 띠 위에 왼쪽 글, 오른쪽 사진 (Figma 6-2. intro).
+ * 영역 페이지 첫 칸 - 왼쪽에 그림, 오른쪽에 글과 숫자.
  */
-export default function DomainIntro({ eyebrow, title, desc, media, children }: DomainIntroProps) {
+export default function DomainIntro({ eyebrow, title, desc, media, stats, tags }: DomainIntroProps) {
   return (
-    <section data-header="light" className="relative bg-white">
-      <div aria-hidden className="absolute inset-x-0 top-0 h-full bg-gray-100 lg:h-[min(700px,88%)]" />
-      <div className={`${container} relative grid items-center gap-10 py-20 sm:py-24 lg:grid-cols-[minmax(0,489fr)_minmax(0,742fr)] lg:gap-16 xl:gap-[120px] xl:py-[100px]`}>
-        <motion.div {...inView} variants={stagger}>
-          <motion.p variants={fadeLeft} className="type-b4 text-point-200">{eyebrow}</motion.p>
-          <motion.h2 variants={fadeLeft} className="type-h1 mt-3 text-ink">{title}</motion.h2>
-          <motion.p variants={fadeUp} className="type-b3 mt-6 max-w-[34em] text-ink-2">{desc}</motion.p>
-          {children && <motion.div variants={fadeUp} className="mt-8">{children}</motion.div>}
-        </motion.div>
-        <motion.div {...inView} variants={fadeRight}
-          className={`relative aspect-[742/500] overflow-hidden bg-gray-200 shadow-float ${radiusCard}`}>
+    <section data-header="light" className="bg-white py-20 sm:py-28 xl:py-36">
+      <div className={`${container} grid items-center gap-12 lg:grid-cols-12 lg:gap-8`}>
+        <motion.div {...inView} variants={fadeLeft} className="lg:col-span-6">
           {media}
+        </motion.div>
+
+        <motion.div {...inView} variants={stagger} className="lg:col-span-5 lg:col-start-8">
+          <motion.p variants={fadeUp} className="eyebrow mb-5">{eyebrow}</motion.p>
+          <motion.h2 variants={fadeUp} className="type-h1 text-ink">{title}</motion.h2>
+          <motion.p variants={fadeUp} className="type-b3 mt-6 text-ink-2">{desc}</motion.p>
+          {stats && stats.length > 0 && (
+            <motion.dl variants={fadeUp} className="mt-9 grid grid-cols-2 gap-6 border-t border-line pt-6 sm:grid-cols-3">
+              {stats.map((s) => (
+                <div key={s.label} className="flex flex-col-reverse">
+                  <dt className="mt-2 text-[13px] text-ink-3">{s.label}</dt>
+                  <dd className="text-[34px] font-medium leading-none tracking-[-0.02em] text-ink">{s.value}</dd>
+                </div>
+              ))}
+            </motion.dl>
+          )}
+          {tags && tags.length > 0 && (
+            <motion.div variants={fadeUp} className="mt-7 flex flex-wrap gap-1.5">
+              {tags.map((t) => <span key={t} className={chipLine}>{t}</span>)}
+            </motion.div>
+          )}
         </motion.div>
       </div>
     </section>

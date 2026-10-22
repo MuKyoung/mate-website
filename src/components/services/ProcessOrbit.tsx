@@ -62,11 +62,12 @@ export default function ProcessOrbit() {
   const ActiveIcon = ICONS[active];
 
   return (
-    <section id="process" data-header="light" className="relative overflow-hidden bg-white py-24 sm:py-32 xl:py-[154px]">
+    <section id="process" data-header="light" className="relative overflow-hidden bg-white py-24 sm:py-32 xl:py-40">
       <OrbitLines />
       <div className={`${container} relative`}>
-        <SectionHead align="center" eyebrow="Process"
-          title={<>상담부터 배포까지,<br /><b>한 팀이 끝까지</b> 맡습니다</>} />
+        <SectionHead align="center" eyebrow="Process:"
+          title={<>영역이 달라도<br /><b>진행 방식은 같습니다</b></>}
+          desc="무엇을 만들든 진행 방식은 같습니다. 단계마다 진행 상황을 공유합니다." />
 
         {/* ── 원 (xl 이상) ── */}
         <div ref={ref} className="relative mx-auto mt-10 hidden aspect-square w-[min(708px,55vw)] xl:block"
@@ -82,7 +83,7 @@ export default function ProcessOrbit() {
               <motion.div key={active} className="flex flex-col items-center"
                 initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }}
                 transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}>
-                <span className="rounded-pill border-2 border-point-200 px-6 py-1 text-[16px] font-bold leading-[1.6] text-point-200 xl:text-[18px]">
+                <span className="rounded-[4px] bg-point-200 px-3 py-1.5 font-mono text-[12px] uppercase leading-none tracking-[0.06em] text-white">
                   Step {pad(active + 1)}
                 </span>
                 <span aria-hidden

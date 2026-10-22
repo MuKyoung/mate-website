@@ -2,41 +2,45 @@
 
 import { motion } from 'framer-motion';
 import type { IconType } from 'react-icons';
+import SectionHead from '@/components/ui/SectionHead';
 import { fadeUp, staggerTight, inView } from '@/lib/motion';
-import { container, radiusCard } from '@/lib/styles';
+import { chipLine, container, iconTile, radiusCard } from '@/lib/styles';
 
 export interface ProductItem {
   title: string;
   en: string;
   icon: IconType;
   desc?: string;
+  tags?: string[];
 }
 
 /**
- * 영역의 주요 작업 - 회색 칸 네 줄 (Figma 6-2 「전기 · 전력 주요 제품」).
- * Figma 는 칸 오른쪽에 제품 사진을 넣었다. 사진 대신 흰 아이콘 칸을 둔다.
+ * 영역에서 만드는 것들 - 흰 칸에 파란 아이콘 칸, 영문 이름, 설명, 태그.
  */
-export default function ProductGrid({ title, items }: { title: React.ReactNode; items: ProductItem[] }) {
+export default function ProductGrid({ eyebrow, title, items }: { eyebrow: string; title: React.ReactNode; items: ProductItem[] }) {
   return (
-    <section data-header="light" className="bg-white pb-24 pt-4 sm:pb-32 xl:pb-[160px]">
+    <section data-header="light" className="bg-gray-100 py-24 sm:py-32 xl:py-40">
       <div className={container}>
-        <motion.h2 {...inView} variants={fadeUp} className="type-h2 font-normal text-ink">{title}</motion.h2>
+        <SectionHead eyebrow={eyebrow} title={title} />
         <motion.ul {...inView} variants={staggerTight}
-          className="mt-8 grid gap-3 sm:mt-12 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
-          {items.map((it) => {
+          className="mt-12 grid gap-4 sm:mt-16 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
+          {items.map((it, i) => {
             const Icon = it.icon;
             return (
               <motion.li key={it.title} variants={fadeUp}
-                className={`group flex min-h-[188px] flex-col bg-gray-100 p-6 transition-colors duration-300 hover:bg-point-100 sm:min-h-[200px] ${radiusCard}`}>
+                className={`group flex min-h-[260px] flex-col border border-line bg-white p-6 transition-colors duration-300 hover:border-point-200 sm:p-7 ${radiusCard}`}>
                 <div className="flex items-start justify-between gap-4">
-                  <h3 className="text-[21px] font-bold leading-[1.3] text-ink xl:text-[25px]">{it.title}</h3>
-                  <span aria-hidden
-                    className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[10px] bg-white text-point-200 shadow-float transition-transform duration-500 group-hover:-translate-y-1 xl:h-[72px] xl:w-[72px]">
-                    <Icon size={28} strokeWidth={1.6} />
-                  </span>
+                  <span className={iconTile}><Icon size={20} /></span>
+                  <span className="font-mono text-[12px] text-ink-3">{String(i + 1).padStart(2, '0')}</span>
                 </div>
-                {it.desc && <p className="mt-4 text-[14px] leading-[1.6] text-ink-2">{it.desc}</p>}
-                <p className="mt-auto pt-5 text-[13px] font-bold text-gray-500">{it.en}</p>
+                <p className="mt-8 font-mono text-[12px] uppercase tracking-[0.06em] text-point-200">{it.en}</p>
+                <h3 className="type-h3 mt-1.5 text-ink">{it.title}</h3>
+                {it.desc && <p className="mt-3 text-[14px] leading-[1.7] text-ink-2">{it.desc}</p>}
+                {it.tags && it.tags.length > 0 && (
+                  <div className="mt-auto flex flex-wrap gap-1.5 pt-6">
+                    {it.tags.map((t) => <span key={t} className={chipLine}>{t}</span>)}
+                  </div>
+                )}
               </motion.li>
             );
           })}

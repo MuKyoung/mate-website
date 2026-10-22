@@ -1,11 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
-import { FiArrowUpRight, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import SectionHead from '@/components/ui/SectionHead';
 import { affiliations, awards } from '@/data/teamCapabilities';
-import { arrowHover, container, linkMore } from '@/lib/styles';
+import { container } from '@/lib/styles';
 
 type Kind = 'award' | 'exhibition' | 'member';
 
@@ -84,36 +83,34 @@ export default function AwardsShowcase() {
   const step = (d: -1 | 1) => setActive((a) => (a + d + list.length) % list.length);
 
   return (
-    <section id="awards" data-header="dark" className="night-grid relative overflow-hidden py-24 sm:py-32 xl:py-[180px]">
+    <section id="awards" data-header="dark" className="night-grid relative overflow-hidden py-24 sm:py-32 xl:py-40">
       <div className={`${container} relative grid gap-14 lg:grid-cols-[minmax(0,0.47fr)_minmax(0,0.53fr)] lg:gap-6`}>
         <div className="relative z-10">
-          <SectionHead dark eyebrow="Awards & Exhibitions"
-            title={<>MATE가 받은 <b>상과 선정</b>,<br />참가한 <b>전시</b>입니다</>} />
+          <SectionHead dark eyebrow="Awards & Exhibitions:"
+            title={<>MATE가 받은 <b>상과 선정</b>,<br />참가한 <b>전시</b>입니다</>}
+            desc={`해마다 쌓인 ${awards.length}건을 갈래별로 모았습니다. 카드를 누르면 크게 봅니다.`} />
 
-          <div role="tablist" aria-label="이력 갈래" className="mt-10 w-full max-w-[363px] sm:mt-12">
+          <div role="tablist" aria-label="이력 갈래" className="mt-10 w-full max-w-[363px] border-t border-white/15 sm:mt-12">
             {TABS.map((t) => {
               const on = t.key === kind;
               return (
                 <button key={t.key} type="button" role="tab" aria-selected={on} onClick={() => pick(t.key)}
-                  className={`flex w-full items-center justify-between p-4 text-left text-[16px] font-bold transition-colors sm:text-[18px] ${
-                    on ? 'bg-point-200 text-white' : 'border-b border-[rgba(185,192,208,0.4)] text-gray-300 hover:text-white'
+                  className={`relative flex w-full items-center justify-between border-b border-white/15 py-4 pl-4 pr-2 text-left text-[16px] font-medium transition-colors sm:text-[17px] ${
+                    on ? 'bg-white/[0.06] text-white' : 'text-gray-300 hover:text-white'
                   }`}>
+                  <span aria-hidden className={`absolute inset-y-0 left-0 w-0.5 ${on ? 'bg-point-light' : 'bg-transparent'}`} />
                   {t.label}
                   <span className="flex items-center gap-3">
-                    <span className={`text-[13px] font-normal tabular-nums ${on ? 'text-white/75' : 'text-gray-400'}`}>
-                      {certs[t.key].length}
+                    <span className={`font-mono text-[12px] tabular-nums ${on ? 'text-point-light' : 'text-gray-400'}`}>
+                      {String(certs[t.key].length).padStart(2, '0')}
                     </span>
-                    <FiChevronRight size={20} />
+                    <FiChevronRight size={18} />
                   </span>
                 </button>
               );
             })}
           </div>
 
-          <Link href="/team#awards" className={`${linkMore} mt-10 text-white hover:text-point-light`}>
-            View more
-            <FiArrowUpRight size={16} className={arrowHover} />
-          </Link>
         </div>
 
         {/* 카드 줄 - 오른쪽은 화면 끝까지 흘려 보낸다 */}
@@ -150,11 +147,11 @@ export default function AwardsShowcase() {
         </p>
         <div className="flex gap-2">
           <button type="button" onClick={() => step(-1)} aria-label="이전 카드"
-            className="flex h-10 w-10 items-center justify-center rounded-pill border border-white/30 text-white transition-colors hover:border-white hover:bg-white/10">
+            className="flex h-10 w-10 items-center justify-center rounded-[6px] border border-white/25 text-white transition-colors hover:border-point-200 hover:bg-point-200">
             <FiChevronLeft size={20} />
           </button>
           <button type="button" onClick={() => step(1)} aria-label="다음 카드"
-            className="flex h-10 w-10 items-center justify-center rounded-pill border border-white/30 text-white transition-colors hover:border-white hover:bg-white/10">
+            className="flex h-10 w-10 items-center justify-center rounded-[6px] border border-white/25 text-white transition-colors hover:border-point-200 hover:bg-point-200">
             <FiChevronRight size={20} />
           </button>
         </div>

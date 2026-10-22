@@ -11,7 +11,7 @@ import { easeEnter } from '@/lib/motion';
  * 홈 첫 화면 - 위에서 휘어 내려오는 빛, 한가운데 잡아 돌리는 큐브, 맨 아래 스크롤 유도.
  *
  * 2026-10-19 에 만든 첫 화면을 세종 Figma 체계 위에 되살렸다 (2026-10-22, 사용자 요청 "큐브 같은건 살려줘").
- * Figma 의 첫 칸(1-0. intro, 브랜드 칸 한 장) 자리에 둔다. 스크롤 유도가 사진 슬라이드(#hero)로 내려보낸다.
+ * 스크롤 유도는 하는 일(#what)로 내려보낸다.
  * 로고와 소개 줄은 10/19 에 사용자가 뺐다 - 다시 넣지 않는다.
  */
 export default function CubeStage() {
@@ -41,7 +41,7 @@ export default function CubeStage() {
       <motion.div style={{ opacity: fade }} className="relative flex justify-center pb-6 pt-4 sm:pb-10">
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.9, delay: 1.5, ease: easeEnter }}>
-          <ScrollCue target="hero" />
+          <ScrollCue target="what" />
         </motion.div>
       </motion.div>
     </section>

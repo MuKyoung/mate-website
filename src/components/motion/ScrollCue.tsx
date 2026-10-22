@@ -11,14 +11,14 @@ export default function ScrollCue({ target, className = '' }: { target: string; 
   return (
     <a href={`#${target}`} aria-label="아래로 내려가기"
       className={`group flex flex-col items-center gap-2.5 ${className}`}>
-      <span className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/60 transition-colors group-hover:text-white">
+      <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-white/60 transition-colors group-hover:text-white">
         Scroll
       </span>
       <span aria-hidden className="relative block h-10 w-px overflow-hidden bg-white/15">
         <span className="scroll-cue-light absolute inset-x-0 top-0 block h-1/2" />
       </span>
       <span aria-hidden
-        className="flex h-9 w-9 items-center justify-center rounded-pill border border-white/25 text-white/75 transition-colors duration-300
+        className="flex h-9 w-9 items-center justify-center rounded-[6px] border border-white/25 text-white/75 transition-colors duration-300
                    group-hover:border-point-200 group-hover:bg-point-200 group-hover:text-white">
         <FiArrowDown size={15} className="scroll-cue-arrow" />
       </span>

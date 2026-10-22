@@ -3,13 +3,14 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { FiExternalLink, FiGithub, FiYoutube, FiArrowUpRight } from 'react-icons/fi';
+import { FiExternalLink, FiGithub, FiYoutube, FiArrowUpRight, FiArrowLeft } from 'react-icons/fi';
 import SafeImage from '@/components/SafeImage';
 import ThumbFallback from '@/components/ThumbFallback';
 import ProjectCard from '@/components/ProjectCard';
+import SectionHead from '@/components/ui/SectionHead';
 import { domainLabel, domainOf, projects } from '@/data/projects';
-import { fadeLeft, fadeRight, fadeUp, stagger, staggerTight, inView, onMount } from '@/lib/motion';
-import { arrowHover, btnLine, btnPoint, btnSm, chipLine, container, radiusCard } from '@/lib/styles';
+import { fadeUp, stagger, staggerTight, inView, onMount } from '@/lib/motion';
+import { arrowHover, btnLine, btnPoint, chip, container, radiusCard } from '@/lib/styles';
 
 function getYouTubeVideoId(url: string): string | null {
   const patterns = [
@@ -26,8 +27,7 @@ function getYouTubeVideoId(url: string): string | null {
 interface Props { params: { slug: string } }
 
 /**
- * 사례 상세 - 칩과 제목, 왼쪽 큰 그림과 오른쪽 정보 표, 문의 버튼 (Figma 12-1. Project detail).
- * 아래로 개요, 다른 컷, 다른 작업 세 장.
+ * 사례 상세 - 가운데 좁은 단에 분류 · 제목 · 정보 줄 · 큰 화면 · 개요, 끝에 다른 작업 세 장.
  */
 export default function ProjectDetailClient({ params }: Props) {
   const project = projects.find((p) => p.id === params.slug);
@@ -35,6 +35,7 @@ export default function ProjectDetailClient({ params }: Props) {
 
   const domain = domainOf(project.category);
   const host = project.liveUrl?.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
+  const no = String(projects.findIndex((p) => p.id === project.id) + 1).padStart(2, '0');
 
   /* 개요가 한 줄 소개를 그대로 복제한 경우가 있다.
      같은 문장을 제목 아래에서 또 읽히게 두면 섹션만 있고 내용은 없는 화면이 된다. */
@@ -52,136 +53,123 @@ export default function ProjectDetailClient({ params }: Props) {
     .sort((a, b) => rank(a) - rank(b))
     .slice(0, 3);
 
-  const specs: [string, React.ReactNode][] = [
-    ['프로젝트', project.title],
+  const videoId = project.youtubeUrl ? getYouTubeVideoId(project.youtubeUrl) : null;
+
+  const meta: [string, React.ReactNode][] = [
     ['영역', domainLabel[domain]],
     ['분류', project.category],
   ];
   if (project.liveUrl && host) {
-    specs.push(['사이트', (
-      <a key="site" href={project.liveUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 hover:text-point-200">
-        {host}<FiExternalLink size={13} />
+    meta.push(['사이트', (
+      <a key="site" href={project.liveUrl} target="_blank" rel="noopener noreferrer"
+        className="inline-flex items-center gap-1 text-point-200 hover:underline">
+        {host}<FiExternalLink size={12} />
       </a>
     )]);
   }
 
-  const videoId = project.youtubeUrl ? getYouTubeVideoId(project.youtubeUrl) : null;
-
   return (
     <>
-      <section data-header="light" className="bg-white pb-20 pt-32 sm:pb-24 sm:pt-36 lg:pt-[140px]">
+      <article data-header="light" className="bg-white pb-20 pt-32 sm:pb-28 sm:pt-40">
         <div className={container}>
-          <motion.div {...onMount} variants={stagger}>
-            <motion.span variants={fadeUp} className={chipLine}>{domainLabel[domain]}</motion.span>
-            <motion.h1 variants={fadeUp} className="type-h1 mt-3 font-bold text-ink">{project.title}</motion.h1>
-          </motion.div>
-
-          <div className="mt-8 grid gap-6 sm:mt-10 lg:grid-cols-[minmax(0,868fr)_minmax(0,616fr)] lg:gap-4">
-            <motion.div {...onMount} variants={fadeLeft}
-              className={`relative aspect-[868/500] overflow-hidden bg-gray-100 ${radiusCard}`}>
-              {videoId ? (
-                <iframe
-                  src={`https://www.youtube.com/embed/${videoId}?rel=0`}
-                  title={project.title}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen className="absolute inset-0 h-full w-full" />
-              ) : (
-                <SafeImage src={project.thumbnail} alt={project.title} fill
-                  className={project.category === 'Website' ? '[&_img]:!object-top' : ''}
-                  placeholder={<ThumbFallback label={project.category} />} />
-              )}
+          <motion.div {...onMount} variants={stagger} className="mx-auto max-w-[920px]">
+            <motion.div variants={fadeUp} className="flex items-center justify-between gap-4">
+              <Link href="/projects" className="group inline-flex items-center gap-2 font-mono text-[12px] uppercase tracking-[0.06em] text-ink-3 hover:text-point-200">
+                <FiArrowLeft size={13} className="transition-transform group-hover:-translate-x-0.5" />
+                Projects
+              </Link>
+              <span className="font-mono text-[12px] tracking-[0.06em] text-ink-3">Case {no}</span>
             </motion.div>
 
-            <motion.div {...onMount} variants={fadeRight} className="flex flex-col">
-              <dl className="border-t border-line">
-                {specs.map(([k, v]) => (
-                  <div key={k} className="flex items-center justify-between gap-6 border-b border-line py-4">
-                    <dt className="shrink-0 text-[14px] text-gray-500">{k}</dt>
-                    <dd className="text-right text-[14px] font-bold text-ink">{v}</dd>
-                  </div>
+            <motion.span variants={fadeUp} className={`${chip} mt-10`}>{domainLabel[domain]}</motion.span>
+            <motion.h1 variants={fadeUp}
+              className="mt-4 font-medium leading-[1.15] tracking-[-0.022em] text-ink"
+              style={{ fontSize: 'clamp(2.125rem, 1.2rem + 2.6vw, 3.75rem)' }}>
+              {project.title}
+            </motion.h1>
+            <motion.p variants={fadeUp} className="mt-5 text-[17px] leading-[1.7] text-ink-2 sm:text-[19px]">
+              {project.description}
+            </motion.p>
+
+            <motion.dl variants={fadeUp} className="mt-8 flex flex-wrap gap-x-10 gap-y-3 border-y border-line py-4">
+              {meta.map(([k, v]) => (
+                <div key={k} className="flex items-baseline gap-3 text-[14px]">
+                  <dt className="font-mono text-[11px] uppercase tracking-[0.06em] text-ink-3">{k}</dt>
+                  <dd className="font-medium text-ink">{v}</dd>
+                </div>
+              ))}
+            </motion.dl>
+          </motion.div>
+
+          {/* 큰 화면 - 본문 단보다 넓게 */}
+          <motion.div {...onMount} variants={fadeUp}
+            className={`relative mx-auto mt-10 aspect-[16/9] max-w-[1180px] overflow-hidden bg-gray-100 sm:mt-14 ${radiusCard}`}>
+            {videoId ? (
+              <iframe
+                src={`https://www.youtube.com/embed/${videoId}?rel=0`}
+                title={project.title}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen className="absolute inset-0 h-full w-full" />
+            ) : (
+              <SafeImage src={project.thumbnail} alt={project.title} fill
+                className={project.category === 'Website' ? '[&_img]:!object-top' : ''}
+                placeholder={<ThumbFallback label={project.category} />} />
+            )}
+          </motion.div>
+
+          <div className="mx-auto max-w-[920px]">
+            {/* 개요 - 내용이 한 줄 소개와 다를 때만 */}
+            {overview && (
+              <motion.div {...inView} variants={fadeUp} className="mt-16 grid gap-6 sm:mt-20 md:grid-cols-[200px_1fr]">
+                <p className="eyebrow">Overview:</p>
+                <p className="whitespace-pre-line text-[16px] leading-[1.9] text-ink-2 sm:text-[17px]">{overview}</p>
+              </motion.div>
+            )}
+
+            {/* 다른 컷 - 대표 이미지와 다른 컷이 있을 때만 */}
+            {gallery.length > 0 && (
+              <motion.div {...inView} variants={staggerTight} className="mt-14 grid gap-3 sm:grid-cols-2">
+                {gallery.map((img, i) => (
+                  <motion.div key={img} variants={fadeUp} className={`relative aspect-[16/10] overflow-hidden bg-gray-100 ${radiusCard}`}>
+                    <SafeImage src={img} alt={`${project.title} ${i + 1}`} fill placeholder={<ThumbFallback label={project.category} />} />
+                  </motion.div>
                 ))}
-              </dl>
-              <p className="type-b3 mt-6 text-ink-2">{project.description}</p>
-              <div className="mt-8 flex flex-col gap-2 lg:mt-auto lg:pt-8">
-                <Link href={`/contact?domain=${domain}`}
-                  className="group inline-flex h-12 w-full items-center justify-center gap-2 rounded-[6px] bg-point-200 px-6 text-[15px] font-bold text-white transition-colors hover:bg-point-300">
-                  비슷한 프로젝트 문의하기
-                  <FiArrowUpRight size={16} className={arrowHover} />
-                </Link>
-                {(project.liveUrl || project.youtubeUrl || project.githubUrl) && (
-                  <div className="flex gap-2">
-                    {project.liveUrl && (
-                      <a href={project.liveUrl} target="_blank" rel="noopener noreferrer"
-                        className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-[6px] border border-line text-[15px] font-bold text-ink transition-colors hover:border-point-200 hover:text-point-200">
-                        사이트 바로가기 <FiExternalLink size={15} />
-                      </a>
-                    )}
-                    {project.youtubeUrl && (
-                      <a href={project.youtubeUrl} target="_blank" rel="noopener noreferrer"
-                        className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-[6px] border border-line text-[15px] font-bold text-ink transition-colors hover:border-point-200 hover:text-point-200">
-                        <FiYoutube size={17} /> YouTube
-                      </a>
-                    )}
-                    {project.githubUrl && (
-                      <a href={project.githubUrl} target="_blank" rel="noopener noreferrer"
-                        className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-[6px] border border-line text-[15px] font-bold text-ink transition-colors hover:border-point-200 hover:text-point-200">
-                        <FiGithub size={15} /> GitHub
-                      </a>
-                    )}
-                  </div>
-                )}
-              </div>
+              </motion.div>
+            )}
+
+            <motion.div {...inView} variants={fadeUp} className="mt-14 flex flex-wrap gap-2 border-t border-line pt-8 sm:mt-16">
+              <Link href={`/contact?domain=${domain}`} className={btnPoint}>
+                비슷한 프로젝트 문의하기
+                <FiArrowUpRight size={16} className={arrowHover} />
+              </Link>
+              {project.liveUrl && (
+                <a href={project.liveUrl} target="_blank" rel="noopener noreferrer" className={btnLine}>
+                  사이트 바로가기 <FiExternalLink size={15} />
+                </a>
+              )}
+              {project.youtubeUrl && (
+                <a href={project.youtubeUrl} target="_blank" rel="noopener noreferrer" className={btnLine}>
+                  <FiYoutube size={17} /> YouTube
+                </a>
+              )}
+              {project.githubUrl && (
+                <a href={project.githubUrl} target="_blank" rel="noopener noreferrer" className={btnLine}>
+                  <FiGithub size={15} /> GitHub
+                </a>
+              )}
             </motion.div>
           </div>
         </div>
-      </section>
-
-      {/* ── 개요 - 내용이 한 줄 소개와 다를 때만 ── */}
-      {overview && (
-        <section data-header="light" className="bg-gray-100 py-20 sm:py-28 xl:py-[120px]">
-          <div className={`${container} grid gap-8 lg:grid-cols-12 lg:gap-8`}>
-            <motion.div {...inView} variants={fadeUp} className="lg:col-span-4">
-              <p className="eyebrow mb-3">Overview</p>
-              <h2 className="type-h1 text-ink"><b>프로젝트 개요</b></h2>
-            </motion.div>
-            <motion.p {...inView} variants={fadeUp}
-              className="whitespace-pre-line text-[16px] leading-[1.85] text-ink-2 sm:text-[17px] lg:col-span-8">
-              {overview}
-            </motion.p>
-          </div>
-        </section>
-      )}
-
-      {/* ── 다른 컷 - 대표 이미지와 다른 컷이 있을 때만 ── */}
-      {gallery.length > 0 && (
-        <section data-header="light" className="bg-white pt-20 sm:pt-28">
-          <div className={container}>
-            <motion.div {...inView} variants={fadeUp}>
-              <p className="eyebrow mb-3">Gallery</p>
-              <h2 className="type-h1 text-ink"><b>작업 화면</b>을 둘러보세요</h2>
-            </motion.div>
-            <motion.div {...inView} variants={staggerTight} className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {gallery.map((img, i) => (
-                <motion.div key={img} variants={fadeUp} className={`relative aspect-[16/10] overflow-hidden bg-gray-100 ${radiusCard}`}>
-                  <SafeImage src={img} alt={`${project.title} ${i + 1}`} fill placeholder={<ThumbFallback label={project.category} />} />
-                </motion.div>
-              ))}
-            </motion.div>
-          </div>
-        </section>
-      )}
+      </article>
 
       {/* ── 다른 작업 ── */}
-      <section data-header="light" className="bg-white py-20 sm:py-28 xl:pb-[140px] xl:pt-[120px]">
+      <section data-header="light" className="bg-gray-100 py-20 sm:py-28 xl:py-32">
         <div className={container}>
-          <motion.h2 {...inView} variants={fadeUp} className="type-h2 text-ink">다른 작업 살펴보기</motion.h2>
-          <motion.div {...inView} variants={staggerTight} className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
+          <SectionHead eyebrow="More work:" title={<>다른 작업 <b>살펴보기</b></>}
+            more={{ href: '/projects', label: '목록으로' }} />
+          <motion.div {...inView} variants={staggerTight} className="mt-12 grid gap-x-5 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
             {related.map((p) => <ProjectCard key={p.id} project={p} />)}
           </motion.div>
-          <div className="mt-12 flex justify-center gap-2 sm:mt-14">
-            <Link href="/projects" className={`${btnPoint} ${btnSm}`}>목록으로 이동</Link>
-            <Link href="/contact" className={`${btnLine} ${btnSm}`}>문의하기</Link>
-          </div>
         </div>
       </section>
     </>
