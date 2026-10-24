@@ -11,7 +11,7 @@ export interface CtaCopy {
   line1: string;
   line2: string;
   desc: string;
-  /** 동그란 버튼 두 줄 */
+  /** 알약 버튼 문구 (두 낱말을 한 줄로 잇는다) */
   button: [string, string];
   href: string;
 }
