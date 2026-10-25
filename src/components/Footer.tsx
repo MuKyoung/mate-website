@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -13,9 +14,10 @@ import { arrowHover, container, CONTACT_EMAIL, CONTACT_PHONE, KAKAO_OPEN_CHAT_UR
 import { isToolScreen } from '@/lib/shell';
 /**
  * 모든 페이지의 마지막 화면.
- * 위에는 가운데 정렬 문의 칸(문구는 페이지마다 src/data/cta.ts), 아래에는 회사 정보 · 바로가기 · 연락처 세 칸.
+ * 위에는 왼쪽 문의 문구(페이지마다 src/data/cta.ts) + 오른쪽 연락 창구 목록(문의 양식 · 전화 · 메일 · 카카오톡),
+ * 아래에는 로고 + 바로가기 한 줄, 그 밑에 사업자 정보 · 저작권 작은 글씨.
  * 그 사이로 어두운 행성이 떠오르고 가장자리에서 로고 파랑 빛이 번진다.
- * 세종호이스트크레인 사이트 푸터(좌우로 나눈 문구 + 큰 원 버튼, 좌우 정보 + 링크 한 줄)와 짜임을 다르게 둔다.
+ * 세종호이스트크레인 사이트 푸터(문구 + 큰 원 버튼 하나, 구분선 아래 회사 정보 · 연락처 좌우 두 칸)와 짜임을 다르게 둔다.
  */
 export default function Footer() {
   const pathname = usePathname();
@@ -27,8 +29,16 @@ export default function Footer() {
   // 문의 페이지에서는 문의 칸을 다시 띄우지 않는다
   const isContact = /^\/contact\/?$/.test(pathname);
   const cta = ctaFor(pathname);
-  const linkCls = 'transition-colors hover:text-white';
-  const colHead = 'mb-4 text-[14px] font-bold text-white';
+  const channels = [
+    { label: '문의 양식', value: cta.button.join(' '), href: cta.href, primary: true },
+    { label: '전화', value: CONTACT_PHONE, href: `tel:${CONTACT_PHONE}` },
+    { label: '메일', value: CONTACT_EMAIL, href: `mailto:${CONTACT_EMAIL}` },
+    { label: '카카오톡', value: '오픈채팅', href: KAKAO_OPEN_CHAT_URL, external: true },
+  ];
+  // 모바일은 이름 | 값 | 화살표 한 줄, lg 부터는 이름 · 화살표 위 + 값 아래인 세로 칸
+  const cellCls =
+    'group grid h-full grid-cols-[4.5em_minmax(0,1fr)_auto] items-center gap-4 border-t py-5 transition-colors duration-200 ' +
+    'sm:grid-cols-[6em_minmax(0,1fr)_auto] sm:gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-x-4 lg:gap-y-10 lg:pb-0 lg:pt-6';
 
   return (
     <footer data-header="dark" className="relative isolate overflow-hidden bg-night text-white">
@@ -36,8 +46,7 @@ export default function Footer() {
 
       {!isContact && (
         <div className={`${container} relative pt-24 sm:pt-32 xl:pt-[200px]`}>
-          <motion.div {...inView} variants={stagger}
-            className="mx-auto flex max-w-[760px] flex-col items-center text-center">
+          <motion.div {...inView} variants={stagger}>
             <motion.p variants={fadeUp} className="eyebrow on-night mb-3">Contact</motion.p>
             <motion.h2 variants={fadeUp} className="type-h1 font-bold text-white">
               {cta.line1}<br />{cta.line2}
@@ -45,16 +54,39 @@ export default function Footer() {
             <motion.p variants={fadeUp} className="mt-6 max-w-[30em] text-[16px] leading-[1.6] text-gray-200 sm:text-[18px]">
               {cta.desc}
             </motion.p>
-            <motion.div variants={fadeUp} className="mt-10 sm:mt-12">
-              <Link href={cta.href}
-                className="group inline-flex h-14 items-center gap-4 rounded-pill bg-point-200 pl-8 pr-2 text-[16px] font-bold text-white shadow-[0_20px_60px_rgba(38,68,203,0.45)] transition-colors duration-200 hover:bg-point-300 sm:h-16 sm:pl-9 sm:text-[18px]">
-                {cta.button.join(' ')}
-                <span className="flex h-10 w-10 items-center justify-center rounded-pill bg-white text-point-200 sm:h-12 sm:w-12">
-                  <FiArrowUpRight size={22} className={arrowHover} />
-                </span>
-              </Link>
-            </motion.div>
           </motion.div>
+
+          {/* 연락 창구 - 모바일은 목록, lg 부터 가로 네 칸. 첫 칸(문의 양식)만 로고 파랑 선 · 원 */}
+          <motion.ul {...inView} variants={stagger}
+            className="mt-12 grid border-b border-white/15 sm:mt-16 lg:grid-cols-4 lg:gap-x-8 lg:border-b-0">
+            {channels.map((c) => {
+              const cls = `${cellCls} ${c.primary ? 'border-point-light' : 'border-white/15 hover:border-white/60'}`;
+              const body = (
+                <>
+                  <span className="text-[13px] text-gray-400 sm:text-[14px]">{c.label}</span>
+                  <span className="break-words lg:order-last text-[17px] font-bold text-white sm:text-[20px] lg:col-span-2">
+                    {c.value}
+                  </span>
+                  <span className={`flex h-10 w-10 items-center justify-center rounded-pill text-white transition-colors duration-200 sm:h-12 sm:w-12 ${
+                    c.primary ? 'bg-point-200 group-hover:bg-point-300' : 'border border-white/25 group-hover:border-point-200 group-hover:bg-point-200'}`}>
+                    <FiArrowUpRight size={20} className={arrowHover} />
+                  </span>
+                </>
+              );
+              return (
+                <motion.li key={c.label} variants={fadeUp}>
+                  {c.href.startsWith('/') ? (
+                    <Link href={c.href} className={cls}>{body}</Link>
+                  ) : (
+                    <a href={c.href} className={cls}
+                      {...(c.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
+                      {body}
+                    </a>
+                  )}
+                </motion.li>
+              );
+            })}
+          </motion.ul>
         </div>
       )}
 
@@ -68,40 +100,29 @@ export default function Footer() {
         <div className={`${container} relative pb-14 sm:pb-20`}>
           <div className="h-px bg-[rgba(123,138,167,0.6)]" />
 
-          {/* 회사 정보 · 바로가기 · 연락처 세 칸 */}
-          <div className="mt-12 grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.6fr_1fr_1fr]">
-            <div className="flex flex-col gap-2.5 sm:col-span-2 lg:col-span-1">
-              <p className="type-b2 text-white">{business.name} ({business.brand})</p>
-              <p className="text-[14px] leading-[1.6] text-gray-200">
-                {business.address}<br />
-                대표 {business.owner} · 사업자등록번호 {business.regNo}
-              </p>
-            </div>
+          {/* 로고 + 바로가기 한 줄 */}
+          <div className="mt-10 flex flex-col gap-6 sm:mt-12 lg:flex-row lg:items-center lg:justify-between">
+            <Link href="/" aria-label="MATE 홈" className="w-fit transition-opacity hover:opacity-75">
+              <Image src="/images/logo.png" alt="MATE" width={1991} height={493} className="h-6 w-auto brightness-0 invert lg:h-7" />
+            </Link>
             <nav aria-label="바로가기">
-              <p className={colHead}>바로가기</p>
-              <ul className="flex flex-col gap-2.5 text-[14px] text-gray-200">
+              <ul className="flex flex-wrap gap-x-8 gap-y-3 text-[15px] font-bold text-gray-200 sm:gap-x-10">
                 {navItems.map((n) => (
-                  <li key={n.href}><Link href={n.href} className={linkCls}>{n.label}</Link></li>
+                  <li key={n.href}><Link href={n.href} className="transition-colors hover:text-white">{n.label}</Link></li>
                 ))}
               </ul>
             </nav>
-            <div>
-              <p className={colHead}>연락처</p>
-              <ul className="flex flex-col gap-2.5 text-[14px] text-gray-200">
-                <li><a href={`tel:${CONTACT_PHONE}`} className={linkCls}>TEL {CONTACT_PHONE}</a></li>
-                <li><a href={`mailto:${CONTACT_EMAIL}`} className={`${linkCls} break-all`}>{CONTACT_EMAIL}</a></li>
-                <li>
-                  <a href={KAKAO_OPEN_CHAT_URL} target="_blank" rel="noopener noreferrer" className={linkCls}>
-                    카카오톡 오픈채팅
-                  </a>
-                </li>
-              </ul>
-            </div>
           </div>
 
-          <p className="mt-12 border-t border-white/10 pt-6 text-[13px] text-gray-400">
-            © {year} {business.brand}. All rights reserved.
-          </p>
+          {/* 사업자 정보 · 저작권 - 작은 글씨 한 덩어리 */}
+          {/* 오른쪽 아래는 떠 있는 문의 · 맨 위로 버튼 자리라 비워 둔다 */}
+          <div className="mt-10 flex flex-col gap-3 border-t border-white/10 pt-6 text-[13px] leading-[1.7] text-gray-400">
+            <p>
+              {business.name} ({business.brand}) · 대표 {business.owner} · 사업자등록번호 {business.regNo}<br />
+              {business.address}
+            </p>
+            <p>© {year} {business.brand}. All rights reserved.</p>
+          </div>
         </div>
       </div>
     </footer>
