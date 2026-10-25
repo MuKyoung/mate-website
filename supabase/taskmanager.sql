@@ -7,8 +7,8 @@
 --
 -- 권한의 뼈대
 --   · 계정(auth.users)이 생기면 tm_members 에 승인 대기로 한 줄이 생긴다. 저절로 승인되는 계정은 없다.
---     (가입을 막는 설정을 깜빡해도 낯선 계정이 바로 들어오지 못하게 하는 두 번째 문)
---   · 승인 · 승인 취소 · 관리자 지정은 관리자가 화면의 '팀원' 창에서 한다.
+--     (누구나 로그인 화면에서 가입 요청을 보낼 수 있으므로 이것이 문이다)
+--   · 승인 · 거절 · 승인 취소 · 관리자 지정은 관리자가 화면의 '팀원' 창에서 한다.
 --     첫 관리자는 이 파일 맨 아래의 문장으로 SQL Editor 에서 정한다. 마지막 관리자는 내릴 수 없다.
 --   · 작업 · 문서는 승인된 팀원만 읽고 쓴다(RLS). 로그인하지 않은 요청(anon)은 아무것도 못 본다.
 -- ═══════════════════════════════════════════════════════════════════════
@@ -166,6 +166,29 @@ begin
 end;
 $$;
 
+-- 가입 요청 거절 - 승인 대기 계정을 계정째 지운다(팀원 줄은 cascade 로 함께). 같은 메일로 다시 요청할 수 있다.
+-- 관리자만, 자기 계정은 못 지운다. 지우는 동안 다른 관리자가 승인하지 못하게 그 줄을 잠근다
+create or replace function public.tm_reject_member(target uuid)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if not public.tm_is_admin() then
+    raise exception '가입 요청은 관리자만 거절할 수 있습니다';
+  end if;
+  if target = auth.uid() then
+    raise exception '자기 계정은 지울 수 없습니다';
+  end if;
+  perform 1 from public.tm_members m where m.id = target and not m.active for update;
+  if not found then
+    raise exception '승인 대기 중인 계정만 거절할 수 있습니다';
+  end if;
+  delete from auth.users u where u.id = target;
+end;
+$$;
+
 -- ── 트리거 ───────────────────────────────────────────────────
 drop trigger if exists tm_tasks_touch on public.tm_tasks;
 create trigger tm_tasks_touch before update on public.tm_tasks
@@ -226,10 +249,11 @@ grant select, update on public.tm_members to authenticated;
 grant select, insert, update, delete on public.tm_tasks, public.tm_docs to authenticated;
 
 -- 함수도 기본으로 누구나 실행할 수 있어 /rest/v1/rpc 로 불린다. 트리거용은 아무도 부르지 못하게 하고
--- RLS 가 쓰는 두 개(승인된 팀원인가 · 관리자인가)만 로그인한 사람에게 남긴다. 트리거는 이 권한과 상관없이 돈다
+-- RLS 가 쓰는 두 개(승인된 팀원인가 · 관리자인가)와 가입 요청 거절만 로그인한 사람에게 남긴다(거절은 함수가 관리자인지 본다).
+-- 트리거는 이 권한과 상관없이 돈다
 revoke execute on function public.tm_is_member(), public.tm_is_admin(), public.tm_touch(),
-  public.tm_on_new_user(), public.tm_members_guard() from public, anon, authenticated;
-grant execute on function public.tm_is_member(), public.tm_is_admin() to authenticated;
+  public.tm_on_new_user(), public.tm_members_guard(), public.tm_reject_member(uuid) from public, anon, authenticated;
+grant execute on function public.tm_is_member(), public.tm_is_admin(), public.tm_reject_member(uuid) to authenticated;
 
 -- ── 실시간 - 다른 사람이 고친 것이 새로고침 없이 보이게 ──────
 do $$

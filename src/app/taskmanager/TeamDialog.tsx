@@ -10,7 +10,7 @@ import {
 
 /*
  * 팀원 창 - Supabase 모드에서 내 계정 블록을 누르면 열린다.
- * 내 이름 · 역할 고치기, 비밀번호 바꾸기. 관리자는 새 계정 승인 · 승인 취소 · 관리자 지정도 한다.
+ * 내 이름 · 역할 고치기, 비밀번호 바꾸기. 관리자는 가입 요청 승인 · 거절, 승인 취소, 관리자 지정도 한다.
  * 규칙은 DB 가 지킨다(관리자만 남의 승인을 바꾸고, 자기 것은 못 바꾸고, 마지막 관리자는 내릴 수 없다).
  */
 
@@ -20,13 +20,15 @@ const okLine = 'text-[13.5px] font-semibold text-tm-ok-deep';
 const errLine = 'text-[13.5px] font-semibold text-tm-red-deep';
 
 export function TeamDialog({
-  me, members, recovery, onUpdate, onClose,
+  me, members, recovery, onUpdate, onReject, onClose,
 }: {
   me: Member;
   members: Member[];
   /** 비밀번호 재설정 링크로 들어왔다 - 새 비밀번호 칸부터 연다 */
   recovery?: boolean;
   onUpdate(id: string, patch: MemberPatch): Promise<string | null>;
+  /** 승인 대기 계정을 계정째 지운다 */
+  onReject(id: string): Promise<string | null>;
   onClose(): void;
 }) {
   const [confirm, confirmNode] = useConfirm();
@@ -81,6 +83,25 @@ export function TeamDialog({
     setRowBusy(m.id);
     setRowErr(null);
     const err = await onUpdate(m.id, { active });
+    if (err) setRowErr(err);
+    setRowBusy(null);
+  };
+
+  const reject = async (m: Member) => {
+    const yes = await confirm({
+      title: '가입 요청을 거절할까요?',
+      body: (
+        <>
+          <b>{m.name}</b> 님({m.email})의 계정을 지웁니다. 같은 메일로 다시 가입 요청을 보낼 수 있습니다.
+        </>
+      ),
+      ok: '거절',
+      tone: 'danger',
+    });
+    if (!yes) return;
+    setRowBusy(m.id);
+    setRowErr(null);
+    const err = await onReject(m.id);
     if (err) setRowErr(err);
     setRowBusy(null);
   };
@@ -200,9 +221,14 @@ export function TeamDialog({
                   </span>
                   {admin && m.id !== me.id && (
                     pending ? (
-                      <button type="button" onClick={() => void setActive(m, true)} disabled={busy} className={tmEditBtn}>
-                        {busy ? '승인 중…' : '승인'}
-                      </button>
+                      <>
+                        <button type="button" onClick={() => void setActive(m, true)} disabled={busy} className={tmEditBtn}>
+                          {busy ? '처리 중…' : '승인'}
+                        </button>
+                        <button type="button" onClick={() => void reject(m)} disabled={busy} className={tmGhostDanger}>
+                          거절
+                        </button>
+                      </>
                     ) : (
                       <>
                         <button type="button" onClick={() => void setAdmin(m, !m.isAdmin)} disabled={busy} className={tmGhostBtn}>
@@ -220,8 +246,8 @@ export function TeamDialog({
           </ul>
           <div className={`${tmCallout} mt-4`}>
             <p className="min-w-0">
-              새 팀원은 Supabase 대시보드 → Authentication → Users 에서 <b className="font-bold text-tm-deep">Add user</b> 로
-              계정을 만들면 여기에 승인 대기로 나타납니다.{admin ? '' : ' 승인과 승인 취소는 관리자가 합니다.'}
+              새 팀원이 로그인 화면에서 <b className="font-bold text-tm-deep">가입 요청</b>을 보내면 여기에 승인 대기로 나타납니다.
+              {admin ? ' 모르는 사람이면 거절합니다.' : ' 승인과 거절은 관리자가 합니다.'}
             </p>
           </div>
         </div>

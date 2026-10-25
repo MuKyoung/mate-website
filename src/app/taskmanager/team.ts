@@ -7,7 +7,7 @@ import { isMissingTable, memberFromRow, sb, type MemberRow } from './supabase';
 
 /*
  * 로그인과 팀원 - Supabase 모드에서만 쓴다.
- * 계정은 관리자가 Supabase 대시보드에서 만들고(가입 화면은 없다), 새 계정은 늘 승인 대기로 생겨
+ * 계정은 로그인 화면의 가입 요청이나 Supabase 대시보드에서 생긴다. 새 계정은 늘 승인 대기로 생겨
  * 관리자가 '팀원' 창에서 승인해야 작업과 문서가 보인다(supabase/taskmanager.sql).
  * 첫 관리자는 SQL Editor 에서 정한다(TASKMANAGER_SETUP.md 4단계).
  */
@@ -59,6 +59,37 @@ export async function signIn(email: string, password: string): Promise<string | 
   }
 }
 
+/**
+ * 가입 요청 - 계정을 만들면 DB 가 승인 대기 팀원 줄을 붙인다(이름은 metadata 의 name).
+ * in = 바로 로그인됐다(승인 대기 화면으로 간다), confirm = 메일 인증을 켜 둔 프로젝트라 인증 메일을 보냈다
+ */
+export async function signUp(name: string, email: string, password: string): Promise<{ ok: 'in' | 'confirm' } | { error: string }> {
+  try {
+    const { data, error } = await sb().auth.signUp({
+      email: email.trim(),
+      password,
+      options: { data: { name: name.trim() }, emailRedirectTo: `${window.location.origin}/taskmanager/` },
+    });
+    if (error) {
+      if (error.code === 'user_already_exists' || error.code === 'email_exists') return { error: '이미 가입한 메일입니다. 로그인해 주세요.' };
+      if (error.code === 'weak_password') return { error: '비밀번호가 너무 쉽습니다. 더 길게 만들어 주세요.' };
+      if (error.code === 'email_address_invalid' || error.code === 'validation_failed') return { error: '메일 주소를 다시 확인해 주세요.' };
+      if (error.code === 'signup_disabled' || error.code === 'email_address_not_authorized') {
+        return { error: '지금은 가입 요청을 받을 수 없습니다. 관리자에게 알려 주세요.' };
+      }
+      if (error.code === 'over_email_send_rate_limit' || error.code === 'over_request_rate_limit' || error.status === 429) {
+        return { error: '요청이 너무 많습니다. 잠시 뒤 다시 해 주세요.' };
+      }
+      return { error: '가입 요청을 보내지 못했습니다. 잠시 뒤 다시 해 주세요.' };
+    }
+    // 메일 인증을 켜 둔 프로젝트는 이미 있는 메일에도 오류 대신 신원(identities)이 빈 계정을 돌려준다
+    if (data.user && data.user.identities?.length === 0) return { error: '이미 가입한 메일입니다. 로그인해 주세요.' };
+    return { ok: data.session ? 'in' : 'confirm' };
+  } catch {
+    return { error: '가입 요청을 보내지 못했습니다. 인터넷 연결을 확인해 주세요.' };
+  }
+}
+
 export async function signOut(): Promise<void> {
   try {
     await sb().auth.signOut();
@@ -92,6 +123,8 @@ export interface Team {
   reload(): Promise<void>;
   /** 실패하면 화면에 보일 문구(DB 의 규칙 문구 그대로), 성공하면 null */
   update(id: string, patch: MemberPatch): Promise<string | null>;
+  /** 승인 대기 계정을 계정째 지운다(가입 요청 거절). 관리자만 - DB 가 지킨다 */
+  reject(id: string): Promise<string | null>;
 }
 
 export function useTeam(userId: string | null): Team {
@@ -145,5 +178,18 @@ export function useTeam(userId: string | null): Team {
     }
   }, [reload]);
 
-  return { ...state, reload, update };
+  const reject = useCallback(async (id: string) => {
+    try {
+      const { error } = await sb().rpc('tm_reject_member', { target: id });
+      // 함수가 생기기 전의 DB(SQL 을 다시 실행하지 않았다)
+      if (error?.code === 'PGRST202') return '거절 기능이 아직 DB 에 없습니다. supabase/taskmanager.sql 을 다시 실행해 주세요.';
+      if (error) return error.message || '거절하지 못했습니다.';
+      await reload();
+      return null;
+    } catch {
+      return '거절하지 못했습니다. 인터넷 연결을 확인해 주세요.';
+    }
+  }, [reload]);
+
+  return { ...state, reload, update, reject };
 }
