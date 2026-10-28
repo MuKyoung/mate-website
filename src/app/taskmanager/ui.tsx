@@ -233,7 +233,7 @@ function IconCalendar() {
 }
 
 /** 메뉴 아이콘 */
-export type NavIcon = 'board' | 'mine' | 'wiki' | 'home' | 'menu';
+export type NavIcon = 'board' | 'mine' | 'wiki' | 'memo' | 'home' | 'menu';
 export function IconNav({ name, size = 20 }: { name: NavIcon; size?: number }) {
   const paths: Record<NavIcon, React.ReactNode> = {
     /* 모든 작업 - 보드의 칸 */
@@ -255,6 +255,13 @@ export function IconNav({ name, size = 20 }: { name: NavIcon; size?: number }) {
       <>
         <path d="M5.5 3h6l3.5 3.5V17h-9.5z" />
         <path d="M11.5 3v3.5H15M7.8 10h4.4M7.8 13h4.4" />
+      </>
+    ),
+    /* 내 메모 - 귀퉁이를 접은 쪽지 */
+    memo: (
+      <>
+        <path d="M4 4.5h12V12l-4.5 4.5H4z" />
+        <path d="M16 12h-4.5v4.5M7 8h6M7 11h3" />
       </>
     ),
     home: <path d="M3.5 9.5L10 4l6.5 5.5V16a.5.5 0 01-.5.5h-3.5v-4.5h-5v4.5H4a.5.5 0 01-.5-.5z" />,

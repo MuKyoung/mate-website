@@ -205,3 +205,18 @@ export const DOC_TEMPLATES: DocTemplate[] = [
     ].join('\n'),
   },
 ];
+
+/* ── 개인 메모 ────────────────────────────────────── */
+
+/** 쓴 사람만 보는 메모 - 팀 위키와 달리 다른 팀원에게 보이지 않는다 */
+export interface Memo {
+  id: string;
+  /** Member.id - 쓴 사람. Supabase 모드에서는 이 사람만 읽고 쓴다(RLS) */
+  owner: string;
+  /** 비워 둘 수 있다 - 목록에는 본문 첫 줄이 대신 나온다 */
+  title: string;
+  /** 꾸밈 없는 글 */
+  body: string;
+  createdAt: string;
+  updatedAt: string;
+}

@@ -11,6 +11,7 @@
 --   · 승인 · 거절 · 승인 취소 · 관리자 지정은 관리자가 화면의 '팀원' 창에서 한다.
 --     첫 관리자는 이 파일 맨 아래의 문장으로 SQL Editor 에서 정한다. 마지막 관리자는 내릴 수 없다.
 --   · 작업 · 문서는 승인된 팀원만 읽고 쓴다(RLS). 로그인하지 않은 요청(anon)은 아무것도 못 본다.
+--   · 개인 메모는 쓴 사람만 읽고 쓴다. 관리자도 남의 메모는 못 본다.
 -- ═══════════════════════════════════════════════════════════════════════
 
 -- ── 팀원 ─────────────────────────────────────────────────────
@@ -59,11 +60,23 @@ create table if not exists public.tm_docs (
   updated_at timestamptz not null default now()
 );
 
+-- ── 개인 메모 ────────────────────────────────────────────────
+-- 쓴 사람만 읽고 쓴다(아래 RLS). 계정이 지워지면 그 사람의 메모도 함께 지워진다
+create table if not exists public.tm_memos (
+  id uuid primary key default gen_random_uuid(),
+  owner uuid not null default auth.uid() references public.tm_members (id) on delete cascade,
+  title text not null default '',
+  body text not null default '',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 -- 다른 표를 가리키는 칸 - 지울 때(on delete) · 묶어 볼 때 표 전체를 훑지 않게
 create index if not exists tm_tasks_assignee_idx on public.tm_tasks (assignee);
 create index if not exists tm_tasks_created_by_idx on public.tm_tasks (created_by);
 create index if not exists tm_docs_parent_id_idx on public.tm_docs (parent_id);
 create index if not exists tm_docs_author_idx on public.tm_docs (author);
+create index if not exists tm_memos_owner_idx on public.tm_memos (owner);
 
 -- ── 함수 ─────────────────────────────────────────────────────
 
@@ -198,6 +211,10 @@ drop trigger if exists tm_docs_touch on public.tm_docs;
 create trigger tm_docs_touch before update on public.tm_docs
   for each row execute function public.tm_touch();
 
+drop trigger if exists tm_memos_touch on public.tm_memos;
+create trigger tm_memos_touch before update on public.tm_memos
+  for each row execute function public.tm_touch();
+
 drop trigger if exists tm_members_guard on public.tm_members;
 create trigger tm_members_guard before update on public.tm_members
   for each row execute function public.tm_members_guard();
@@ -218,6 +235,7 @@ on conflict (id) do nothing;
 alter table public.tm_members enable row level security;
 alter table public.tm_tasks enable row level security;
 alter table public.tm_docs enable row level security;
+alter table public.tm_memos enable row level security;
 
 -- 팀원 목록: 승인된 팀원은 모두를, 승인 대기 중인 사람은 자기 줄만 본다
 drop policy if exists tm_members_select on public.tm_members;
@@ -243,10 +261,17 @@ create policy tm_docs_members on public.tm_docs
   using ((select public.tm_is_member()))
   with check ((select public.tm_is_member()));
 
+-- 개인 메모: 쓴 사람만. 주인을 남으로 바꿔 넘기지도 못한다. 승인이 취소되면 자기 메모도 못 연다(다시 승인되면 그대로 있다)
+drop policy if exists tm_memos_owner on public.tm_memos;
+create policy tm_memos_owner on public.tm_memos
+  for all to authenticated
+  using (owner = (select auth.uid()) and (select public.tm_is_member()))
+  with check (owner = (select auth.uid()) and (select public.tm_is_member()));
+
 -- Supabase 가 새 표에 기본으로 주는 권한(TRUNCATE 등)을 모두 거두고, 화면이 쓰는 것만 다시 준다
-revoke all on public.tm_members, public.tm_tasks, public.tm_docs from anon, authenticated;
+revoke all on public.tm_members, public.tm_tasks, public.tm_docs, public.tm_memos from anon, authenticated;
 grant select, update on public.tm_members to authenticated;
-grant select, insert, update, delete on public.tm_tasks, public.tm_docs to authenticated;
+grant select, insert, update, delete on public.tm_tasks, public.tm_docs, public.tm_memos to authenticated;
 
 -- 함수도 기본으로 누구나 실행할 수 있어 /rest/v1/rpc 로 불린다. 트리거용은 아무도 부르지 못하게 하고
 -- RLS 가 쓰는 두 개(승인된 팀원인가 · 관리자인가)와 가입 요청 거절만 로그인한 사람에게 남긴다(거절은 함수가 관리자인지 본다).
@@ -256,6 +281,7 @@ revoke execute on function public.tm_is_member(), public.tm_is_admin(), public.t
 grant execute on function public.tm_is_member(), public.tm_is_admin(), public.tm_reject_member(uuid) to authenticated;
 
 -- ── 실시간 - 다른 사람이 고친 것이 새로고침 없이 보이게 ──────
+-- 메모는 RLS 를 거쳐 쓴 사람에게만 간다(지운 알림만은 RLS 를 거치지 않아 id 만 실려 모두에게 간다 - 내용은 없다)
 do $$
 begin
   begin
@@ -268,6 +294,10 @@ begin
   end;
   begin
     alter publication supabase_realtime add table public.tm_docs;
+  exception when duplicate_object then null;
+  end;
+  begin
+    alter publication supabase_realtime add table public.tm_memos;
   exception when duplicate_object then null;
   end;
 end;

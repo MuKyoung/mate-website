@@ -1,7 +1,7 @@
 'use client';
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import { initialOf, type Doc, type DomainKey, type Member, type Priority, type Status, type Task } from './types';
+import { initialOf, type Doc, type DomainKey, type Member, type Memo, type Priority, type Status, type Task } from './types';
 
 /*
  * 팀이 함께 쓰는 저장소(Supabase) 연결.
@@ -65,6 +65,15 @@ export interface DocRow {
   author: string | null;
   labels: string[] | null;
   sort: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MemoRow {
+  id: string;
+  owner: string;
+  title: string;
+  body: string;
   created_at: string;
   updated_at: string;
 }
@@ -141,6 +150,25 @@ export function docToRow(p: Partial<Doc>): Partial<DocRow> {
   if (p.author !== undefined) r.author = p.author || null;
   if (p.labels !== undefined) r.labels = p.labels;
   if (p.order !== undefined) r.sort = p.order;
+  return r;
+}
+
+export function memoFromRow(r: MemoRow): Memo {
+  return {
+    id: r.id,
+    owner: r.owner,
+    title: r.title,
+    body: r.body,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+/** 주인(owner)은 만들 때 한 번만 보낸다 - 고칠 때는 제목 · 본문만 */
+export function memoToRow(p: Partial<Memo>): Partial<MemoRow> {
+  const r: Partial<MemoRow> = {};
+  if (p.title !== undefined) r.title = p.title;
+  if (p.body !== undefined) r.body = p.body;
   return r;
 }
 

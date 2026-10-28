@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { LOCAL_ME_KEY, isUntouchedSample, useTaskStore, type Store, type StoreOptions } from './store';
 import { useDocStore, type DocStore } from './docStore';
+import { useMemoStore, type MemoStore } from './memoStore';
 import {
   DOMAINS, MEMBERS, PRIORITIES, STATUSES,
   domainLabel, memberById, priorityLabel,
@@ -21,8 +22,11 @@ import Timeline from './Timeline';
 import Calendar from './Calendar';
 import Roadmap from './Roadmap';
 import Docs from './Docs';
+import Memos from './Memos';
 import { isRemote } from './supabase';
-import { RETRY, importLocal, localLeftovers, skipImport, useRemoteDocStore, useRemoteTaskStore } from './remote';
+import {
+  RETRY, importLocal, localLeftovers, skipImport, useRemoteDocStore, useRemoteMemoStore, useRemoteTaskStore,
+} from './remote';
 import { signOut, useAuth, useTeam, type MemberPatch } from './team';
 import { MembersContext, useMembers } from './members';
 import { LoadingScreen, LoginScreen, PendingScreen, TroubleScreen } from './Gate';
@@ -43,6 +47,7 @@ import { TeamDialog } from './TeamDialog';
 /** 빌드마다 하나로 정해지므로 렌더 사이에 훅 순서가 바뀌지 않는다 */
 const useTasks: (opts: StoreOptions) => Store = isRemote ? useRemoteTaskStore : useTaskStore;
 const useDocs: (opts: StoreOptions) => DocStore = isRemote ? useRemoteDocStore : useDocStore;
+const useMemos: (opts: StoreOptions) => MemoStore = isRemote ? useRemoteMemoStore : useMemoStore;
 
 /** Supabase 모드에서 로그인한 사람 */
 interface Account {
@@ -55,7 +60,7 @@ interface Account {
 }
 
 type View = 'board' | 'list' | 'timeline' | 'calendar' | 'roadmap';
-type Section = 'tasks' | 'docs';
+type Section = 'tasks' | 'docs' | 'memos';
 
 /** 보기 - hint 는 쪽 머리의 설명 줄에 나온다 */
 const VIEWS: { id: View; label: string; key: string; hint: string }[] = [
@@ -172,6 +177,7 @@ function Workspace({ account }: { account?: Account }) {
   const notify = useCallback((text: string) => setToast({ text, undo: false, tone: 'err' }), []);
   const store = useTasks({ onError: notify });
   const docStore = useDocs({ onError: notify });
+  const memoStore = useMemos({ onError: notify });
 
   const [section, setSection] = useState<Section>('tasks');
   const [view, setView] = useState<View>('board');
@@ -276,7 +282,7 @@ function Workspace({ account }: { account?: Account }) {
   const logout = async () => {
     if (leaving) return;
     setLeaving(true);
-    await Promise.all([store.flush?.(), docStore.flush?.()]).catch(() => {});
+    await Promise.all([store.flush?.(), docStore.flush?.(), memoStore.flush?.()]).catch(() => {});
     await signOut();
   };
 
@@ -309,9 +315,9 @@ function Workspace({ account }: { account?: Account }) {
     setToast(ok ? null : { text: '그 사이 바뀌어서 되돌리지 않았습니다', undo: false });
   }, []);
 
-  /* 저장 상태 알약 - 브라우저 저장인지, 팀 저장소에 다 들어갔는지(작업과 문서를 함께 본다) */
-  const sync = store.sync === 'error' || docStore.sync === 'error' ? 'error'
-    : store.sync === 'saving' || docStore.sync === 'saving' ? 'saving' : 'idle';
+  /* 저장 상태 알약 - 브라우저 저장인지, 팀 저장소에 다 들어갔는지(작업 · 문서 · 메모를 함께 본다) */
+  const syncs = [store.sync, docStore.sync, memoStore.sync];
+  const sync = syncs.includes('error') ? 'error' : syncs.includes('saving') ? 'saving' : 'idle';
   const saved: { tone: 'ok' | 'busy' | 'warn'; text: string } = account
     ? sync === 'error'
       ? { tone: 'warn', text: '저장하지 못한 변경이 있습니다' }
@@ -368,8 +374,8 @@ function Workspace({ account }: { account?: Account }) {
       if (k === 'n') { e.preventDefault(); setCreatingDue(null); setCreating('todo'); }
       if (k === '/') {
         e.preventDefault();
-        // 문서 화면에서는 문서 검색으로. 그 칸이 없거나(좁은 화면) 숨어 있으면 작업 화면으로 가서 그려진 뒤 검색 칸에
-        const docSearch = document.querySelector<HTMLInputElement>('input[aria-label="문서 검색"]');
+        // 문서 · 메모 화면에서는 그 화면의 검색으로. 그 칸이 없거나(좁은 화면) 숨어 있으면 작업 화면으로 가서 그려진 뒤 검색 칸에
+        const docSearch = document.querySelector<HTMLInputElement>('input[aria-label="문서 검색"], input[aria-label="메모 검색"]');
         if (docSearch?.offsetParent) docSearch.focus();
         else if (searchRef.current) searchRef.current.focus();
         else { searchNext.current = true; setSection('tasks'); }
@@ -377,6 +383,7 @@ function Workspace({ account }: { account?: Account }) {
       const v = VIEWS.find((x) => x.key === k);
       if (v) { setSection('tasks'); setView(v.id); }
       if (k === 'd') setSection('docs');
+      if (k === 'm') setSection('memos');
       // Ctrl/Cmd 조합은 위에서 걸러지므로 되돌리기는 여기서 따로 받는다 - 실행 취소 알림이 떠 있을 때만
       if (k === 'z' && toastRef.current?.undo) {
         e.preventDefault();
@@ -630,8 +637,13 @@ function Workspace({ account }: { account?: Account }) {
     },
     {
       label: '문서',
-      items: [{ key: 'docs', label: '팀 위키', icon: 'wiki', count: docStore.docs.length,
-        active: section === 'docs', go: () => setSection('docs') }],
+      items: [
+        { key: 'docs', label: '팀 위키', icon: 'wiki', count: docStore.docs.length,
+          active: section === 'docs', go: () => setSection('docs') },
+        // 나만 보는 메모 - 브라우저 저장 모드는 '나'를 바꿔 쓸 수 있어 쓴 사람으로 센다
+        { key: 'memos', label: '내 메모', icon: 'memo', count: memoStore.memos.filter((m) => m.owner === me).length,
+          active: section === 'memos', go: () => setSection('memos') },
+      ],
     },
   ];
 
@@ -758,6 +770,8 @@ function Workspace({ account }: { account?: Account }) {
                   if (hit) { setSection('tasks'); setOpenId(hit.id); }
                   else setToast({ text: `${key} 작업을 찾을 수 없습니다`, undo: false });
                 }} />
+            ) : section === 'memos' ? (
+              <Memos store={memoStore} me={me} />
             ) : (
               <>
                 <PageHead

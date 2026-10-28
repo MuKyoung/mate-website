@@ -3,14 +3,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { LOCAL_ME_KEY, LOCAL_TASKS_KEY, isUntouchedSample, type Store, type StoreOptions, type SyncState } from './store';
 import { LOCAL_DOCS_KEY, isUntouchedSampleDoc, type DocStore } from './docStore';
+import type { MemoStore } from './memoStore';
 import {
-  PENDING_KEY, docFromRow, docToRow, isMissingTable, sb, taskFromRow, taskToRow,
-  type DocRow, type TaskRow,
+  PENDING_KEY, docFromRow, docToRow, isMissingTable, memoFromRow, memoToRow, sb, taskFromRow, taskToRow,
+  type DocRow, type MemoRow, type TaskRow,
 } from './supabase';
-import type { Doc, Task } from './types';
+import type { Doc, Memo, Task } from './types';
 
 /*
- * Supabase 저장소 - 작업 · 문서를 팀이 함께 쓴다.
+ * Supabase 저장소 - 작업 · 문서를 팀이 함께 쓴다. 개인 메모는 쓴 사람만 읽고 쓴다(표의 RLS).
  *
  * 화면은 먼저 바꾸고(누르는 즉시 반영) 서버에는 뒤에서 보낸다.
  *   · 글자를 칠 때마다 보내지 않는다 - 한 줄에 대해 0.45초 동안 모아 한 번에 보낸다.
@@ -726,6 +727,41 @@ export function useRemoteDocStore(opts: StoreOptions = {}): DocStore {
     docs: items, ready, sync, loadError, deletedElsewhere: deleted,
     create, update, remove, flush, reload, clearSamples: noop,
   };
+}
+
+/* ── 개인 메모 ────────────────────────────────────────────── */
+
+/* 표의 RLS 가 쓴 사람의 줄만 돌려주고 실시간도 그 줄만 보낸다 - 다른 팀원의 메모는 이 브라우저에 오지 않는다 */
+export function useRemoteMemoStore(opts: StoreOptions = {}): MemoStore {
+  const { items, ready, sync, loadError, deleted, eng } = useRowSync<Memo, MemoRow>({
+    table: 'tm_memos', fromRow: memoFromRow, toRow: memoToRow, onError: opts.onError,
+    texts: {
+      gone: '다른 창이나 기기에서 지운 메모라 고치던 내용을 저장하지 못했습니다.',
+      createFail: () => '새 메모를 만들지 못했습니다. 서버가 받아 주지 않아 목록에서 뺐습니다.',
+    },
+  });
+
+  const create = useCallback<MemoStore['create']>((owner, text = {}) => {
+    const now = new Date().toISOString();
+    const memo: Memo = {
+      id: crypto.randomUUID(), owner, title: text.title ?? '', body: text.body ?? '', createdAt: now, updatedAt: now,
+    };
+    eng.create(memo, { id: memo.id, owner, ...memoToRow(memo) });
+    return memo;
+  }, [eng]);
+
+  const update = useCallback<MemoStore['update']>((id, patch) => {
+    eng.patch(id, { ...patch, updatedAt: new Date().toISOString() });
+  }, [eng]);
+
+  const remove = useCallback<MemoStore['remove']>((id) => eng.remove([id], id), [eng]);
+
+  const flush = useCallback(() => eng.flushAll(), [eng]);
+  const reload = useCallback(async () => {
+    await eng.reload();
+  }, [eng]);
+
+  return { memos: items, ready, sync, loadError, deletedElsewhere: deleted, create, update, remove, flush, reload };
 }
 
 /* ── 이 브라우저에 남은 예전 데이터 옮기기 ───────────────────
