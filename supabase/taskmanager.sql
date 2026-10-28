@@ -12,6 +12,8 @@
 --     첫 관리자는 이 파일 맨 아래의 문장으로 SQL Editor 에서 정한다. 마지막 관리자는 내릴 수 없다.
 --   · 작업 · 문서는 승인된 팀원만 읽고 쓴다(RLS). 로그인하지 않은 요청(anon)은 아무것도 못 본다.
 --   · 개인 메모는 쓴 사람만 읽고 쓴다. 관리자도 남의 메모는 못 본다.
+--   · 영역(작업을 가르는 갈래)은 팀원 모두 읽고, 고치기는 영역을 맡은 사람만 한다.
+--     맡은 사람은 관리자와 따로, 이 파일 맨 아래의 문장으로 SQL Editor 에서만 정한다.
 -- ═══════════════════════════════════════════════════════════════════════
 
 -- ── 팀원 ─────────────────────────────────────────────────────
@@ -23,10 +25,35 @@ create table if not exists public.tm_members (
   initial text not null default '',   -- 비우면 화면이 이름에서 만든다(박무경 → 무경)
   active boolean not null default false,
   is_admin boolean not null default false,   -- 승인 · 승인 취소 · 관리자 지정을 할 수 있다
+  domain_editor boolean not null default false,   -- 영역을 고칠 수 있다(관리자와 따로, SQL Editor 에서만 정한다)
   created_at timestamptz not null default now()
 );
--- 관리자 칸이 생기기 전에 만든 표
+-- 관리자 · 영역 칸이 생기기 전에 만든 표
 alter table public.tm_members add column if not exists is_admin boolean not null default false;
+alter table public.tm_members add column if not exists domain_editor boolean not null default false;
+
+-- ── 영역 ─────────────────────────────────────────────────────
+-- 작업을 가르는 갈래(웹 · 앱, 게임 · XR …). 색은 화면의 네 가지 - 빨강 · 호박색 · 초록은 급함 · 임박 · 끝남의 뜻이라 영역에 주지 않는다
+create table if not exists public.tm_domains (
+  id text primary key,
+  label text not null check (char_length(btrim(label)) between 1 and 20),
+  short text not null default '' check (char_length(short) <= 10),   -- 보드 카드의 알약. 비우면 화면이 이름을 쓴다
+  color text not null default 'gray' check (color in ('blue', 'violet', 'teal', 'gray')),
+  sort double precision not null default 0,   -- 메뉴 순서. 작을수록 위
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+-- 처음 네 영역 - 작업 표가 처음부터 가리키던 값이라 id 는 그대로 둔다.
+-- 표가 비어 있을 때만 넣는다(다시 실행해도 맡은 사람이 지운 영역을 되살리지 않게)
+insert into public.tm_domains (id, label, short, color, sort)
+select v.id, v.label, v.short, v.color, v.sort
+from (values
+  ('web', '웹 · 앱', 'WEB', 'blue', 1000::double precision),
+  ('game', '게임 · XR', 'GAME', 'violet', 2000),
+  ('edu', '교육 · 강의', 'EDU', 'teal', 3000),
+  ('ops', '내부 · 운영', 'OPS', 'gray', 4000)
+) as v (id, label, short, color, sort)
+where not exists (select 1 from public.tm_domains);
 
 -- ── 작업 ─────────────────────────────────────────────────────
 create table if not exists public.tm_tasks (
@@ -36,7 +63,7 @@ create table if not exists public.tm_tasks (
   description text not null default '',
   status text not null default 'todo' check (status in ('backlog', 'todo', 'doing', 'review', 'done')),
   priority text not null default 'normal' check (priority in ('urgent', 'high', 'normal', 'low')),
-  domain text not null default 'ops' check (domain in ('web', 'game', 'edu', 'ops')),
+  domain text not null default 'ops',   -- 영역(tm_domains). 외래 키는 아래에서 건다
   assignee uuid references public.tm_members (id) on delete set null,
   start_date date,
   due_date date,
@@ -46,6 +73,12 @@ create table if not exists public.tm_tasks (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+-- 영역이 정해진 네 값이던 때의 규칙(tm_tasks_domain_check)을 영역 표를 가리키는 외래 키로 바꾼다.
+-- 작업이 남은 영역은 지워지지 않는다 - 지우기는 tm_domain_remove 가 작업을 옮긴 뒤에 한다
+alter table public.tm_tasks drop constraint if exists tm_tasks_domain_check;
+alter table public.tm_tasks drop constraint if exists tm_tasks_domain_fkey;
+alter table public.tm_tasks add constraint tm_tasks_domain_fkey
+  foreign key (domain) references public.tm_domains (id) on update cascade;
 
 -- ── 문서 ─────────────────────────────────────────────────────
 create table if not exists public.tm_docs (
@@ -105,6 +138,7 @@ create table if not exists public.tm_doc_comments (
 -- 다른 표를 가리키는 칸 - 지울 때(on delete) · 묶어 볼 때 표 전체를 훑지 않게
 create index if not exists tm_tasks_assignee_idx on public.tm_tasks (assignee);
 create index if not exists tm_tasks_created_by_idx on public.tm_tasks (created_by);
+create index if not exists tm_tasks_domain_idx on public.tm_tasks (domain);
 create index if not exists tm_docs_parent_id_idx on public.tm_docs (parent_id);
 create index if not exists tm_docs_author_idx on public.tm_docs (author);
 create index if not exists tm_doc_versions_doc_idx on public.tm_doc_versions (doc_id, created_at desc);
@@ -134,6 +168,17 @@ security definer
 set search_path = ''
 as $$
   select exists (select 1 from public.tm_members m where m.id = auth.uid() and m.active and m.is_admin)
+$$;
+
+-- 지금 요청한 사람이 영역을 고칠 수 있는가 - 승인된 팀원 가운데 영역을 맡은 사람(관리자와 따로 정한다)
+create or replace function public.tm_can_edit_domains()
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (select 1 from public.tm_members m where m.id = auth.uid() and m.active and m.domain_editor)
 $$;
 
 -- 고친 시각
@@ -171,7 +216,8 @@ end;
 $$;
 
 -- 팀원 줄을 고칠 때의 규칙 - 이름 · 역할은 자기 것만, 승인 · 관리자 여부는 관리자가 다른 사람 것만,
--- 승인된 관리자가 하나도 남지 않게는 못 한다. 승인을 취소하면 관리자에서도 빠진다
+-- 승인된 관리자가 하나도 남지 않게는 못 한다. 승인을 취소하면 관리자 · 영역 맡기에서도 빠진다.
+-- 영역을 맡은 사람은 SQL Editor 에서만 정한다(로그인한 사용자는 관리자라도 못 바꾼다)
 create or replace function public.tm_members_guard()
 returns trigger
 language plpgsql
@@ -179,9 +225,13 @@ security definer
 set search_path = ''
 as $$
 begin
-  -- 승인을 취소하면 관리자 표시도 지운다 - 나중에 다시 승인했을 때 관리자 권한이 말없이 되살아나지 않게
+  if auth.uid() is not null and new.domain_editor is distinct from old.domain_editor then
+    raise exception '영역을 맡을 사람은 SQL Editor 에서만 정할 수 있습니다';
+  end if;
+  -- 승인을 취소하면 관리자 · 영역 맡기 표시도 지운다 - 나중에 다시 승인했을 때 권한이 말없이 되살아나지 않게
   if old.active and not new.active then
     new.is_admin := false;
+    new.domain_editor := false;
   end if;
   -- 마지막 관리자는 SQL Editor 에서도 내리지 못한다. 둘이 동시에 서로를 내리지 못하게 관리자 줄을 잠그고 센다
   if old.active and old.is_admin and not (new.active and new.is_admin) then
@@ -233,6 +283,30 @@ begin
     raise exception '승인 대기 중인 계정만 거절할 수 있습니다';
   end if;
   delete from auth.users u where u.id = target;
+end;
+$$;
+
+-- 영역 지우기 - 그 영역의 작업을 move_to 로 옮기고 지운다. 영역을 맡은 사람만.
+-- 옮길 영역이 따로 있어야 하므로 마지막 영역은 지울 수 없다. 둘이 동시에 서로 다른 영역을 지워 하나도 남지 않게 되지 않도록 영역 줄을 잠근다
+create or replace function public.tm_domain_remove(target text, move_to text)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if not public.tm_can_edit_domains() then
+    raise exception '영역은 맡은 사람만 지울 수 있습니다';
+  end if;
+  if target = move_to then
+    raise exception '작업을 옮길 영역은 지울 영역과 달라야 합니다';
+  end if;
+  perform 1 from public.tm_domains d for update;
+  if not exists (select 1 from public.tm_domains d where d.id = move_to) then
+    raise exception '작업을 옮길 영역이 없습니다. 화면을 새로고침해 주세요';
+  end if;
+  update public.tm_tasks t set domain = move_to where t.domain = target;
+  delete from public.tm_domains d where d.id = target;
 end;
 $$;
 
@@ -403,6 +477,9 @@ drop trigger if exists tm_memos_touch on public.tm_memos;
 create trigger tm_memos_touch before update on public.tm_memos
   for each row execute function public.tm_touch();
 
+create or replace trigger tm_domains_touch before update on public.tm_domains
+  for each row execute function public.tm_touch();
+
 -- 문서 트리거는 이름 순서로 돈다: guard(고리 막기) → history(기록 · 고친 사람) → stamp('누가' 칸 고정) → touch(고친 시각)
 create or replace trigger tm_docs_guard before insert or update of parent_id on public.tm_docs
   for each row execute function public.tm_docs_guard();
@@ -436,6 +513,7 @@ alter table public.tm_docs enable row level security;
 alter table public.tm_memos enable row level security;
 alter table public.tm_doc_versions enable row level security;
 alter table public.tm_doc_comments enable row level security;
+alter table public.tm_domains enable row level security;
 
 -- 팀원 목록: 승인된 팀원은 모두를, 승인 대기 중인 사람은 자기 줄만 본다
 drop policy if exists tm_members_select on public.tm_members;
@@ -481,14 +559,33 @@ create policy tm_doc_comments_members on public.tm_doc_comments
   using ((select public.tm_is_member()))
   with check ((select public.tm_is_member()));
 
+-- 영역: 팀원 모두 읽고, 만들기 · 고치기는 영역을 맡은 사람만.
+-- 지우기 권한은 아무에게도 주지 않는다 - tm_domain_remove 가 그 영역의 작업을 옮긴 뒤에만 지운다
+drop policy if exists tm_domains_read on public.tm_domains;
+create policy tm_domains_read on public.tm_domains
+  for select to authenticated
+  using ((select public.tm_is_member()));
+drop policy if exists tm_domains_insert on public.tm_domains;
+create policy tm_domains_insert on public.tm_domains
+  for insert to authenticated
+  with check ((select public.tm_can_edit_domains()));
+drop policy if exists tm_domains_update on public.tm_domains;
+create policy tm_domains_update on public.tm_domains
+  for update to authenticated
+  using ((select public.tm_can_edit_domains()))
+  with check ((select public.tm_can_edit_domains()));
+
 -- Supabase 가 새 표에 기본으로 주는 권한(TRUNCATE 등)을 모두 거두고, 화면이 쓰는 것만 다시 준다
-revoke all on public.tm_members, public.tm_tasks, public.tm_docs, public.tm_memos, public.tm_doc_versions, public.tm_doc_comments
+revoke all on public.tm_members, public.tm_tasks, public.tm_docs, public.tm_memos, public.tm_doc_versions, public.tm_doc_comments,
+  public.tm_domains
   from anon, authenticated;
 grant select, update on public.tm_members to authenticated;
 grant select, insert, update, delete on public.tm_tasks, public.tm_docs, public.tm_memos to authenticated;
 -- 댓글은 지우지 않고 removed 로 표시한다(답글이 이어지게). 기록은 읽기만
 grant select, insert, update on public.tm_doc_comments to authenticated;
 grant select on public.tm_doc_versions to authenticated;
+-- 영역은 칸마다 - id 는 만들 때만, 만든 시각 · 고친 시각은 DB 가
+grant select, insert (id, label, short, color, sort), update (label, short, color, sort) on public.tm_domains to authenticated;
 
 -- 함수도 기본으로 누구나 실행할 수 있어 /rest/v1/rpc 로 불린다. 트리거용은 아무도 부르지 못하게 하고
 -- RLS 가 쓰는 두 개(승인된 팀원인가 · 관리자인가)와 가입 요청 거절만 로그인한 사람에게 남긴다(거절은 함수가 관리자인지 본다).
@@ -500,6 +597,9 @@ grant execute on function public.tm_is_member(), public.tm_is_admin(), public.tm
 revoke execute on function public.tm_docs_history(), public.tm_docs_guard(), public.tm_docs_stamp(), public.tm_doc_comments_guard(),
   public.tm_doc_snapshot(uuid) from public, anon, authenticated;
 grant execute on function public.tm_doc_snapshot(uuid) to authenticated;
+-- 영역 - RLS 가 쓰는 '맡은 사람인가'와 지우기(함수가 맡은 사람인지 본다)
+revoke execute on function public.tm_can_edit_domains(), public.tm_domain_remove(text, text) from public, anon, authenticated;
+grant execute on function public.tm_can_edit_domains(), public.tm_domain_remove(text, text) to authenticated;
 
 -- ── 실시간 - 다른 사람이 고친 것이 새로고침 없이 보이게 ──────
 -- 메모는 RLS 를 거쳐 쓴 사람에게만 간다(지운 알림만은 RLS 를 거치지 않아 id 만 실려 모두에게 간다 - 내용은 없다)
@@ -523,6 +623,10 @@ begin
   end;
   begin
     alter publication supabase_realtime add table public.tm_doc_comments;
+  exception when duplicate_object then null;
+  end;
+  begin
+    alter publication supabase_realtime add table public.tm_domains;
   exception when duplicate_object then null;
   end;
 end;
@@ -574,3 +678,8 @@ create policy tm_presence_write on realtime.messages
 -- 관리자 칸이 생기기 전부터 쓰던 프로젝트도 한 번 실행한다(그 전에는 아무도 승인할 수 없다).
 -- 결과에 그 계정 한 줄이 나와야 한다. 아무 줄도 나오지 않으면 메일이 Users 목록과 다른 것이다.
 -- update public.tm_members set active = true, is_admin = true where lower(email) = lower('admin@example.com') returning email, active, is_admin;
+
+-- ── 영역을 맡을 사람 정하기 ───────────────────────────────────
+-- 영역(작업을 가르는 갈래)은 여기서 정한 사람만 만들고 고치고 지운다. 관리자와 따로이고, 화면에서는 누구도 바꿀 수 없다.
+-- 아래 줄의 메일을 바꾸고 맨 앞의 -- 를 지워 그 줄만 따로 실행한다. 맡기기를 거두려면 true 를 false 로.
+-- update public.tm_members set domain_editor = true where lower(email) = lower('admin@example.com') returning email, domain_editor;

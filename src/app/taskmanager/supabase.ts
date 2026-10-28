@@ -2,7 +2,8 @@
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import {
-  initialOf, type Doc, type DocComment, type DocVersion, type DomainKey, type Member, type Memo, type Priority, type Status, type Task,
+  initialOf, isDomainColor,
+  type Doc, type DocComment, type DocVersion, type Domain, type DomainKey, type Member, type Memo, type Priority, type Status, type Task,
 } from './types';
 
 /*
@@ -106,6 +107,16 @@ export interface MemoRow {
   updated_at: string;
 }
 
+export interface DomainRow {
+  id: string;
+  label: string;
+  short: string;
+  color: string;
+  sort: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface MemberRow {
   id: string;
   email: string;
@@ -115,6 +126,8 @@ export interface MemberRow {
   active: boolean;
   /** 승인 · 승인 취소 · 관리자 지정을 할 수 있다. SQL 을 다시 실행하기 전의 표에는 없다 */
   is_admin?: boolean;
+  /** 영역을 고칠 수 있다(SQL Editor 에서만 정한다). SQL 을 다시 실행하기 전의 표에는 없다 */
+  domain_editor?: boolean;
   created_at: string;
 }
 
@@ -238,6 +251,20 @@ export function memoToRow(p: Partial<Memo>): Partial<MemoRow> {
   return r;
 }
 
+export function domainFromRow(r: DomainRow): Domain {
+  return { id: r.id, label: r.label, short: r.short, color: isDomainColor(r.color) ? r.color : 'gray', order: r.sort };
+}
+
+/** 바뀐 칸만 옮긴다. id 는 만들 때 한 번만 보낸다 */
+export function domainToRow(p: Partial<Domain>): Partial<DomainRow> {
+  const r: Partial<DomainRow> = {};
+  if (p.label !== undefined) r.label = p.label;
+  if (p.short !== undefined) r.short = p.short;
+  if (p.color !== undefined) r.color = p.color;
+  if (p.order !== undefined) r.sort = p.order;
+  return r;
+}
+
 export function memberFromRow(r: MemberRow): Member {
   const name = r.name.trim() || r.email.split('@')[0] || '이름 없음';
   return {
@@ -248,5 +275,6 @@ export function memberFromRow(r: MemberRow): Member {
     email: r.email,
     active: r.active,
     isAdmin: r.is_admin === true,
+    domainEditor: r.domain_editor === true,
   };
 }

@@ -1,15 +1,16 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { LOCAL_ME_KEY, LOCAL_TASKS_KEY, isUntouchedSample, type Store, type StoreOptions, type SyncState } from './store';
 import { LOCAL_DOCS_KEY, isUntouchedSampleDoc, type DocStore } from './docStore';
+import { byOrder, defaultDomain, nextOrder, type DomainStore } from './domainStore';
 import type { MemoStore } from './memoStore';
 import {
-  PENDING_KEY, docCommentFromRow, docCommentToRow, docFromRow, docToRow, docVersionFromRow, isMissingTable,
+  PENDING_KEY, docCommentFromRow, docCommentToRow, docFromRow, docToRow, docVersionFromRow, domainFromRow, domainToRow, isMissingTable,
   memoFromRow, memoToRow, sb, taskFromRow, taskToRow,
-  type DocCommentRow, type DocRow, type DocVersionRow, type MemoRow, type TaskRow,
+  type DocCommentRow, type DocRow, type DocVersionRow, type DomainRow, type MemoRow, type TaskRow,
 } from './supabase';
-import type { Doc, DocComment, Memo, Task } from './types';
+import { DEFAULT_DOMAINS, type Doc, type DocComment, type Domain, type Memo, type Task } from './types';
 
 /*
  * Supabase 저장소 - 작업 · 문서를 팀이 함께 쓴다. 개인 메모는 쓴 사람만 읽고 쓴다(표의 RLS).
@@ -706,23 +707,28 @@ const FILE_TYPES = new Set([
 /** 파일을 볼 수 있는 주소는 한 시간짜리 - 50분 동안 다시 쓴다 */
 const signed = new Map<string, { url: string; until: number }>();
 
+/** 위키 표(SQL 의 위키 칸 · 기록 · 댓글) */
+const wikiProbe = () => [
+  sb().from('tm_docs').select('id,icon,trashed_at,updated_by').limit(1),
+  sb().from('tm_doc_comments').select('id').limit(1),
+];
+/** 영역 표 */
+const domainProbe = () => [sb().from('tm_domains').select('id').limit(1)];
+
 /**
- * 위키 표(SQL 의 위키 칸 · 기록 · 댓글)가 있는가. 앱을 먼저 배포하고 SQL 을 나중에 실행해도 예전처럼
- * 문서만 쓸 수 있게 열 때 한 번 물어본다. 연결 문제로 못 물었으면 잠시 뒤 다시 묻는다
+ * 뒤에 SQL 로 더한 표 · 칸이 있는가. 앱을 먼저 배포하고 SQL 을 나중에 실행해도 예전처럼
+ * 돌 수 있게 열 때 한 번 물어본다. 연결 문제로 못 물었으면 잠시 뒤 다시 묻는다. probe 는 모듈의 고정 함수로 준다
  */
-function useWikiTables(): boolean | null {
+function useTablesExist(probe: () => PromiseLike<{ error: DbError | null }>[]): boolean | null {
   const [ok, setOk] = useState<boolean | null>(null);
   useEffect(() => {
     let live = true;
     let timer: ReturnType<typeof setTimeout> | null = null;
     const ask = async (tries: number) => {
-      const [cols, comments] = await Promise.all([
-        sb().from('tm_docs').select('id,icon,trashed_at,updated_by').limit(1),
-        sb().from('tm_doc_comments').select('id').limit(1),
-      ]);
+      const res = await Promise.all(probe());
       if (!live) return;
-      const errs = [cols.error, comments.error].filter(Boolean) as DbError[];
-      // 표 · 칸이 없다는 답(42P01 · 42703 · PGRST2xx)이면 위키 기능을 끈다
+      const errs = res.map((r) => r.error).filter(Boolean) as DbError[];
+      // 표 · 칸이 없다는 답(42P01 · 42703 · PGRST2xx)이면 그 기능을 끈다
       if (errs.some((e) => isMissingTable(e) || e.code === '42703' || e.code?.startsWith('PGRST2'))) { setOk(false); return; }
       if (errs.length) {
         if (tries < 5) timer = setTimeout(() => void ask(tries + 1), 3000 * (tries + 1));
@@ -736,12 +742,12 @@ function useWikiTables(): boolean | null {
       live = false;
       if (timer) clearTimeout(timer);
     };
-  }, []);
+  }, [probe]);
   return ok;
 }
 
 export function useRemoteDocStore(opts: StoreOptions = {}): DocStore {
-  const wiki = useWikiTables();
+  const wiki = useTablesExist(wikiProbe);
   const { items, ready, sync, loadError, deleted, eng } = useRowSync<Doc, DocRow>({
     table: 'tm_docs', fromRow: docFromRow, toRow: docToRow, onError: opts.onError,
     texts: {
@@ -870,6 +876,55 @@ export function useRemoteDocStore(opts: StoreOptions = {}): DocStore {
     create, update, remove, flush, reload, clearSamples: noop,
     features: { wiki: wiki === true, files: wiki === true },
     versions, snapshot, comments: notes.items, addComment, updateComment, upload, fileUrl,
+  };
+}
+
+/* ── 영역 ─────────────────────────────────────────────────── */
+
+/* 팀원 모두 읽고, 만들기 · 고치기는 영역을 맡은 사람만(RLS). 지우기는 그 영역의 작업을 옮기는 것까지 tm_domain_remove 가 한 번에 한다.
+   영역 표가 없는 DB(SQL 을 다시 실행하기 전)에서는 처음 네 영역으로 돌고 고치기를 숨긴다 */
+export function useRemoteDomainStore(opts: StoreOptions = {}): DomainStore {
+  const { onError } = opts;
+  const table = useTablesExist(domainProbe);
+  const { items, ready, sync, eng } = useRowSync<Domain, DomainRow>({
+    table: 'tm_domains', fromRow: domainFromRow, toRow: domainToRow, onError,
+    disabled: table !== true,
+    texts: {
+      gone: '다른 곳에서 지운 영역이라 고치던 내용을 저장하지 못했습니다.',
+      createFail: ({ label }) => `'${label}' 영역을 만들지 못했습니다. 서버가 받아 주지 않아 목록에서 뺐습니다.`,
+    },
+  });
+  // 아직 한 줄도 받지 못했으면(읽기 실패) 처음 네 영역으로 그린다
+  const domains = useMemo(() => (table === true && items.length ? items.slice().sort(byOrder) : DEFAULT_DOMAINS), [table, items]);
+
+  const create = useCallback<DomainStore['create']>((input) => {
+    const d: Domain = {
+      id: crypto.randomUUID(), label: input.label, short: input.short ?? '', color: input.color, order: nextOrder(eng.items),
+    };
+    eng.create(d, { id: d.id, ...domainToRow(d) });
+    return d;
+  }, [eng]);
+
+  const update = useCallback<DomainStore['update']>((id, patch) => eng.patch(id, patch), [eng]);
+
+  const remove = useCallback<DomainStore['remove']>(async (id, moveTo) => {
+    // 기다리는 고치기를 먼저 보낸다 - 지운 뒤에 그 영역을 고치러 가지 않게
+    await eng.flushAll();
+    const { error } = await sb().rpc('tm_domain_remove', { target: id, move_to: moveTo });
+    if (error) {
+      // DB 가 거절한 까닭(맡은 사람만 · 옮길 영역 없음)은 그대로 알린다
+      onError?.(error.code === 'P0001' && error.message ? error.message : '영역을 지우지 못했습니다. 인터넷 연결을 확인해 주세요.');
+      return false;
+    }
+    await eng.reload(true);
+    return true;
+  }, [eng, onError]);
+
+  const flush = useCallback(() => eng.flushAll(), [eng]);
+
+  return {
+    domains, ready: table === false || (table === true && ready), editable: table === true, sync,
+    create, update, remove, flush,
   };
 }
 
@@ -1042,6 +1097,10 @@ export async function importLocal(userId: string): Promise<{ tasks: number; docs
     const localMe = (() => {
       try { return window.localStorage.getItem(LOCAL_ME_KEY) ?? 'm7'; } catch { return 'm7'; }
     })();
+    // 브라우저에서 만든 영역은 옮기지 않는다 - 팀 영역에 없는 영역의 작업은 새 작업과 같은 영역으로
+    const got = await sb().from('tm_domains').select('*');
+    const team = got.error ? DEFAULT_DOMAINS : (got.data as DomainRow[]).map(domainFromRow);
+    const domainFor = (id: string) => (team.some((d) => d.id === id) ? id : defaultDomain(team.slice().sort(byOrder)));
     const plan = mark?.state === 'tasks' ? mark.plan : {};
     const rows = left.tasks
       .slice()
@@ -1053,7 +1112,7 @@ export async function importLocal(userId: string): Promise<{ tasks: number; docs
       .from('tm_tasks')
       .upsert(rows.map(({ id, old }) => ({
         id,
-        ...taskToRow({ ...old, assignee: old.assignee === localMe ? userId : null }),
+        ...taskToRow({ ...old, domain: domainFor(old.domain), assignee: old.assignee === localMe ? userId : null }),
         created_at: old.createdAt,
         updated_at: old.updatedAt,
       })), { onConflict: 'id', ignoreDuplicates: true })

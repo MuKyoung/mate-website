@@ -7,13 +7,14 @@ import Link from 'next/link';
 import { LOCAL_ME_KEY, isUntouchedSample, useTaskStore, type Store, type StoreOptions } from './store';
 import { liveDocCount, useDocStore, type DocStore } from './docStore';
 import { useMemoStore, type MemoStore } from './memoStore';
+import { DomainsContext, defaultDomain, domainOf, useDomainStore, type DomainStore } from './domainStore';
 import {
-  DOMAINS, MEMBERS, PRIORITIES, STATUSES,
-  domainLabel, memberById, priorityLabel,
-  type DomainKey, type Member, type Priority, type Status, type Task,
+  MEMBERS, PRIORITIES, STATUSES,
+  memberById, priorityLabel,
+  type DomainColor, type DomainKey, type Member, type Priority, type Status, type Task,
 } from './types';
 import {
-  Avatar, Chip, DOMAIN_FILL, DOMAIN_STYLE, DueBadge, IconChevron, IconNav, IconPlus, IconSearch, Modal,
+  Avatar, DOMAIN_FILL, DomainChip, DueBadge, IconChevron, IconNav, IconPlus, IconSearch, Modal,
   PRIORITY_STYLE, PageHead, PriorityDot, STATUS_STYLE, StatusPill, TaskCard, Toast,
   tmBtn, tmBtnPrimary, tmCallout, tmCount, tmEditBtn, tmGhostBtn, tmIconBtnSm, tmInput, tmSelect, tmTab, tmTextBtn,
   type NavIcon,
@@ -30,12 +31,13 @@ const Docs = dynamic(() => import('./Docs'), {
 import Memos from './Memos';
 import { isRemote } from './supabase';
 import {
-  RETRY, importLocal, localLeftovers, skipImport, useRemoteDocStore, useRemoteMemoStore, useRemoteTaskStore,
+  RETRY, importLocal, localLeftovers, skipImport, useRemoteDocStore, useRemoteDomainStore, useRemoteMemoStore, useRemoteTaskStore,
 } from './remote';
 import { signOut, useAuth, useTeam, type MemberPatch } from './team';
 import { MembersContext, useMembers } from './members';
 import { LoadingScreen, LoginScreen, PendingScreen, TroubleScreen } from './Gate';
 import { TeamDialog } from './TeamDialog';
+import { DomainDialog } from './DomainDialog';
 
 /*
  * 작업 관리 도구의 틀 - 세종호이스트크레인 리뉴얼 관리자의 틀을 옮겼다(2026-10-22).
@@ -53,6 +55,7 @@ import { TeamDialog } from './TeamDialog';
 const useTasks: (opts: StoreOptions) => Store = isRemote ? useRemoteTaskStore : useTaskStore;
 const useDocs: (opts: StoreOptions) => DocStore = isRemote ? useRemoteDocStore : useDocStore;
 const useMemos: (opts: StoreOptions) => MemoStore = isRemote ? useRemoteMemoStore : useMemoStore;
+const useDomainList: (opts: StoreOptions) => DomainStore = isRemote ? useRemoteDomainStore : useDomainStore;
 
 /** Supabase 모드에서 로그인한 사람 */
 interface Account {
@@ -77,7 +80,9 @@ const VIEWS: { id: View; label: string; key: string; hint: string }[] = [
 ];
 type Scope = { kind: 'all' } | { kind: 'mine' } | { kind: 'domain'; id: DomainKey };
 
-type NavItem = { key: string; label: string; icon?: NavIcon; dot?: DomainKey; count: number; active: boolean; go(): void };
+type NavItem = { key: string; label: string; icon?: NavIcon; dot?: DomainColor; count: number; active: boolean; go(): void };
+/** 메뉴 묶음 - action 은 묶음 이름 옆의 글자 버튼(영역 '관리') */
+type NavGroup = { label?: string; action?: { text: string; label: string; go(): void }; items: NavItem[] };
 
 const PREF_KEY = 'mate.taskmanager.prefs.v1';
 
@@ -183,6 +188,8 @@ function Workspace({ account }: { account?: Account }) {
   const store = useTasks({ onError: notify });
   const docStore = useDocs({ onError: notify });
   const memoStore = useMemos({ onError: notify });
+  const domainStore = useDomainList({ onError: notify });
+  const domains = domainStore.domains;
 
   const [section, setSection] = useState<Section>('tasks');
   const [view, setView] = useState<View>('board');
@@ -206,6 +213,8 @@ function Workspace({ account }: { account?: Account }) {
   const [menu, setMenu] = useState(false);
   /** Supabase 모드 - 팀원 창 */
   const [teamOpen, setTeamOpen] = useState(false);
+  /** 영역 관리 창 */
+  const [domainsOpen, setDomainsOpen] = useState(false);
   const [leaving, setLeaving] = useState(false);
   /** Supabase 모드 - 이 브라우저에 남은 예전 데이터 */
   const [leftover, setLeftover] = useState<{ tasks: number; docs: number } | null>(null);
@@ -289,12 +298,33 @@ function Workspace({ account }: { account?: Account }) {
   const logout = async () => {
     if (leaving) return;
     setLeaving(true);
-    await Promise.all([store.flush?.(), docStore.flush?.(), memoStore.flush?.()]).catch(() => {});
+    await Promise.all([store.flush?.(), docStore.flush?.(), memoStore.flush?.(), domainStore.flush?.()]).catch(() => {});
     await signOut();
   };
 
   /* 승인은 관리자만 하므로 승인 대기 숫자도 관리자에게만 보인다 */
   const pendingCount = account?.me.isAdmin ? account.members.filter((m) => m.active === false).length : 0;
+
+  /* 영역 고치기 - Supabase 모드는 영역을 맡은 사람만(관리자와 따로 SQL Editor 에서 정하고, DB 도 그 사람 것만 받는다).
+     브라우저 저장 모드는 계정이 없어 누구나 */
+  const canEditDomains = domainStore.editable && (!account || account.me.domainEditor === true);
+
+  /* 영역 지우기 - 그 영역의 작업은 고른 영역으로 옮긴다 */
+  const removeDomain = async (id: DomainKey, to: DomainKey) => {
+    const gone = domainOf(domains, id);
+    const n = store.tasks.filter((t) => t.domain === id).length;
+    // 브라우저 저장 모드는 작업을 먼저 옮긴다. Supabase 모드는 DB 가 지우면서 한 번에 옮긴다
+    if (!isRemote) store.tasks.filter((t) => t.domain === id).forEach((t) => store.update(t.id, { domain: to }));
+    const ok = await domainStore.remove(id, to);
+    if (!ok) return false;
+    // 실시간 알림을 기다리지 않고 옮겨진 작업을 바로 받는다
+    if (isRemote) await store.reload?.();
+    setToast({
+      text: n ? `'${gone.label}' 영역을 지웠습니다. 작업 ${n}건은 '${domainOf(domains, to).label}' 영역으로 옮겼습니다.` : `'${gone.label}' 영역을 지웠습니다.`,
+      undo: false,
+    });
+    return true;
+  };
 
   /* 비밀번호 재설정 링크로 들어왔으면 팀원 창(새 비밀번호 칸)을 연다 */
   const recovery = account?.recovery;
@@ -322,8 +352,8 @@ function Workspace({ account }: { account?: Account }) {
     setToast(ok ? null : { text: '그 사이 바뀌어서 되돌리지 않았습니다', undo: false });
   }, []);
 
-  /* 저장 상태 알약 - 브라우저 저장인지, 팀 저장소에 다 들어갔는지(작업 · 문서 · 메모를 함께 본다) */
-  const syncs = [store.sync, docStore.sync, memoStore.sync];
+  /* 저장 상태 알약 - 브라우저 저장인지, 팀 저장소에 다 들어갔는지(작업 · 문서 · 메모 · 영역을 함께 본다) */
+  const syncs = [store.sync, docStore.sync, memoStore.sync, domainStore.sync];
   const sync = syncs.includes('error') ? 'error' : syncs.includes('saving') ? 'saving' : 'idle';
   const saved: { tone: 'ok' | 'busy' | 'warn'; text: string } = account
     ? sync === 'error'
@@ -444,14 +474,14 @@ function Workspace({ account }: { account?: Account }) {
     const base = [...visible].sort((a, b) => statusRank[a.status] - statusRank[b.status] || a.order - b.order);
     if (!sort) return base;
     const rank = { urgent: 0, high: 1, normal: 2, low: 3 } as Record<Priority, number>;
-    const domainRank = Object.fromEntries(DOMAINS.map((d, i) => [d.id, i])) as Record<DomainKey, number>;
+    const domainRank = new Map(domains.map((d, i) => [d.id, i]));
     const key = (t: Task): string | number => {
       switch (sort.by) {
         case 'title': return t.title;
         case 'status': return statusRank[t.status];
         case 'priority': return rank[t.priority];
-        // 메뉴에 놓인 영역 순서대로
-        case 'domain': return domainRank[t.domain];
+        // 메뉴에 놓인 영역 순서대로. 목록에 없는 영역은 뒤로
+        case 'domain': return domainRank.get(t.domain) ?? domains.length;
         // 마감일 없는 것은 항상 뒤로
         case 'due': return t.due ?? '9999-12-31';
         // 담당자 이름 순. 미배정 · 없어진 계정은 뒤로
@@ -463,7 +493,7 @@ function Workspace({ account }: { account?: Account }) {
       const d = typeof x === 'string' && typeof y === 'string' ? x.localeCompare(y, 'ko') : Number(x) - Number(y);
       return d * sort.dir;
     });
-  }, [visible, sort, members]);
+  }, [visible, sort, members, domains]);
 
   const toggleSort = (by: NonNullable<typeof sort>['by']) =>
     setSort((prev) => (prev?.by === by ? (prev.dir === 1 ? { by, dir: -1 } : null) : { by, dir: 1 }));
@@ -486,12 +516,19 @@ function Workspace({ account }: { account?: Account }) {
 
   const counts = useMemo(() => {
     const mine = store.tasks.filter((t) => t.assignee === me && t.status !== 'done').length;
-    const perDomain = Object.fromEntries(
-      DOMAINS.map((d) => [d.id, store.tasks.filter((t) => t.domain === d.id && t.status !== 'done').length]),
-    ) as Record<DomainKey, number>;
+    const perDomain = new Map<DomainKey, number>();
+    store.tasks.forEach((t) => {
+      if (t.status !== 'done') perDomain.set(t.domain, (perDomain.get(t.domain) ?? 0) + 1);
+    });
     const open = store.tasks.filter((t) => t.status !== 'done').length;
     return { mine, perDomain, open, total: store.tasks.length };
   }, [store.tasks, me]);
+
+  /* 보던 영역이 지워졌으면(다른 곳에서 지웠거나 저장해 둔 화면의 영역이 없어졌으면) 모든 작업으로 */
+  const scopeGone = scope.kind === 'domain' && domainStore.ready && !domains.some((d) => d.id === scope.id);
+  useEffect(() => {
+    if (scopeGone) setScope({ kind: 'all' });
+  }, [scopeGone]);
 
   const open = openId ? store.tasks.find((t) => t.id === openId) ?? null : null;
 
@@ -620,12 +657,12 @@ function Workspace({ account }: { account?: Account }) {
   const scopeTitle =
     scope.kind === 'all' ? '모든 작업'
       : scope.kind === 'mine' ? '내 작업'
-        : domainLabel(scope.id);
+        : domainOf(domains, scope.id).label;
   const currentView = VIEWS.find((v) => v.id === view) ?? VIEWS[0];
 
   /* ── 메뉴 ── */
   const goTasks = (s: Scope) => { setSection('tasks'); setScope(s); };
-  const nav: { label?: string; items: NavItem[] }[] = [
+  const nav: NavGroup[] = [
     {
       items: [
         { key: 'all', label: '모든 작업', icon: 'board', count: counts.open,
@@ -636,8 +673,9 @@ function Workspace({ account }: { account?: Account }) {
     },
     {
       label: '영역',
-      items: DOMAINS.map((d) => ({
-        key: d.id, label: d.label, dot: d.id, count: counts.perDomain[d.id],
+      action: canEditDomains ? { text: '관리', label: '영역 관리', go: () => setDomainsOpen(true) } : undefined,
+      items: domains.map((d) => ({
+        key: d.id, label: d.label, dot: d.color, count: counts.perDomain.get(d.id) ?? 0,
         active: section === 'tasks' && scope.kind === 'domain' && scope.id === d.id,
         go: () => goTasks({ kind: 'domain', id: d.id }),
       })),
@@ -657,7 +695,18 @@ function Workspace({ account }: { account?: Account }) {
   const navLinks = (after?: () => void) =>
     nav.map((g, gi) => (
       <div key={gi} className="contents">
-        {g.label && <p className="mx-3 mb-1 mt-3 text-[12.5px] font-bold text-tm-sub">{g.label}</p>}
+        {g.label && (
+          <div className="mx-3 mb-1 mt-3 flex items-center justify-between gap-2">
+            <p className="text-[12.5px] font-bold text-tm-sub">{g.label}</p>
+            {g.action && (
+              <button type="button" aria-label={g.action.label} onClick={() => { after?.(); g.action?.go(); }}
+                className="-my-1 -mr-2 rounded-md px-2 py-1 text-[12.5px] font-bold text-tm-blue transition-colors duration-150 hover:bg-tm-tint
+                           [@media(pointer:coarse)]:min-h-11">
+                {g.action.text}
+              </button>
+            )}
+          </div>
+        )}
         {g.items.map((it) => (
           <button key={it.key} type="button" aria-current={it.active ? 'page' : undefined}
             onClick={() => { it.go(); after?.(); }}
@@ -686,7 +735,8 @@ function Workspace({ account }: { account?: Account }) {
     `flex min-h-[54px] flex-col items-center justify-center gap-[3px] rounded-tm-sm text-[12.5px] ${
       active ? 'bg-tm-tint font-bold text-tm-blue' : 'font-semibold text-tm-sub'}`;
 
-  if (!store.ready) {
+  /* 영역도 받은 뒤에 그린다 - 바꾼 영역 이름 대신 처음 이름이 잠깐 보이지 않게. 작업을 못 읽었으면 그 안내를 먼저 */
+  if (!store.ready || (!domainStore.ready && !store.loadError)) {
     return (
       <div className="flex h-[100dvh] items-center justify-center bg-tm-bg text-[15px] font-semibold text-tm-sub">
         불러오는 중…
@@ -694,7 +744,7 @@ function Workspace({ account }: { account?: Account }) {
     );
   }
 
-  return (
+  const page = (
     <div className="grid h-[100dvh] grid-cols-[268px_minmax(0,1fr)] grid-rows-[minmax(0,1fr)] overflow-hidden bg-tm-bg text-[15.5px] leading-[1.6] text-tm-ink
                     max-[900px]:grid-cols-[minmax(0,1fr)]">
 
@@ -1046,7 +1096,7 @@ function Workspace({ account }: { account?: Account }) {
                               </span>
                             </td>
                             <td className="px-4 py-3.5">
-                              <Chip className={DOMAIN_STYLE[t.domain]}>{domainLabel(t.domain)}</Chip>
+                              <DomainChip id={t.domain} />
                             </td>
                             <td className="px-4 py-3.5">
                               <DueBadge due={t.due} done={t.status === 'done'} />
@@ -1103,7 +1153,7 @@ function Workspace({ account }: { account?: Account }) {
       )}
 
       {creating && (
-        <NewTaskDialog defaultStatus={creating} defaultDue={creatingDue} knownLabels={knownLabels}
+        <NewTaskDialog defaultStatus={creating} defaultDomain={defaultDomain(domains)} defaultDue={creatingDue} knownLabels={knownLabels}
           onCreate={handleCreate}
           onClose={() => { setCreating(null); setCreatingDue(null); }} />
       )}
@@ -1115,6 +1165,16 @@ function Workspace({ account }: { account?: Account }) {
           </nav>
         </Modal>
       )}
+
+      {/* 맡은 사람에서 빠지면(다른 창에서 바뀌면) 창도 닫힌다 */}
+      {domainsOpen && canEditDomains && (
+        <DomainDialog domains={domains} tasks={store.tasks} local={!isRemote}
+          onCreate={domainStore.create} onUpdate={domainStore.update} onRemove={removeDomain}
+          onClose={() => setDomainsOpen(false)} />
+      )}
     </div>
   );
+
+  /* 카드 · 목록 · 보기 · 작업 창이 영역 이름과 색을 여기서 읽는다 */
+  return <DomainsContext.Provider value={domains}>{page}</DomainsContext.Provider>;
 }

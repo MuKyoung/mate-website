@@ -1,8 +1,9 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { DOMAINS, type DomainKey, type Task } from './types';
+import type { Task } from './types';
 import { useMembers } from './members';
+import { domainOf, useDomains } from './domainStore';
 import { useToday } from './Timeline';
 import { Avatar, DOMAIN_FILL, DueBadge, PriorityDot, STATUS_STYLE, tmCount, tmSelect } from './ui';
 
@@ -60,6 +61,7 @@ export default function Roadmap({
   const [groupBy, setGroupBy] = useState<GroupBy>('domain');
   const now = useToday();
   const members = useMembers();
+  const domains = useDomains();
 
   /* 지난주까지 마감된 완료 작업은 '이번 주'에 계속 쌓이므로 올리지 않는다 */
   const shown = useMemo(() => {
@@ -69,9 +71,11 @@ export default function Roadmap({
   const hiddenDone = tasks.length - shown.length;
 
   const lanes = useMemo(() => {
+    // 목록에 없는 영역(방금 지워진 것)의 작업도 사라지지 않게 '영역 없음' 줄에 모은다
+    const known = new Set(domains.map((d) => d.id));
     const base =
       groupBy === 'domain'
-        ? DOMAINS.map((d) => ({ id: d.id as string, label: d.label }))
+        ? [...domains.map((d) => ({ id: d.id, label: d.label })), { id: '__none', label: '영역 없음' }]
         : [
             ...members.map((m) => ({ id: m.id, label: m.name })),
             { id: '__none', label: '미배정' },
@@ -81,7 +85,7 @@ export default function Roadmap({
       .map((lane) => {
         const mine = shown.filter((t) =>
           groupBy === 'domain'
-            ? t.domain === (lane.id as DomainKey)
+            ? (known.has(t.domain) ? t.domain : '__none') === lane.id
             : (t.assignee ?? '__none') === lane.id);
 
         const cells = HORIZONS.map((h) => ({
@@ -96,7 +100,7 @@ export default function Roadmap({
       })
       // 할 일이 하나도 없는 줄은 격자를 늘리기만 한다
       .filter((lane) => lane.total > 0);
-  }, [shown, groupBy, now, members]);
+  }, [shown, groupBy, now, members, domains]);
 
   const perHorizon = useMemo(
     () =>
@@ -163,7 +167,7 @@ export default function Roadmap({
                   className="grid grid-cols-[184px_repeat(4,minmax(0,1fr))] items-stretch gap-3.5">
                   <div className="flex items-start gap-2.5 pt-3.5">
                     {groupBy === 'domain' ? (
-                      <span className={`mt-[7px] h-2.5 w-2.5 shrink-0 rounded-[3px] ${DOMAIN_FILL[lane.id as DomainKey]}`} />
+                      <span className={`mt-[7px] h-2.5 w-2.5 shrink-0 rounded-[3px] ${DOMAIN_FILL[domainOf(domains, lane.id).color]}`} />
                     ) : (
                       <Avatar id={lane.id === '__none' ? null : lane.id} size={26} />
                     )}

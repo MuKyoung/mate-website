@@ -2,7 +2,10 @@
 
 export type Status = 'backlog' | 'todo' | 'doing' | 'review' | 'done';
 export type Priority = 'urgent' | 'high' | 'normal' | 'low';
-export type DomainKey = 'web' | 'game' | 'edu' | 'ops';
+/** 영역 id - 처음 네 개(web · game · edu · ops) 말고는 관리자가 만든 영역이다(tm_domains) */
+export type DomainKey = string;
+/** 영역 색 - 빨강 · 호박색 · 초록은 급함 · 임박 · 끝남의 뜻으로만 써서 영역에는 주지 않는다 */
+export type DomainColor = 'blue' | 'violet' | 'teal' | 'gray';
 
 export interface Member {
   id: string;
@@ -16,6 +19,19 @@ export interface Member {
   active?: boolean;
   /** Supabase 계정일 때만 - 승인 · 승인 취소 · 관리자 지정을 할 수 있는지 */
   isAdmin?: boolean;
+  /** Supabase 계정일 때만 - 영역을 고칠 수 있는지. 관리자와 따로, SQL Editor 에서만 정한다 */
+  domainEditor?: boolean;
+}
+
+/** 작업을 가르는 갈래(웹 · 앱, 게임 · XR …). 메뉴 · 보드 · 타임라인 · 로드맵이 이 순서로 줄을 세운다 */
+export interface Domain {
+  id: DomainKey;
+  label: string;
+  /** 보드 카드의 알약에 쓰는 짧은 이름 - 비어 있으면 이름을 쓴다 */
+  short: string;
+  color: DomainColor;
+  /** 메뉴 순서. 작을수록 위 */
+  order: number;
 }
 
 /** 이름에서 아바타 글자를 만든다 - 한글은 이름 두 글자(박무경 → 무경), 영문은 머리글자 */
@@ -64,12 +80,22 @@ export const PRIORITIES: { id: Priority; label: string; rank: number }[] = [
   { id: 'low', label: '낮음', rank: 3 },
 ];
 
-export const DOMAINS: { id: DomainKey; label: string; short: string }[] = [
-  { id: 'web', label: '웹 · 앱', short: 'WEB' },
-  { id: 'game', label: '게임 · XR', short: 'GAME' },
-  { id: 'edu', label: '교육 · 강의', short: 'EDU' },
-  { id: 'ops', label: '내부 · 운영', short: 'OPS' },
+/** 처음 네 영역 - 브라우저 저장 모드의 처음 값이자, 영역 표(tm_domains)가 아직 없는 DB 에서 쓰는 값 */
+export const DEFAULT_DOMAINS: Domain[] = [
+  { id: 'web', label: '웹 · 앱', short: 'WEB', color: 'blue', order: 1000 },
+  { id: 'game', label: '게임 · XR', short: 'GAME', color: 'violet', order: 2000 },
+  { id: 'edu', label: '교육 · 강의', short: 'EDU', color: 'teal', order: 3000 },
+  { id: 'ops', label: '내부 · 운영', short: 'OPS', color: 'gray', order: 4000 },
 ];
+
+export const DOMAIN_COLORS: { id: DomainColor; label: string }[] = [
+  { id: 'blue', label: '파랑' },
+  { id: 'violet', label: '보라' },
+  { id: 'teal', label: '청록' },
+  { id: 'gray', label: '회색' },
+];
+
+export const isDomainColor = (v: unknown): v is DomainColor => DOMAIN_COLORS.some((c) => c.id === v);
 
 export const MEMBERS: Member[] = [
   { id: 'm1', name: '개발 1', initial: 'D1', role: '클라이언트' },
@@ -86,8 +112,6 @@ export const memberById = (id: string | null) =>
 
 export const statusLabel = (s: Status) => STATUSES.find((x) => x.id === s)?.label ?? s;
 export const priorityLabel = (p: Priority) => PRIORITIES.find((x) => x.id === p)?.label ?? p;
-export const domainLabel = (d: DomainKey) => DOMAINS.find((x) => x.id === d)?.label ?? d;
-export const domainShort = (d: DomainKey) => DOMAINS.find((x) => x.id === d)?.short ?? d;
 
 /* ── 날짜 ─────────────────────────────────────────── */
 

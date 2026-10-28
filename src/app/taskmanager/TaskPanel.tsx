@@ -2,12 +2,13 @@
 
 import { useEffect, useId, useRef, useState } from 'react';
 import {
-  DOMAINS, PRIORITIES, STATUSES, localDay,
+  PRIORITIES, STATUSES, localDay,
   type DomainKey, type Priority, type Status, type Task,
 } from './types';
 import { assignable, useMember, useMembers } from './members';
+import { useDomains } from './domainStore';
 import {
-  Avatar, Chip, DOMAIN_STYLE, IconClose, Modal, PriorityDot,
+  Avatar, DomainChip, IconClose, Modal, PriorityDot,
   tmBtn, tmBtnPrimary, tmFieldBase, tmGhostDanger, tmIconBtn, tmInput, tmLabel, tmSelect, tmTextarea,
   useConfirm, useFocusTrap,
 } from './ui';
@@ -26,12 +27,12 @@ interface Draft {
   labels: string[];
 }
 
-const emptyDraft = (status: Status = 'todo'): Draft => ({
+const emptyDraft = (status: Status, domain: DomainKey): Draft => ({
   title: '',
   description: '',
   status,
   priority: 'normal',
-  domain: 'ops',
+  domain,
   assignee: null,
   start: null,
   due: null,
@@ -52,6 +53,7 @@ function Fields({ draft, set, knownLabels = [] }: {
   /** 거꾸로 된 기간을 막으려고 옮긴 쪽 */
   const [moved, setMoved] = useState<'start' | 'due' | null>(null);
   const people = assignable(useMembers(), draft.assignee);
+  const domains = useDomains();
   const listId = useId();
   const suggest = knownLabels.filter((l) => !draft.labels.includes(l));
 
@@ -107,8 +109,10 @@ function Fields({ draft, set, knownLabels = [] }: {
       <div>
         <label className={tmLabel} htmlFor="tm-domain">영역</label>
         <select id="tm-domain" className={`${tmSelect} w-full`}
-          value={draft.domain} onChange={(e) => set({ domain: e.target.value as DomainKey })}>
-          {DOMAINS.map((d) => <option key={d.id} value={d.id}>{d.label}</option>)}
+          value={draft.domain} onChange={(e) => set({ domain: e.target.value })}>
+          {domains.map((d) => <option key={d.id} value={d.id}>{d.label}</option>)}
+          {/* 방금 지워진 영역 - 고르기 칸이 엉뚱한 영역을 보이지 않게 */}
+          {!domains.some((d) => d.id === draft.domain) && <option value={draft.domain} disabled>영역 없음</option>}
         </select>
       </div>
       <div>
@@ -180,9 +184,10 @@ function Fields({ draft, set, knownLabels = [] }: {
 /* ── 새 작업 ──────────────────────────────────────── */
 
 export function NewTaskDialog({
-  defaultStatus, defaultDue, knownLabels, onCreate, onClose,
+  defaultStatus, defaultDomain, defaultDue, knownLabels, onCreate, onClose,
 }: {
   defaultStatus: Status;
+  defaultDomain: DomainKey;
   /** 캘린더에서 날짜를 눌러 들어온 경우 미리 채운다 */
   defaultDue?: string | null;
   /** 이미 쓰인 라벨 - 라벨 칸 추천 목록 */
@@ -190,7 +195,7 @@ export function NewTaskDialog({
   onCreate(d: Draft): void;
   onClose(): void;
 }) {
-  const [draft, setDraft] = useState<Draft>(() => ({ ...emptyDraft(defaultStatus), due: defaultDue ?? null }));
+  const [draft, setDraft] = useState<Draft>(() => ({ ...emptyDraft(defaultStatus, defaultDomain), due: defaultDue ?? null }));
   const titleRef = useRef<HTMLInputElement>(null);
   const formId = useId();
   const [confirm, confirmNode] = useConfirm();
@@ -340,7 +345,7 @@ export function TaskPanel({
         <header className="flex flex-none items-center gap-2.5 border-b border-tm-line py-[18px] pl-[26px] pr-5 max-[720px]:py-3.5 max-[720px]:pl-4 max-[720px]:pr-3">
           <PriorityDot p={task.priority} />
           <span className="text-[16px] font-extrabold tabular-nums text-tm-deep">{task.key}</span>
-          <Chip className={DOMAIN_STYLE[task.domain]}>{DOMAINS.find((d) => d.id === task.domain)?.label}</Chip>
+          <DomainChip id={task.domain} />
           <button type="button" onClick={onClose} aria-label="닫기" className={`ml-auto ${tmIconBtn}`}>
             <IconClose />
           </button>

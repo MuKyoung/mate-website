@@ -3,10 +3,11 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
-  STATUSES, domainShort, statusLabel,
-  type DomainKey, type Priority, type Status, type Task,
+  STATUSES, statusLabel,
+  type DomainColor, type DomainKey, type Priority, type Status, type Task,
 } from './types';
 import { useMember } from './members';
+import { useDomain } from './domainStore';
 
 /*
  * 작업 관리 도구의 화면 부품.
@@ -80,20 +81,20 @@ export const PRIORITY_STYLE: Record<Priority, { dot: string; text: string }> = {
   low: { dot: 'border-[1.5px] border-tm-edge bg-white', text: 'font-semibold text-tm-sub' },
 };
 
-/** 영역 알약 */
-export const DOMAIN_STYLE: Record<DomainKey, string> = {
-  web: 'bg-tm-tint text-tm-blue',
-  game: 'bg-tm-violet-tint text-tm-violet-deep',
-  edu: 'bg-tm-teal-tint text-tm-teal-deep',
-  ops: 'bg-tm-bg text-tm-sub ring-1 ring-inset ring-tm-line',
+/** 영역 알약 - 영역의 색으로 */
+export const DOMAIN_STYLE: Record<DomainColor, string> = {
+  blue: 'bg-tm-tint text-tm-blue',
+  violet: 'bg-tm-violet-tint text-tm-violet-deep',
+  teal: 'bg-tm-teal-tint text-tm-teal-deep',
+  gray: 'bg-tm-bg text-tm-sub ring-1 ring-inset ring-tm-line',
 };
 
 /** 영역 채움 - 타임라인 막대 · 캘린더 점 · 메뉴 표식. 흰 글자 대비 5.4:1 이상 */
-export const DOMAIN_FILL: Record<DomainKey, string> = {
-  web: 'bg-tm-blue',
-  game: 'bg-tm-violet',
-  edu: 'bg-tm-teal',
-  ops: 'bg-tm-sub',
+export const DOMAIN_FILL: Record<DomainColor, string> = {
+  blue: 'bg-tm-blue',
+  violet: 'bg-tm-violet',
+  teal: 'bg-tm-teal',
+  gray: 'bg-tm-sub',
 };
 
 /** 상태 - 점과 알약(세종 문의 내역의 상태 알약과 같은 꼴) */
@@ -313,6 +314,12 @@ export function Chip({ className = '', children }: { className?: string; childre
       {children}
     </span>
   );
+}
+
+/** 영역 알약 - short 면 보드 카드에 쓰는 짧은 이름 */
+export function DomainChip({ id, short = false }: { id: DomainKey; short?: boolean }) {
+  const d = useDomain(id);
+  return <Chip className={DOMAIN_STYLE[d.color]}>{short ? d.short || d.label : d.label}</Chip>;
 }
 
 export function PriorityDot({ p }: { p: Priority }) {
@@ -823,7 +830,7 @@ export function TaskCard({ task, onOpen, onDragStart, onDragEnd, dragging, onMov
 
       {/* 영역 알약을 맨 앞에 두고 라벨을 잇는다 - 좁은 칸에서도 번호 줄이 넘치지 않는다 */}
       <div className="mb-3 flex flex-wrap gap-1.5">
-        <Chip className={DOMAIN_STYLE[task.domain]}>{domainShort(task.domain)}</Chip>
+        <DomainChip id={task.domain} short />
         {task.labels.map((l) => (
           <span key={l} className="rounded-full bg-tm-bg px-2.5 py-[3px] text-[12.5px] font-semibold leading-[1.35] text-tm-sub">
             {l}

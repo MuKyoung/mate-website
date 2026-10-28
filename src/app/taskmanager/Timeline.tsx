@@ -1,15 +1,13 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { DOMAINS, domainLabel, localToday, type Task } from './types';
+import { localToday, type Task } from './types';
 import { useMembers } from './members';
+import { domainOf, useDomains } from './domainStore';
 import { Avatar, DOMAIN_FILL, IconArrow, PriorityDot, tmCount, tmGhostBtn, tmIconBtn, tmSelect, tmTab } from './ui';
 
 const DAY = 86400000;
 const WEEKDAY = ['일', '월', '화', '수', '목', '금', '토'];
-
-/** 막대 위에 흰 글자를 올리므로 4.5:1 을 넘는 영역 채움 색을 그대로 쓴다 */
-const BAR = DOMAIN_FILL;
 
 const parse = (s: string) => new Date(`${s}T00:00:00`);
 const startOfToday = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; };
@@ -49,6 +47,7 @@ export default function Timeline({
   const [shift, setShift] = useState(0);
   const [groupBy, setGroupBy] = useState<GroupBy>('domain');
   const members = useMembers();
+  const domains = useDomains();
   const today = useToday();
 
   const days = useMemo(() => {
@@ -62,8 +61,10 @@ export default function Timeline({
     const dated = tasks.filter((t) => t.start || t.due);
     const undatedList = tasks.filter((t) => !t.start && !t.due);
 
+    // 목록에 없는 영역(방금 지워진 것)의 작업도 사라지지 않게 '영역 없음' 줄에 모은다
+    const known = new Set(domains.map((d) => d.id));
     const keys = groupBy === 'domain'
-      ? DOMAINS.map((d) => ({ id: d.id as string, label: d.label }))
+      ? [...domains.map((d) => ({ id: d.id, label: d.label })), { id: '__none', label: '영역 없음' }]
       : [...members.map((m) => ({ id: m.id, label: m.role ? `${m.name} · ${m.role}` : m.name })),
          { id: '__none', label: '미배정' }];
 
@@ -72,12 +73,12 @@ export default function Timeline({
         .map((k) => ({
           ...k,
           items: dated.filter((t) =>
-            groupBy === 'domain' ? t.domain === k.id : (t.assignee ?? '__none') === k.id),
+            groupBy === 'domain' ? (known.has(t.domain) ? t.domain : '__none') === k.id : (t.assignee ?? '__none') === k.id),
         }))
         .filter((g) => g.items.length > 0),
       undated: undatedList,
     };
-  }, [tasks, groupBy, members]);
+  }, [tasks, groupBy, members, domains]);
 
   const first = days[0];
   const span = days.length;
@@ -217,7 +218,7 @@ export default function Timeline({
                           style={{ left: b.left + 3, width: b.width }}
                           className={`absolute top-[9px] flex h-[26px] items-center gap-1.5 px-2.5 text-[12.5px] font-bold text-white
                                       shadow-tm transition-[filter,box-shadow] duration-150 hover:shadow-tm-up hover:brightness-110
-                                      ${BAR[t.domain]} ${done ? 'opacity-45' : ''}
+                                      ${DOMAIN_FILL[domainOf(domains, t.domain).color]} ${done ? 'opacity-45' : ''}
                                       ${b.cutLeft ? 'rounded-l-none' : 'rounded-l-lg'}
                                       ${b.cutRight ? 'rounded-r-none' : 'rounded-r-lg'}`}>
                           <span className="truncate tabular-nums">{t.key}</span>
@@ -266,4 +267,4 @@ export default function Timeline({
   );
 }
 
-export { parse, startOfToday, useToday, DAY, WEEKDAY, BAR, domainLabel };
+export { parse, startOfToday, useToday, DAY, WEEKDAY };

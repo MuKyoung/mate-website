@@ -212,6 +212,7 @@ export function TeamDialog({
                       {m.name}
                       {m.id === me.id && <span className="ml-1.5 text-[13px] font-semibold text-tm-sub">나</span>}
                       {m.isAdmin && <span className="ml-1.5 text-[13px] font-semibold text-tm-blue">관리자</span>}
+                      {m.domainEditor && <span className="ml-1.5 text-[13px] font-semibold text-tm-blue">영역 관리</span>}
                     </p>
                     <p className="truncate text-[13px] text-tm-sub">{[m.role, m.email].filter(Boolean).join(' · ')}</p>
                   </div>

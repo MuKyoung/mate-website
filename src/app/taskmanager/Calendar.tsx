@@ -1,13 +1,12 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { DOMAINS, localISO, type DomainKey, type Task } from './types';
+import { localISO, type Task } from './types';
+import { domainOf, useDomains } from './domainStore';
 import { DOMAIN_FILL, IconArrow, IconPlus, tmGhostBtn, tmIconBtn } from './ui';
 
 const DAY = 86400000;
 const WEEKDAY = ['일', '월', '화', '수', '목', '금', '토'];
-
-const DOT: Record<DomainKey, string> = DOMAIN_FILL;
 
 const iso = localISO;
 
@@ -24,6 +23,7 @@ export default function Calendar({
   /** 다른 날로 끌어다 놓으면 마감일을 옮긴다 */
   onReschedule(id: string, dueISO: string): void;
 }) {
+  const domains = useDomains();
   const [dragId, setDragId] = useState<string | null>(null);
   const [overKey, setOverKey] = useState<string | null>(null);
   /** 세 건 넘는 날 중 펼쳐 둔 날 */
@@ -155,7 +155,7 @@ export default function Calendar({
                           onDragEnd={() => { setDragId(null); setOverKey(null); }}
                           className={`flex w-full items-center gap-1.5 rounded-md px-1.5 py-1 text-left text-[13px] leading-[1.35] transition-colors
                                       hover:bg-white hover:shadow-tm ${done ? 'opacity-55' : ''} ${dragId === t.id ? 'opacity-40' : ''}`}>
-                          <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${DOT[t.domain]}`} />
+                          <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${DOMAIN_FILL[domainOf(domains, t.domain).color]}`} />
                           <span className={`truncate ${
                             done ? 'font-semibold text-tm-sub line-through' : overdue ? 'font-bold text-tm-red-deep' : 'font-semibold text-tm-ink'}`}>
                             {t.title}
@@ -184,9 +184,9 @@ export default function Calendar({
 
         {/* 범례 + 마감 없는 작업 */}
         <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 px-1">
-          {DOMAINS.map((d) => (
+          {domains.map((d) => (
             <span key={d.id} className="inline-flex items-center gap-2 text-[13.5px] font-semibold text-tm-sub">
-              <span className={`h-2 w-2 rounded-full ${DOT[d.id]}`} />
+              <span className={`h-2 w-2 rounded-full ${DOMAIN_FILL[d.color]}`} />
               {d.label}
             </span>
           ))}
