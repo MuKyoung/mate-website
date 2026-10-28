@@ -5,10 +5,11 @@ import { LOCAL_ME_KEY, LOCAL_TASKS_KEY, isUntouchedSample, type Store, type Stor
 import { LOCAL_DOCS_KEY, isUntouchedSampleDoc, type DocStore } from './docStore';
 import type { MemoStore } from './memoStore';
 import {
-  PENDING_KEY, docFromRow, docToRow, isMissingTable, memoFromRow, memoToRow, sb, taskFromRow, taskToRow,
-  type DocRow, type MemoRow, type TaskRow,
+  PENDING_KEY, docCommentFromRow, docCommentToRow, docFromRow, docToRow, docVersionFromRow, isMissingTable,
+  memoFromRow, memoToRow, sb, taskFromRow, taskToRow,
+  type DocCommentRow, type DocRow, type DocVersionRow, type MemoRow, type TaskRow,
 } from './supabase';
-import type { Doc, Memo, Task } from './types';
+import type { Doc, DocComment, Memo, Task } from './types';
 
 /*
  * Supabase 저장소 - 작업 · 문서를 팀이 함께 쓴다. 개인 메모는 쓴 사람만 읽고 쓴다(표의 RLS).
@@ -33,8 +34,10 @@ interface SyncOptions<T, R> {
   fromRow(r: R): T;
   toRow(p: Partial<T>): Partial<R>;
   /** gone = 다른 곳에서 지운 줄에 보내지 못한 고침이 있었다, createFail = 서버가 새 줄을 받지 않았다 */
-  texts: { gone: string; createFail(title: string): string };
+  texts: { gone: string; createFail(item: T): string };
   onError?(text: string): void;
+  /** 참이면 붙지 않는다(읽지도 듣지도 않는다) - 표가 아직 없을 때. 거짓이 되면 그때 붙는다 */
+  disabled?: boolean;
 }
 
 interface SyncView<T> {
@@ -74,7 +77,7 @@ function outcomeOf(res: Result | null): Outcome {
 
 const NONE: ReadonlyMap<string, boolean> = new Map();
 
-class RowSync<T extends Entity & { title: string }, R extends Entity> {
+class RowSync<T extends Entity, R extends Entity> {
   items: T[] = [];
   /** 서버에 아직 확정되지 않은 칸 - 실시간으로 온 값이 이 칸을 덮지 않는다 */
   private dirty = new Map<string, Set<string>>();
@@ -135,10 +138,13 @@ class RowSync<T extends Entity & { title: string }, R extends Entity> {
   }
 
   private withLocal(server: T, local: T | undefined): T {
+    if (!local) return server;
     const d = this.dirty.get(server.id);
-    if (!d || !local) return server;
     const merged = { ...server } as Record<string, unknown>;
-    d.forEach((k) => { merged[k] = (local as Record<string, unknown>)[k]; });
+    const mine = local as Record<string, unknown>;
+    // 실시간 알림에서 빠진 칸(긴 본문은 바뀌지 않았으면 Postgres 가 싣지 않는다 - TOAST)은 화면의 값을 둔다
+    Object.keys(mine).forEach((k) => { if (merged[k] === undefined) merged[k] = mine[k]; });
+    d?.forEach((k) => { merged[k] = mine[k]; });
     return merged as T;
   }
 
@@ -252,7 +258,13 @@ class RowSync<T extends Entity & { title: string }, R extends Entity> {
       return;
     }
     const item = this.opt.fromRow(c.new);
-    if (!this.removing.has(item.id)) this.merge(item);
+    if (this.removing.has(item.id)) return;
+    // 칸이 빠진 알림인데 화면에 없는 줄이면 채울 값이 없다 - 목록을 다시 읽어 온전한 줄을 받는다
+    if (Object.values(item).some((v) => v === undefined) && !this.items.some((x) => x.id === item.id)) {
+      void this.reload(true);
+      return;
+    }
+    this.merge(item);
   }
 
   /** 한 줄에 대한 요청을 앞 요청 뒤에 잇는다. failText 는 서버가 거절했을 때의 알림(없으면 기본 문구) */
@@ -442,7 +454,7 @@ class RowSync<T extends Entity & { title: string }, R extends Entity> {
       }
       this.creating.delete(item.id);
       if (o === 'fail') this.set(this.items.filter((x) => x.id !== item.id));
-    }, this.opt.texts.createFail(item.title));
+    }, this.opt.texts.createFail(item));
   }
 
   /** ids 를 화면에서 지우고 서버에서는 rootId 한 줄만 지운다(문서의 아래 문서는 DB 가 함께 지운다) */
@@ -515,7 +527,7 @@ class RowSync<T extends Entity & { title: string }, R extends Entity> {
   }
 }
 
-function useRowSync<T extends Entity & { title: string }, R extends Entity>(opt: SyncOptions<T, R>) {
+function useRowSync<T extends Entity, R extends Entity>(opt: SyncOptions<T, R>) {
   const [state, setState] = useState<SyncView<T>>({
     items: [], sync: 'idle', ready: false, loadError: null, deleted: NONE,
   });
@@ -524,7 +536,8 @@ function useRowSync<T extends Entity & { title: string }, R extends Entity>(opt:
   const eng = ref.current;
   // 알림 함수가 바뀌어도 엔진은 그대로 두고 설정만 갈아 끼운다
   eng.opt = opt;
-  useEffect(() => eng.start(), [eng]);
+  const off = !!opt.disabled;
+  useEffect(() => (off ? undefined : eng.start()), [eng, off]);
   return { ...state, eng };
 }
 
@@ -541,7 +554,7 @@ export function useRemoteTaskStore(opts: StoreOptions = {}): Store {
     table: 'tm_tasks', fromRow: taskFromRow, toRow: taskToRow, onError: opts.onError,
     texts: {
       gone: '다른 팀원이 지운 작업이라 고치던 내용을 저장하지 못했습니다.',
-      createFail: (title) => `${title ? `'${title}' ` : '새 '}작업을 만들지 못했습니다. 서버가 받아 주지 않아 목록에서 뺐습니다.`,
+      createFail: ({ title }) => `${title ? `'${title}' ` : '새 '}작업을 만들지 못했습니다. 서버가 받아 주지 않아 목록에서 뺐습니다.`,
     },
   });
 
@@ -673,12 +686,75 @@ export function useRemoteTaskStore(opts: StoreOptions = {}): Store {
 
 /* ── 문서 ─────────────────────────────────────────────────── */
 
+/** 팀 저장소의 파일 칸(Storage 버킷) - 본문에는 tmfile:<경로> 로 적는다 */
+const FILES = 'tm-files';
+const FILE_MAX = 20 * 1024 * 1024;
+/**
+ * 형식을 그대로 두고 올리는 파일 - 버킷이 받는 형식(SQL 의 allowed_mime_types)과 같다.
+ * 그 밖(HTML · SVG · 스크립트처럼 브라우저가 열어 실행할 수 있는 것, 형식을 모르는 것)은 내려받기 전용으로 올린다
+ */
+const FILE_TYPES = new Set([
+  'image/png', 'image/jpeg', 'image/gif', 'image/webp',
+  'application/pdf', 'text/plain', 'text/csv', 'text/markdown', 'application/json',
+  'application/zip', 'application/x-zip-compressed', 'application/x-7z-compressed',
+  'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'application/x-hwp', 'application/haansofthwp', 'application/vnd.hancom.hwp', 'application/vnd.hancom.hwpx',
+  'video/mp4', 'video/webm', 'video/quicktime', 'audio/mpeg', 'audio/mp4', 'audio/wav',
+]);
+/** 파일을 볼 수 있는 주소는 한 시간짜리 - 50분 동안 다시 쓴다 */
+const signed = new Map<string, { url: string; until: number }>();
+
+/**
+ * 위키 표(SQL 의 위키 칸 · 기록 · 댓글)가 있는가. 앱을 먼저 배포하고 SQL 을 나중에 실행해도 예전처럼
+ * 문서만 쓸 수 있게 열 때 한 번 물어본다. 연결 문제로 못 물었으면 잠시 뒤 다시 묻는다
+ */
+function useWikiTables(): boolean | null {
+  const [ok, setOk] = useState<boolean | null>(null);
+  useEffect(() => {
+    let live = true;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const ask = async (tries: number) => {
+      const [cols, comments] = await Promise.all([
+        sb().from('tm_docs').select('id,icon,trashed_at,updated_by').limit(1),
+        sb().from('tm_doc_comments').select('id').limit(1),
+      ]);
+      if (!live) return;
+      const errs = [cols.error, comments.error].filter(Boolean) as DbError[];
+      // 표 · 칸이 없다는 답(42P01 · 42703 · PGRST2xx)이면 위키 기능을 끈다
+      if (errs.some((e) => isMissingTable(e) || e.code === '42703' || e.code?.startsWith('PGRST2'))) { setOk(false); return; }
+      if (errs.length) {
+        if (tries < 5) timer = setTimeout(() => void ask(tries + 1), 3000 * (tries + 1));
+        else setOk(false);
+        return;
+      }
+      setOk(true);
+    };
+    void ask(0);
+    return () => {
+      live = false;
+      if (timer) clearTimeout(timer);
+    };
+  }, []);
+  return ok;
+}
+
 export function useRemoteDocStore(opts: StoreOptions = {}): DocStore {
+  const wiki = useWikiTables();
   const { items, ready, sync, loadError, deleted, eng } = useRowSync<Doc, DocRow>({
     table: 'tm_docs', fromRow: docFromRow, toRow: docToRow, onError: opts.onError,
     texts: {
       gone: '다른 팀원이 지운 문서라 고치던 내용을 저장하지 못했습니다.',
-      createFail: (title) => `${title ? `'${title}' ` : '새 '}문서를 만들지 못했습니다. 서버가 받아 주지 않아 목록에서 뺐습니다.`,
+      createFail: ({ title }) => `${title ? `'${title}' ` : '새 '}문서를 만들지 못했습니다. 서버가 받아 주지 않아 목록에서 뺐습니다.`,
+    },
+  });
+  const notes = useRowSync<DocComment, DocCommentRow>({
+    table: 'tm_doc_comments', fromRow: docCommentFromRow, toRow: docCommentToRow, onError: opts.onError,
+    disabled: wiki !== true,
+    texts: {
+      gone: '다른 곳에서 지운 댓글이라 고치던 내용을 저장하지 못했습니다.',
+      createFail: () => '댓글을 남기지 못했습니다. 서버가 받아 주지 않았습니다.',
     },
   });
 
@@ -690,12 +766,21 @@ export function useRemoteDocStore(opts: StoreOptions = {}): DocStore {
       parentId: input.parentId,
       body: input.body,
       author: input.author,
-      labels: [],
-      order: Date.now(),
+      labels: input.labels ?? [],
+      order: input.order ?? Date.now(),
       createdAt: now,
       updatedAt: now,
+      icon: input.icon ?? '',
+      updatedBy: input.author,
+      trashedAt: null,
+      trashedBy: null,
     };
-    eng.create(doc, { id: doc.id, ...docToRow(doc) });
+    // 빈 위키 칸은 보내지 않는다 - 위키 칸이 없는 표(SQL 을 다시 실행하기 전)에도 들어가게
+    const row = docToRow(doc);
+    if (!doc.icon) delete row.icon;
+    delete row.trashed_at;
+    delete row.trashed_by;
+    eng.create(doc, { id: doc.id, ...row });
     return doc;
   }, [eng]);
 
@@ -718,15 +803,151 @@ export function useRemoteDocStore(opts: StoreOptions = {}): DocStore {
     eng.remove([...doomed], id);
   }, [eng]);
 
-  const flush = useCallback(() => eng.flushAll(), [eng]);
-  const reload = useCallback(async () => {
-    await eng.reload();
+  const versions = useCallback<DocStore['versions']>(async (docId) => {
+    const { data, error } = await sb().from('tm_doc_versions').select('id,doc_id,title,body,edited_by,edited_at')
+      .eq('doc_id', docId).order('created_at', { ascending: false }).limit(100);
+    if (error) throw new Error('기록을 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.');
+    return (data as DocVersionRow[]).map(docVersionFromRow);
+  }, []);
+
+  const snapshot = useCallback<DocStore['snapshot']>(async (docId) => {
+    // 아직 보내지 않은 고침을 먼저 보내야 '지금 모습'이 서버의 모습과 같다
+    await eng.flushAll();
+    const { error } = await sb().rpc('tm_doc_snapshot', { target: docId });
+    if (error) throw new Error('지금 모습을 기록에 남기지 못해 되돌리지 않았습니다.');
   }, [eng]);
 
+  const addComment = useCallback<DocStore['addComment']>((input) => {
+    const now = new Date().toISOString();
+    const c: DocComment = {
+      id: crypto.randomUUID(), docId: input.docId, parentId: input.parentId, author: input.author,
+      body: input.body, resolved: false, removed: false, createdAt: now, updatedAt: now,
+    };
+    notes.eng.create(c, { id: c.id, doc_id: c.docId, parent_id: c.parentId, author: c.author, body: c.body });
+  }, [notes.eng]);
+
+  const updateComment = useCallback<DocStore['updateComment']>((id, patch) => {
+    const now = new Date().toISOString();
+    const body = patch.removed ? { body: '' } : {};
+    notes.eng.patch(id, { ...patch, ...body, ...(patch.body !== undefined && !patch.removed ? { updatedAt: now } : {}) }, true);
+  }, [notes.eng]);
+
+  const upload = useCallback<DocStore['upload']>(async (file, docId) => {
+    if (file.size > FILE_MAX) throw new Error('20MB 넘는 파일은 올릴 수 없습니다');
+    const ext = (/\.([A-Za-z0-9]{1,8})$/.exec(file.name)?.[1] ?? 'bin').toLowerCase();
+    const path = `${docId}/${crypto.randomUUID()}.${ext}`;
+    const { error } = await sb().storage.from(FILES).upload(path, file, {
+      contentType: FILE_TYPES.has(file.type) ? file.type : 'application/octet-stream', upsert: false,
+    });
+    if (error) throw new Error(`'${file.name}' 을(를) 올리지 못했습니다. 인터넷 연결을 확인해 주세요.`);
+    return `tmfile:${path}`;
+  }, []);
+
+  const fileUrl = useCallback<DocStore['fileUrl']>(async (src) => {
+    if (!src.startsWith('tmfile:')) return src;
+    const path = src.slice('tmfile:'.length);
+    const hit = signed.get(path);
+    if (hit && hit.until > Date.now()) return hit.url;
+    const { data, error } = await sb().storage.from(FILES).createSignedUrl(path, 3600);
+    if (error || !data?.signedUrl) throw new Error('파일을 열지 못했습니다');
+    signed.set(path, { url: data.signedUrl, until: Date.now() + 50 * 60 * 1000 });
+    return data.signedUrl;
+  }, []);
+
+  const flush = useCallback(async () => {
+    await Promise.all([eng.flushAll(), notes.eng.flushAll()]);
+  }, [eng, notes.eng]);
+  const reload = useCallback(async () => {
+    await Promise.all([eng.reload(), wiki ? notes.eng.reload() : null]);
+  }, [eng, notes.eng, wiki]);
+
+  // 댓글을 보내는 중 · 못 보낸 것도 저장 상태에 함께 센다
+  const allSync: SyncState = sync === 'error' || notes.sync === 'error' ? 'error'
+    : sync === 'saving' || notes.sync === 'saving' ? 'saving' : 'idle';
+
   return {
-    docs: items, ready, sync, loadError, deletedElsewhere: deleted,
+    docs: items, ready, sync: allSync, loadError, deletedElsewhere: deleted,
     create, update, remove, flush, reload, clearSamples: noop,
+    features: { wiki: wiki === true, files: wiki === true },
+    versions, snapshot, comments: notes.items, addComment, updateComment, upload, fileUrl,
   };
+}
+
+/* ── 함께 보는 사람 ───────────────────────────────────────── */
+
+export interface Presence {
+  /** 문서 id → 그 문서를 보고 있는 팀원(나 빼고). editing = 편집 중 */
+  byDoc: ReadonlyMap<string, { member: string; editing: boolean }[]>;
+}
+
+const PRESENCE_NONE: Presence = { byDoc: new Map() };
+
+/**
+ * 지금 어느 문서를 누가 보고 · 고치는지 - Supabase Realtime presence.
+ * 비공개 채널이라 승인된 팀원만 붙는다(SQL 의 tm_presence_* 정책). 정책이 없으면 조용히 아무도 안 보인다
+ */
+export function useRemotePresence(me: string, docId: string | null, editing: boolean, enabled = true): Presence {
+  const [state, setState] = useState<Presence>(PRESENCE_NONE);
+  const channel = useRef<ReturnType<ReturnType<typeof sb>['channel']> | null>(null);
+  const joined = useRef(false);
+  const mine = useRef({ docId, editing });
+  mine.current = { docId, editing };
+
+  useEffect(() => {
+    // 위키 SQL(채널 권한)을 넣기 전에는 붙지 않는다 - 권한 없이 붙으면 거절당한 채 계속 다시 붙으려 한다
+    if (!enabled) {
+      setState(PRESENCE_NONE);
+      return;
+    }
+    let cancelled = false;
+    let ch: ReturnType<ReturnType<typeof sb>['channel']> | null = null;
+    const start = async () => {
+      // 채널 이름이 권한 규칙에 묶여 있어 바꿀 수 없다. 같은 이름의 채널이 아직 닫히는 중이면 realtime-js 가
+      // 그 채널을 돌려주므로(위키를 빨리 다시 열 때) 먼저 치운다
+      const stale = sb().getChannels().filter((c) => c.topic === 'realtime:tm-docs-presence');
+      await Promise.all(stale.map((c) => sb().removeChannel(c)));
+      if (cancelled) return;
+      // 탭마다 따로 센다 - 같은 사람이 탭 둘을 열어도 하나로 보이게 아래에서 사람으로 묶는다
+      const key = `${me}:${Math.random().toString(36).slice(2, 8)}`;
+      const c = sb().channel('tm-docs-presence', { config: { private: true, presence: { key } } });
+      ch = c;
+      channel.current = c;
+      c.on('presence', { event: 'sync' }, () => {
+        const raw = c.presenceState<{ member: string; doc: string | null; editing: boolean }>();
+        const byDoc = new Map<string, { member: string; editing: boolean }[]>();
+        Object.values(raw).flat().forEach((p) => {
+          if (!p.doc || p.member === me) return;
+          const list = byDoc.get(p.doc) ?? [];
+          const same = list.find((x) => x.member === p.member);
+          if (same) same.editing = same.editing || p.editing;
+          else list.push({ member: p.member, editing: p.editing });
+          byDoc.set(p.doc, list);
+        });
+        setState({ byDoc });
+      }).subscribe((status) => {
+        joined.current = status === 'SUBSCRIBED';
+        if (joined.current) void c.track({ member: me, doc: mine.current.docId, editing: mine.current.editing });
+      });
+    };
+    void start().catch(() => { /* 함께 보기는 덤이다 - 붙지 못하면 아무도 안 보일 뿐 */ });
+    return () => {
+      cancelled = true;
+      joined.current = false;
+      channel.current = null;
+      if (ch) void sb().removeChannel(ch);
+    };
+  }, [me, enabled]);
+
+  useEffect(() => {
+    if (joined.current) void channel.current?.track({ member: me, doc: docId, editing });
+  }, [me, docId, editing]);
+
+  return state;
+}
+
+/** 브라우저 저장 모드 - 함께 보는 사람이 없다 */
+export function useNoPresence(): Presence {
+  return PRESENCE_NONE;
 }
 
 /* ── 개인 메모 ────────────────────────────────────────────── */

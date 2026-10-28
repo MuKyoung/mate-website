@@ -1,264 +1,124 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { DOC_TEMPLATES, MEMBERS, localDay, type Doc } from './types';
-import { useMember } from './members';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { Editor } from '@tiptap/react';
+import { DOC_TEMPLATES, localDay, type Doc, type DocVersion, type Task } from './types';
+import { useMember, useMembers } from './members';
 import { isUntouchedSampleDoc, type DocStore } from './docStore';
-import Markdown, { extractHeadings } from './Markdown';
+import { docLinkIds } from './docMarkdown';
+import { isRemote } from './supabase';
+import { useNoPresence, useRemotePresence, type Presence } from './remote';
+import DocEditor, { focusEditor, scrollToPos, scrollWithin, type WikiHeading, type WikiRefs } from './DocEditor';
+import DocTree, { FlatRow, buildTree, type DropZone } from './DocTree';
 import {
-  Avatar, IconPlus, IconSearch, Modal, PageHead,
-  tmBtn, tmBtnPrimary, tmCallout, tmEditBtn, tmFieldBase, tmGhostBtn, tmGhostDanger, tmInput, tmLabel, tmSelect,
-  useConfirm,
+  Comments, DocIcon, DropMenu, EmojiPicker, HistoryDialog, LabelEditor, MoveDialog, NewDocDialog, QuickFind, Snippet,
+  TitleField, TrashDialog, ago, pathOf, plainOf, readingLabel, titleOf, useDeleteConfirm, useStoredList,
+  type MenuEntry,
+} from './DocPanels';
+import {
+  Avatar, IconPlus, IconSearch, PageHead,
+  tmBtn, tmBtnPrimary, tmCallout, tmEditBtn, tmFieldBase, tmGhostBtn, tmIconBtn, tmSelect,
 } from './ui';
 
-/* ── 문서 트리 ────────────────────────────────────── */
+/*
+ * 팀 위키 - 노션 · Confluence 처럼 쓰는 문서 화면.
+ *
+ * 왼쪽은 문서 트리(끌어서 옮기기, 즐겨찾기, 휴지통), 가운데는 보이는 그대로 고치는 편집기(DocEditor),
+ * 오른쪽은 목차. 문서 머리에는 아이콘 · 제목 · 라벨 · 고친 사람이, 아래에는 하위 문서 · 이 문서를 링크한 문서 ·
+ * 댓글이 붙는다. 기록(예전 판 비교 · 되돌리기), 옮기기, 사본, 내보내기, 인쇄는 문서 메뉴(⋯)에 있다.
+ * 주소에 ?doc=<id> 가 붙어 링크로 문서를 나눌 수 있다.
+ */
 
-interface Node extends Doc { children: Node[] }
+const usePresence: (me: string, doc: string | null, editing: boolean, enabled: boolean) => Presence =
+  isRemote ? useRemotePresence : useNoPresence;
 
-/** 화면에 적는 제목 - 예전 편집기가 빈 제목을 저장한 문서도 목록 · 경로에서 빈 줄로 보이지 않게 */
-const titleOf = (d: { title: string }) => d.title.trim() || '제목 없는 문서';
-
-function buildTree(docs: Doc[]): Node[] {
-  const byId = new Map<string, Node>(docs.map((d) => [d.id, { ...d, children: [] }]));
-  const roots: Node[] = [];
-  byId.forEach((n) => {
-    const parent = n.parentId ? byId.get(n.parentId) : null;
-    if (parent) parent.children.push(n);
-    else roots.push(n);
-  });
-  const sort = (ns: Node[]) => {
-    ns.sort((a, b) => a.order - b.order);
-    ns.forEach((n) => sort(n.children));
-  };
-  sort(roots);
-  return roots;
+/** 같은 위 문서 아래 순서 - 둘 사이 값 하나만 고친다 */
+function between(a: number | undefined, b: number | undefined): number {
+  if (a === undefined && b === undefined) return 1000;
+  if (a === undefined) return (b as number) - 1000;
+  if (b === undefined) return a + 1000;
+  return (a + b) / 2;
 }
 
-const docIcon = (
-  <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden className="shrink-0"
-    stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M5.5 3h6l3.5 3.5V17h-9.5z" />
-    <path d="M11.5 3v3.5H15" />
-  </svg>
-);
+const WIDE_KEY = 'mate.taskmanager.docs.wide.v1';
 
-/** 트리 한 줄 - 고른 문서는 왼쪽 메뉴처럼 파랗게 채운다 */
-function TreeItem({
-  node, depth, activeId, openSet, onToggle, onSelect,
-}: {
-  node: Node; depth: number; activeId: string | null;
-  openSet: Set<string>; onToggle(id: string): void; onSelect(id: string): void;
-}) {
-  const hasKids = node.children.length > 0;
-  const expanded = openSet.has(node.id);
-  const active = node.id === activeId;
-
-  return (
-    <li>
-      <div
-        className={`flex min-h-[38px] items-center gap-0.5 rounded-tm-sm pr-2 transition-colors duration-150 [@media(pointer:coarse)]:min-h-11 ${
-          active ? 'bg-tm-blue text-white' : 'text-tm-ink hover:bg-tm-tint'}`}
-        style={{ paddingLeft: 4 + depth * 14 }}
-      >
-        {hasKids ? (
-          <button type="button" onClick={() => onToggle(node.id)}
-            aria-label={expanded ? '접기' : '펼치기'} aria-expanded={expanded}
-            className={`grid h-7 w-7 shrink-0 place-items-center rounded-md transition-colors duration-150 ${
-              active ? 'text-white hover:bg-white/20 focus-visible:outline-white' : 'text-tm-sub hover:bg-white hover:text-tm-ink'}`}>
-            <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden
-              className={`transition-transform duration-150 ${expanded ? 'rotate-90' : ''}`}>
-              <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-        ) : (
-          <span className="h-7 w-7 shrink-0" />
-        )}
-        <button type="button" onClick={() => onSelect(node.id)} aria-current={active ? 'page' : undefined}
-          className={`flex min-w-0 flex-1 items-center gap-2 self-stretch rounded-md text-left text-[14.5px] ${
-            active ? 'font-bold focus-visible:outline-white' : 'font-semibold'}`}>
-          <span className={active ? 'text-white' : 'text-tm-sub'}>{docIcon}</span>
-          <span className="truncate">{titleOf(node)}</span>
-        </button>
-      </div>
-      {hasKids && expanded && (
-        <ul className="mt-0.5 space-y-0.5">
-          {node.children.map((c) => (
-            <TreeItem key={c.id} node={c} depth={depth + 1} activeId={activeId}
-              openSet={openSet} onToggle={onToggle} onSelect={onSelect} />
-          ))}
-        </ul>
-      )}
-    </li>
-  );
-}
-
-/* ── 새 문서 ──────────────────────────────────────── */
-
-function NewDocDialog({
-  parentTitle, onCreate, onClose,
-}: {
-  parentTitle: string | null;
-  onCreate(templateId: string, title: string): void;
-  onClose(): void;
-}) {
-  const [picked, setPicked] = useState('meeting');
-  const [title, setTitle] = useState(() => DOC_TEMPLATES.find((x) => x.id === 'meeting')?.title ?? '');
-  const titleRef = useRef<HTMLInputElement>(null);
-  /* 양식을 마우스 · 손가락으로 골랐는가. 화살표로 양식을 넘겨 보는 중에는 초점을 옮기지 않는다
-     (그때는 Tab 으로 제목 칸에 들어오면 브라우저가 글자를 모두 골라 준다) */
-  const byPointer = useRef(true);
-
-  /* 창을 열 때와 양식을 고를 때 - 양식이 채운 제목을 골라 둔다. 그대로 치면 바뀐다 */
-  useEffect(() => {
-    const el = titleRef.current;
-    if (!el || !byPointer.current) return;
-    el.focus();
-    el.select();
-  }, [picked]);
-
-  const create = () => { if (title.trim()) onCreate(picked, title.trim()); };
-
-  return (
-    <Modal
-      title="새 문서"
-      sub={parentTitle ? `${parentTitle} 아래에 만듭니다` : undefined}
-      onClose={onClose}
-      foot={
-        <>
-          <span className="flex-1" />
-          <button type="button" onClick={onClose} className={tmBtn}>
-            취소
-          </button>
-          <button type="button" onClick={create} disabled={!title.trim()} className={tmBtnPrimary}>
-            만들기
-          </button>
-        </>
-      }
-    >
-      <p className={tmLabel} id="doc-template-label">양식</p>
-      {/* 세종 관리자의 분류 고르기 칸 - 고른 것은 파란 테두리에 옅은 파랑 바탕 */}
-      <div role="radiogroup" aria-labelledby="doc-template-label" className="mb-[22px] grid gap-2.5 sm:grid-cols-2"
-        onPointerDown={() => { byPointer.current = true; }}
-        onKeyDown={() => { byPointer.current = false; }}>
-        {DOC_TEMPLATES.map((t) => {
-          const on = picked === t.id;
-          return (
-            <label key={t.id}
-              className={`flex cursor-pointer items-start gap-2.5 rounded-tm-sm border p-3.5 transition-[border-color,box-shadow,background-color] duration-150 ${
-                on ? 'border-tm-blue bg-tm-tint shadow-[inset_0_0_0_1px_#2644cb]' : 'border-tm-edge bg-white hover:border-tm-blue'}`}>
-              <input type="radio" name="doc-template" value={t.id} checked={on}
-                onChange={() => { setPicked(t.id); setTitle(t.title); }}
-                className="mt-[3px] h-[18px] w-[18px] flex-none accent-tm-blue" />
-              <span className="min-w-0">
-                <b className="block text-[15px] font-bold text-tm-ink">{t.name}</b>
-                <small className="mt-0.5 block text-[13px] leading-[1.5] text-tm-sub">{t.hint}</small>
-              </span>
-            </label>
-          );
-        })}
-      </div>
-
-      <label className={tmLabel} htmlFor="doc-title">
-        제목 <b className="text-[12.5px] font-bold text-tm-red">필수</b>
-      </label>
-      {/* Enter 의 기본 동작을 막는다 - 창이 닫히며 초점이 '새 문서' 단추로 돌아간 뒤
-          같은 Enter 가 그 단추를 눌러 창을 다시 여는 일이 없게 */}
-      <input id="doc-title" ref={titleRef} value={title} onChange={(e) => setTitle(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key !== 'Enter' || e.nativeEvent.isComposing) return;
-          e.preventDefault();
-          create();
-        }}
-        placeholder="검색해서 찾을 수 있는 이름으로"
-        className={tmInput} />
-    </Modal>
-  );
-}
-
-/* ── 편집기 제목 칸 ───────────────────────────────── */
-
-/* 제목은 빈 채로 저장하지 않는다. 칸의 글자는 따로 들고, 비어 있는 동안은 저장을 건너뛰고
-   칸을 떠나면 마지막 제목으로 돌린다. 문서가 바뀌면 key 로 새로 세운다 */
-function TitleField({ saved, onSave }: { saved: string; onSave(title: string): void }) {
-  const [title, setTitle] = useState(saved);
-  const focused = useRef(false);
-  useEffect(() => {
-    // 치고 있지 않을 때 들어온 제목(다른 팀원의 수정)은 그대로 따른다
-    if (!focused.current) setTitle(saved);
-  }, [saved]);
-
-  return (
-    <>
-      <input id="doc-edit-title" value={title}
-        aria-invalid={!title.trim() || undefined}
-        aria-describedby={title.trim() ? undefined : 'doc-edit-title-hint'}
-        onFocus={() => { focused.current = true; }}
-        onChange={(e) => {
-          const v = e.target.value;
-          setTitle(v);
-          if (v.trim()) onSave(v);
-        }}
-        onBlur={() => { focused.current = false; setTitle(saved); }}
-        className={`${tmFieldBase} mb-[18px] block h-12 w-full px-3.5 text-[17px] font-bold`} />
-      {!title.trim() && (
-        <p id="doc-edit-title-hint" className="-mt-3 mb-[18px] text-[13.5px] font-semibold leading-[1.5] text-tm-red-deep">
-          제목은 비워 둘 수 없습니다. 칸을 떠나면 마지막으로 저장된 제목으로 돌아갑니다.
-        </p>
-      )}
-    </>
-  );
-}
-
-/* ── 본체 ─────────────────────────────────────────── */
-
-/** 편집기 서식 버튼 - 마크다운을 몰라도 쓸 수 있어야 한다 */
-const TOOLS: { label: string; title: string; wrap?: [string, string]; line?: string; block?: string }[] = [
-  { label: 'H2', title: '제목', line: '## ' },
-  { label: 'H3', title: '작은 제목', line: '### ' },
-  { label: 'B', title: '굵게', wrap: ['**', '**'] },
-  { label: '목록', title: '목록', line: '- ' },
-  { label: '체크', title: '체크박스', line: '- [ ] ' },
-  { label: '패널', title: '강조 패널', line: '> ' },
-  { label: '표', title: '표', block: '| 항목 | 내용 |\n| --- | --- |\n|  |  |' },
-  { label: '코드', title: '코드 블록', block: '```\n\n```' },
-  { label: '구분', title: '구분선', block: '---' },
-];
-
-export default function Docs({ store, me, onTaskClick }: {
+export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
   store: DocStore;
   me: string;
+  /** 작업 목록 - 본문의 MATE-### 칩 제목 · 상태와 [[ 고르기에 쓴다 */
+  tasks: Task[];
   /** 본문의 MATE-### 를 눌렀을 때 - 해당 작업을 연다 */
   onTaskClick?(key: string): void;
+  /** 화면 아래 알림 */
+  onNotice?(text: string, tone?: 'ok' | 'err'): void;
 }) {
-  const bodyRef = useRef<HTMLTextAreaElement>(null);
+  const members = useMembers();
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [openSet, setOpenSet] = useState<Set<string>>(new Set());
-  /* 편집 중인 문서 - 다른 문서를 고르면 저절로 편집이 풀린다.
-     (예전에는 고른 문서가 바뀔 때 편집을 끄는 효과가 새 문서를 만들자마자 연 편집기까지 닫았다) */
+  /* 편집 중인 문서 - 다른 문서를 고르면 저절로 편집이 풀린다 */
   const [editingId, setEditingId] = useState<string | null>(null);
-  const editing = editingId !== null && editingId === activeId;
   const [creatingUnder, setCreatingUnder] = useState<string | null | undefined>(undefined);
   const [query, setQuery] = useState('');
-  const [confirm, confirmNode] = useConfirm();
-  const author = useMember(store.docs.find((d) => d.id === activeId)?.author ?? null);
-  /* 보던 문서를 다른 팀원이 지웠다(Supabase 모드). 쓰던 글을 새 문서로 남길 수 있게 마지막 모습을 들고 있는다 */
-  const [lost, setLost] = useState<{ doc: Doc; unsaved: boolean; editing: boolean } | null>(null);
-  const lastDoc = useRef<Doc | null>(null);
-  /** 새로 만든 문서는 편집기 본문에서 시작한다 */
-  const focusBody = useRef(false);
+  const [dialog, setDialog] = useState<null | 'find' | 'move' | 'trash' | 'history'>(null);
+  const [iconOpen, setIconOpen] = useState(false);
+  const [headings, setHeadings] = useState<WikiHeading[]>([]);
+  const [here, setHere] = useState<number | null>(null);
+  const [wide, setWide] = useState(false);
   const [retrying, setRetrying] = useState(false);
+  /* 보던 문서를 다른 팀원이 영구 삭제했다(Supabase 모드). 쓰던 글을 새 문서로 남길 수 있게 마지막 모습을 들고 있는다 */
+  const [lost, setLost] = useState<{ doc: Doc; unsaved: boolean; editing: boolean } | null>(null);
+  /** 새로 만든 문서는 본문에 커서를 두고 연다 */
+  const [focusFor, setFocusFor] = useState<string | null>(null);
+  const lastDoc = useRef<Doc | null>(null);
+  const editorRef = useRef<Editor | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const importRef = useRef<HTMLInputElement>(null);
+  /** 들어온 주소의 ?doc= - 위키를 떠날 때 주소에서 지우므로 처음 그릴 때 읽어 둔다 */
+  const [urlDoc] = useState(() => (typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('doc')));
+  const [askDelete, deleteNode] = useDeleteConfirm();
 
-  const tree = useMemo(() => buildTree(store.docs), [store.docs]);
+  const [starred, setStarred] = useStoredList(`mate.taskmanager.docs.stars.v1:${me}`);
+  const [recent, setRecent, recentLoaded] = useStoredList(`mate.taskmanager.docs.recent.v1:${me}`, 15);
+  const [openList, setOpenList, openLoaded] = useStoredList(`mate.taskmanager.docs.open.v1:${me}`, 400);
+  const openSet = useMemo(() => new Set(openList), [openList]);
+
+  const wikiOn = store.features.wiki;
+  const byId = useMemo(() => new Map(store.docs.map((d) => [d.id, d])), [store.docs]);
+
+  /** 휴지통에 든 문서와 그 아래 문서 - 트리 · 검색에서 뺀다 */
+  const hidden = useMemo(() => {
+    const out = new Set<string>();
+    store.docs.forEach((d) => {
+      let cur: Doc | undefined = d;
+      let guard = 0;
+      while (cur && guard < 60) {
+        if (cur.trashedAt) { out.add(d.id); return; }
+        cur = cur.parentId ? byId.get(cur.parentId) : undefined;
+        guard += 1;
+      }
+    });
+    return out;
+  }, [store.docs, byId]);
+  const live = useMemo(() => store.docs.filter((d) => !hidden.has(d.id)), [store.docs, hidden]);
+  const trashed = useMemo(() => store.docs.filter((d) => d.trashedAt), [store.docs]);
+  const tree = useMemo(() => buildTree(live), [live]);
 
   /** 아무도 고치지 않은 예시 문서 수 - 안내 띠를 띄울지 정한다 */
   const sampleCount = useMemo(() => store.docs.filter(isUntouchedSampleDoc).length, [store.docs]);
 
-  /** 트리를 평탄화한 목록 - 좁은 화면의 선택기에 쓴다 */
+  const doc = activeId ? byId.get(activeId) ?? null : null;
+  const canEdit = !!doc && !hidden.has(doc.id);
+  const editing = editingId !== null && editingId === activeId && canEdit;
+  const presence = usePresence(me, canEdit ? activeId : null, editing, wikiOn);
+  const watched = useMemo(() => new Set(presence.byDoc.keys()), [presence]);
+  const here2 = doc ? presence.byDoc.get(doc.id) ?? [] : [];
+  const othersEditing = here2.filter((p) => p.editing);
+
+  /** 트리를 평탄화한 목록 - 좁은 화면의 선택기 */
   const flat = useMemo(() => {
     const out: { id: string; label: string }[] = [];
-    const walk = (ns: Node[], depth: number) => {
+    const walk = (ns: ReturnType<typeof buildTree>, depth: number) => {
       ns.forEach((n) => {
-        out.push({ id: n.id, label: `${'  '.repeat(depth)}${depth ? '└ ' : ''}${titleOf(n)}` });
+        out.push({ id: n.id, label: `${'  '.repeat(depth)}${depth ? '└ ' : ''}${n.icon ? `${n.icon} ` : ''}${titleOf(n)}` });
         walk(n.children, depth + 1);
       });
     };
@@ -266,8 +126,10 @@ export default function Docs({ store, me, onTaskClick }: {
     return out;
   }, [tree]);
 
+  /* ── 처음 고를 문서 · 사라진 문서 ── */
   useEffect(() => {
-    if (!store.ready) return;
+    // 마지막으로 본 문서를 알려면 이 브라우저에 남긴 목록을 먼저 읽어야 한다
+    if (!store.ready || !recentLoaded) return;
     if (activeId && store.docs.some((d) => d.id === activeId)) return;
     // 다른 곳에서 지운 문서였다 - 알리고 편집을 푼다. 고른 것도 비워 같은 일을 두 번 알리지 않는다
     const unsaved = activeId ? store.deletedElsewhere?.get(activeId) : undefined;
@@ -281,79 +143,231 @@ export default function Docs({ store, me, onTaskClick }: {
       setEditingId(null);
       setActiveId(null);
     }
-    // 위 문서가 먼저 지워져 떠 있는 아래 문서보다 진짜 맨 위 문서로 간다 - 곧 함께 지워질 문서로 가지 않게
+    // 고른 문서가 없으면 - 들어온 주소의 ?doc= → 마지막으로 본 문서 → 맨 위 문서.
+    // 몇 번을 다시 돌아도 같은 답이 나오게 둔다(개발 모드는 효과를 두 번 돌린다)
+    const want = [urlDoc, ...recent].find((id) => !!id && store.docs.some((d) => d.id === id && (id === urlDoc || !hidden.has(id))));
+    if (want) { setActiveId(want); return; }
     const firstRoot = tree.find((n) => !n.parentId) ?? tree[0];
-    if (firstRoot) {
-      setActiveId(firstRoot.id);
-      setOpenSet(new Set(store.docs.filter((d) => !d.parentId).map((d) => d.id)));
-    }
-  }, [store.ready, store.docs, store.deletedElsewhere, tree, activeId, editingId]);
-
-  const doc = activeId ? store.docs.find((d) => d.id === activeId) ?? null : null;
+    if (firstRoot) setActiveId(firstRoot.id);
+  }, [store.ready, store.docs, store.deletedElsewhere, tree, activeId, editingId, recent, recentLoaded, hidden, urlDoc]);
 
   useEffect(() => {
     if (doc) lastDoc.current = doc;
   }, [doc]);
 
-  /* 새 문서 창이 닫히면 초점이 '새 문서' 단추로 돌아온다. 편집기 본문으로 옮겨 그 단추가 다시 눌리지 않게 한다 */
+  /* 주소에 고른 문서를 적는다 - 링크로 나눌 수 있게. 위키를 떠나면 지운다 */
   useEffect(() => {
-    if (!focusBody.current || !editing) return;
-    focusBody.current = false;
-    bodyRef.current?.focus();
-  }, [editing, editingId]);
+    if (!activeId) return;
+    const url = new URL(window.location.href);
+    if (url.searchParams.get('doc') === activeId) return;
+    url.searchParams.set('doc', activeId);
+    window.history.replaceState(window.history.state, '', url);
+  }, [activeId]);
+  useEffect(() => () => {
+    const url = new URL(window.location.href);
+    if (!url.searchParams.has('doc')) return;
+    url.searchParams.delete('doc');
+    window.history.replaceState(window.history.state, '', url);
+  }, []);
+
+  /* 최근 본 문서 · 고른 문서의 위 문서는 펼쳐 둔다 */
+  useEffect(() => {
+    if (!activeId || hidden.has(activeId)) return;
+    setRecent((prev) => (prev[0] === activeId ? prev : [activeId, ...prev.filter((x) => x !== activeId)]));
+    const ups: string[] = [];
+    let cur = byId.get(activeId)?.parentId ?? null;
+    let guard = 0;
+    while (cur && guard < 50) {
+      ups.push(cur);
+      cur = byId.get(cur)?.parentId ?? null;
+      guard += 1;
+    }
+    if (ups.some((u) => !openSet.has(u))) setOpenList((prev) => [...new Set([...prev, ...ups])]);
+  }, [activeId, hidden, byId, openSet, setRecent, setOpenList]);
+
+  /* 처음 쓰는 사람은 맨 위 문서들을 펼친 채로 시작한다 - 저장된 펼침을 읽은 뒤에, 비어 있을 때만 */
+  const seeded = useRef(false);
+  useEffect(() => {
+    if (!store.ready || !openLoaded || seeded.current || !tree.length) return;
+    seeded.current = true;
+    setOpenList((prev) => (prev.length ? prev : tree.map((n) => n.id)));
+  }, [store.ready, openLoaded, tree, setOpenList]);
+
+  useEffect(() => {
+    try { setWide(window.localStorage.getItem(WIDE_KEY) === '1'); } catch { /* 저장이 막힌 환경 */ }
+  }, []);
+  const toggleWide = () => {
+    setWide((v) => {
+      try { window.localStorage.setItem(WIDE_KEY, v ? '0' : '1'); } catch { /* noop */ }
+      return !v;
+    });
+  };
+
+  /* 다른 문서로 가면 목차 · 맨 위 자리를 새로 */
+  useEffect(() => {
+    setHeadings([]);
+    setHere(null);
+    setIconOpen(false);
+    scrollRef.current?.scrollTo({ top: 0 });
+  }, [activeId]);
+
+  /* 목차 - 지금 읽는 자리의 제목을 표시한다 */
+  useEffect(() => {
+    const box = scrollRef.current;
+    if (!box || headings.length < 2) return;
+    let raf = 0;
+    const onScroll = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const ed = editorRef.current;
+        if (!ed || ed.isDestroyed) return;
+        const top = box.getBoundingClientRect().top + 96;
+        let cur: number | null = null;
+        for (const h of headings) {
+          const el = ed.view.nodeDOM(h.pos) as HTMLElement | null;
+          if (el?.getBoundingClientRect && el.getBoundingClientRect().top <= top) cur = h.pos;
+        }
+        setHere(cur);
+      });
+    };
+    onScroll();
+    box.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      box.removeEventListener('scroll', onScroll);
+      cancelAnimationFrame(raf);
+    };
+  }, [headings]);
+
+  /* ── 단축키 - Ctrl(⌘)+K 찾기, E 편집 ── */
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.isComposing) return;
+      if ((e.ctrlKey || e.metaKey) && !e.altKey && (e.key === 'k' || e.key === 'K' || e.code === 'KeyK')) {
+        // 편집기에서 글을 고른 채 누른 것은 링크 - 편집기가 먼저 받는다
+        if (e.defaultPrevented) return;
+        if (document.querySelector('[aria-modal="true"]')) return;
+        e.preventDefault();
+        setDialog('find');
+        return;
+      }
+      const el = e.target as HTMLElement | null;
+      const typing = !!el && (/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.isContentEditable);
+      if (typing || e.ctrlKey || e.metaKey || e.altKey || document.querySelector('[aria-modal="true"]')) return;
+      if ((e.key === 'e' || e.code === 'KeyE') && doc && canEdit) {
+        e.preventDefault();
+        setEditingId((v) => (v === doc.id ? null : doc.id));
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [doc, canEdit]);
 
   const breadcrumb = useMemo(() => {
     const out: Doc[] = [];
     let cur = doc;
-    while (cur) {
+    let guard = 0;
+    while (cur && guard < 50) {
       out.unshift(cur);
-      cur = cur.parentId ? store.docs.find((d) => d.id === cur!.parentId) ?? null : null;
+      cur = cur.parentId ? byId.get(cur.parentId) ?? null : null;
+      guard += 1;
     }
     return out;
-  }, [doc, store.docs]);
+  }, [doc, byId]);
 
-  const headings = useMemo(() => (doc ? extractHeadings(doc.body) : []), [doc]);
+  /** 휴지통에 든 위 문서 - 이 문서는 그 문서와 함께 숨어 있다 */
+  const trashedAbove = useMemo(() => {
+    if (!doc || doc.trashedAt || !hidden.has(doc.id)) return null;
+    return [...breadcrumb].reverse().find((d) => d.trashedAt) ?? null;
+  }, [doc, hidden, breadcrumb]);
 
   const searchHits = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return null;
-    return store.docs.filter((d) =>
-      `${d.title} ${d.body} ${d.labels.join(' ')}`.toLowerCase().includes(q));
-  }, [query, store.docs]);
+    // #라벨 로 찾으면 라벨만 본다
+    if (q.startsWith('#') && q.length > 1) {
+      const label = q.slice(1);
+      return live.filter((d) => d.labels.some((l) => l.toLowerCase().includes(label))).map((d) => ({ d, text: '' }));
+    }
+    return live
+      .map((d) => ({ d, text: plainOf(d) }))
+      .filter(({ d, text }) => `${d.title} ${d.labels.join(' ')} ${text}`.toLowerCase().includes(q));
+  }, [query, live]);
 
-  const toggle = (id: string) =>
-    setOpenSet((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
-    });
+  const children = useMemo(
+    () => (doc ? live.filter((d) => d.parentId === doc.id).sort((a, b) => a.order - b.order) : []),
+    [doc, live],
+  );
+  const backlinks = useMemo(
+    () => (doc ? live.filter((d) => d.id !== doc.id && d.body.includes(`(doc:${doc.id})`) && docLinkIds(d.body).includes(doc.id)) : []),
+    [doc, live],
+  );
+  const docComments = useMemo(() => (doc ? store.comments.filter((c) => c.docId === doc.id) : []), [doc, store.comments]);
+  const commentCount = docComments.filter((c) => !c.removed).length;
+
+  /* 편집기에 넘기는 것 - 바뀐 것이 있을 때만 새로 만든다(작업 칩 · 문서 링크를 다시 그리는 기준) */
+  const taskClick = useRef(onTaskClick);
+  taskClick.current = onTaskClick;
+  const docRefs = useMemo(
+    () => store.docs.map((d) => ({ id: d.id, title: titleOf(d), icon: d.icon, gone: hidden.has(d.id) })),
+    [store.docs, hidden],
+  );
+  const taskRefs = useMemo(() => tasks.map((t) => ({ key: t.key, title: t.title, status: t.status })), [tasks]);
+  const fileUrl = store.fileUrl;
+  const refs = useMemo<WikiRefs>(() => ({
+    docs: docRefs,
+    tasks: taskRefs,
+    openDoc: (id) => { setActiveId(id); setQuery(''); },
+    openTask: (key) => taskClick.current?.(key),
+    fileUrl,
+  }), [docRefs, taskRefs, fileUrl]);
+
+  /* ── 동작 ── */
+
+  const select = (id: string) => {
+    setActiveId(id);
+    setQuery('');
+    setDialog(null);
+  };
+
+  const toggleOpen = (id: string) =>
+    setOpenList((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+
+  const siblingsOf = useCallback((parentId: string | null, except?: string) =>
+    live.filter((d) => (d.parentId ?? null) === parentId && d.id !== except).sort((a, b) => a.order - b.order), [live]);
 
   const handleCreate = (templateId: string, title: string) => {
     const tpl = DOC_TEMPLATES.find((t) => t.id === templateId);
-    const created = store.create({
-      title,
-      body: tpl?.body ?? '',
-      parentId: creatingUnder ?? null,
-      author: me,
-    });
-    if (creatingUnder) setOpenSet((prev) => new Set(prev).add(creatingUnder));
+    const parentId = creatingUnder ?? null;
+    const last = siblingsOf(parentId).at(-1);
+    const created = store.create({ title, body: tpl?.body ?? '', parentId, author: me, order: between(last?.order, undefined) });
+    if (parentId) setOpenList((prev) => [...new Set([...prev, parentId])]);
     setCreatingUnder(undefined);
     setActiveId(created.id);
     setEditingId(created.id);
-    focusBody.current = true;
+    setFocusFor(created.id);
+  };
+
+  /** [[ 목록의 '새 문서' - 지금 문서 아래에 빈 문서를 만든다 */
+  const createSub = (title: string) => {
+    if (!doc) return null;
+    const last = siblingsOf(doc.id).at(-1);
+    const made = store.create({ title, body: '', parentId: doc.id, author: me, order: between(last?.order, undefined) });
+    setOpenList((prev) => [...new Set([...prev, doc.id])]);
+    onNotice?.(`'${title}' 문서를 만들었습니다`, 'ok');
+    return { id: made.id, title: made.title };
   };
 
   /* 지워진 문서의 마지막 글을 새 문서로 남긴다. 위 문서도 지워졌으면 맨 위에 둔다 */
   const keepLost = () => {
     if (!lost) return;
     const { doc: d } = lost;
-    const parentId = d.parentId && store.docs.some((x) => x.id === d.parentId) ? d.parentId : null;
-    const created = store.create({ title: d.title.trim() || '제목 없는 문서', body: d.body, parentId, author: me });
-    if (parentId) setOpenSet((prev) => new Set(prev).add(parentId));
+    const parentId = d.parentId && byId.has(d.parentId) && !hidden.has(d.parentId) ? d.parentId : null;
+    const created = store.create({ title: d.title.trim() || '제목 없는 문서', body: d.body, parentId, author: me, icon: d.icon, labels: d.labels });
+    if (parentId) setOpenList((prev) => [...new Set([...prev, parentId])]);
     setLost(null);
     setActiveId(created.id);
     setEditingId(created.id);
-    focusBody.current = true;
+    setFocusFor(created.id);
   };
 
   /* 처음 목록을 읽지 못했을 때 - 저장소가 저절로도 다시 읽지만 바로 해 볼 수 있게 */
@@ -366,56 +380,175 @@ export default function Docs({ store, me, onTaskClick }: {
     }
   };
 
-
-  /* 하위 문서가 고아로 남지 않게 저장소가 가지째 지운다 - 문서에는 실행 취소가 없어 먼저 묻는다 */
-  const removeDoc = async () => {
-    if (!doc) return;
-    const hasKids = store.docs.some((d) => d.parentId === doc.id);
-    const yes = await confirm({
-      title: '이 문서를 삭제할까요?',
-      body: (
-        <>
-          <b>{titleOf(doc)}</b> 문서{hasKids ? '와 그 아래 문서가 모두' : '가'} 지워집니다. 삭제한 뒤에는 되돌릴 수 없습니다.
-        </>
-      ),
-      ok: '삭제',
-      tone: 'danger',
-    });
-    if (!yes) return;
-    store.remove(doc.id);
-    setActiveId(null);
-  };
-
-  const applyTool = (tool: (typeof TOOLS)[number]) => {
-    const el = bodyRef.current;
-    if (!el || !doc) return;
-    const { selectionStart: a, selectionEnd: b, value } = el;
-    let next: string;
-    let caret: number;
-
-    if (tool.wrap) {
-      const [l, r] = tool.wrap;
-      next = value.slice(0, a) + l + value.slice(a, b) + r + value.slice(b);
-      caret = b + l.length + (a === b ? 0 : r.length);
-    } else if (tool.line) {
-      // 선택한 모든 줄의 머리에 붙인다
-      const lineStart = value.lastIndexOf('\n', a - 1) + 1;
-      const target = value.slice(lineStart, b);
-      const prefixed = target.split('\n').map((ln) => tool.line + ln).join('\n');
-      next = value.slice(0, lineStart) + prefixed + value.slice(b);
-      caret = lineStart + prefixed.length;
-    } else {
-      const pad = a > 0 && value[a - 1] !== '\n' ? '\n' : '';
-      next = value.slice(0, a) + pad + tool.block + '\n' + value.slice(b);
-      caret = a + pad.length + (tool.block ?? '').length + 1;
+  /** 휴지통으로 - 위키 표가 없으면(예전 표) 예전처럼 묻고 바로 지운다 */
+  const trashDoc = async (d: Doc) => {
+    if (!wikiOn) {
+      const yes = await askDelete(d, store.docs.some((x) => x.parentId === d.id));
+      if (yes) store.remove(d.id);
+      return;
     }
-
-    store.update(doc.id, { body: next });
-    requestAnimationFrame(() => {
-      el.focus();
-      el.setSelectionRange(caret, caret);
-    });
+    if (editingId === d.id) setEditingId(null);
+    store.update(d.id, { trashedAt: new Date().toISOString(), trashedBy: me });
+    onNotice?.(`'${titleOf(d)}' 문서를 휴지통으로 옮겼습니다. 휴지통에서 되살릴 수 있습니다`, 'ok');
   };
+
+  /** 되살리기 - 위 문서가 없거나 아직 휴지통에 있으면 맨 위로 */
+  const restoreDoc = (id: string) => {
+    const d = byId.get(id);
+    if (!d) return;
+    const parentOk = !d.parentId || (byId.has(d.parentId) && !hidden.has(d.parentId));
+    store.update(id, { trashedAt: null, trashedBy: null, ...(parentOk ? {} : { parentId: null }) });
+    onNotice?.(`'${titleOf(d)}' 문서를 되살렸습니다`, 'ok');
+  };
+
+  const purge = (ids: string[]) => {
+    ids.forEach((id) => store.remove(id));
+    onNotice?.(ids.length > 1 ? `문서 ${ids.length}건을 영구 삭제했습니다` : '문서를 영구 삭제했습니다', 'ok');
+  };
+
+  const duplicate = (d: Doc) => {
+    const sibs = siblingsOf(d.parentId ?? null);
+    const next = sibs[sibs.findIndex((x) => x.id === d.id) + 1];
+    const made = store.create({
+      title: `${titleOf(d)} (사본)`, body: d.body, parentId: d.parentId, author: me, icon: d.icon, labels: d.labels,
+      order: between(d.order, next?.order),
+    });
+    setActiveId(made.id);
+    onNotice?.('사본을 만들었습니다', 'ok');
+  };
+
+  const moveTo = (d: Doc, parentId: string | null) => {
+    const last = siblingsOf(parentId, d.id).at(-1);
+    store.update(d.id, { parentId, order: between(last?.order, undefined) });
+    if (parentId) setOpenList((prev) => [...new Set([...prev, parentId])]);
+    setDialog(null);
+    onNotice?.(parentId ? `'${titleOf(byId.get(parentId) ?? d)}' 아래로 옮겼습니다` : '맨 위 문서로 옮겼습니다', 'ok');
+  };
+
+  /** 트리에서 끌어 놓기 */
+  const onDrop = (id: string, target: string | null, zone: DropZone) => {
+    const d = byId.get(id);
+    if (!d) return;
+    if (target === null) {
+      moveTo(d, null);
+      return;
+    }
+    const t = byId.get(target);
+    if (!t || t.id === id) return;
+    if (zone === 'inside') {
+      if (t.id === d.parentId) return;
+      moveTo(d, t.id);
+      return;
+    }
+    const parentId = t.parentId ?? null;
+    const sibs = siblingsOf(parentId, id);
+    const at = sibs.findIndex((x) => x.id === t.id);
+    const prev = zone === 'before' ? sibs[at - 1] : t;
+    const next = zone === 'before' ? t : sibs[at + 1];
+    let order = between(prev?.order, next?.order);
+    if (prev && next && Math.abs(next.order - prev.order) < 1e-6) {
+      // 같은 자리에 수십 번 끼워 넣어 사이가 바닥나면 그때만 형제 전체를 다시 매긴다
+      const list = [...sibs];
+      list.splice(zone === 'before' ? at : at + 1, 0, d);
+      list.forEach((x, i) => {
+        const o = (i + 1) * 1000;
+        if (x.id === id) order = o;
+        else if (x.order !== o) store.update(x.id, { order: o });
+      });
+    }
+    store.update(id, { parentId, order });
+  };
+
+  const copyLink = async (d: Doc) => {
+    const url = new URL(window.location.href);
+    url.search = '';
+    url.hash = '';
+    url.searchParams.set('doc', d.id);
+    try {
+      await navigator.clipboard.writeText(url.toString());
+      onNotice?.('문서 링크를 복사했습니다', 'ok');
+    } catch {
+      onNotice?.('링크를 복사하지 못했습니다. 주소창의 주소를 복사해 주세요', 'err');
+    }
+  };
+
+  const exportMd = (d: Doc) => {
+    const blob = new Blob([`# ${titleOf(d)}\n\n${d.body}\n`], { type: 'text/markdown;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${titleOf(d).replace(/[\\/:*?"<>|]+/g, '_').slice(0, 80)}.md`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  };
+
+  /** 인쇄 · PDF - 본문을 복사해 인쇄 전용 칸에 놓고 나머지 화면은 인쇄에서 뺀다(wiki.css) */
+  const printDoc = (d: Doc) => {
+    const ed = editorRef.current;
+    if (!ed || ed.isDestroyed) return;
+    const root = document.createElement('div');
+    root.className = 'tm-print-root';
+    const h = document.createElement('h1');
+    h.textContent = `${d.icon ? `${d.icon} ` : ''}${titleOf(d)}`;
+    const meta = document.createElement('p');
+    meta.className = 'tm-print-meta';
+    const who = members.find((m) => m.id === d.updatedBy)?.name;
+    meta.textContent = `${who ? `${who} · ` : ''}마지막 수정 ${localDay(d.updatedAt)}`;
+    const body = ed.view.dom.cloneNode(true) as HTMLElement;
+    body.removeAttribute('contenteditable');
+    root.append(h, meta, body);
+    document.body.appendChild(root);
+    const done = () => {
+      root.remove();
+      window.removeEventListener('afterprint', done);
+    };
+    window.addEventListener('afterprint', done);
+    window.print();
+  };
+
+  /** 마크다운 파일 가져오기 - 첫 줄의 # 제목을 문서 제목으로 */
+  const importFiles = async (files: File[]) => {
+    let last: string | null = null;
+    for (const f of files) {
+      if (f.size > 2 * 1024 * 1024) {
+        onNotice?.(`'${f.name}' 은(는) 2MB 가 넘어 가져오지 않았습니다`, 'err');
+        continue;
+      }
+      const text = (await f.text()).replace(/^﻿/, '');
+      const m = /^#\s+(.+)\n+/.exec(text);
+      const title = (m?.[1] ?? f.name.replace(/\.(md|markdown|txt)$/i, '')).trim() || '가져온 문서';
+      const lastRoot = siblingsOf(null).at(-1);
+      last = store.create({ title, body: m ? text.slice(m[0].length) : text, parentId: null, author: me, order: between(lastRoot?.order, undefined) }).id;
+    }
+    if (last) {
+      setActiveId(last);
+      onNotice?.(files.length > 1 ? `문서 ${files.length}건을 가져왔습니다` : '문서를 가져왔습니다', 'ok');
+    }
+  };
+
+  const restoreVersion = async (v: DocVersion) => {
+    if (!doc) return;
+    try {
+      await store.snapshot(doc.id);
+    } catch (e) {
+      onNotice?.(e instanceof Error ? e.message : '되돌리지 못했습니다', 'err');
+      return;
+    }
+    // 되돌린 모습은 보기 모드로 보여 준다(편집기가 다른 사람의 저장으로 바뀐 것처럼 알리지 않게)
+    setEditingId(null);
+    store.update(doc.id, { title: v.title.trim() || doc.title, body: v.body, updatedBy: me });
+    setDialog(null);
+    onNotice?.(`${localDay(v.editedAt)} 판으로 되돌렸습니다. 되돌리기 전 모습은 기록에 남았습니다`, 'ok');
+  };
+
+  const toggleStar = (id: string) =>
+    setStarred((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [id, ...prev]));
+
+  /* 휴지통으로 간 문서는 편집을 푼다 */
+  useEffect(() => {
+    if (editingId && hidden.has(editingId)) setEditingId(null);
+  }, [editingId, hidden]);
 
   if (!store.ready) {
     return (
@@ -423,13 +556,32 @@ export default function Docs({ store, me, onTaskClick }: {
     );
   }
 
+  const starredDocs = starred.map((id) => byId.get(id)).filter((d): d is Doc => !!d && !hidden.has(d.id));
+  const menu: MenuEntry[] = doc ? [
+    { label: starred.includes(doc.id) ? '즐겨찾기에서 빼기' : '즐겨찾기에 넣기', onSelect: () => toggleStar(doc.id), disabled: !canEdit },
+    { label: '링크 복사', onSelect: () => void copyLink(doc) },
+    { label: '아래에 새 문서', onSelect: () => setCreatingUnder(doc.id), disabled: !canEdit, sep: true },
+    { label: '사본 만들기', onSelect: () => duplicate(doc), disabled: !canEdit },
+    { label: '옮기기', onSelect: () => setDialog('move'), disabled: !canEdit },
+    ...(wikiOn ? [{ label: '기록 · 예전 판', onSelect: () => setDialog('history'), sep: true }] : []),
+    { label: '마크다운으로 내려받기', onSelect: () => exportMd(doc), sep: !wikiOn },
+    { label: '인쇄 · PDF', onSelect: () => printDoc(doc) },
+    { label: '넓게 보기', onSelect: toggleWide, checked: wide, sep: true },
+    ...(canEdit ? [{ label: wikiOn ? '휴지통으로 옮기기' : '문서 삭제', onSelect: () => void trashDoc(doc), danger: true, sep: true }] : []),
+  ] : [];
+
   return (
     <>
       <PageHead
         title="팀 위키"
-        lead="회의록, 요구사항, 인수인계처럼 팀이 함께 보는 문서를 모읍니다. 본문에 MATE-104 처럼 적으면 그 작업으로 가는 링크가 됩니다."
+        lead="회의록, 요구사항, 인수인계처럼 팀이 함께 보는 문서를 모읍니다. 편집에서 / 를 누르면 표 · 목록 · 알림 상자를, [[ 를 치면 다른 문서나 작업을 넣습니다."
       >
-        <button type="button" onClick={() => setCreatingUnder(null)} className={`${tmBtnPrimary} max-[720px]:ml-auto`}>
+        <button type="button" onClick={() => setDialog('find')} className={`${tmBtn} max-[720px]:ml-auto max-[720px]:px-3.5`} title="문서 찾기 (Ctrl+K)">
+          <IconSearch />
+          <span className="max-[720px]:sr-only">찾기</span>
+          <kbd className="rounded-md border border-tm-line bg-tm-bg px-1.5 text-[11.5px] font-bold text-tm-sub max-[720px]:hidden">Ctrl K</kbd>
+        </button>
+        <button type="button" onClick={() => setCreatingUnder(null)} className={tmBtnPrimary}>
           <IconPlus />
           새 문서
         </button>
@@ -472,7 +624,7 @@ export default function Docs({ store, me, onTaskClick }: {
 
       <div className="flex min-h-0 flex-1 gap-5">
 
-        {/* 문서 트리 */}
+        {/* ── 문서 트리 ── */}
         <aside className="hidden w-[272px] shrink-0 flex-col overflow-hidden rounded-tm border border-tm-line bg-white shadow-tm md:flex">
           <div className="relative flex-none border-b border-tm-line p-3">
             <span className="pointer-events-none absolute left-[26px] top-1/2 -translate-y-1/2 text-tm-sub">
@@ -480,7 +632,7 @@ export default function Docs({ store, me, onTaskClick }: {
             </span>
             <input value={query} onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Escape') { setQuery(''); e.currentTarget.blur(); } }}
-              placeholder="문서 검색" aria-label="문서 검색"
+              placeholder="문서 검색 · #라벨" aria-label="문서 검색"
               className={`${tmFieldBase} h-11 w-full pl-10 pr-3 text-[15px]`} />
           </div>
 
@@ -490,30 +642,56 @@ export default function Docs({ store, me, onTaskClick }: {
                 <p className="px-2 py-8 text-center text-[14px] text-tm-sub">찾는 문서가 없습니다.</p>
               ) : (
                 <ul className="space-y-0.5">
-                  {searchHits.map((d) => (
+                  {searchHits.map(({ d, text }) => (
                     <li key={d.id}>
-                      <button type="button" onClick={() => { setActiveId(d.id); setQuery(''); }}
-                        className={`flex min-h-[38px] w-full items-center gap-2 rounded-tm-sm px-2.5 text-left text-[14.5px] transition-colors duration-150 ${
-                          d.id === activeId ? 'bg-tm-blue font-bold text-white focus-visible:outline-white' : 'font-semibold text-tm-ink hover:bg-tm-tint'}`}>
-                        <span className={d.id === activeId ? 'text-white' : 'text-tm-sub'}>{docIcon}</span>
-                        <span className="truncate">{titleOf(d)}</span>
-                      </button>
+                      <FlatRow doc={d} active={d.id === activeId} onSelect={() => select(d.id)}
+                        sub={text && !titleOf(d).toLowerCase().includes(query.trim().toLowerCase())
+                          ? <Snippet text={text} q={query.trim()} /> : pathOf(d, byId) || undefined} />
                     </li>
                   ))}
                 </ul>
               )
             ) : (
-              <ul className="space-y-0.5">
-                {tree.map((n) => (
-                  <TreeItem key={n.id} node={n} depth={0} activeId={activeId}
-                    openSet={openSet} onToggle={toggle} onSelect={setActiveId} />
-                ))}
-              </ul>
+              <>
+                {starredDocs.length > 0 && (
+                  <div className="mb-2 border-b border-tm-line pb-2">
+                    <p className="mx-2 mb-1 mt-1 text-[12.5px] font-bold text-tm-sub">즐겨찾기</p>
+                    <ul className="space-y-0.5">
+                      {starredDocs.map((d) => (
+                        <li key={d.id}><FlatRow doc={d} active={d.id === activeId} onSelect={() => select(d.id)} /></li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                <DocTree roots={tree} activeId={activeId} openSet={openSet} onToggle={toggleOpen} onSelect={select}
+                  onAddChild={(id) => setCreatingUnder(id)} onDrop={onDrop} canDrag watched={watched} />
+              </>
             )}
           </nav>
+
+          <div className="flex flex-none items-center gap-1 border-t border-tm-line p-2">
+            {wikiOn && (
+              <button type="button" onClick={() => setDialog('trash')}
+                className="flex min-h-[38px] flex-1 items-center gap-2 rounded-tm-sm px-2.5 text-[14px] font-semibold text-tm-ink transition-colors hover:bg-tm-tint">
+                <TrashGlyph />
+                휴지통
+                {trashed.length > 0 && <span className="ml-auto rounded-full bg-tm-bg px-2 text-[12.5px] font-bold tabular-nums text-tm-sub">{trashed.length}</span>}
+              </button>
+            )}
+            <button type="button" onClick={() => importRef.current?.click()} title="마크다운(.md) 파일을 문서로 가져옵니다"
+              className="flex min-h-[38px] items-center gap-2 rounded-tm-sm px-2.5 text-[14px] font-semibold text-tm-ink transition-colors hover:bg-tm-tint">
+              가져오기
+            </button>
+            <input ref={importRef} type="file" accept=".md,.markdown,.txt,text/markdown,text/plain" multiple hidden
+              onChange={(e) => {
+                const files = [...(e.target.files ?? [])];
+                e.target.value = '';
+                void importFiles(files);
+              }} />
+          </div>
         </aside>
 
-        {/* 본문 */}
+        {/* ── 본문 ── */}
         {!doc && store.loadError ? (
           /* 처음 목록을 읽지 못했다 - '문서가 없습니다'로 보이면 다 지워진 줄 안다 */
           <div role="alert" className="flex min-w-0 flex-1 flex-col items-center justify-center gap-2.5 rounded-tm border border-tm-line bg-white px-6 py-16 text-center shadow-tm">
@@ -536,122 +714,233 @@ export default function Docs({ store, me, onTaskClick }: {
           </div>
         ) : (
           <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-tm border border-tm-line bg-white shadow-tm">
-            {/* 문서 머리 */}
-            <div className="flex-none border-b border-tm-line px-7 pb-[18px] pt-5 max-[720px]:px-4 max-[720px]:pt-4">
-              {/* 트리가 숨는 구간에서의 이동 수단 */}
-              <div className="mb-3 md:hidden">
+            {/* 문서 막대 - 경로 · 함께 보는 사람 · 동작 */}
+            <div className="flex flex-none flex-wrap items-center gap-2 border-b border-tm-line px-5 py-2.5 max-[720px]:px-3">
+              <div className="min-w-0 flex-1 basis-full md:hidden">
                 <label className="sr-only" htmlFor="doc-pick">문서 고르기</label>
-                <select id="doc-pick" value={doc.id} onChange={(e) => setActiveId(e.target.value)}
-                  className={`${tmSelect} w-full`}>
+                <select id="doc-pick" value={hidden.has(doc.id) ? '' : doc.id} onChange={(e) => select(e.target.value)}
+                  className={`${tmSelect} h-10 w-full text-[15px]`}>
+                  {hidden.has(doc.id) && <option value="">{titleOf(doc)} (휴지통)</option>}
                   {flat.map((f) => <option key={f.id} value={f.id}>{f.label}</option>)}
                 </select>
               </div>
-
-              <nav aria-label="문서 경로" className="mb-1.5 hidden flex-wrap items-center gap-1 text-[13px] font-semibold text-tm-sub md:flex">
+              <nav aria-label="문서 경로" className="hidden min-w-0 flex-1 flex-wrap items-center gap-1 text-[13.5px] font-semibold text-tm-sub md:flex">
                 {breadcrumb.map((b, i) => (
-                  <span key={b.id} className="flex items-center gap-1">
+                  <span key={b.id} className="flex min-w-0 items-center gap-1">
                     {i > 0 && <span className="text-tm-edge" aria-hidden>/</span>}
-                    <button type="button" onClick={() => setActiveId(b.id)}
-                      className={`rounded-md ${i === breadcrumb.length - 1 ? 'text-tm-sub' : 'transition-colors hover:text-tm-blue hover:underline'}`}>
-                      {titleOf(b)}
+                    <button type="button" onClick={() => select(b.id)} aria-current={i === breadcrumb.length - 1 ? 'page' : undefined}
+                      className={`flex min-w-0 items-center gap-1.5 rounded-md px-1 py-0.5 ${i === breadcrumb.length - 1 ? 'text-tm-ink' : 'transition-colors hover:bg-tm-tint hover:text-tm-blue'}`}>
+                      {b.icon && <span aria-hidden>{b.icon}</span>}
+                      <span className="max-w-[220px] truncate">{titleOf(b)}</span>
                     </button>
                   </span>
                 ))}
               </nav>
 
-              <div className="flex flex-wrap items-center gap-2.5">
-                <h2 className="mr-auto min-w-0 text-[22px] font-extrabold leading-[1.3] tracking-[-0.01em] text-tm-deep [overflow-wrap:anywhere]">
-                  {titleOf(doc)}
-                </h2>
-                <button type="button" onClick={() => setCreatingUnder(doc.id)} className={tmGhostBtn}>
-                  <IconPlus size={16} />
-                  하위 문서
-                </button>
-                <button type="button" onClick={() => setEditingId(editing ? null : doc.id)} data-on={editing ? '' : undefined} className={tmEditBtn}>
-                  {editing ? '편집 끝내기' : '편집'}
-                </button>
-              </div>
-
-              <div className="mt-2.5 flex flex-wrap items-center gap-x-3.5 gap-y-1.5 text-[13.5px] text-tm-sub">
-                <span className="inline-flex items-center gap-2 font-semibold">
-                  <Avatar id={doc.author} size={22} />
-                  {author?.name ?? '알 수 없음'}
-                </span>
-                <span className="tabular-nums">마지막 수정 {localDay(doc.updatedAt)}</span>
-                {doc.labels.map((l) => (
-                  <span key={l} className="rounded-full bg-tm-tint px-2.5 py-0.5 text-[12.5px] font-bold text-tm-deep">{l}</span>
-                ))}
+              <div className="flex flex-none items-center gap-1.5 max-md:ml-auto">
+                {here2.length > 0 && (
+                  <span className="mr-1 flex items-center -space-x-1.5" aria-label={`함께 보는 사람 ${here2.length}명`}>
+                    {here2.slice(0, 4).map((p) => (
+                      <span key={p.member} className={`rounded-full ring-2 ${p.editing ? 'ring-tm-ok' : 'ring-white'}`}>
+                        <Avatar id={p.member} size={26} />
+                      </span>
+                    ))}
+                  </span>
+                )}
+                {wikiOn && (
+                  <button type="button" title="댓글로 가기" aria-label={`댓글 ${commentCount}개`}
+                    className="inline-flex h-[38px] items-center gap-1.5 rounded-tm-sm border border-tm-edge bg-white px-2.5 text-[13.5px] font-bold text-tm-ink transition-colors
+                               hover:border-tm-blue hover:bg-tm-tint [@media(pointer:coarse)]:h-11"
+                    onClick={() => scrollWithin(document.getElementById(`comments-${doc.id}`))}>
+                    <CommentGlyph />
+                    <span className="tabular-nums">{commentCount}</span>
+                  </button>
+                )}
+                {canEdit && (
+                  <button type="button" className={tmIconBtn} aria-pressed={starred.includes(doc.id)}
+                    title={starred.includes(doc.id) ? '즐겨찾기에서 빼기' : '즐겨찾기에 넣기'}
+                    aria-label={starred.includes(doc.id) ? '즐겨찾기에서 빼기' : '즐겨찾기에 넣기'}
+                    onClick={() => toggleStar(doc.id)}>
+                    <StarGlyph on={starred.includes(doc.id)} />
+                  </button>
+                )}
+                {canEdit && (
+                  <button type="button" onClick={() => setEditingId(editing ? null : doc.id)} data-on={editing ? '' : undefined}
+                    className={tmEditBtn} title="편집 (E)">
+                    {editing ? '편집 끝내기' : '편집'}
+                  </button>
+                )}
+                <DropMenu label="문서 메뉴" items={menu} className={tmIconBtn}>
+                  <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden fill="currentColor">
+                    <circle cx="4.5" cy="10" r="1.6" /><circle cx="10" cy="10" r="1.6" /><circle cx="15.5" cy="10" r="1.6" />
+                  </svg>
+                </DropMenu>
               </div>
             </div>
 
             {/* 본문 + 목차 */}
-            <div className="min-h-0 flex-1 overflow-y-auto">
-              {editing ? (
-                <div className="mx-auto max-w-[920px] px-7 py-6 max-[720px]:px-4 max-[720px]:py-5">
-                  <label className={tmLabel} htmlFor="doc-edit-title">제목</label>
-                  <TitleField key={doc.id} saved={doc.title} onSave={(title) => store.update(doc.id, { title })} />
-
-                  <div className="mb-2 flex flex-wrap items-center gap-1.5">
-                    <label className="mr-1.5 text-[14px] font-bold text-tm-ink" htmlFor="doc-edit-body">
-                      본문
-                    </label>
-                    {TOOLS.map((t) => (
-                      <button key={t.label} type="button" title={t.title} onClick={() => applyTool(t)}
-                        className="inline-flex h-8 items-center rounded-lg border border-tm-edge bg-white px-2.5 text-[13px] font-bold text-tm-ink
-                                   transition-colors duration-150 hover:border-tm-blue hover:bg-tm-tint [@media(pointer:coarse)]:h-10">
-                        {t.label}
-                      </button>
-                    ))}
-                    <span className="ml-auto inline-flex items-center gap-2 text-[13px] font-semibold text-tm-sub" aria-live="polite">
-                      <i className={`h-2 w-2 rounded-full ${
-                        store.sync === 'error' ? 'bg-tm-red' : store.sync === 'saving' ? 'bg-tm-edge' : 'bg-tm-ok'}`} aria-hidden />
-                      {/* error = 아직 서버에 닿지 않은 고침이 있다(저절로 다시 보내는 중이거나 서버가 거절했다) */}
-                      {store.sync === 'error' ? '저장하지 못한 변경이 있습니다' : store.sync === 'saving' ? '저장 중…' : '자동 저장됨'}
-                    </span>
-                  </div>
-                  <textarea id="doc-edit-body" ref={bodyRef} value={doc.body}
-                    onChange={(e) => store.update(doc.id, { body: e.target.value })}
-                    spellCheck={false}
-                    className={`${tmFieldBase} tm-mono block min-h-[52vh] w-full resize-y p-4 text-[14px] leading-[1.65]`} />
-
-                  <p className="mt-2.5 text-[13.5px] leading-[1.6] text-tm-sub">
-                    본문에 <code className="tm-mono rounded-md bg-tm-tint px-1.5 py-0.5 text-[12.5px] text-tm-deep">MATE-104</code> 처럼 적으면
-                    그 작업으로 가는 링크가 됩니다.
-                  </p>
-
-                  <div className="mt-7 border-t border-tm-line pt-5">
-                    <button type="button" onClick={() => void removeDoc()} className={tmGhostDanger}>
-                      문서 삭제
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="mx-auto flex max-w-[1100px] gap-10 px-7 py-6 max-[720px]:px-4 max-[720px]:py-5 lg:px-10 lg:py-8">
-                  <article className="min-w-0 flex-1">
-                    <Markdown source={doc.body} onTaskClick={onTaskClick} />
-                  </article>
-
-                  {headings.length > 1 && (
-                    <nav aria-label="목차" className="hidden w-[196px] shrink-0 xl:block">
-                      <div className="sticky top-0">
-                        <p className="mb-2.5 text-[13px] font-bold text-tm-sub">이 문서에서</p>
-                        <ul className="space-y-0.5 border-l-2 border-tm-line">
-                          {headings.map((h) => (
-                            <li key={h.id}>
-                              <a href={`#${h.id}`}
-                                className="-ml-0.5 block border-l-2 border-transparent py-1 text-[13.5px] font-semibold leading-snug text-tm-sub
-                                           transition-colors duration-150 hover:border-tm-blue hover:text-tm-ink"
-                                style={{ paddingLeft: 12 + (h.level - 1) * 10 }}>
-                                {h.text}
-                              </a>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </nav>
+            <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
+              <div className={`mx-auto flex gap-8 px-7 pb-16 pt-6 max-[720px]:px-4 max-[720px]:pt-4 md:pl-[66px] ${wide ? 'max-w-none' : 'max-w-[1120px]'}`}>
+                <article className="min-w-0 flex-1">
+                  {/* 휴지통 · 함께 편집 알림 */}
+                  {doc.trashedAt && (
+                    <TrashBanner doc={doc} onRestore={() => restoreDoc(doc.id)}
+                      onPurge={async () => {
+                        const yes = await askDelete(doc, store.docs.some((x) => x.parentId === doc.id));
+                        if (yes) purge([doc.id]);
+                      }} />
                   )}
-                </div>
-              )}
+                  {trashedAbove && (
+                    <div role="status" className={`${tmCallout} mb-5 border-l-tm-red`}>
+                      <p className="min-w-0 flex-[1_1_280px]">
+                        위 문서 <b className="font-bold text-tm-deep">{titleOf(trashedAbove)}</b> 와 함께 휴지통에 있습니다. 읽기만 할 수 있습니다.
+                      </p>
+                      <button type="button" className={tmGhostBtn} onClick={() => restoreDoc(trashedAbove.id)}>위 문서째 되살리기</button>
+                    </div>
+                  )}
+                  {othersEditing.length > 0 && (
+                    <div role="status" className={`${tmCallout} mb-5 border-l-tm-warn`}>
+                      <p className="min-w-0 flex-[1_1_280px]">
+                        <b className="font-bold text-tm-deep">{othersEditing.map((p) => members.find((m) => m.id === p.member)?.name ?? '팀원').join(', ')}</b>
+                        님이 이 문서를 편집하고 있습니다. 같은 곳을 함께 고치면 나중에 저장한 쪽이 남으니 말을 맞추세요. 덮인 내용은 기록에서 찾을 수 있습니다.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* 아이콘 · 제목 */}
+                  <div className="relative mb-1">
+                    {wikiOn && editing ? (
+                      <div className="relative mb-1">
+                        <button type="button" onClick={() => setIconOpen((v) => !v)} aria-expanded={iconOpen}
+                          className={doc.icon
+                            ? 'grid h-14 w-14 place-items-center rounded-tm-sm text-[40px] leading-none transition-colors hover:bg-tm-tint'
+                            : 'inline-flex h-8 items-center gap-1.5 rounded-lg px-2 text-[13.5px] font-semibold text-tm-sub transition-colors hover:bg-tm-tint hover:text-tm-blue'}
+                          aria-label={doc.icon ? '아이콘 바꾸기' : '아이콘 넣기'}>
+                          {doc.icon || <>☺ 아이콘 넣기</>}
+                        </button>
+                        {iconOpen && (
+                          <EmojiPicker value={doc.icon} onClose={() => setIconOpen(false)}
+                            onPick={(v) => { store.update(doc.id, { icon: v }); setIconOpen(false); }} />
+                        )}
+                      </div>
+                    ) : doc.icon ? (
+                      <div className="mb-1 text-[40px] leading-[1.2]" aria-hidden>{doc.icon}</div>
+                    ) : null}
+                    {editing ? (
+                      <TitleField key={doc.id} saved={doc.title}
+                        onSave={(title) => store.update(doc.id, { title, updatedBy: me })}
+                        onEnter={() => focusEditor(editorRef.current, 'start')} />
+                    ) : (
+                      <h2 className="text-[28px] font-extrabold leading-[1.3] tracking-[-0.02em] text-tm-deep [overflow-wrap:anywhere] max-[720px]:text-[23px]">
+                        {titleOf(doc)}
+                      </h2>
+                    )}
+                  </div>
+
+                  <DocMeta doc={doc} editing={editing} onLabels={(labels) => store.update(doc.id, { labels })}
+                    onLabelClick={(l) => setQuery(`#${l}`)} sync={editing ? store.sync : undefined} />
+
+                  <div className="mt-6">
+                    <DocEditor key={doc.id}
+                      body={doc.body}
+                      editable={editing}
+                      checkable={canEdit}
+                      onChange={(md) => store.update(doc.id, { body: md, updatedBy: me })}
+                      refs={refs}
+                      selfId={doc.id}
+                      upload={store.features.files ? (f) => store.upload(f, doc.id) : undefined}
+                      allowData={!isRemote}
+                      onCreateDoc={canEdit ? createSub : undefined}
+                      onNotice={onNotice}
+                      onHeadings={setHeadings}
+                      editorRef={editorRef}
+                      autoFocus={focusFor === doc.id}
+                      onRequestEdit={canEdit ? () => setEditingId(doc.id) : undefined}
+                      className={canEdit ? '' : 'tm-readonly-checks'} />
+                  </div>
+
+                  {!editing && !doc.body.trim() && (
+                    <p className="py-6 text-[15.5px] text-tm-sub">
+                      내용이 비어 있습니다.{canEdit ? ' 편집을 눌러 작성하세요.' : ''}
+                    </p>
+                  )}
+
+                  {editing && (
+                    <p className="mt-6 text-[13.5px] leading-[1.6] text-tm-sub">
+                      / 블록 넣기 · [[ 문서 · 작업 링크 · @ 사람 언급 · 그림은 붙여 넣거나 끌어다 놓기 · 고친 내용은 저절로 저장됩니다.
+                      {' '}본문에 <code className="tm-mono rounded-md bg-tm-tint px-1.5 py-0.5 text-[12.5px] text-tm-deep">MATE-104</code> 처럼 적으면 그 작업으로 가는 링크가 됩니다.
+                    </p>
+                  )}
+
+                  {/* 하위 문서 · 이 문서를 링크한 문서 */}
+                  {(children.length > 0 || backlinks.length > 0) && !editing && (
+                    <div className="mt-12 grid gap-6 border-t border-tm-line pt-7 lg:grid-cols-2">
+                      {children.length > 0 && (
+                        <section aria-labelledby={`kids-${doc.id}`}>
+                          <h3 id={`kids-${doc.id}`} className="mb-2.5 text-[14px] font-bold text-tm-sub">하위 문서 {children.length}</h3>
+                          <ul className="space-y-1">
+                            {children.map((c) => (
+                              <li key={c.id}>
+                                <button type="button" onClick={() => select(c.id)}
+                                  className="flex w-full items-center gap-2.5 rounded-tm-sm border border-tm-line px-3 py-2.5 text-left transition-colors hover:border-tm-blue hover:bg-tm-tint">
+                                  <span className="text-tm-sub"><DocIcon icon={c.icon} size={18} /></span>
+                                  <span className="min-w-0 flex-1 truncate text-[15px] font-bold text-tm-ink">{titleOf(c)}</span>
+                                  <span className="flex-none text-[12.5px] tabular-nums text-tm-sub">{ago(c.updatedAt)}</span>
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        </section>
+                      )}
+                      {backlinks.length > 0 && (
+                        <section aria-labelledby={`backs-${doc.id}`}>
+                          <h3 id={`backs-${doc.id}`} className="mb-2.5 text-[14px] font-bold text-tm-sub">이 문서를 링크한 문서 {backlinks.length}</h3>
+                          <ul className="space-y-1">
+                            {backlinks.map((b) => (
+                              <li key={b.id}>
+                                <button type="button" onClick={() => select(b.id)}
+                                  className="flex w-full items-center gap-2.5 rounded-tm-sm px-3 py-2 text-left transition-colors hover:bg-tm-tint">
+                                  <span className="text-tm-sub"><DocIcon icon={b.icon} size={18} /></span>
+                                  <span className="min-w-0 flex-1 truncate text-[15px] font-semibold text-tm-blue underline underline-offset-[3px]">{titleOf(b)}</span>
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        </section>
+                      )}
+                    </div>
+                  )}
+
+                  {wikiOn && (
+                    <Comments docId={doc.id} comments={docComments} me={me} canWrite={canEdit}
+                      onAdd={(body, parentId) => store.addComment({ docId: doc.id, parentId, body, author: me })}
+                      onUpdate={(id, patch) => store.updateComment(id, patch)}
+                      onTaskClick={onTaskClick} />
+                  )}
+                </article>
+
+                {/* 목차 */}
+                {headings.length > 1 && (
+                  <nav aria-label="목차" className="hidden w-[188px] shrink-0 xl:block">
+                    <div className="sticky top-0 max-h-[calc(100dvh-220px)] overflow-y-auto pt-1">
+                      <p className="mb-2.5 text-[13px] font-bold text-tm-sub">이 문서에서</p>
+                      <ul className="space-y-0.5 border-l-2 border-tm-line">
+                        {headings.map((h) => (
+                          <li key={h.pos}>
+                            <button type="button" onClick={() => scrollToPos(editorRef.current, h.pos)}
+                              aria-current={here === h.pos ? 'location' : undefined}
+                              className={`-ml-0.5 block w-full border-l-2 py-1 text-left text-[13.5px] font-semibold leading-snug transition-colors duration-150 ${
+                                here === h.pos ? 'border-tm-blue text-tm-blue' : 'border-transparent text-tm-sub hover:border-tm-blue hover:text-tm-ink'}`}
+                              style={{ paddingLeft: 12 + (h.level - 1) * 10 }}>
+                              {h.text}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </nav>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -659,13 +948,101 @@ export default function Docs({ store, me, onTaskClick }: {
 
       {creatingUnder !== undefined && (
         <NewDocDialog
-          parentTitle={store.docs.filter((d) => d.id === creatingUnder).map(titleOf)[0] ?? null}
+          parentTitle={creatingUnder ? titleOf(byId.get(creatingUnder) ?? { title: '' }) : null}
           onCreate={handleCreate}
           onClose={() => setCreatingUnder(undefined)} />
       )}
-      {confirmNode}
+      {dialog === 'find' && (
+        <QuickFind docs={live} recent={recent} starred={starred} onOpen={select} onClose={() => setDialog(null)} />
+      )}
+      {dialog === 'move' && doc && (
+        <MoveDialog doc={doc} docs={live} onMove={(p) => moveTo(doc, p)} onClose={() => setDialog(null)} />
+      )}
+      {dialog === 'trash' && (
+        <TrashDialog docs={trashed} onOpen={select} onRestore={restoreDoc} onPurge={purge} onClose={() => setDialog(null)} />
+      )}
+      {dialog === 'history' && doc && (
+        <HistoryDialog doc={doc} store={store} refs={refs} onRestore={restoreVersion} onClose={() => setDialog(null)} />
+      )}
+      {deleteNode}
     </>
   );
 }
 
-export { MEMBERS };
+/** 쓴 사람 · 고친 사람 · 읽는 시간 · 라벨 */
+function DocMeta({ doc, editing, onLabels, onLabelClick, sync }: {
+  doc: Doc; editing: boolean; onLabels(labels: string[]): void; onLabelClick(l: string): void; sync?: DocStore['sync'];
+}) {
+  const author = useMember(doc.author);
+  const editor = useMember(doc.updatedBy);
+  const reading = readingLabel(doc);
+  return (
+    <div className="mt-2.5 flex flex-wrap items-center gap-x-3.5 gap-y-2 text-[13.5px] text-tm-sub">
+      <span className="inline-flex items-center gap-2 font-semibold">
+        <Avatar id={doc.author} size={22} />
+        {author?.name ?? '알 수 없음'}
+      </span>
+      <span className="tabular-nums" title={new Date(doc.updatedAt).toLocaleString('ko-KR')}>
+        {editor && editor.id !== author?.id ? `${editor.name} · ` : ''}{ago(doc.updatedAt)} 고침
+      </span>
+      {reading && <span>{reading}</span>}
+      {editing ? (
+        <LabelEditor labels={doc.labels} onChange={onLabels} />
+      ) : (
+        doc.labels.map((l) => (
+          <button key={l} type="button" onClick={() => onLabelClick(l)} title={`'${l}' 라벨이 붙은 문서 보기`}
+            className="rounded-full bg-tm-tint px-2.5 py-0.5 text-[12.5px] font-bold text-tm-deep transition-colors hover:bg-tm-blue hover:text-white">
+            {l}
+          </button>
+        ))
+      )}
+      {editing && sync !== undefined && (
+        <span className="ml-auto inline-flex items-center gap-2 text-[13px] font-semibold" aria-live="polite">
+          <i className={`h-2 w-2 rounded-full ${sync === 'error' ? 'bg-tm-red' : sync === 'saving' ? 'bg-tm-edge' : 'bg-tm-ok'}`} aria-hidden />
+          {/* error = 아직 서버에 닿지 않은 고침이 있다(저절로 다시 보내는 중이거나 서버가 거절했다) */}
+          {sync === 'error' ? '저장하지 못한 변경이 있습니다' : sync === 'saving' ? '저장 중…' : '자동 저장됨'}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function TrashBanner({ doc, onRestore, onPurge }: { doc: Doc; onRestore(): void; onPurge(): void }) {
+  const who = useMember(doc.trashedBy);
+  return (
+    <div role="status" className={`${tmCallout} mb-5 border-l-tm-red`}>
+      <p className="min-w-0 flex-[1_1_280px]">
+        <b className="font-bold text-tm-red-deep">휴지통에 있는 문서입니다.</b>{' '}
+        {who ? `${who.name}님이 ` : ''}{doc.trashedAt ? ago(doc.trashedAt) : ''} 옮겼습니다. 읽기만 할 수 있습니다.
+      </p>
+      <div className="flex flex-none gap-2">
+        <button type="button" className={tmEditBtn} onClick={onRestore}>되살리기</button>
+        <button type="button" className={`${tmGhostBtn} text-tm-red-deep`} onClick={onPurge}>영구 삭제</button>
+      </div>
+    </div>
+  );
+}
+
+function TrashGlyph() {
+  return (
+    <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="flex-none text-tm-sub">
+      <path d="M3.5 5.5h13M8 5.5V3.8h4v1.7M5 5.5l.8 11h8.4l.8-11M8.5 9v4.5M11.5 9v4.5" />
+    </svg>
+  );
+}
+
+function CommentGlyph() {
+  return (
+    <svg viewBox="0 0 20 20" width="17" height="17" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 4h12v9H9l-4 3v-3H4z" />
+    </svg>
+  );
+}
+
+function StarGlyph({ on }: { on: boolean }) {
+  return (
+    <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden fill={on ? '#f5b800' : 'none'} stroke={on ? '#c48f00' : 'currentColor'} strokeWidth="1.7" strokeLinejoin="round">
+      <path d="M10 2.8l2.2 4.6 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5L2.8 8.1l5-.7z" />
+    </svg>
+  );
+}

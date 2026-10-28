@@ -1,7 +1,9 @@
 'use client';
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import { initialOf, type Doc, type DomainKey, type Member, type Memo, type Priority, type Status, type Task } from './types';
+import {
+  initialOf, type Doc, type DocComment, type DocVersion, type DomainKey, type Member, type Memo, type Priority, type Status, type Task,
+} from './types';
 
 /*
  * 팀이 함께 쓰는 저장소(Supabase) 연결.
@@ -65,6 +67,32 @@ export interface DocRow {
   author: string | null;
   labels: string[] | null;
   sort: number;
+  created_at: string;
+  updated_at: string;
+  /* 위키 칸 - SQL 을 다시 실행하기 전의 표에는 없다 */
+  icon?: string;
+  updated_by?: string | null;
+  trashed_at?: string | null;
+  trashed_by?: string | null;
+}
+
+export interface DocVersionRow {
+  id: string;
+  doc_id: string;
+  title: string;
+  body: string;
+  edited_by: string | null;
+  edited_at: string;
+}
+
+export interface DocCommentRow {
+  id: string;
+  doc_id: string;
+  parent_id: string | null;
+  author: string | null;
+  body: string;
+  resolved: boolean;
+  removed: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -139,9 +167,15 @@ export function docFromRow(r: DocRow): Doc {
     order: r.sort,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
+    icon: r.icon ?? '',
+    // 칸이 생기기 전에 만든 문서는 쓴 사람이 마지막으로 고친 사람이다
+    updatedBy: r.updated_by ?? r.author,
+    trashedAt: r.trashed_at ?? null,
+    trashedBy: r.trashed_by ?? null,
   };
 }
 
+/** 바뀐 칸만 옮긴다. 마지막으로 고친 사람은 DB 트리거가 로그인한 사람으로 적는다 */
 export function docToRow(p: Partial<Doc>): Partial<DocRow> {
   const r: Partial<DocRow> = {};
   if (p.parentId !== undefined) r.parent_id = p.parentId;
@@ -150,6 +184,38 @@ export function docToRow(p: Partial<Doc>): Partial<DocRow> {
   if (p.author !== undefined) r.author = p.author || null;
   if (p.labels !== undefined) r.labels = p.labels;
   if (p.order !== undefined) r.sort = p.order;
+  if (p.icon !== undefined) r.icon = p.icon;
+  if (p.trashedAt !== undefined) r.trashed_at = p.trashedAt;
+  if (p.trashedBy !== undefined) r.trashed_by = p.trashedBy;
+  return r;
+}
+
+export function docVersionFromRow(r: DocVersionRow): DocVersion {
+  return {
+    id: r.id, docId: r.doc_id, title: r.title, body: r.body, editedBy: r.edited_by, editedAt: r.edited_at,
+  };
+}
+
+export function docCommentFromRow(r: DocCommentRow): DocComment {
+  return {
+    id: r.id,
+    docId: r.doc_id,
+    parentId: r.parent_id,
+    author: r.author ?? '',
+    body: r.body,
+    resolved: r.resolved,
+    removed: r.removed,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+/** 쓴 사람 · 문서 · 위 댓글은 만들 때만 보낸다(DB 가 바꾸지 못하게 막는다) - 고칠 때는 본문 · 해결 · 지움만 */
+export function docCommentToRow(p: Partial<DocComment>): Partial<DocCommentRow> {
+  const r: Partial<DocCommentRow> = {};
+  if (p.body !== undefined) r.body = p.body;
+  if (p.resolved !== undefined) r.resolved = p.resolved;
+  if (p.removed !== undefined) r.removed = p.removed;
   return r;
 }
 

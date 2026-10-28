@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { LOCAL_ME_KEY, isUntouchedSample, useTaskStore, type Store, type StoreOptions } from './store';
-import { useDocStore, type DocStore } from './docStore';
+import { liveDocCount, useDocStore, type DocStore } from './docStore';
 import { useMemoStore, type MemoStore } from './memoStore';
 import {
   DOMAINS, MEMBERS, PRIORITIES, STATUSES,
@@ -21,7 +22,11 @@ import { NewTaskDialog, TaskPanel, type Draft } from './TaskPanel';
 import Timeline from './Timeline';
 import Calendar from './Calendar';
 import Roadmap from './Roadmap';
-import Docs from './Docs';
+/* 위키 편집기(TipTap)는 크다 - 위키를 열 때만 받아 작업 보드의 첫 로딩을 가볍게 둔다 */
+const Docs = dynamic(() => import('./Docs'), {
+  ssr: false,
+  loading: () => <div className="flex flex-1 items-center justify-center text-[15px] font-semibold text-tm-sub">불러오는 중…</div>,
+});
 import Memos from './Memos';
 import { isRemote } from './supabase';
 import {
@@ -236,6 +241,8 @@ function Workspace({ account }: { account?: Account }) {
       if (p.priority) setPriorityFilter(p.priority);
       if (typeof p.hideDone === 'boolean') setHideDone(p.hideDone);
     }
+    // 위키 문서 링크(?doc=)로 들어왔으면 위키를 연다
+    if (new URLSearchParams(window.location.search).has('doc')) setSection('docs');
     setPrefsLoaded(true);
   }, []);
 
@@ -638,7 +645,7 @@ function Workspace({ account }: { account?: Account }) {
     {
       label: '문서',
       items: [
-        { key: 'docs', label: '팀 위키', icon: 'wiki', count: docStore.docs.length,
+        { key: 'docs', label: '팀 위키', icon: 'wiki', count: liveDocCount(docStore.docs),
           active: section === 'docs', go: () => setSection('docs') },
         // 나만 보는 메모 - 브라우저 저장 모드는 '나'를 바꿔 쓸 수 있어 쓴 사람으로 센다
         { key: 'memos', label: '내 메모', icon: 'memo', count: memoStore.memos.filter((m) => m.owner === me).length,
@@ -764,12 +771,13 @@ function Workspace({ account }: { account?: Account }) {
           <div className="mx-auto flex min-h-0 w-full max-w-[1560px] flex-1 flex-col">
 
             {section === 'docs' ? (
-              <Docs store={docStore} me={me}
+              <Docs store={docStore} me={me} tasks={store.tasks}
                 onTaskClick={(key) => {
                   const hit = store.tasks.find((t) => t.key === key);
                   if (hit) { setSection('tasks'); setOpenId(hit.id); }
                   else setToast({ text: `${key} 작업을 찾을 수 없습니다`, undo: false });
-                }} />
+                }}
+                onNotice={(text, tone) => setToast({ text, undo: false, tone: tone === 'err' ? 'err' : undefined })} />
             ) : section === 'memos' ? (
               <Memos store={memoStore} me={me} />
             ) : (

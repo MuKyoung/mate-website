@@ -71,11 +71,45 @@ create table if not exists public.tm_memos (
   updated_at timestamptz not null default now()
 );
 
+-- 위키 칸 - 아이콘, 마지막으로 내용을 고친 사람, 휴지통(비어 있으면 살아 있는 문서).
+-- 사람을 가리키지만 외래 키는 두지 않는다 - 팀원 계정을 지울 때 문서가 막지 않게(화면은 모르는 사람으로 적는다)
+alter table public.tm_docs add column if not exists icon text not null default '';
+alter table public.tm_docs add column if not exists updated_by uuid;
+alter table public.tm_docs add column if not exists trashed_at timestamptz;
+alter table public.tm_docs add column if not exists trashed_by uuid;
+
+-- ── 문서 기록 ── 고치기 전 모습. 남기는 것은 트리거와 tm_doc_snapshot 이 하고 화면은 읽기만 한다
+create table if not exists public.tm_doc_versions (
+  id uuid primary key default gen_random_uuid(),
+  doc_id uuid not null references public.tm_docs (id) on delete cascade,
+  title text not null default '',
+  body text not null default '',
+  edited_by uuid,                                   -- 이 모습으로 마지막에 고친 사람
+  edited_at timestamptz not null default now(),     -- 이 모습이 저장된 시각
+  created_at timestamptz not null default now()
+);
+
+-- ── 문서 댓글 ── 답글은 한 단계(parent_id 는 맨 위 댓글). 지우기는 removed 표시로 자리만 남긴다
+create table if not exists public.tm_doc_comments (
+  id uuid primary key default gen_random_uuid(),
+  doc_id uuid not null references public.tm_docs (id) on delete cascade,
+  parent_id uuid references public.tm_doc_comments (id) on delete cascade,
+  author uuid default auth.uid(),
+  body text not null default '',
+  resolved boolean not null default false,
+  removed boolean not null default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()      -- 본문을 고친 시각(해결 표시로는 바뀌지 않는다)
+);
+
 -- 다른 표를 가리키는 칸 - 지울 때(on delete) · 묶어 볼 때 표 전체를 훑지 않게
 create index if not exists tm_tasks_assignee_idx on public.tm_tasks (assignee);
 create index if not exists tm_tasks_created_by_idx on public.tm_tasks (created_by);
 create index if not exists tm_docs_parent_id_idx on public.tm_docs (parent_id);
 create index if not exists tm_docs_author_idx on public.tm_docs (author);
+create index if not exists tm_doc_versions_doc_idx on public.tm_doc_versions (doc_id, created_at desc);
+create index if not exists tm_doc_comments_doc_idx on public.tm_doc_comments (doc_id);
+create index if not exists tm_doc_comments_parent_idx on public.tm_doc_comments (parent_id);
 create index if not exists tm_memos_owner_idx on public.tm_memos (owner);
 
 -- ── 함수 ─────────────────────────────────────────────────────
@@ -202,6 +236,160 @@ begin
 end;
 $$;
 
+-- 문서를 고칠 때 - 제목 · 본문이 바뀌면 고친 사람을 적고, 새로 고치기 시작했으면 그 전 모습을 기록에 남긴다.
+-- 새로 시작 = 마지막으로 고친 사람이 다르거나 10분 넘게 손대지 않았다. 한 사람이 오래 이어서 고치면 30분마다 한 번 남긴다.
+-- 두 사람이 번갈아 저장해도 사람이 바뀔 때의 기록은 1분에 한 번만 - 저장마다 남기면 기록이 금세 넘친다
+create or replace function public.tm_docs_history()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if new.title is not distinct from old.title and new.body is not distinct from old.body then
+    return new;
+  end if;
+  new.updated_by := coalesce(auth.uid(), new.updated_by);
+  if (old.updated_by is distinct from new.updated_by and not exists (
+       select 1 from public.tm_doc_versions v
+       where v.doc_id = old.id and v.created_at > now() - interval '1 minute'
+     ))
+     or old.updated_at < now() - interval '10 minutes'
+     or not exists (
+       select 1 from public.tm_doc_versions v
+       where v.doc_id = old.id and v.created_at > now() - interval '30 minutes'
+     ) then
+    insert into public.tm_doc_versions (doc_id, title, body, edited_by, edited_at)
+    values (old.id, old.title, old.body, old.updated_by, old.updated_at);
+  end if;
+  return new;
+end;
+$$;
+
+-- 문서의 '누가' 칸은 DB 가 정한다 - 쓴 사람은 만든 사람으로 고정, 휴지통에 넣은 사람은 넣은 사람,
+-- 마지막으로 고친 사람은 내용을 바꾼 사람(tm_docs_history). 화면이 다른 이름을 보내도 따르지 않는다
+create or replace function public.tm_docs_stamp()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  -- 대시보드 · SQL Editor 처럼 로그인한 사용자를 거치지 않는 쪽은 그대로 둔다
+  if auth.uid() is null then
+    return new;
+  end if;
+  if tg_op = 'INSERT' then
+    new.author := auth.uid();
+    new.updated_by := auth.uid();
+    new.trashed_at := null;
+    new.trashed_by := null;
+    return new;
+  end if;
+  new.author := old.author;
+  if new.trashed_at is distinct from old.trashed_at then
+    new.trashed_by := case when new.trashed_at is null then null else auth.uid() end;
+  else
+    new.trashed_by := old.trashed_by;
+  end if;
+  if new.title is not distinct from old.title and new.body is not distinct from old.body then
+    new.updated_by := old.updated_by;
+  end if;
+  return new;
+end;
+$$;
+
+-- 문서를 자기 아래(자기 하위 문서 밑)로 옮기지 못하게 한다 - 고리가 생기면 트리에서 사라진다
+create or replace function public.tm_docs_guard()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if new.parent_id is not null and (tg_op = 'INSERT' or new.parent_id is distinct from old.parent_id) then
+    if new.parent_id = new.id or exists (
+      with recursive up (id, parent_id) as (
+        select d.id, d.parent_id from public.tm_docs d where d.id = new.parent_id
+        union
+        select d.id, d.parent_id from public.tm_docs d join up on d.id = up.parent_id
+      )
+      select 1 from up where up.id = new.id
+    ) then
+      raise exception '문서를 자기 아래로 옮길 수 없습니다';
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
+-- 지금 모습을 기록에 남긴다 - 예전 판으로 되돌리기 직전에 화면이 부른다(되돌린 것도 되돌릴 수 있게)
+create or replace function public.tm_doc_snapshot(target uuid)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if not public.tm_is_member() then
+    raise exception '승인된 팀원만 기록을 남길 수 있습니다';
+  end if;
+  insert into public.tm_doc_versions (doc_id, title, body, edited_by, edited_at)
+  select d.id, d.title, d.body, d.updated_by, d.updated_at
+  from public.tm_docs d
+  where d.id = target
+    and not exists (
+      select 1 from public.tm_doc_versions v
+      where v.doc_id = d.id and v.edited_at = d.updated_at and v.title = d.title and v.body = d.body
+    );
+end;
+$$;
+
+-- 댓글 규칙 - 쓴 사람 · 쓴 시각은 DB 가 적고, 본문 고치기 · 지우기는 쓴 사람만. 해결 표시는 누구나.
+-- 답글은 같은 문서의 맨 위 댓글에만 단다
+create or replace function public.tm_doc_comments_guard()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if tg_op = 'INSERT' then
+    if auth.uid() is not null then
+      new.author := auth.uid();
+      new.created_at := now();
+    end if;
+    new.removed := false;
+    new.updated_at := new.created_at;
+    if new.parent_id is not null and not exists (
+      select 1 from public.tm_doc_comments p
+      where p.id = new.parent_id and p.doc_id = new.doc_id and p.parent_id is null
+    ) then
+      raise exception '답글은 같은 문서의 댓글에만 달 수 있습니다';
+    end if;
+    return new;
+  end if;
+  if (new.id, new.doc_id, new.parent_id, new.author, new.created_at)
+     is distinct from (old.id, old.doc_id, old.parent_id, old.author, old.created_at) then
+    raise exception '바꿀 수 없는 칸입니다';
+  end if;
+  if old.removed and not new.removed then
+    raise exception '지운 댓글은 되살릴 수 없습니다';
+  end if;
+  if auth.uid() is not null and old.author is distinct from auth.uid()
+     and (new.body, new.removed) is distinct from (old.body, old.removed) then
+    raise exception '다른 사람의 댓글은 고치거나 지울 수 없습니다';
+  end if;
+  if new.removed then
+    new.body := '';
+  end if;
+  if new.body is distinct from old.body and not new.removed then
+    new.updated_at := now();
+  else
+    new.updated_at := old.updated_at;
+  end if;
+  return new;
+end;
+$$;
+
 -- ── 트리거 ───────────────────────────────────────────────────
 drop trigger if exists tm_tasks_touch on public.tm_tasks;
 create trigger tm_tasks_touch before update on public.tm_tasks
@@ -214,6 +402,16 @@ create trigger tm_docs_touch before update on public.tm_docs
 drop trigger if exists tm_memos_touch on public.tm_memos;
 create trigger tm_memos_touch before update on public.tm_memos
   for each row execute function public.tm_touch();
+
+-- 문서 트리거는 이름 순서로 돈다: guard(고리 막기) → history(기록 · 고친 사람) → stamp('누가' 칸 고정) → touch(고친 시각)
+create or replace trigger tm_docs_guard before insert or update of parent_id on public.tm_docs
+  for each row execute function public.tm_docs_guard();
+create or replace trigger tm_docs_history before update on public.tm_docs
+  for each row execute function public.tm_docs_history();
+create or replace trigger tm_docs_stamp before insert or update on public.tm_docs
+  for each row execute function public.tm_docs_stamp();
+create or replace trigger tm_doc_comments_guard before insert or update on public.tm_doc_comments
+  for each row execute function public.tm_doc_comments_guard();
 
 drop trigger if exists tm_members_guard on public.tm_members;
 create trigger tm_members_guard before update on public.tm_members
@@ -236,6 +434,8 @@ alter table public.tm_members enable row level security;
 alter table public.tm_tasks enable row level security;
 alter table public.tm_docs enable row level security;
 alter table public.tm_memos enable row level security;
+alter table public.tm_doc_versions enable row level security;
+alter table public.tm_doc_comments enable row level security;
 
 -- 팀원 목록: 승인된 팀원은 모두를, 승인 대기 중인 사람은 자기 줄만 본다
 drop policy if exists tm_members_select on public.tm_members;
@@ -268,10 +468,27 @@ create policy tm_memos_owner on public.tm_memos
   using (owner = (select auth.uid()) and (select public.tm_is_member()))
   with check (owner = (select auth.uid()) and (select public.tm_is_member()));
 
+-- 문서 기록: 팀원이 읽기만 한다. 남기는 것은 트리거(tm_docs_history)와 tm_doc_snapshot 뿐이라 기록을 지어낼 수 없다
+drop policy if exists tm_doc_versions_read on public.tm_doc_versions;
+create policy tm_doc_versions_read on public.tm_doc_versions
+  for select to authenticated
+  using ((select public.tm_is_member()));
+
+-- 문서 댓글: 팀원이 읽고 쓴다. 남의 댓글을 고치거나 지우지 못하게 하는 것은 트리거(tm_doc_comments_guard)가 한다
+drop policy if exists tm_doc_comments_members on public.tm_doc_comments;
+create policy tm_doc_comments_members on public.tm_doc_comments
+  for all to authenticated
+  using ((select public.tm_is_member()))
+  with check ((select public.tm_is_member()));
+
 -- Supabase 가 새 표에 기본으로 주는 권한(TRUNCATE 등)을 모두 거두고, 화면이 쓰는 것만 다시 준다
-revoke all on public.tm_members, public.tm_tasks, public.tm_docs, public.tm_memos from anon, authenticated;
+revoke all on public.tm_members, public.tm_tasks, public.tm_docs, public.tm_memos, public.tm_doc_versions, public.tm_doc_comments
+  from anon, authenticated;
 grant select, update on public.tm_members to authenticated;
 grant select, insert, update, delete on public.tm_tasks, public.tm_docs, public.tm_memos to authenticated;
+-- 댓글은 지우지 않고 removed 로 표시한다(답글이 이어지게). 기록은 읽기만
+grant select, insert, update on public.tm_doc_comments to authenticated;
+grant select on public.tm_doc_versions to authenticated;
 
 -- 함수도 기본으로 누구나 실행할 수 있어 /rest/v1/rpc 로 불린다. 트리거용은 아무도 부르지 못하게 하고
 -- RLS 가 쓰는 두 개(승인된 팀원인가 · 관리자인가)와 가입 요청 거절만 로그인한 사람에게 남긴다(거절은 함수가 관리자인지 본다).
@@ -279,6 +496,10 @@ grant select, insert, update, delete on public.tm_tasks, public.tm_docs, public.
 revoke execute on function public.tm_is_member(), public.tm_is_admin(), public.tm_touch(),
   public.tm_on_new_user(), public.tm_members_guard(), public.tm_reject_member(uuid) from public, anon, authenticated;
 grant execute on function public.tm_is_member(), public.tm_is_admin(), public.tm_reject_member(uuid) to authenticated;
+-- 위키 - 트리거용은 막고, 되돌리기 전에 지금 모습을 남기는 함수만 로그인한 사람에게(함수가 팀원인지 본다)
+revoke execute on function public.tm_docs_history(), public.tm_docs_guard(), public.tm_docs_stamp(), public.tm_doc_comments_guard(),
+  public.tm_doc_snapshot(uuid) from public, anon, authenticated;
+grant execute on function public.tm_doc_snapshot(uuid) to authenticated;
 
 -- ── 실시간 - 다른 사람이 고친 것이 새로고침 없이 보이게 ──────
 -- 메모는 RLS 를 거쳐 쓴 사람에게만 간다(지운 알림만은 RLS 를 거치지 않아 id 만 실려 모두에게 간다 - 내용은 없다)
@@ -300,8 +521,53 @@ begin
     alter publication supabase_realtime add table public.tm_memos;
   exception when duplicate_object then null;
   end;
+  begin
+    alter publication supabase_realtime add table public.tm_doc_comments;
+  exception when duplicate_object then null;
+  end;
 end;
 $$;
+
+-- ── 위키 파일(그림 · 첨부) ─────────────────────────────────────
+-- 비공개 저장소 하나. 승인된 팀원만 올리고 받는다(받을 때는 한 시간짜리 주소). 지우기는 자기가 올린 것만.
+-- 브라우저가 열어 실행할 수 있는 형식(HTML · SVG · 스크립트)은 받지 않는다 - 화면은 그런 파일을 내려받기 전용(octet-stream)으로 올린다
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('tm-files', 'tm-files', false, 20971520, array[
+  'image/png', 'image/jpeg', 'image/gif', 'image/webp',
+  'application/pdf', 'text/plain', 'text/csv', 'text/markdown', 'application/json',
+  'application/zip', 'application/x-zip-compressed', 'application/x-7z-compressed',
+  'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'application/x-hwp', 'application/haansofthwp', 'application/vnd.hancom.hwp', 'application/vnd.hancom.hwpx',
+  'video/mp4', 'video/webm', 'video/quicktime', 'audio/mpeg', 'audio/mp4', 'audio/wav',
+  'application/octet-stream'
+])
+on conflict (id) do update set file_size_limit = excluded.file_size_limit, allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists tm_files_read on storage.objects;
+create policy tm_files_read on storage.objects
+  for select to authenticated
+  using (bucket_id = 'tm-files' and (select public.tm_is_member()));
+drop policy if exists tm_files_write on storage.objects;
+create policy tm_files_write on storage.objects
+  for insert to authenticated
+  with check (bucket_id = 'tm-files' and (select public.tm_is_member()));
+drop policy if exists tm_files_own_remove on storage.objects;
+create policy tm_files_own_remove on storage.objects
+  for delete to authenticated
+  using (bucket_id = 'tm-files' and owner_id = (select auth.uid())::text and (select public.tm_is_member()));
+
+-- ── 위키에서 함께 보는 사람(Realtime presence) ─────────────────
+-- 비공개 채널 tm-docs-presence 에 승인된 팀원만 붙는다. 누가 어느 문서를 보는지(id)만 오간다
+drop policy if exists tm_presence_read on realtime.messages;
+create policy tm_presence_read on realtime.messages
+  for select to authenticated
+  using ((select realtime.topic()) = 'tm-docs-presence' and extension = 'presence' and (select public.tm_is_member()));
+drop policy if exists tm_presence_write on realtime.messages;
+create policy tm_presence_write on realtime.messages
+  for insert to authenticated
+  with check ((select realtime.topic()) = 'tm-docs-presence' and extension = 'presence' and (select public.tm_is_member()));
 
 -- ── 첫 관리자 정하기 ─────────────────────────────────────────
 -- 위를 실행하고 첫 계정을 만든 뒤, 아래 줄의 메일을 바꾸고 맨 앞의 -- 를 지워 그 줄만 따로 실행한다.

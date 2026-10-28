@@ -111,7 +111,7 @@ export interface Doc {
   title: string;
   /** 상위 문서 id - 최상위는 null */
   parentId: string | null;
-  /** 마크다운 본문 */
+  /** 마크다운 본문 - 문법은 docMarkdown.ts */
   body: string;
   /** Member.id */
   author: string;
@@ -119,6 +119,41 @@ export interface Doc {
   /** 같은 깊이에서의 정렬 */
   order: number;
   createdAt: string;
+  updatedAt: string;
+  /** 제목 앞의 이모지. 없으면 '' */
+  icon: string;
+  /** 마지막으로 제목 · 본문을 고친 사람(Member.id). 모르면 null */
+  updatedBy: string | null;
+  /** 휴지통에 넣은 시각 - null 이면 살아 있는 문서. 아래 문서는 함께 숨는다 */
+  trashedAt: string | null;
+  trashedBy: string | null;
+}
+
+/** 문서의 예전 모습 - 새로 고치기 시작하기 직전의 제목 · 본문 */
+export interface DocVersion {
+  id: string;
+  docId: string;
+  title: string;
+  body: string;
+  /** 이 모습으로 마지막에 고친 사람 */
+  editedBy: string | null;
+  /** 이 모습이 저장된 시각 */
+  editedAt: string;
+}
+
+/** 문서 댓글 - parentId 가 있으면 그 댓글의 답글(한 단계만) */
+export interface DocComment {
+  id: string;
+  docId: string;
+  parentId: string | null;
+  author: string;
+  body: string;
+  /** 맨 위 댓글만 - 해결되어 접어 둔 스레드 */
+  resolved: boolean;
+  /** 지운 댓글 - 답글이 이어지게 자리만 남긴다 */
+  removed: boolean;
+  createdAt: string;
+  /** 본문을 고친 시각. createdAt 과 다르면 '수정됨' */
   updatedAt: string;
 }
 

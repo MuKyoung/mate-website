@@ -1,9 +1,10 @@
 'use client';
 
 import React from 'react';
+import { linkTo } from './docMarkdown';
 
 /**
- * 문서 본문 렌더러.
+ * 짧은 마크다운 렌더러 - 위키 댓글에 쓴다(문서 본문은 DocEditor 가 그린다).
  *
  * 외부 마크다운 라이브러리를 쓰지 않는다. 결과를 HTML 문자열로 만들지 않고
  * React 엘리먼트로 바로 세우므로 dangerouslySetInnerHTML 이 아예 없고,
@@ -59,32 +60,6 @@ function TaskChip({ taskKey }: { taskKey: string }) {
   );
 }
 
-/**
- * 링크로 둘 주소 - http(s) · mailto · tel, 이 사이트 안의 경로(/…), 문서 안 목차(#…)만.
- * 브라우저와 같은 규칙(URL)으로 읽어 고른다. //host, /\host, 중간에 탭을 끼운 주소처럼
- * 경로로 보이지만 밖으로 나가는 것과 javascript: 같은 스킴은 링크로 만들지 않는다.
- */
-function linkTo(raw: string): { href: string; external: boolean } | null {
-  const s = raw.trim();
-  if (s.startsWith('#')) return { href: s, external: false };
-  const here = typeof window === 'undefined' ? 'http://localhost' : window.location.origin;
-  let url: URL;
-  try {
-    url = new URL(s, here);
-  } catch {
-    return null;
-  }
-  const web = url.protocol === 'http:' || url.protocol === 'https:';
-  // http(s) 를 적은 주소는 예전처럼 새 탭에서 연다(대문자 스킴도)
-  if (/^https?:/i.test(s) && web) return { href: url.href, external: true };
-  if (/^(mailto|tel):/i.test(s)) return { href: url.href, external: false };
-  // 경로는 이 사이트 안에 머물 때만. 앞의 / 를 하나로 줄여 //host 로 읽힐 틈을 없앤다
-  if (s.startsWith('/') && web && url.origin === here) {
-    return { href: `/${url.pathname.replace(/^\/+/, '')}${url.search}${url.hash}`, external: false };
-  }
-  return null;
-}
-
 function inline(text: string, keyPrefix: string): React.ReactNode[] {
   return text.split(INLINE).filter(Boolean).map((part, i) => {
     const k = `${keyPrefix}-${i}`;
@@ -106,8 +81,9 @@ function inline(text: string, keyPrefix: string): React.ReactNode[] {
     }
     const link = /^\[([^\]]+)\]\(([^)]+)\)$/.exec(part);
     if (link) {
+      // 링크로 둘 주소의 규칙은 위키 본문과 같다(docMarkdown.ts). 팀 저장소 파일 주소는 여기서 열 수 없어 글로 둔다
       const to = linkTo(link[2]);
-      return to ? (
+      return to && !to.href.startsWith('tmfile:') ? (
         <a key={k} href={to.href} className="font-semibold text-tm-blue underline underline-offset-[3px] hover:text-tm-deep"
           {...(to.external ? { target: '_blank', rel: 'noreferrer' } : {})}>
           {link[1]}
