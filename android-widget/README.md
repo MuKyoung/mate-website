@@ -10,7 +10,8 @@
 
 ## 휴대폰에 설치
 
-1. `MATE-오늘.apk` 파일을 휴대폰으로 옮깁니다(카카오톡 나에게 보내기, 구글 드라이브, USB 등).
+1. 작업 관리 왼쪽 메뉴(휴대폰은 오른쪽 위 사람 메뉴)의 **갤럭시 위젯 앱 → APK 받기**로 휴대폰에서 받습니다.
+   PC 에서 받았다면 카카오톡 나에게 보내기 · 구글 드라이브 · USB 로 휴대폰에 옮깁니다.
 2. 파일을 누르면 "출처를 알 수 없는 앱" 허용을 묻습니다 - 파일을 연 앱(내 파일 · 카카오톡 등)에 허용합니다.
 3. Play 프로텍트가 "확인되지 않은 앱"이라고 하면 **자세히 → 무시하고 설치**를 누릅니다(스토어에 올리지 않은 사내 앱이라 나오는 안내).
 4. 앱을 열어 작업 관리 메일 · 비밀번호로 로그인합니다.
@@ -29,6 +30,8 @@ cd android-widget
 & "$env:JAVA_HOME\bin\java.exe" -cp "$u\Tools\gradle\lib\gradle-launcher-8.13.jar" org.gradle.launcher.GradleMain --no-daemon assembleRelease
 # → app/build/outputs/apk/release/app-release.apk
 ```
+
+- 작업 관리의 받기 단추는 `public/downloads/mate-today.apk` 를 내려줍니다. 다시 빌드하면 이 파일을 새 APK 로 바꿔 커밋 · 배포합니다.
 
 - `local.properties` 에 `sdk.dir=` (위 SDK 경로)가 있어야 합니다. 저장소에는 올리지 않습니다.
 - 고친 판을 덮어 깔려면 `app/build.gradle` 의 `versionCode` 를 1 올리고, **같은 키로 서명**해야 합니다.

@@ -234,7 +234,7 @@ function IconCalendar() {
 }
 
 /** 메뉴 아이콘 */
-export type NavIcon = 'board' | 'mine' | 'wiki' | 'memo' | 'home' | 'menu';
+export type NavIcon = 'board' | 'mine' | 'wiki' | 'memo' | 'home' | 'menu' | 'phone';
 export function IconNav({ name, size = 20 }: { name: NavIcon; size?: number }) {
   const paths: Record<NavIcon, React.ReactNode> = {
     /* 모든 작업 - 보드의 칸 */
@@ -267,6 +267,13 @@ export function IconNav({ name, size = 20 }: { name: NavIcon; size?: number }) {
     ),
     home: <path d="M3.5 9.5L10 4l6.5 5.5V16a.5.5 0 01-.5.5h-3.5v-4.5h-5v4.5H4a.5.5 0 01-.5-.5z" />,
     menu: <path d="M4 6h12M4 10h12M4 14h12" />,
+    /* 갤럭시 위젯 앱 - 휴대폰 */
+    phone: (
+      <>
+        <rect x="5.5" y="2.5" width="9" height="15" rx="1.8" />
+        <path d="M8.5 14.5h3" />
+      </>
+    ),
   };
   return (
     <svg viewBox="0 0 20 20" width={size} height={size} aria-hidden className="flex-none" {...svg}>

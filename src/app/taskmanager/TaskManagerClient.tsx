@@ -144,6 +144,34 @@ const logoutBtn =
   'h-[42px] w-full rounded-tm-sm border border-tm-edge bg-white text-[14px] font-semibold text-tm-ink transition-colors duration-150 ' +
   'hover:border-tm-blue hover:bg-tm-tint disabled:cursor-default disabled:opacity-50 [@media(pointer:coarse)]:h-11';
 
+/* 위젯 앱(android-widget/)을 다시 빌드하면 이 파일도 새 APK 로 바꾼다 */
+const WIDGET_APK = '/downloads/mate-today.apk';
+
+/** 갤럭시 위젯 앱 받기 - 설치 순서를 보여 주고 APK 를 내려받는다 */
+function WidgetAppDialog({ onClose }: { onClose: () => void }) {
+  return (
+    <Modal title="갤럭시 위젯 앱 'MATE 오늘'" sub="오늘이 마감일인 작업을 홈 화면 위젯으로 봅니다. 안드로이드 전용입니다."
+      size="sm" onClose={onClose}
+      foot={
+        <>
+          <span className="flex-1" />
+          <button type="button" onClick={onClose} className={tmBtn}>닫기</button>
+          <a href={WIDGET_APK} download className={`${tmBtnPrimary} hover:border-tm-blue-hover hover:bg-tm-blue-hover`}>
+            APK 받기
+          </a>
+        </>
+      }>
+      <ol className="flex list-decimal flex-col gap-2 pl-5 text-[14.5px] leading-[1.65] text-tm-ink marker:font-bold marker:text-tm-blue">
+        <li>휴대폰에서 받습니다. PC 에서 받았다면 카카오톡 나에게 보내기 같은 방법으로 휴대폰에 옮깁니다.</li>
+        <li>파일을 열면 묻는 &lsquo;출처를 알 수 없는 앱&rsquo; 설치를 허용합니다.</li>
+        <li>Play 프로텍트 안내가 나오면 <b>자세히</b>를 눌러 <b>무시하고 설치</b>합니다. 스토어에 올리지 않은 사내 앱이라 나오는 안내입니다.</li>
+        <li>앱을 열어 작업 관리와 같은 메일 · 비밀번호로 로그인합니다.</li>
+        <li>홈 화면 빈 곳을 길게 눌러 <b>위젯</b>에서 <b>MATE 오늘</b>을 놓고, 내 작업과 팀 전체 중 하나를 고릅니다.</li>
+      </ol>
+    </Modal>
+  );
+}
+
 export default function TaskManagerClient() {
   return isRemote ? <RemoteApp /> : <Workspace />;
 }
@@ -213,6 +241,7 @@ function Workspace({ account }: { account?: Account }) {
   const [menu, setMenu] = useState(false);
   /** Supabase 모드 - 팀원 창 */
   const [teamOpen, setTeamOpen] = useState(false);
+  const [appOpen, setAppOpen] = useState(false);
   /** 영역 관리 창 */
   const [domainsOpen, setDomainsOpen] = useState(false);
   const [leaving, setLeaving] = useState(false);
@@ -786,6 +815,11 @@ function Workspace({ account }: { account?: Account }) {
         </nav>
 
         <div className="mt-auto flex flex-col gap-1.5 border-t border-tm-line pt-2.5">
+          <button type="button" onClick={() => setAppOpen(true)}
+            className="flex min-h-[42px] items-center gap-3 rounded-tm-sm px-3 text-left text-[15px] font-semibold text-tm-ink transition-colors duration-150 hover:bg-tm-tint">
+            <IconNav name="phone" />
+            <span>갤럭시 위젯 앱</span>
+          </button>
           <Link href="/"
             className="flex min-h-[42px] items-center gap-3 rounded-tm-sm px-3 text-[15px] font-semibold text-tm-ink transition-colors duration-150 hover:bg-tm-tint">
             <IconNav name="home" />
@@ -833,6 +867,10 @@ function Workspace({ account }: { account?: Account }) {
                 className="flex min-h-[44px] items-center justify-between gap-2 rounded-tm-sm bg-tm-tint px-3 text-[14px] font-semibold text-tm-ink">
                 홈페이지로 <IconNav name="home" size={18} />
               </Link>
+              <button type="button" onClick={() => { if (acct.current) acct.current.open = false; setAppOpen(true); }}
+                className="flex min-h-[44px] items-center justify-between gap-2 rounded-tm-sm bg-tm-tint px-3 text-left text-[14px] font-semibold text-tm-ink">
+                갤럭시 위젯 앱 <IconNav name="phone" size={18} />
+              </button>
               {account && (
                 <button type="button" onClick={() => void logout()} disabled={leaving} className={logoutBtn}>
                   {leaving ? '로그아웃 중…' : '로그아웃'}
@@ -1197,6 +1235,8 @@ function Workspace({ account }: { account?: Account }) {
           </nav>
         </Modal>
       )}
+
+      {appOpen && <WidgetAppDialog onClose={() => setAppOpen(false)} />}
 
       {/* 맡은 사람에서 빠지면(다른 창에서 바뀌면) 창도 닫힌다 */}
       {domainsOpen && canEditDomains && (
