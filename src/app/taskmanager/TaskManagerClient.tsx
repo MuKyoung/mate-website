@@ -251,7 +251,13 @@ function Workspace({ account }: { account?: Account }) {
       if (typeof p.hideDone === 'boolean') setHideDone(p.hideDone);
     }
     // 위키 문서 링크(?doc=)로 들어왔으면 위키를 연다
-    if (new URLSearchParams(window.location.search).has('doc')) setSection('docs');
+    const q = new URLSearchParams(window.location.search);
+    if (q.has('doc')) setSection('docs');
+    // 갤럭시 홈 화면 위젯('MATE 오늘' 앱, android-widget/)에서 들어왔다 - ?view=calendar 는 그 보기로,
+    // ?task=<id> 는 작업 화면으로 와서 목록을 읽은 뒤 그 작업을 연다(아래 효과)
+    const v = q.get('view');
+    if (v && VIEWS.some((x) => x.id === v)) { setSection('tasks'); setView(v as View); }
+    if (q.has('task')) setSection('tasks');
     setPrefsLoaded(true);
   }, []);
 
@@ -531,6 +537,23 @@ function Workspace({ account }: { account?: Account }) {
   }, [scopeGone]);
 
   const open = openId ? store.tasks.find((t) => t.id === openId) ?? null : null;
+
+  /* 위젯에서 누른 작업(?task=<id>)을 연다 - 목록을 읽은 뒤 한 번만. ?task · ?view 는 주소에서 지워
+     새로고침하거나 다른 보기로 옮겨도 다시 열리지 않게 한다 */
+  const linkDone = useRef(false);
+  useEffect(() => {
+    if (!store.ready || store.loadError || linkDone.current) return;
+    linkDone.current = true;
+    const url = new URL(window.location.href);
+    const id = url.searchParams.get('task');
+    if (!id && !url.searchParams.has('view')) return;
+    url.searchParams.delete('task');
+    url.searchParams.delete('view');
+    window.history.replaceState(window.history.state, '', url);
+    if (!id) return;
+    if (store.tasks.some((t) => t.id === id)) setOpenId(id);
+    else setToast({ text: '위젯에서 고른 작업을 찾지 못했습니다. 그사이 지워졌을 수 있습니다.', undo: false });
+  }, [store.ready, store.loadError, store.tasks]);
 
   /* 열어 둔 작업이 다른 곳에서 지워지면 창을 닫고 알린다. openId 도 비워 나중에 되살아나도 저절로 열리지 않게 한다 */
   const openMissing = !!openId && store.ready && !open;

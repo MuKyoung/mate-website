@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MATE 오늘</string>
+    <string name="widget_description">작업 관리에서 오늘이 마감일인 작업</string>
+</resources>

@@ -1,0 +1,4 @@
+// MATE 오늘 - 작업 관리 캘린더의 그날 항목을 갤럭시 홈 화면 위젯으로 보여 주는 앱. 사용법은 README.md
+plugins {
+    id 'com.android.application' version '8.11.1' apply false
+}

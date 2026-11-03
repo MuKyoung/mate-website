@@ -1,0 +1,36 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'kr.co.devteammate.today'
+    compileSdk 36
+    // 이 PC 에는 유니티가 깔아 둔 SDK(Program Files, 쓰기 불가)만 있다 - 깔린 판을 못박아 내려받기를 시도하지 않게
+    buildToolsVersion '36.0.0'
+
+    defaultConfig {
+        applicationId 'kr.co.devteammate.today'
+        minSdk 26
+        targetSdk 34
+        versionCode 1
+        versionName '1.0'
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            // 팀 안에서 APK 로 나눠 설치한다. 업데이트는 같은 키로 서명해야 덮어 깔리므로
+            // 이 PC 의 디버그 키(~/.android/debug.keystore)를 쓴다 - README 참고
+            signingConfig signingConfigs.debug
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    lint {
+        checkReleaseBuilds false
+    }
+}

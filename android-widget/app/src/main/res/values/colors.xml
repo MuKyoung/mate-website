@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 웹 작업 관리(tailwind.config.ts 의 tm)와 같은 값 -->
+<resources>
+    <color name="tm_blue">#2644CB</color>
+    <color name="tm_deep">#18308F</color>
+    <color name="tm_tint">#EEF2FF</color>
+    <color name="tm_ink">#1B2430</color>
+    <color name="tm_sub">#5B6676</color>
+    <color name="tm_line">#D7DCE4</color>
+    <color name="tm_edge">#7F8B9E</color>
+    <color name="tm_bg">#F4F6F9</color>
+    <color name="tm_red">#D32D27</color>
+</resources>
