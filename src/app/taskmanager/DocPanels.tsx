@@ -921,8 +921,10 @@ export function LabelEditor({ labels, onChange }: { labels: string[]; onChange(n
       {labels.map((l) => (
         <span key={l} className="inline-flex items-center gap-1 rounded-full bg-tm-tint py-0.5 pl-2.5 pr-1 text-[12.5px] font-bold text-tm-deep">
           {l}
+          {/* 손가락 기기에서는 칩 높이는 그대로 두고 누를 자리만 넓힌다 */}
           <button type="button" aria-label={`라벨 ${l} 빼기`} onClick={() => onChange(labels.filter((x) => x !== l))}
-            className="grid h-5 w-5 place-items-center rounded-full text-tm-sub hover:bg-white hover:text-tm-red-deep">×</button>
+            className="grid h-5 w-5 place-items-center rounded-full text-tm-sub hover:bg-white hover:text-tm-red-deep
+                       [@media(pointer:coarse)]:-my-1.5 [@media(pointer:coarse)]:h-8 [@media(pointer:coarse)]:w-8">×</button>
         </span>
       ))}
       <input value={text} onChange={(e) => setText(e.target.value)} placeholder="+ 라벨" aria-label="라벨 더하기"
@@ -932,7 +934,9 @@ export function LabelEditor({ labels, onChange }: { labels: string[]; onChange(n
           if (e.key === 'Backspace' && !text && labels.length) onChange(labels.slice(0, -1));
         }}
         onBlur={add}
-        className="h-7 w-[96px] rounded-full border border-dashed border-tm-edge bg-white px-2.5 text-[12.5px] font-semibold text-tm-ink placeholder:text-tm-sub focus:border-tm-blue focus:outline-none" />
+        // iPhone · iPad 는 16px 보다 작은 칸을 누르면 화면을 확대한다 - 손가락 기기에서만 키운다
+        className="h-7 w-[96px] rounded-full border border-dashed border-tm-edge bg-white px-2.5 text-[12.5px] font-semibold text-tm-ink placeholder:text-tm-sub focus:border-tm-blue focus:outline-none
+                   [@media(pointer:coarse)]:h-9 [@media(pointer:coarse)]:w-[112px] [@media(pointer:coarse)]:text-[16px]" />
     </span>
   );
 }

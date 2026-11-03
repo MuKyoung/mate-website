@@ -197,7 +197,7 @@ export default function Memos({ store, me }: { store: MemoStore; me: string }) {
           </div>
         )
       ) : (
-        <div className="flex min-h-0 flex-1 gap-5">
+        <div className="tm-fill flex min-h-0 flex-1 gap-5">
 
           {/* 메모 목록 */}
           <aside className={`${listing ? 'flex' : 'hidden'} min-h-0 w-full flex-col overflow-hidden rounded-tm border border-tm-line bg-white shadow-tm

@@ -116,6 +116,30 @@ html[data-shell='app'] ::-webkit-scrollbar-thumb {
 }
 html[data-shell='app'] ::-webkit-scrollbar-thumb:hover { background: #7f8b9e; background-clip: padding-box; }
 
+/* 좁은 화면(휴대폰)과 낮은 화면(가로로 든 휴대폰)에서는 쪽 머리(제목 · 보기 · 찾기)를 위로 넘기고,
+   본문(보드 · 목록 · 타임라인 · 문서 · 메모)은 화면 한 장 높이를 다 쓴다. 본문 안의 스크롤은 넓은 화면과 같다.
+   한 화면에 머리와 본문을 다 넣으면 휴대폰에서는 본문이 손가락 몇 마디만 남고, 가로로 들면 아예 보이지 않았다.
+   --tm-fill-h = 화면 높이 - 위 띠(58) - 아래 메뉴(67) - 위아래 여백(20 + 16). 낮은 화면에서는 띠와 메뉴가 48 · 53 으로 준다.
+   넓고 낮은 화면(901px~)은 띠 · 메뉴가 없고 여백(40 + 28)만 뺀다. */
+html[data-shell='app'] { --tm-fill-h: calc(100dvh - 68px); }
+@media (max-width: 900px) {
+  html[data-shell='app'] { --tm-fill-h: calc(100dvh - 161px - env(safe-area-inset-bottom)); }
+}
+@media (max-width: 900px) and (max-height: 500px) {
+  html[data-shell='app'] { --tm-fill-h: calc(100dvh - 137px - env(safe-area-inset-bottom)); }
+}
+@media (max-width: 900px), (max-height: 500px) {
+  /* 당겨서 새로고침이 걸리지 않게 스크롤을 이 안에 가둔다 - 고치던 글이 날아갈 수 있다 */
+  html[data-shell='app'] .tm-page { overflow-x: hidden; overflow-y: auto; overscroll-behavior-y: contain; }
+  html[data-shell='app'] .tm-page-inner { flex: none; }
+  html[data-shell='app'] .tm-fill { flex: none; height: max(200px, var(--tm-fill-h)); }
+}
+@media (max-height: 500px) {
+  /* 가로로 든 휴대폰은 한 화면이 200px 남짓이라, 본문을 그 높이에 가두면 위키 편집 막대 · 머리만 보이고 글을 누를 자리가 없다.
+     본문은 제 높이대로 늘리고 쪽째 스크롤한다 */
+  html[data-shell='app'] .tm-fill { height: auto; min-height: max(200px, var(--tm-fill-h)); }
+}
+
 /* ── Grid - 12칼럼 레이아웃 유틸 ─────────────────────── */
 .grid-12 {
   display: grid;

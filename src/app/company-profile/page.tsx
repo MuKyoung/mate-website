@@ -49,10 +49,23 @@ const STATS = [
 export default function CompanyProfilePage() {
   useEffect(() => { document.title = 'MATE 회사 소개서'; }, []);
 
+  /* 휴대폰 · 태블릿에서는 A4 가로 한 장(297mm = 1123px)을 화면 너비에 맞춰 줄여 보인다 - 옆으로 밀지 않아도 되게. 인쇄는 그대로 */
+  useEffect(() => {
+    const fit = () => {
+      const w = document.documentElement.clientWidth;
+      document.documentElement.style.setProperty('--cp-fit', String(Math.min(1, (w - 16) / 1123)));
+    };
+    fit();
+    window.addEventListener('resize', fit);
+    return () => window.removeEventListener('resize', fit);
+  }, []);
+
   return (
     <>
-      {/* ══════════════ 스타일 ══════════════ */}
-      <style>{`
+      {/* ══════════════ 스타일 ══════════════
+          dangerouslySetInnerHTML 로 넣는다 - 글자로 넣으면 서버가 & · ' 를 &amp; 처럼 바꿔 써서 브라우저의 글자와 어긋나고
+          (React #418 · #425) 첫 화면의 CSS 가 깨진 채 다시 그려진다 */}
+      <style dangerouslySetInnerHTML={{ __html: `
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap');
 
@@ -489,6 +502,7 @@ export default function CompanyProfilePage() {
           .cp {
             margin: 72px auto 100px;
             box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+            zoom: var(--cp-fit, 1);
           }
           .cp-page {
             box-shadow: 0 2px 12px rgba(0,0,0,0.08);
@@ -506,7 +520,7 @@ export default function CompanyProfilePage() {
           .p1-left,
           .p2-contact { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
-      `}</style>
+      ` }} />
 
       {/* ── 인쇄 버튼 ── */}
       <div className="cp-print-bar">

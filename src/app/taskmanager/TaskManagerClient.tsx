@@ -731,8 +731,10 @@ function Workspace({ account }: { account?: Account }) {
   /* 좁은 화면 아래쪽 - 자주 쓰는 셋 + 전체 메뉴 */
   const tabs = nav.flatMap((g) => g.items).filter((it) => it.key === 'all' || it.key === 'mine' || it.key === 'docs');
   const inTabs = tabs.some((t) => t.active);
+  /* 가로로 든 휴대폰처럼 낮은 화면에서는 그림과 글자를 한 줄에 두어 본문 자리를 늘린다 */
   const tabItem = (active: boolean) =>
-    `flex min-h-[54px] flex-col items-center justify-center gap-[3px] rounded-tm-sm text-[12.5px] ${
+    `flex min-h-[54px] flex-col items-center justify-center gap-[3px] rounded-tm-sm text-[12.5px]
+     [@media(max-height:500px)]:min-h-10 [@media(max-height:500px)]:flex-row [@media(max-height:500px)]:gap-1.5 ${
       active ? 'bg-tm-tint font-bold text-tm-blue' : 'font-semibold text-tm-sub'}`;
 
   /* 영역도 받은 뒤에 그린다 - 바꾼 영역 이름 대신 처음 이름이 잠깐 보이지 않게. 작업을 못 읽었으면 그 안내를 먼저 */
@@ -782,7 +784,8 @@ function Workspace({ account }: { account?: Account }) {
       <div className="flex min-h-0 min-w-0 flex-col">
 
         {/* ── 좁은 화면: 위쪽 띠 ── */}
-        <header className="relative z-30 flex h-[58px] flex-none items-center justify-between gap-3 border-b border-tm-line bg-white px-4 min-[901px]:hidden">
+        <header className="relative z-30 flex h-[58px] flex-none items-center justify-between gap-3 border-b border-tm-line bg-white px-4 min-[901px]:hidden
+                           [@media(max-height:500px)]:h-12">
           <button type="button" onClick={() => goTasks({ kind: 'all' })} aria-label="작업 관리 처음 화면"
             className="flex min-w-0 items-center gap-2.5 rounded-tm-sm">
             <Image src="/images/logo.png" alt="" width={96} height={24} className="h-auto w-[96px]" />
@@ -816,9 +819,9 @@ function Workspace({ account }: { account?: Account }) {
           </details>
         </header>
 
-        {/* ── 본문 ── */}
-        <div className="flex min-h-0 flex-1 flex-col px-11 pb-7 pt-10 max-[1500px]:px-8 max-[900px]:px-4 max-[900px]:pb-4 max-[900px]:pt-5">
-          <div className="mx-auto flex min-h-0 w-full max-w-[1560px] flex-1 flex-col">
+        {/* ── 본문 - 좁거나 낮은 화면에서는 쪽 머리째 스크롤한다(globals.css 의 tm-page · tm-fill) ── */}
+        <div className="tm-page flex min-h-0 flex-1 flex-col px-11 pb-7 pt-10 max-[1500px]:px-8 max-[900px]:px-4 max-[900px]:pb-4 max-[900px]:pt-5">
+          <div className="tm-page-inner mx-auto flex min-h-0 w-full max-w-[1560px] flex-1 flex-col">
 
             {section === 'docs' ? (
               <Docs store={docStore} me={me} tasks={store.tasks}
@@ -927,6 +930,9 @@ function Workspace({ account }: { account?: Account }) {
                     </button>
                   </div>
                 )}
+
+                {/* 보기 자리 - 넓은 화면에서는 남은 높이를, 휴대폰에서는 화면 한 장 높이를 쓴다 */}
+                <div className="tm-fill flex min-h-0 flex-1 flex-col">
 
                 {/* ── 목록을 읽지 못함(Supabase 모드) - 빈 보드처럼 보이지 않게 ── */}
                 {slot === 'error' && (
@@ -1058,8 +1064,10 @@ function Workspace({ account }: { account?: Account }) {
                             <th key={by}
                               className={`sticky top-0 z-10 bg-tm-bg px-4 py-3 font-bold shadow-[inset_0_-1px_0_#d7dce4] ${cls}`}
                               aria-sort={sort?.by === by ? (sort.dir === 1 ? 'ascending' : 'descending') : 'none'}>
+                              {/* 손가락 기기에서는 칸 높이만큼 누를 자리를 넓힌다 - 글자 높이(21px)로는 잘 안 눌린다 */}
                               <button type="button" onClick={() => toggleSort(by)}
-                                className="group/sort inline-flex items-center gap-1 rounded-md transition-colors duration-150 hover:text-tm-ink">
+                                className="group/sort inline-flex items-center gap-1 rounded-md transition-colors duration-150 hover:text-tm-ink
+                                           [@media(pointer:coarse)]:-my-3 [@media(pointer:coarse)]:py-3">
                                 {label}
                                 {/* 정렬 표시는 고른 열에만 - 흐린 화살표를 모든 열에 두면 어느 열 기준인지 안 보인다 */}
                                 <span className={`text-[10px] leading-none text-tm-blue transition-opacity duration-150 ${
@@ -1112,6 +1120,7 @@ function Workspace({ account }: { account?: Account }) {
                     {visible.length === 0 && emptyState}
                   </div>
                 )}
+                </div>
               </>
             )}
           </div>

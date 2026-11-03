@@ -198,7 +198,7 @@ export default function TeamPageClient() {
                     <li key={r.label}>
                       <p className="flex items-center gap-2 text-[15px] font-bold text-point-200"><Icon size={17} />{r.label}</p>
                       {r.href ? (
-                        <a href={r.href} className="mt-1.5 block break-all text-[15px] text-ink-2 hover:text-point-200"
+                        <a href={r.href} className="mt-0.5 block break-all py-1 text-[15px] text-ink-2 hover:text-point-200"
                           {...(r.href.startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
                           {r.value}
                         </a>

@@ -52,6 +52,32 @@ function horizonOf(due: string | null, now: Date): Horizon {
 
 type GroupBy = 'domain' | 'assignee';
 
+/** 할 일 한 줄 - 넓은 화면의 격자와 휴대폰의 세로 목록이 같이 쓴다 */
+function Item({ t, onOpen }: { t: Task; onOpen(id: string): void }) {
+  return (
+    <li>
+      {/* 흰 칸 안의 항목은 세종 관리자 홈의 할 일 줄처럼 회색 바탕 */}
+      <button type="button" onClick={() => onOpen(t.id)}
+        className="w-full rounded-tm-sm bg-tm-bg px-3 py-2.5 text-left transition-[background-color,box-shadow] duration-150
+                   hover:bg-tm-tint hover:shadow-[inset_0_0_0_1px_#2644cb]">
+        <span className="mb-1 flex items-center gap-2">
+          <span className={`h-2 w-2 shrink-0 rounded-full ${STATUS_STYLE[t.status].dot}`} />
+          <span className="text-[12.5px] font-bold tabular-nums text-tm-sub">{t.key}</span>
+          <span className="ml-auto"><PriorityDot p={t.priority} /></span>
+        </span>
+        <span className={`block text-[14px] font-bold leading-[1.45] ${
+          t.status === 'done' ? 'text-tm-sub line-through' : 'text-tm-ink'}`}>
+          {t.title}
+        </span>
+        <span className="mt-1.5 flex min-h-[22px] items-center justify-between gap-2">
+          <DueBadge due={t.due} done={t.status === 'done'} />
+          <span className="ml-auto"><Avatar id={t.assignee} size={22} /></span>
+        </span>
+      </button>
+    </li>
+  );
+}
+
 export default function Roadmap({
   tasks, onOpen,
 }: {
@@ -117,6 +143,14 @@ export default function Roadmap({
     return `${a.getMonth() + 1}.${a.getDate()}~${b.getMonth() + 1}.${b.getDate()}`;
   };
 
+  /** 줄 머리의 표시 - 영역은 색 네모, 담당자는 얼굴. top 은 두 줄 이름 옆에 놓일 때(격자) 네모를 첫 줄에 맞춘다 */
+  const laneMark = (id: string, top = false) =>
+    groupBy === 'domain' ? (
+      <span className={`${top ? 'mt-[7px] ' : ''}h-2.5 w-2.5 shrink-0 rounded-[3px] ${DOMAIN_FILL[domainOf(domains, id).color]}`} />
+    ) : (
+      <Avatar id={id === '__none' ? null : id} size={26} />
+    );
+
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       {/* 보기 설정 */}
@@ -145,13 +179,55 @@ export default function Roadmap({
             </p>
           </div>
         ) : (
-          <div className="min-w-[900px] pb-1">
+          <>
+          {/* 휴대폰 · 작은 태블릿(아래 메뉴가 나오는 900px 까지) - 격자 대신 시간대별로 세로로 쌓는다.
+              900px 너비 격자를 옆으로 밀면 한 번에 한 칸만 보인다 */}
+          <div className="hidden space-y-5 pb-1 max-[900px]:block">
+            {HORIZONS.map((h, i) => {
+              const groups = lanes
+                .map((lane) => ({ lane, items: lane.cells.find((c) => c.horizon === h.id)?.items ?? [] }))
+                .filter((g) => g.items.length > 0);
+              return (
+                <section key={h.id} aria-label={h.label}>
+                  <div className="mb-2 flex items-center gap-2 px-1">
+                    <h2 className="whitespace-nowrap text-[15.5px] font-extrabold text-tm-deep">{h.label}</h2>
+                    {i < 2 && (
+                      <span className="text-[13px] font-semibold tabular-nums text-tm-sub">{weekLabel(i)}</span>
+                    )}
+                    <span className={`ml-auto ${tmCount}`}>{perHorizon[h.id]}</span>
+                  </div>
+                  {groups.length === 0 ? (
+                    <p className="rounded-tm border-2 border-dashed border-tm-line px-3 py-4 text-center text-[13.5px] font-semibold text-tm-sub">
+                      없음
+                    </p>
+                  ) : (
+                    <div className="space-y-2.5">
+                      {groups.map(({ lane, items }) => (
+                        <div key={lane.id} className="rounded-tm border border-tm-line bg-white p-2 shadow-tm">
+                          <div className="mb-2 flex items-center gap-2 px-1 pt-1">
+                            {laneMark(lane.id)}
+                            <p className="min-w-0 truncate text-[14px] font-bold text-tm-ink">{lane.label}</p>
+                            <span className="ml-auto flex-none text-[13px] font-semibold tabular-nums text-tm-sub">{items.length}건</span>
+                          </div>
+                          <ul className="space-y-1.5">
+                            {items.map((t) => <Item key={t.id} t={t} onOpen={onOpen} />)}
+                          </ul>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </section>
+              );
+            })}
+          </div>
+
+          <div className="min-w-[900px] pb-1 max-[900px]:hidden">
             {/* 시간대 머리 */}
             <div className="grid grid-cols-[184px_repeat(4,minmax(0,1fr))] gap-3.5 pb-2.5">
               <span />
               {HORIZONS.map((h, i) => (
                 <div key={h.id} className="flex items-center gap-2 px-1">
-                  <h2 className="text-[15.5px] font-extrabold text-tm-deep">{h.label}</h2>
+                  <h2 className="whitespace-nowrap text-[15.5px] font-extrabold text-tm-deep">{h.label}</h2>
                   {i < 2 && (
                     <span className="text-[13px] font-semibold tabular-nums text-tm-sub">{weekLabel(i)}</span>
                   )}
@@ -166,11 +242,7 @@ export default function Roadmap({
                 <div key={lane.id}
                   className="grid grid-cols-[184px_repeat(4,minmax(0,1fr))] items-stretch gap-3.5">
                   <div className="flex items-start gap-2.5 pt-3.5">
-                    {groupBy === 'domain' ? (
-                      <span className={`mt-[7px] h-2.5 w-2.5 shrink-0 rounded-[3px] ${DOMAIN_FILL[domainOf(domains, lane.id).color]}`} />
-                    ) : (
-                      <Avatar id={lane.id === '__none' ? null : lane.id} size={26} />
-                    )}
+                    {laneMark(lane.id, true)}
                     <div className="min-w-0">
                       <p className="truncate text-[15px] font-bold text-tm-ink">
                         {lane.label}
@@ -189,28 +261,7 @@ export default function Roadmap({
                         <span className="sr-only">없음</span>
                       ) : (
                         <ul className="space-y-1.5">
-                          {cell.items.map((t) => (
-                            <li key={t.id}>
-                              {/* 흰 칸 안의 항목은 세종 관리자 홈의 할 일 줄처럼 회색 바탕 */}
-                              <button type="button" onClick={() => onOpen(t.id)}
-                                className="w-full rounded-tm-sm bg-tm-bg px-3 py-2.5 text-left transition-[background-color,box-shadow] duration-150
-                                           hover:bg-tm-tint hover:shadow-[inset_0_0_0_1px_#2644cb]">
-                                <span className="mb-1 flex items-center gap-2">
-                                  <span className={`h-2 w-2 shrink-0 rounded-full ${STATUS_STYLE[t.status].dot}`} />
-                                  <span className="text-[12.5px] font-bold tabular-nums text-tm-sub">{t.key}</span>
-                                  <span className="ml-auto"><PriorityDot p={t.priority} /></span>
-                                </span>
-                                <span className={`block text-[14px] font-bold leading-[1.45] ${
-                                  t.status === 'done' ? 'text-tm-sub line-through' : 'text-tm-ink'}`}>
-                                  {t.title}
-                                </span>
-                                <span className="mt-1.5 flex min-h-[22px] items-center justify-between gap-2">
-                                  <DueBadge due={t.due} done={t.status === 'done'} />
-                                  <span className="ml-auto"><Avatar id={t.assignee} size={22} /></span>
-                                </span>
-                              </button>
-                            </li>
-                          ))}
+                          {cell.items.map((t) => <Item key={t.id} t={t} onOpen={onOpen} />)}
                         </ul>
                       )}
                     </div>
@@ -219,6 +270,7 @@ export default function Roadmap({
               ))}
             </div>
           </div>
+          </>
         )}
       </div>
     </div>

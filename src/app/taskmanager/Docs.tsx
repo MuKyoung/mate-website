@@ -622,7 +622,8 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
         </div>
       )}
 
-      <div className="flex min-h-0 flex-1 gap-5">
+      {/* tm-fill - 휴대폰에서는 쪽 머리를 넘기면 화면 한 장 높이를 다 쓴다(globals.css) */}
+      <div className="tm-fill flex min-h-0 flex-1 gap-5">
 
         {/* ── 문서 트리 ── */}
         <aside className="hidden w-[272px] shrink-0 flex-col overflow-hidden rounded-tm border border-tm-line bg-white shadow-tm md:flex">
@@ -633,7 +634,7 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
             <input value={query} onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Escape') { setQuery(''); e.currentTarget.blur(); } }}
               placeholder="문서 검색 · #라벨" aria-label="문서 검색"
-              className={`${tmFieldBase} h-11 w-full pl-10 pr-3 text-[15px]`} />
+              className={`${tmFieldBase} h-11 w-full pl-10 pr-3 text-[15px] [@media(pointer:coarse)]:text-[16px]`} />
           </div>
 
           <nav aria-label="문서 목록" className="min-h-0 flex-1 overflow-y-auto p-2">
