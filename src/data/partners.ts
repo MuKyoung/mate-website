@@ -15,8 +15,8 @@ export interface Partner {
   role: string;
 }
 
+// 세종호이스트크레인은 2026-11-03 사용자 요청으로 사이트 어디에도 적지 않는다
 export const partners: Partner[] = [
-  { name: '(주)세종호이스트크레인', role: '웹사이트 제작' },
   { name: '우화', role: '웹사이트 제작' },
   { name: '미래산업과학고등학교', role: '정규 수업' },
   { name: '동일공업고등학교', role: '게임개발 강의' },

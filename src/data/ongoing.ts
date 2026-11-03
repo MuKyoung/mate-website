@@ -13,8 +13,8 @@ export interface OngoingWork {
 }
 
 export const ongoing: Record<'web' | 'game' | 'edu', OngoingWork[]> = {
+  // 세종호이스트크레인 웹사이트는 2026-11-03 사용자 요청으로 사이트 어디에도 적지 않는다
   web: [
-    { title: '(주)세종호이스트크레인 웹사이트', status: '제작 중' },
     { title: '우화 웹사이트', status: '제작 중' },
     { title: '고객사 사내 ERD', status: '제작 중' },
     { title: '고객사 사내 툴 허브', status: '제작 중' },

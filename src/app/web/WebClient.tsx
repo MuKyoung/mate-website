@@ -1,31 +1,44 @@
 'use client';
 
-import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { FiArrowUpRight } from 'react-icons/fi';
 import PageHeader from '@/components/PageHeader';
 import DomainIntro from '@/components/domain/DomainIntro';
 import ProjectCard from '@/components/ProjectCard';
 import SectionHead from '@/components/ui/SectionHead';
-import BrowserFrame from '@/components/visual/BrowserFrame';
 import { projects } from '@/data/projects';
+import { ongoing } from '@/data/ongoing';
 import { serviceTabs } from '@/data/navigation';
 import { webScope, webStack, webDeliverables, domainByKey } from '@/data/domains';
 import { fadeUp, rowIn, staggerTight, staggerRows, inView } from '@/lib/motion';
-import { arrowCircle, container, numTile, radiusCard } from '@/lib/styles';
+import { container, numTile, radiusCard } from '@/lib/styles';
 
 const d = domainByKey.web;
-/* 화면을 공개할 수 있는 웹 사례 - 고객사 허락을 받았다 (2026-10-16). 첫 칸 브라우저 틀에 크게 싣는다 */
-const showcase = projects.find((p) => p.id === '13');
-/* 아래 목록에는 첫 칸에서 본 사례를 다시 넣지 않는다 - 한 화면에 같은 그림을 두 번 두지 않는다 */
-const work = projects.filter((p) => (p.category === 'Web Application' || p.category === 'Website') && p.id !== showcase?.id);
+const work = projects.filter((p) => p.category === 'Web Application' || p.category === 'Website');
 
 const pad = (n: number) => String(n).padStart(2, '0');
+
+/* 첫 칸 그림 자리 - 공개할 수 있는 웹 화면이 없어(2026-11-03 세종호이스트크레인을 포트폴리오에서 뺌)
+   지금 만들고 있는 웹 작업(ongoing.ts)을 적는다. 게임 페이지의 플랫폼 판과 같은 모양 */
+function NowPanel() {
+  return (
+    <div className={`night-grid on-night relative flex min-h-[340px] flex-col justify-between overflow-hidden p-6 sm:min-h-[420px] sm:p-9 ${radiusCard}`}>
+      <p className="eyebrow">Now</p>
+      <ul className="mt-10 border-t border-white/15">
+        {ongoing.web.map((w) => (
+          <li key={w.title} className="flex items-center justify-between gap-6 border-b border-white/15 py-5">
+            <span className="text-[18px] font-bold text-white sm:text-[22px]">{w.title}</span>
+            <span className="flex-none text-right text-[14px] text-gray-300">{w.status}</span>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-6 text-[14px] font-bold text-gray-300">지금 만들고 있는 것</p>
+    </div>
+  );
+}
 
 export default function WebClient() {
   return (
     <div data-domain="web">
-      {/* 머리에 크레인 사진을 깔지 않는다 - 바로 아래 세종 화면 캡처에 같은 사진이 크게 들어 있다 */}
       <PageHeader eyebrow="사업영역" title={d.kr} tabs={serviceTabs} active="/web" />
 
       <DomainIntro
@@ -34,16 +47,7 @@ export default function WebClient() {
         desc={d.summary}
         stats={d.stats}
         tags={d.tags}
-        media={showcase && (
-          <Link href={`/projects/${showcase.id}`} className="group block">
-            <BrowserFrame src={showcase.thumbnail} alt={`${showcase.title} 화면`}
-              url={(showcase.liveUrl ?? '').replace(/^https?:\/\//, '')} />
-            <p className="mt-5 flex items-center justify-between gap-4">
-              <span className="text-[16px] font-bold text-ink transition-colors group-hover:text-point-200 sm:text-[18px]">{showcase.title}</span>
-              <span className={arrowCircle}><FiArrowUpRight size={16} /></span>
-            </p>
-          </Link>
-        )}
+        media={<NowPanel />}
       />
 
       {/* ━━ 작업 범위 - 세 단계를 세 칸으로 ━━ */}

@@ -163,18 +163,5 @@ export const projects: Project[] = [
     images: [],
     category: 'Web Application',
   },
-  {
-    id: '13',
-    title: '세종호이스트크레인 홈페이지',
-    description: '크레인과 호이스트를 설계 · 제작 · 설치하는 (주)세종호이스트크레인의 회사 홈페이지. 회사소개, 사업영역, 시공사례, 견적문의를 한 사이트에 담았습니다.',
-    longDescription:
-      '크레인과 호이스트를 설계 · 제작 · 설치하는 (주)세종호이스트크레인의 회사 홈페이지입니다.\n\n회사소개(인사말, 연혁, 기술 · 인증, 수상이력, 오시는 길), 전기 · 전력부터 일반 제조까지 다섯 갈래의 사업영역, 시공사례, 뉴스, 견적문의와 문의현황 조회로 구성했고 영문 페이지를 함께 두었습니다.',
-    // 공개된 사이트의 첫 화면을 찍은 것이다
-    thumbnail: '/images/projects/세종호이스트크레인.webp',
-    images: [
-      '/images/projects/세종호이스트크레인.webp',
-    ],
-    liveUrl: 'https://www.sjhoistcrane.com',
-    category: 'Website',
-  },
+  // id 13 (세종호이스트크레인 홈페이지)은 2026-11-03 사용자 요청으로 포트폴리오에서 뺐다. 번호는 다시 쓰지 않는다
 ];

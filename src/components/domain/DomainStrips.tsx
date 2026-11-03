@@ -16,9 +16,9 @@ interface Strip {
   img?: { src: string; alt: string; position?: string };
 }
 
-/* 영역마다 한 장 - 사진 한 장은 이 페이지에서 한 자리만 쓴다 */
+/* 영역마다 한 장 - 사진 한 장은 이 페이지에서 한 자리만 쓴다.
+   웹 · 앱은 공개할 수 있는 화면이 없어(2026-11-03 세종호이스트크레인을 포트폴리오에서 뺌) 자체 게임처럼 남색 격자 면을 깐다 */
 const IMG: Record<string, Strip['img']> = {
-  web: { src: '/images/projects/세종호이스트크레인.webp', alt: '(주)세종호이스트크레인 홈페이지 화면', position: 'top' },
   game: { src: '/images/projects/꼬꼬지생.webp', alt: '꼬꼬지생 타이틀 화면' },
   edu: { src: '/images/projects/미래산업과학고.webp', alt: '미래산업과학고등학교 수업 현장', position: '50% 42%' },
 };

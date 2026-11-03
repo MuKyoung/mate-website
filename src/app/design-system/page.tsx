@@ -104,7 +104,7 @@ export default function DesignSystemPage() {
         <p className="eyebrow mb-3">Design System</p>
         <h1 className="type-h1 text-ink"><b>MATE DS</b></h1>
         <p className="type-b3 mt-5 max-w-2xl text-ink-2">
-          Figma 「(주)세종호이스트크레인 웹사이트 리뉴얼」 디자인 시스템을 그대로 쓰고, 주요 색(포인트 · 남색)만
+          Figma 디자인 시스템을 그대로 쓰고, 주요 색(포인트 · 남색)만
           MATE 로고 파랑 #2644CB 기준으로 바꿨습니다. 모든 값의 단일 원천은 globals.css :root 입니다.
         </p>
       </div>

@@ -57,17 +57,20 @@ type Face = {
   label: string;
   en: string;
   tone: 'blue' | 'dark' | 'light';
-  img: string;
+  /** 면을 채우는 사진. 공개할 화면이 없는 면은 비우고 mosaic 무늬를 깐다 */
+  img?: string;
   /** 그림에서 보여 줄 부분 (object-position) */
-  focus: string;
+  focus?: string;
+  /** 사진이 없을 때 깔 블록 무늬의 씨앗 - 넷째 면(17)과 다른 값을 줘 무늬가 겹치지 않게 */
+  mosaic?: number;
   /** 이름판 위에 적는 진행 중인 일 (src/data/ongoing.ts) */
   work: OngoingWork[];
 };
 
 const SIDES: Face[] = [
-  // 세종호이스트크레인 홈페이지 - 고객사가 게재를 허락했다 (2026-10-16). 첫 화면 문구와 걸린 보가 들어오게
+  // 웹 · 앱 - 공개할 수 있는 웹 화면이 없다(2026-11-03 세종호이스트크레인을 포트폴리오에서 뺌). 넷째 면처럼 블록 무늬를 깐다
   { side: 'front', no: '01', label: '웹 · 앱 · 브랜딩', en: 'Web, App & Branding', tone: 'blue',
-    img: '/images/projects/세종호이스트크레인.webp', focus: '25% 50%', work: ongoing.web },
+    mosaic: 5, work: ongoing.web },
   // ITLand - 저소득층 아동을 위한 VR 코딩 교육 프로그램 (사용자 지정, 2026-10-19)
   { side: 'right', no: '02', label: '게임 · XR', en: 'Game & XR', tone: 'dark',
     img: '/images/projects/햄부기.webp', focus: '50% 50%', work: ongoing.game },
@@ -173,8 +176,12 @@ export default function BrandCube({ spin }: { spin?: MotionValue<number> }) {
                 <Fragment key={f.side}>
                   {/* 안쪽 - 그림 */}
                   <div className={`cube-face cube-face--${f.side}`}>
-                    <Image src={f.img} alt="" fill priority={i === 0} sizes="440px" draggable={false}
-                      className="cube-bg object-cover" style={{ objectPosition: f.focus }} />
+                    {f.img ? (
+                      <Image src={f.img} alt="" fill priority={i === 0} sizes="440px" draggable={false}
+                        className="cube-bg object-cover" style={{ objectPosition: f.focus }} />
+                    ) : (
+                      <span className="cube-bg"><BlockMosaic seed={f.mosaic ?? 5} rows={9} className="absolute inset-0" /></span>
+                    )}
                     <span className="cube-shade" />
                     <span className="cube-light" />
                   </div>
