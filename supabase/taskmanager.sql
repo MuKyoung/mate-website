@@ -104,6 +104,15 @@ create table if not exists public.tm_memos (
   updated_at timestamptz not null default now()
 );
 
+-- ── 사람 · 라벨 색 ───────────────────────────────────────────
+-- 캘린더 · 타임라인의 작업 바탕과 아바타 색. id 는 'member:<팀원 id>' · 'label:<라벨>'.
+-- 줄이 없으면 화면이 정한 자동 색을 쓴다. 영역 색처럼 빨강 · 호박색 · 초록은 급함 · 임박 · 끝남의 뜻이라 주지 않는다
+create table if not exists public.tm_colors (
+  id text primary key check (id ~ '^(member|label):.' and char_length(id) <= 120),
+  color text not null check (color in ('blue', 'violet', 'teal', 'pink', 'sky', 'plum', 'brown', 'gray')),
+  updated_at timestamptz not null default now()
+);
+
 -- 위키 칸 - 아이콘, 마지막으로 내용을 고친 사람, 휴지통(비어 있으면 살아 있는 문서).
 -- 사람을 가리키지만 외래 키는 두지 않는다 - 팀원 계정을 지울 때 문서가 막지 않게(화면은 모르는 사람으로 적는다)
 alter table public.tm_docs add column if not exists icon text not null default '';
@@ -480,6 +489,9 @@ create trigger tm_memos_touch before update on public.tm_memos
 create or replace trigger tm_domains_touch before update on public.tm_domains
   for each row execute function public.tm_touch();
 
+create or replace trigger tm_colors_touch before update on public.tm_colors
+  for each row execute function public.tm_touch();
+
 -- 문서 트리거는 이름 순서로 돈다: guard(고리 막기) → history(기록 · 고친 사람) → stamp('누가' 칸 고정) → touch(고친 시각)
 create or replace trigger tm_docs_guard before insert or update of parent_id on public.tm_docs
   for each row execute function public.tm_docs_guard();
@@ -514,6 +526,7 @@ alter table public.tm_memos enable row level security;
 alter table public.tm_doc_versions enable row level security;
 alter table public.tm_doc_comments enable row level security;
 alter table public.tm_domains enable row level security;
+alter table public.tm_colors enable row level security;
 
 -- 팀원 목록: 승인된 팀원은 모두를, 승인 대기 중인 사람은 자기 줄만 본다
 drop policy if exists tm_members_select on public.tm_members;
@@ -575,9 +588,16 @@ create policy tm_domains_update on public.tm_domains
   using ((select public.tm_can_edit_domains()))
   with check ((select public.tm_can_edit_domains()));
 
+-- 색: 팀원 누구나 고르고 되돌린다(줄을 지우면 자동 색)
+drop policy if exists tm_colors_members on public.tm_colors;
+create policy tm_colors_members on public.tm_colors
+  for all to authenticated
+  using ((select public.tm_is_member()))
+  with check ((select public.tm_is_member()));
+
 -- Supabase 가 새 표에 기본으로 주는 권한(TRUNCATE 등)을 모두 거두고, 화면이 쓰는 것만 다시 준다
 revoke all on public.tm_members, public.tm_tasks, public.tm_docs, public.tm_memos, public.tm_doc_versions, public.tm_doc_comments,
-  public.tm_domains
+  public.tm_domains, public.tm_colors
   from anon, authenticated;
 grant select, update on public.tm_members to authenticated;
 grant select, insert, update, delete on public.tm_tasks, public.tm_docs, public.tm_memos to authenticated;
@@ -586,6 +606,8 @@ grant select, insert, update on public.tm_doc_comments to authenticated;
 grant select on public.tm_doc_versions to authenticated;
 -- 영역은 칸마다 - id 는 만들 때만, 만든 시각 · 고친 시각은 DB 가
 grant select, insert (id, label, short, color, sort), update (label, short, color, sort) on public.tm_domains to authenticated;
+-- 색은 upsert 로 넣는다(두 사람이 같은 것을 동시에 골라도 겹치지 않게) - upsert 는 id 칸 update 권한도 쓴다
+grant select, insert (id, color), update (id, color), delete on public.tm_colors to authenticated;
 
 -- 함수도 기본으로 누구나 실행할 수 있어 /rest/v1/rpc 로 불린다. 트리거용은 아무도 부르지 못하게 하고
 -- RLS 가 쓰는 두 개(승인된 팀원인가 · 관리자인가)와 가입 요청 거절만 로그인한 사람에게 남긴다(거절은 함수가 관리자인지 본다).
@@ -627,6 +649,10 @@ begin
   end;
   begin
     alter publication supabase_realtime add table public.tm_domains;
+  exception when duplicate_object then null;
+  end;
+  begin
+    alter publication supabase_realtime add table public.tm_colors;
   exception when duplicate_object then null;
   end;
 end;

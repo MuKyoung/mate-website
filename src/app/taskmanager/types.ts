@@ -97,6 +97,39 @@ export const DOMAIN_COLORS: { id: DomainColor; label: string }[] = [
 
 export const isDomainColor = (v: unknown): v is DomainColor => DOMAIN_COLORS.some((c) => c.id === v);
 
+/**
+ * 사람 · 라벨의 색 - 캘린더 · 타임라인의 작업 바탕과 아바타. 영역 색처럼 빨강 · 호박색 · 초록은 주지 않는다.
+ * 이 순서가 곧 자동 색의 순서다(팀원은 목록 순서대로 하나씩)
+ */
+export type TaskColor = 'blue' | 'violet' | 'teal' | 'pink' | 'sky' | 'plum' | 'brown' | 'gray';
+
+export const TASK_COLORS: { id: TaskColor; label: string }[] = [
+  { id: 'blue', label: '파랑' },
+  { id: 'violet', label: '보라' },
+  { id: 'teal', label: '청록' },
+  { id: 'pink', label: '분홍' },
+  { id: 'sky', label: '하늘' },
+  { id: 'plum', label: '자주' },
+  { id: 'brown', label: '갈색' },
+  { id: 'gray', label: '회색' },
+];
+
+export const isTaskColor = (v: unknown): v is TaskColor => TASK_COLORS.some((c) => c.id === v);
+
+/** 고른 색 한 줄 - id 는 'member:<팀원 id>' · 'label:<라벨>' */
+export interface ColorPick {
+  id: string;
+  color: TaskColor;
+}
+
+/** 캘린더 · 타임라인에서 작업 바탕을 무엇의 색으로 칠할지 */
+export type ColorBy = 'member' | 'label' | 'domain';
+export const COLOR_BYS: { id: ColorBy; label: string }[] = [
+  { id: 'member', label: '사람 색' },
+  { id: 'label', label: '라벨 색' },
+  { id: 'domain', label: '영역 색' },
+];
+
 export const MEMBERS: Member[] = [
   { id: 'm1', name: '개발 1', initial: 'D1', role: '클라이언트' },
   { id: 'm2', name: '개발 2', initial: 'D2', role: '서버' },

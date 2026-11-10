@@ -3,11 +3,12 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
-  STATUSES, statusLabel,
-  type DomainColor, type DomainKey, type Priority, type Status, type Task,
+  COLOR_BYS, STATUSES, statusLabel,
+  type ColorBy, type DomainColor, type DomainKey, type Priority, type Status, type Task, type TaskColor,
 } from './types';
 import { useMember } from './members';
 import { useDomain } from './domainStore';
+import { usePainter } from './colorStore';
 
 /*
  * 작업 관리 도구의 화면 부품.
@@ -106,15 +107,21 @@ export const STATUS_STYLE: Record<Status, { dot: string; pill: string }> = {
   done: { dot: 'bg-tm-ok', pill: 'bg-tm-ok-tint text-tm-ok-deep' },
 };
 
-const AVATAR_TONE = [
-  'bg-tm-tint text-tm-deep',
-  'bg-tm-violet-tint text-tm-violet-deep',
-  'bg-tm-ok-tint text-tm-ok-deep',
-  'bg-tm-warn-tint text-tm-warn-deep',
-  'bg-tm-red-tint text-tm-red-deep',
-  'bg-tm-bg text-tm-ink ring-1 ring-inset ring-tm-line',
-  'bg-tm-teal-tint text-tm-teal-deep',
-];
+/**
+ * 사람 · 라벨 색의 값 - 고른 색은 런타임에 정해져 class 대신 style 로 칠한다.
+ * solid: 타임라인 막대(흰 글자 5.4:1 이상) · 캘린더 항목의 왼쪽 띠 · 아바타 글자,
+ * tint: 캘린더 항목 · 아바타의 바탕(본문 글자 12:1, 빨간 지연 글자 5.6:1, solid 글자 4.5:1 이상)
+ */
+export const PAINT: Record<TaskColor, { solid: string; tint: string }> = {
+  blue: { solid: '#2644cb', tint: '#dfe6ff' },
+  violet: { solid: '#6a4c93', tint: '#e8dff5' },
+  teal: { solid: '#0f766e', tint: '#d8f0ec' },
+  pink: { solid: '#b8255f', tint: '#fadde9' },
+  sky: { solid: '#0369a1', tint: '#d5edfa' },
+  plum: { solid: '#9d1f9a', tint: '#f5dcf2' },
+  brown: { solid: '#8a4a26', tint: '#f1e2d7' },
+  gray: { solid: '#5b6676', tint: '#e3e8ee' },
+};
 
 /* ── 버튼 · 입력 칸 ───────────────────────────────────
    세종 관리자 값 그대로 - 큰 버튼 46px · 12px 모서리, 작은 버튼 38px · 10px.
@@ -284,11 +291,6 @@ export function IconNav({ name, size = 20 }: { name: NavIcon; size?: number }) {
 
 /* ── 작은 조각 ─────────────────────────────────────── */
 
-/** 같은 사람은 늘 같은 색 - 자리표시 팀원(m1…)은 번호로, Supabase 계정(uuid)은 글자 값으로 */
-const toneOf = (id: string) =>
-  (/^m\d+$/.test(id) ? Number(id.slice(1)) : [...id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 0))
-  % AVATAR_TONE.length;
-
 export function Avatar({ id, size = 24 }: { id: string | null; size?: number }) {
   const m = useMember(id);
   if (!m) {
@@ -302,14 +304,19 @@ export function Avatar({ id, size = 24 }: { id: string | null; size?: number }) 
       </span>
     );
   }
-  const tone = AVATAR_TONE[toneOf(m.id)];
+  return <MemberAvatar id={m.id} initial={m.initial} title={`${m.name} · ${m.role}`} size={size} />;
+}
+
+/** 아바타는 그 사람의 색(colorStore - 고른 색, 없으면 자동 색)으로 칠한다 */
+function MemberAvatar({ id, initial, title, size }: { id: string; initial: string; title: string; size: number }) {
+  const p = PAINT[usePainter().member(id)];
   return (
     <span
-      className={`inline-flex shrink-0 items-center justify-center rounded-full font-bold tracking-[-0.02em] ${tone}`}
-      style={{ width: size, height: size, fontSize: Math.max(9, size * 0.38) }}
-      title={`${m.name} · ${m.role}`}
+      className="inline-flex shrink-0 items-center justify-center rounded-full font-bold tracking-[-0.02em]"
+      style={{ width: size, height: size, fontSize: Math.max(9, size * 0.38), backgroundColor: p.tint, color: p.solid }}
+      title={title}
     >
-      {m.initial}
+      {initial}
     </span>
   );
 }
@@ -327,6 +334,31 @@ export function Chip({ className = '', children }: { className?: string; childre
 export function DomainChip({ id, short = false }: { id: DomainKey; short?: boolean }) {
   const d = useDomain(id);
   return <Chip className={DOMAIN_STYLE[d.color]}>{short ? d.short || d.label : d.label}</Chip>;
+}
+
+/** 캘린더 · 타임라인의 색 기준 - 작업 바탕을 사람 · 라벨 · 영역 중 무엇의 색으로 칠할지. onEdit 이 있으면 '색 바꾸기' */
+export function ColorByPicker({ id, value, onChange, onEdit }: {
+  id: string;
+  value: ColorBy;
+  onChange(v: ColorBy): void;
+  onEdit?(): void;
+}) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <label className="sr-only" htmlFor={id}>색 기준</label>
+      <select id={id} value={value} onChange={(e) => onChange(e.target.value as ColorBy)} className={tmSelect}>
+        {COLOR_BYS.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
+      </select>
+      {onEdit && value !== 'domain' && (
+        <button type="button" onClick={onEdit} className={tmGhostBtn}>색 바꾸기</button>
+      )}
+    </div>
+  );
+}
+
+/** 색 견본 - 범례 · 색 고르기 창 */
+export function Swatch({ color, size = 10 }: { color: TaskColor; size?: number }) {
+  return <span aria-hidden className="shrink-0 rounded-[3px]" style={{ width: size, height: size, backgroundColor: PAINT[color].solid }} />;
 }
 
 export function PriorityDot({ p }: { p: Priority }) {

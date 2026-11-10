@@ -8,10 +8,11 @@ import { LOCAL_ME_KEY, isUntouchedSample, useTaskStore, type Store, type StoreOp
 import { liveDocCount, useDocStore, type DocStore } from './docStore';
 import { useMemoStore, type MemoStore } from './memoStore';
 import { DomainsContext, defaultDomain, domainOf, useDomainStore, type DomainStore } from './domainStore';
+import { ColorsContext, useColorStore, type ColorStore } from './colorStore';
 import {
-  MEMBERS, PRIORITIES, STATUSES,
+  COLOR_BYS, MEMBERS, PRIORITIES, STATUSES,
   memberById, priorityLabel,
-  type DomainColor, type DomainKey, type Member, type Priority, type Status, type Task,
+  type ColorBy, type DomainColor, type DomainKey, type Member, type Priority, type Status, type Task,
 } from './types';
 import {
   Avatar, DOMAIN_FILL, DomainChip, DueBadge, IconChevron, IconNav, IconPlus, IconSearch, Modal,
@@ -31,13 +32,15 @@ const Docs = dynamic(() => import('./Docs'), {
 import Memos from './Memos';
 import { isRemote } from './supabase';
 import {
-  RETRY, importLocal, localLeftovers, skipImport, useRemoteDocStore, useRemoteDomainStore, useRemoteMemoStore, useRemoteTaskStore,
+  RETRY, importLocal, localLeftovers, skipImport,
+  useRemoteColorStore, useRemoteDocStore, useRemoteDomainStore, useRemoteMemoStore, useRemoteTaskStore,
 } from './remote';
 import { signOut, useAuth, useTeam, type MemberPatch } from './team';
 import { MembersContext, useMembers } from './members';
 import { LoadingScreen, LoginScreen, PendingScreen, TroubleScreen } from './Gate';
 import { TeamDialog } from './TeamDialog';
 import { DomainDialog } from './DomainDialog';
+import { ColorDialog } from './ColorDialog';
 
 /*
  * 작업 관리 도구의 틀 - 세종호이스트크레인 리뉴얼 관리자의 틀을 옮겼다(2026-10-22).
@@ -56,6 +59,7 @@ const useTasks: (opts: StoreOptions) => Store = isRemote ? useRemoteTaskStore : 
 const useDocs: (opts: StoreOptions) => DocStore = isRemote ? useRemoteDocStore : useDocStore;
 const useMemos: (opts: StoreOptions) => MemoStore = isRemote ? useRemoteMemoStore : useMemoStore;
 const useDomainList: (opts: StoreOptions) => DomainStore = isRemote ? useRemoteDomainStore : useDomainStore;
+const useColorList: (opts: StoreOptions) => ColorStore = isRemote ? useRemoteColorStore : useColorStore;
 
 /** Supabase 모드에서 로그인한 사람 */
 interface Account {
@@ -86,7 +90,13 @@ type NavGroup = { label?: string; action?: { text: string; label: string; go(): 
 
 const PREF_KEY = 'mate.taskmanager.prefs.v1';
 
-type Prefs = { section: Section; view: View; scope: Scope; priority: Priority | 'all'; hideDone: boolean };
+/** 담당자로 걸러 보기 - 'all' 모두 · 'none' 미배정 · 그 밖에는 팀원 id */
+type AssigneeFilter = 'all' | 'none' | string;
+
+type Prefs = {
+  section: Section; view: View; scope: Scope; priority: Priority | 'all'; hideDone: boolean;
+  assignee: AssigneeFilter; colorBy: ColorBy;
+};
 
 function readPrefs(): Partial<Prefs> | null {
   try {
@@ -218,6 +228,7 @@ function Workspace({ account }: { account?: Account }) {
   const memoStore = useMemos({ onError: notify });
   const domainStore = useDomainList({ onError: notify });
   const domains = domainStore.domains;
+  const colorStore = useColorList({ onError: notify });
 
   const [section, setSection] = useState<Section>('tasks');
   const [view, setView] = useState<View>('board');
@@ -225,6 +236,10 @@ function Workspace({ account }: { account?: Account }) {
   const [query, setQuery] = useState('');
   const [priorityFilter, setPriorityFilter] = useState<Priority | 'all'>('all');
   const [hideDone, setHideDone] = useState(false);
+  const [assigneeFilter, setAssigneeFilter] = useState<AssigneeFilter>('all');
+  /** 캘린더 · 타임라인에서 작업 바탕을 칠하는 기준 */
+  const [colorBy, setColorBy] = useState<ColorBy>('member');
+  const [colorsOpen, setColorsOpen] = useState(false);
   /** 브라우저 저장 모드에서 고른 '나'. Supabase 모드에서는 로그인한 계정이 '나'다 */
   const [localMe, setLocalMe] = useState<string>('m7');
   const me = account ? account.me.id : localMe;
@@ -278,6 +293,8 @@ function Workspace({ account }: { account?: Account }) {
       if (p.scope) setScope(p.scope);
       if (p.priority) setPriorityFilter(p.priority);
       if (typeof p.hideDone === 'boolean') setHideDone(p.hideDone);
+      if (typeof p.assignee === 'string' && p.assignee) setAssigneeFilter(p.assignee);
+      if (COLOR_BYS.some((c) => c.id === p.colorBy)) setColorBy(p.colorBy as ColorBy);
     }
     // 위키 문서 링크(?doc=)로 들어왔으면 위키를 연다
     const q = new URLSearchParams(window.location.search);
@@ -294,9 +311,9 @@ function Workspace({ account }: { account?: Account }) {
     if (!prefsLoaded) return;
     try {
       window.localStorage.setItem(PREF_KEY, JSON.stringify(
-        { section, view, scope, priority: priorityFilter, hideDone } satisfies Prefs));
+        { section, view, scope, priority: priorityFilter, hideDone, assignee: assigneeFilter, colorBy } satisfies Prefs));
     } catch { /* noop */ }
-  }, [prefsLoaded, section, view, scope, priorityFilter, hideDone]);
+  }, [prefsLoaded, section, view, scope, priorityFilter, hideDone, assigneeFilter, colorBy]);
 
   const pickMe = (id: string) => {
     setLocalMe(id);
@@ -333,7 +350,8 @@ function Workspace({ account }: { account?: Account }) {
   const logout = async () => {
     if (leaving) return;
     setLeaving(true);
-    await Promise.all([store.flush?.(), docStore.flush?.(), memoStore.flush?.(), domainStore.flush?.()]).catch(() => {});
+    await Promise.all([store.flush?.(), docStore.flush?.(), memoStore.flush?.(), domainStore.flush?.(), colorStore.flush?.()])
+      .catch(() => {});
     await signOut();
   };
 
@@ -387,8 +405,8 @@ function Workspace({ account }: { account?: Account }) {
     setToast(ok ? null : { text: '그 사이 바뀌어서 되돌리지 않았습니다', undo: false });
   }, []);
 
-  /* 저장 상태 알약 - 브라우저 저장인지, 팀 저장소에 다 들어갔는지(작업 · 문서 · 메모 · 영역을 함께 본다) */
-  const syncs = [store.sync, docStore.sync, memoStore.sync, domainStore.sync];
+  /* 저장 상태 알약 - 브라우저 저장인지, 팀 저장소에 다 들어갔는지(작업 · 문서 · 메모 · 영역 · 색을 함께 본다) */
+  const syncs = [store.sync, docStore.sync, memoStore.sync, domainStore.sync, colorStore.sync];
   const sync = syncs.includes('error') ? 'error' : syncs.includes('saving') ? 'saving' : 'idle';
   const saved: { tone: 'ok' | 'busy' | 'warn'; text: string } = account
     ? sync === 'error'
@@ -491,6 +509,9 @@ function Workspace({ account }: { account?: Account }) {
         if (scope.kind === 'mine' && t.assignee !== me) return false;
         if (scope.kind === 'domain' && t.domain !== scope.id) return false;
         if (priorityFilter !== 'all' && t.priority !== priorityFilter) return false;
+        // '내 작업'에서는 담당자 걸러 보기를 쓰지 않는다(칸도 숨긴다)
+        if (scope.kind !== 'mine' && assigneeFilter !== 'all'
+          && t.assignee !== (assigneeFilter === 'none' ? null : assigneeFilter)) return false;
         if (hideDone && t.status === 'done') return false;
         if (q) {
           const hay = `${t.key} ${t.title} ${t.description} ${t.labels.join(' ')}`.toLowerCase();
@@ -499,7 +520,7 @@ function Workspace({ account }: { account?: Account }) {
         return true;
       })
       .sort((a, b) => a.order - b.order);
-  }, [store.tasks, scope, me, priorityFilter, hideDone, query]);
+  }, [store.tasks, scope, me, priorityFilter, assigneeFilter, hideDone, query]);
 
   /** 목록 보기 정렬 - 열 이름을 누르면 그 열 기준으로 선다 */
   const members = useMembers();
@@ -625,10 +646,26 @@ function Workspace({ account }: { account?: Account }) {
   const newTask = () => { setCreatingDue(null); setCreating('todo'); };
 
   /* 범위(왼쪽 메뉴)는 걸러 보기가 아니라 지금 있는 곳이라 초기화에 넣지 않는다 */
-  const filtersOn = query.trim() !== '' || priorityFilter !== 'all' || hideDone;
+  const assigneeOn = scope.kind !== 'mine' && assigneeFilter !== 'all';
+  const filtersOn = query.trim() !== '' || priorityFilter !== 'all' || assigneeOn || hideDone;
   const clearFilters = () => {
-    setQuery(''); setPriorityFilter('all'); setHideDone(false);
+    setQuery(''); setPriorityFilter('all'); setAssigneeFilter('all'); setHideDone(false);
   };
+
+  /** 담당자로 고를 수 있는 사람 - 승인된 팀원, 그리고 승인이 풀렸어도 작업을 맡고 있는 사람 */
+  const people = useMemo(
+    () => members.filter((m) => m.active !== false || store.tasks.some((t) => t.assignee === m.id)),
+    [members, store.tasks],
+  );
+  /** 색 바꾸기 창 - Supabase 에 색 표가 아직 없으면 자동 색만 쓰고 단추를 숨긴다 */
+  const editColors = colorStore.editable ? () => setColorsOpen(true) : undefined;
+
+  /* 걸러 보던 사람이 목록에서 빠졌으면(계정을 지움) 모두로 돌린다 */
+  useEffect(() => {
+    if (assigneeFilter !== 'all' && assigneeFilter !== 'none' && members.length && !members.some((m) => m.id === assigneeFilter)) {
+      setAssigneeFilter('all');
+    }
+  }, [assigneeFilter, members]);
 
   /** 걸러 보기 중에 지금 범위의 작업이 하나라도 있는 상태 - 그 칸이 비어 보이면 걸러 보기가 가린 것이라 '작업 추가' 대신 그렇다고 적는다 */
   const hiddenIn = useMemo(() => {
@@ -940,10 +977,23 @@ function Workspace({ account }: { account?: Account }) {
                   <label className="sr-only" htmlFor="tm-filter-priority">우선순위로 걸러 보기</label>
                   <select id="tm-filter-priority" value={priorityFilter}
                     onChange={(e) => setPriorityFilter(e.target.value as Priority | 'all')}
-                    className={`${tmSelect} min-w-0 flex-[0_1_200px]`}>
+                    className={`${tmSelect} min-w-0 flex-[0_1_200px] max-[720px]:flex-[1_1_140px]`}>
                     <option value="all">우선순위 전체</option>
                     {PRIORITIES.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
                   </select>
+
+                  {scope.kind !== 'mine' && (
+                    <>
+                      <label className="sr-only" htmlFor="tm-filter-assignee">담당자로 걸러 보기</label>
+                      <select id="tm-filter-assignee" value={assigneeFilter}
+                        onChange={(e) => setAssigneeFilter(e.target.value)}
+                        className={`${tmSelect} min-w-0 flex-[0_1_200px] max-[720px]:flex-[1_1_140px]`}>
+                        <option value="all">담당자 전체</option>
+                        {people.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+                        <option value="none">미배정</option>
+                      </select>
+                    </>
+                  )}
 
                   <button type="button" onClick={() => setHideDone(!hideDone)} aria-pressed={hideDone} className={tmTab}>
                     완료 숨기기
@@ -1007,11 +1057,14 @@ function Workspace({ account }: { account?: Account }) {
                 )}
 
                 {/* ── 타임라인 ── */}
-                {slot === 'timeline' && <Timeline tasks={visible} onOpen={setOpenId} />}
+                {slot === 'timeline' && (
+                  <Timeline tasks={visible} onOpen={setOpenId} colorBy={colorBy} onColorBy={setColorBy} onEditColors={editColors} />
+                )}
 
                 {/* ── 캘린더 ── */}
                 {slot === 'calendar' && (
-                  <Calendar tasks={visible} onOpen={setOpenId} onCreateAt={createAt} onReschedule={reschedule} />
+                  <Calendar tasks={visible} onOpen={setOpenId} onCreateAt={createAt} onReschedule={reschedule}
+                    colorBy={colorBy} onColorBy={setColorBy} onEditColors={editColors} />
                 )}
 
                 {/* ── 로드맵 ── */}
@@ -1238,6 +1291,11 @@ function Workspace({ account }: { account?: Account }) {
 
       {appOpen && <WidgetAppDialog onClose={() => setAppOpen(false)} />}
 
+      {colorsOpen && colorStore.editable && (
+        <ColorDialog members={members.filter((m) => m.active !== false)} labels={knownLabels} picks={colorStore.picks}
+          local={!isRemote} start={colorBy} onPick={colorStore.set} onClose={() => setColorsOpen(false)} />
+      )}
+
       {/* 맡은 사람에서 빠지면(다른 창에서 바뀌면) 창도 닫힌다 */}
       {domainsOpen && canEditDomains && (
         <DomainDialog domains={domains} tasks={store.tasks} local={!isRemote}
@@ -1247,6 +1305,10 @@ function Workspace({ account }: { account?: Account }) {
     </div>
   );
 
-  /* 카드 · 목록 · 보기 · 작업 창이 영역 이름과 색을 여기서 읽는다 */
-  return <DomainsContext.Provider value={domains}>{page}</DomainsContext.Provider>;
+  /* 카드 · 목록 · 보기 · 작업 창이 영역 이름과 색, 사람 · 라벨 색을 여기서 읽는다 */
+  return (
+    <DomainsContext.Provider value={domains}>
+      <ColorsContext.Provider value={colorStore.picks}>{page}</ColorsContext.Provider>
+    </DomainsContext.Provider>
+  );
 }

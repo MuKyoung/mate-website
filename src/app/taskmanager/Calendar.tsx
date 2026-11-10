@@ -1,9 +1,11 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { localISO, type Task } from './types';
-import { domainOf, useDomains } from './domainStore';
-import { DOMAIN_FILL, IconArrow, IconPlus, tmGhostBtn, tmIconBtn } from './ui';
+import { localISO, type ColorBy, type Task, type TaskColor } from './types';
+import { useDomains } from './domainStore';
+import { useMembers } from './members';
+import { usePainter } from './colorStore';
+import { ColorByPicker, IconArrow, IconPlus, PAINT, Swatch, tmGhostBtn, tmIconBtn } from './ui';
 
 const DAY = 86400000;
 const WEEKDAY = ['일', '월', '화', '수', '목', '금', '토'];
@@ -13,17 +15,24 @@ const iso = localISO;
 /**
  * 월간 캘린더. 마감일을 기준으로 작업을 올린다.
  * 빈 날짜를 누르면 그 날이 마감인 새 작업을 만든다.
+ * 항목 바탕은 고른 색 기준(사람 · 라벨 · 영역)의 색이다. 담당자 · 라벨이 없는 작업은 칠하지 않는다.
  */
 export default function Calendar({
-  tasks, onOpen, onCreateAt, onReschedule,
+  tasks, onOpen, onCreateAt, onReschedule, colorBy, onColorBy, onEditColors,
 }: {
   tasks: Task[];
   onOpen(id: string): void;
   onCreateAt(dueISO: string): void;
   /** 다른 날로 끌어다 놓으면 마감일을 옮긴다 */
   onReschedule(id: string, dueISO: string): void;
+  colorBy: ColorBy;
+  onColorBy(v: ColorBy): void;
+  /** 색 고르기 창 - 고칠 수 없는 저장소면 없다 */
+  onEditColors?(): void;
 }) {
   const domains = useDomains();
+  const members = useMembers();
+  const paint = usePainter();
   const [dragId, setDragId] = useState<string | null>(null);
   const [overKey, setOverKey] = useState<string | null>(null);
   /** 세 건 넘는 날 중 펼쳐 둔 날 */
@@ -57,6 +66,20 @@ export default function Calendar({
   }, [tasks]);
 
   const undated = tasks.filter((t) => !t.due);
+
+  /** 범례 - 영역은 모두, 사람 · 라벨은 캘린더에 올라온 작업이 쓰는 것만 */
+  const legend = useMemo((): { key: string; label: string; color: TaskColor }[] => {
+    if (colorBy === 'domain') return domains.map((d) => ({ key: d.id, label: d.label, color: paint.domain(d.id) }));
+    const dated = tasks.filter((t) => t.due);
+    if (colorBy === 'member') {
+      return members
+        .filter((m) => dated.some((t) => t.assignee === m.id))
+        .map((m) => ({ key: m.id, label: m.name, color: paint.member(m.id) }));
+    }
+    return Array.from(new Set(dated.flatMap((t) => t.labels.slice(0, 1))))
+      .sort((a, b) => a.localeCompare(b, 'ko'))
+      .map((l) => ({ key: l, label: l, color: paint.label(l) }));
+  }, [colorBy, domains, members, tasks, paint]);
   const move = (n: number) => { setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + n, 1)); setOpenDay(null); };
   const toThisMonth = () => { const d = new Date(); setCursor(new Date(d.getFullYear(), d.getMonth(), 1)); setOpenDay(null); };
 
@@ -76,6 +99,9 @@ export default function Calendar({
         <button type="button" onClick={toThisMonth} className={tmGhostBtn}>
           이번 달
         </button>
+        <div className="ml-auto max-[720px]:ml-0">
+          <ColorByPicker id="cal-color" value={colorBy} onChange={onColorBy} onEdit={onEditColors} />
+        </div>
       </div>
 
       <div className="min-h-0 flex-1 overflow-auto">
@@ -142,6 +168,8 @@ export default function Calendar({
                     {(openDay === key ? items : items.slice(0, 3)).map((t) => {
                       const done = t.status === 'done';
                       const overdue = !done && key < todayKey;
+                      const c = paint.task(t, colorBy);
+                      const p = c ? PAINT[c] : null;
                       return (
                         <button key={t.id} type="button" onClick={(e) => { e.stopPropagation(); onOpen(t.id); }}
                           title={`${t.title} · 다른 날로 끌어다 놓으면 마감일이 바뀝니다`}
@@ -153,9 +181,12 @@ export default function Calendar({
                             setDragId(t.id);
                           }}
                           onDragEnd={() => { setDragId(null); setOverKey(null); }}
-                          className={`flex w-full items-center gap-1.5 rounded-md px-1.5 py-1 text-left text-[13px] leading-[1.35] transition-colors
-                                      hover:bg-white hover:shadow-tm ${done ? 'opacity-55' : ''} ${dragId === t.id ? 'opacity-40' : ''}`}>
-                          <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${DOMAIN_FILL[domainOf(domains, t.domain).color]}`} />
+                          style={p ? { backgroundColor: p.tint, boxShadow: `inset 3px 0 0 ${p.solid}` } : undefined}
+                          className={`flex w-full items-center gap-1.5 rounded-md py-1 pr-1.5 text-left text-[13px] leading-[1.35] transition-[filter,box-shadow,background-color]
+                                      ${p ? 'pl-2.5 hover:brightness-95' : 'pl-1.5 hover:bg-white hover:shadow-tm'}
+                                      ${done ? 'opacity-55' : ''} ${dragId === t.id ? 'opacity-40' : ''}`}>
+                          {/* 칠하지 않은 항목(담당자 · 라벨 없음)은 빈 점 */}
+                          {!p && <span className="h-1.5 w-1.5 shrink-0 rounded-full ring-1 ring-inset ring-tm-edge" />}
                           <span className={`truncate ${
                             done ? 'font-semibold text-tm-sub line-through' : overdue ? 'font-bold text-tm-red-deep' : 'font-semibold text-tm-ink'}`}>
                             {t.title}
@@ -184,12 +215,15 @@ export default function Calendar({
 
         {/* 범례 + 마감 없는 작업 */}
         <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 px-1">
-          {domains.map((d) => (
-            <span key={d.id} className="inline-flex items-center gap-2 text-[13.5px] font-semibold text-tm-sub">
-              <span className={`h-2 w-2 rounded-full ${DOMAIN_FILL[d.color]}`} />
-              {d.label}
+          {legend.map((l) => (
+            <span key={l.key} className="inline-flex items-center gap-2 text-[13.5px] font-semibold text-tm-sub">
+              <Swatch color={l.color} />
+              {l.label}
             </span>
           ))}
+          {colorBy === 'label' && legend.length > 0 && (
+            <span className="text-[13px] text-tm-sub">라벨이 여럿이면 첫 라벨의 색입니다</span>
+          )}
           {undated.length > 0 && (
             <span className="ml-auto text-[13.5px] text-tm-sub">
               마감일 없는 작업 {undated.length}건은 캘린더에 올라오지 않습니다

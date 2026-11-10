@@ -4,13 +4,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { LOCAL_ME_KEY, LOCAL_TASKS_KEY, isUntouchedSample, type Store, type StoreOptions, type SyncState } from './store';
 import { LOCAL_DOCS_KEY, isUntouchedSampleDoc, type DocStore } from './docStore';
 import { byOrder, defaultDomain, nextOrder, type DomainStore } from './domainStore';
+import type { ColorStore } from './colorStore';
 import type { MemoStore } from './memoStore';
 import {
-  PENDING_KEY, docCommentFromRow, docCommentToRow, docFromRow, docToRow, docVersionFromRow, domainFromRow, domainToRow, isMissingTable,
+  PENDING_KEY, colorFromRow, colorToRow, docCommentFromRow, docCommentToRow, docFromRow, docToRow, docVersionFromRow, domainFromRow, domainToRow, isMissingTable,
   memoFromRow, memoToRow, sb, taskFromRow, taskToRow,
-  type DocCommentRow, type DocRow, type DocVersionRow, type DomainRow, type MemoRow, type TaskRow,
+  type ColorRow, type DocCommentRow, type DocRow, type DocVersionRow, type DomainRow, type MemoRow, type TaskRow,
 } from './supabase';
-import { DEFAULT_DOMAINS, type Doc, type DocComment, type Domain, type Memo, type Task } from './types';
+import { DEFAULT_DOMAINS, type ColorPick, type Doc, type DocComment, type Domain, type Memo, type Task } from './types';
 
 /*
  * Supabase 저장소 - 작업 · 문서를 팀이 함께 쓴다. 개인 메모는 쓴 사람만 읽고 쓴다(표의 RLS).
@@ -926,6 +927,41 @@ export function useRemoteDomainStore(opts: StoreOptions = {}): DomainStore {
     domains, ready: table === false || (table === true && ready), editable: table === true, sync,
     create, update, remove, flush,
   };
+}
+
+/* ── 사람 · 라벨 색 ───────────────────────────────────────── */
+
+/** 색 표 */
+const colorProbe = () => [sb().from('tm_colors').select('id').limit(1)];
+
+/* 팀원 누구나 고르고 되돌린다(RLS). 색 표가 없는 DB(SQL 을 다시 실행하기 전)에서는 자동 색만 쓰고 고치기를 숨긴다 */
+export function useRemoteColorStore(opts: StoreOptions = {}): ColorStore {
+  const table = useTablesExist(colorProbe);
+  const { items, sync, eng } = useRowSync<ColorPick, ColorRow>({
+    table: 'tm_colors', fromRow: colorFromRow, toRow: colorToRow, onError: opts.onError,
+    disabled: table !== true,
+    texts: {
+      gone: '다른 팀원이 자동 색으로 되돌려 고른 색을 저장하지 못했습니다.',
+      createFail: () => '고른 색을 저장하지 못했습니다. 서버가 받아 주지 않아 자동 색으로 되돌렸습니다.',
+    },
+  });
+  const picks = useMemo(() => new Map(items.map((c) => [c.id, c.color])), [items]);
+
+  const set = useCallback<ColorStore['set']>((key, color) => {
+    const has = eng.items.some((c) => c.id === key);
+    if (!color) {
+      if (has) eng.remove([key], key);
+    } else if (has) {
+      eng.patch(key, { color }, true);
+    } else {
+      // 다른 팀원이 같은 것을 막 골랐어도 겹치지 않게 upsert 로 넣는다
+      eng.create({ id: key, color }, { id: key, color }, true);
+    }
+  }, [eng]);
+
+  const flush = useCallback(() => eng.flushAll(), [eng]);
+
+  return { picks, editable: table === true, set, sync, flush };
 }
 
 /* ── 함께 보는 사람 ───────────────────────────────────────── */

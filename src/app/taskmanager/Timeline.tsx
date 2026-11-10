@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { localToday, type Task } from './types';
+import { localToday, type ColorBy, type Task } from './types';
 import { useMembers } from './members';
-import { domainOf, useDomains } from './domainStore';
-import { Avatar, DOMAIN_FILL, IconArrow, PriorityDot, tmCount, tmGhostBtn, tmIconBtn, tmSelect, tmTab } from './ui';
+import { useDomains } from './domainStore';
+import { usePainter } from './colorStore';
+import { Avatar, ColorByPicker, IconArrow, PAINT, PriorityDot, tmCount, tmGhostBtn, tmIconBtn, tmSelect, tmTab } from './ui';
 
 const DAY = 86400000;
 const WEEKDAY = ['일', '월', '화', '수', '목', '금', '토'];
@@ -35,12 +36,17 @@ const COL = 36;
 /**
  * 간트 타임라인.
  * 시작일이 없는 작업은 마감일 하루짜리 막대로, 둘 다 없으면 별도 묶음으로 내린다.
+ * 막대는 고른 색 기준(사람 · 라벨 · 영역)의 색이고, 담당자 · 라벨이 없으면 흰 막대다.
  */
 export default function Timeline({
-  tasks, onOpen,
+  tasks, onOpen, colorBy, onColorBy, onEditColors,
 }: {
   tasks: Task[];
   onOpen(id: string): void;
+  colorBy: ColorBy;
+  onColorBy(v: ColorBy): void;
+  /** 색 고르기 창 - 고칠 수 없는 저장소면 없다 */
+  onEditColors?(): void;
 }) {
   const [weeks, setWeeks] = useState(6);
   /** 앞뒤로 넘긴 주 수 - 보이는 기간 밖에 있는 막대도 넘겨서 본다 */
@@ -48,6 +54,7 @@ export default function Timeline({
   const [groupBy, setGroupBy] = useState<GroupBy>('domain');
   const members = useMembers();
   const domains = useDomains();
+  const paint = usePainter();
   const today = useToday();
 
   const days = useMemo(() => {
@@ -132,6 +139,9 @@ export default function Timeline({
             오늘
           </button>
         </div>
+        <div className="ml-auto max-[720px]:ml-0">
+          <ColorByPicker id="tl-color" value={colorBy} onChange={onColorBy} onEdit={onEditColors} />
+        </div>
       </div>
 
       <div className="min-h-0 flex-1 overflow-auto rounded-tm border border-tm-line bg-white shadow-tm">
@@ -209,16 +219,17 @@ export default function Timeline({
                 {g.items.map((t) => {
                   const b = bar(t);
                   const done = t.status === 'done';
+                  const c = paint.task(t, colorBy);
                   return (
                     <div key={t.id} className="relative h-11 border-b border-tm-line">
                       {b && (
                         <button type="button" onClick={() => onOpen(t.id)}
                           title={`${t.title} · ${t.start ?? '시작 미정'} → ${t.due ?? '마감 미정'}`}
                           aria-label={`${t.key} ${t.title}`}
-                          style={{ left: b.left + 3, width: b.width }}
-                          className={`absolute top-[9px] flex h-[26px] items-center gap-1.5 px-2.5 text-[12.5px] font-bold text-white
+                          style={{ left: b.left + 3, width: b.width, backgroundColor: c ? PAINT[c].solid : undefined }}
+                          className={`absolute top-[9px] flex h-[26px] items-center gap-1.5 px-2.5 text-[12.5px] font-bold
                                       shadow-tm transition-[filter,box-shadow] duration-150 hover:shadow-tm-up hover:brightness-110
-                                      ${DOMAIN_FILL[domainOf(domains, t.domain).color]} ${done ? 'opacity-45' : ''}
+                                      ${c ? 'text-white' : 'border border-dashed border-tm-edge bg-white text-tm-ink'} ${done ? 'opacity-45' : ''}
                                       ${b.cutLeft ? 'rounded-l-none' : 'rounded-l-lg'}
                                       ${b.cutRight ? 'rounded-r-none' : 'rounded-r-lg'}`}>
                           <span className="truncate tabular-nums">{t.key}</span>

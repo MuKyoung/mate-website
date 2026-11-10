@@ -2,8 +2,8 @@
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import {
-  initialOf, isDomainColor,
-  type Doc, type DocComment, type DocVersion, type Domain, type DomainKey, type Member, type Memo, type Priority, type Status, type Task,
+  initialOf, isDomainColor, isTaskColor,
+  type ColorPick, type Doc, type DocComment, type DocVersion, type Domain, type DomainKey, type Member, type Memo, type Priority, type Status, type Task,
 } from './types';
 
 /*
@@ -114,6 +114,12 @@ export interface DomainRow {
   color: string;
   sort: number;
   created_at: string;
+  updated_at: string;
+}
+
+export interface ColorRow {
+  id: string;
+  color: string;
   updated_at: string;
 }
 
@@ -262,6 +268,17 @@ export function domainToRow(p: Partial<Domain>): Partial<DomainRow> {
   if (p.short !== undefined) r.short = p.short;
   if (p.color !== undefined) r.color = p.color;
   if (p.order !== undefined) r.sort = p.order;
+  return r;
+}
+
+export function colorFromRow(r: ColorRow): ColorPick {
+  return { id: r.id, color: isTaskColor(r.color) ? r.color : 'gray' };
+}
+
+/** 바뀐 칸만 옮긴다. id 는 만들 때 한 번만 보낸다 */
+export function colorToRow(p: Partial<ColorPick>): Partial<ColorRow> {
+  const r: Partial<ColorRow> = {};
+  if (p.color !== undefined) r.color = p.color;
   return r;
 }
 
