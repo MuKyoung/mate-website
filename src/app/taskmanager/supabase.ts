@@ -24,12 +24,33 @@ export const isRemote = SUPABASE_URL !== '' && SUPABASE_KEY !== '';
 
 let client: SupabaseClient | null = null;
 
+/**
+ * 로그인 · 가입 요청 · 토큰 새로 받기(/auth/v1)의 제한 시간 — 끊긴 연결(잠에서 깬 노트북 등)에서 답이 오지 않으면
+ * '로그인 중…' 이 끝없이 그대로였다. 표 저장 · 파일 올리기는 느린 연결에서 오래 걸릴 수 있어 제한하지 않는다(실패하면 remote.ts 가 다시 보낸다)
+ */
+const AUTH_TIMEOUT_MS = 15_000;
+function authTimedFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+  if (!url.includes('/auth/v1/')) return fetch(input, init);
+  const ctrl = new AbortController();
+  const outer = init?.signal ?? null;
+  const follow = () => ctrl.abort(outer?.reason);
+  if (outer?.aborted) ctrl.abort(outer.reason);
+  else outer?.addEventListener('abort', follow, { once: true });
+  const timer = setTimeout(() => ctrl.abort(new DOMException('로그인 서버가 답하지 않습니다', 'TimeoutError')), AUTH_TIMEOUT_MS);
+  return fetch(input, { ...init, signal: ctrl.signal }).finally(() => {
+    clearTimeout(timer);
+    outer?.removeEventListener('abort', follow);
+  });
+}
+
 /** 브라우저에서만 부른다 - 첫 호출 때 만든다(서버에서 미리 그릴 때는 만들지 않는다) */
 export function sb(): SupabaseClient {
   if (!isRemote) throw new Error('Supabase 가 설정되지 않았습니다');
   if (!client) {
     client = createClient(SUPABASE_URL, SUPABASE_KEY, {
       auth: { persistSession: true, autoRefreshToken: true, storageKey: 'mate.taskmanager.auth' },
+      global: { fetch: authTimedFetch },
     });
   }
   return client;

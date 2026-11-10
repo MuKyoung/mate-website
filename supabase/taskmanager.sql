@@ -293,7 +293,25 @@ begin
   end if;
   delete from auth.users u where u.id = target;
 end;
-$$;
+$;
+
+-- 승인하면 메일 인증도 끝낸다. 메일 인증을 켜 둔 때 가입한 계정은 승인돼도 메일의 링크를 누르기 전까지 로그인이 막혔다
+-- (Supabase Auth 가 email_not_confirmed 로 거절 — '승인해도 로그인 안 됨'). 관리자가 승인한 계정은 관리자가 알아본 사람이므로
+-- 인증 메일 없이 들어오게 한다. 지금처럼 메일 인증을 꺼 두면(2단계) 새 계정은 처음부터 인증돼 있어 할 일이 없다.
+-- 작업 관리 · MATE Studio(웹) · MATE Hub(설치형)가 같은 계정이라 셋 다 함께 풀린다
+create or replace function public.tm_confirm_on_approve()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $
+begin
+  if new.active and not old.active then
+    update auth.users u set email_confirmed_at = now() where u.id = new.id and u.email_confirmed_at is null;
+  end if;
+  return new;
+end;
+$;
 
 -- 영역 지우기 - 그 영역의 작업을 move_to 로 옮기고 지운다. 영역을 맡은 사람만.
 -- 옮길 영역이 따로 있어야 하므로 마지막 영역은 지울 수 없다. 둘이 동시에 서로 다른 영역을 지워 하나도 남지 않게 되지 않도록 영역 줄을 잠근다
@@ -506,6 +524,10 @@ drop trigger if exists tm_members_guard on public.tm_members;
 create trigger tm_members_guard before update on public.tm_members
   for each row execute function public.tm_members_guard();
 
+drop trigger if exists tm_confirm_on_approve on public.tm_members;
+create trigger tm_confirm_on_approve after update of active on public.tm_members
+  for each row execute function public.tm_confirm_on_approve();
+
 drop trigger if exists tm_on_new_user on auth.users;
 create trigger tm_on_new_user after insert on auth.users
   for each row execute function public.tm_on_new_user();
@@ -515,6 +537,11 @@ insert into public.tm_members (id, email, name, created_at)
 select u.id, coalesce(u.email, ''), split_part(coalesce(u.email, ''), '@', 1), u.created_at
 from auth.users u
 on conflict (id) do nothing;
+
+-- 이미 승인됐는데 메일 인증이 남아 로그인이 막힌 계정(메일 인증을 켜 둔 때 가입) — 승인과 같게 인증을 끝낸다. 여러 번 실행해도 된다
+update auth.users u set email_confirmed_at = now()
+from public.tm_members m
+where m.id = u.id and m.active and u.email_confirmed_at is null;
 
 -- 저절로 승인하지 않는다. 첫 관리자는 이 파일 맨 아래의 문장으로 정한다
 
@@ -613,7 +640,7 @@ grant select, insert (id, color), update (id, color), delete on public.tm_colors
 -- RLS 가 쓰는 두 개(승인된 팀원인가 · 관리자인가)와 가입 요청 거절만 로그인한 사람에게 남긴다(거절은 함수가 관리자인지 본다).
 -- 트리거는 이 권한과 상관없이 돈다
 revoke execute on function public.tm_is_member(), public.tm_is_admin(), public.tm_touch(),
-  public.tm_on_new_user(), public.tm_members_guard(), public.tm_reject_member(uuid) from public, anon, authenticated;
+  public.tm_on_new_user(), public.tm_members_guard(), public.tm_reject_member(uuid), public.tm_confirm_on_approve() from public, anon, authenticated;
 grant execute on function public.tm_is_member(), public.tm_is_admin(), public.tm_reject_member(uuid) to authenticated;
 -- 위키 - 트리거용은 막고, 되돌리기 전에 지금 모습을 남기는 함수만 로그인한 사람에게(함수가 팀원인지 본다)
 revoke execute on function public.tm_docs_history(), public.tm_docs_guard(), public.tm_docs_stamp(), public.tm_doc_comments_guard(),
