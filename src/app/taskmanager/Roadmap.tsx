@@ -168,7 +168,7 @@ export default function Roadmap({
         )}
       </div>
 
-      <div className="min-h-0 flex-1 overflow-auto">
+      <div className="relative min-h-0 flex-1 overflow-auto">
         {lanes.length === 0 ? (
           <div className="flex flex-col items-center gap-2 rounded-tm border border-tm-line bg-white px-6 py-[72px] text-center shadow-tm">
             <p className="text-[20px] font-extrabold text-tm-deep">조건에 맞는 작업이 없습니다</p>

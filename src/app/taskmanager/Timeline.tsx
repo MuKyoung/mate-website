@@ -1,11 +1,13 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { localToday, type ColorBy, type Task } from './types';
 import { useMembers } from './members';
 import { useDomains } from './domainStore';
 import { usePainter } from './colorStore';
-import { Avatar, ColorByPicker, IconArrow, PAINT, PriorityDot, tmCount, tmGhostBtn, tmIconBtn, tmSelect, tmTab } from './ui';
+import {
+  Avatar, ColorByPicker, IconArrow, PAINT, PriorityDot, tmCount, tmGhostBtn, tmIconBtn, tmSelect, tmTab, useMediaQuery,
+} from './ui';
 
 const DAY = 86400000;
 const WEEKDAY = ['일', '월', '화', '수', '목', '금', '토'];
@@ -31,7 +33,8 @@ function useToday(): Date {
 type GroupBy = 'domain' | 'assignee';
 
 /* 왼쪽 열과 격자의 줄 높이 - 둘이 어긋나면 막대가 다른 작업 줄에 붙는다 */
-const COL = 36;
+/** 하루 칸의 가장 좁은 폭 - 화면이 넓으면 보이는 기간이 상자를 꽉 채우도록 늘린다 */
+const MIN_COL = 36;
 
 /**
  * 간트 타임라인.
@@ -90,6 +93,20 @@ export default function Timeline({
   const first = days[0];
   const span = days.length;
 
+  /* 하루 칸 폭 - 넓은 화면(QHD 등)에서 오른쪽이 비지 않게 상자 폭을 날 수로 나눈다. 휴대폰은 작업 이름 칸을 줄인다 */
+  const narrow = useMediaQuery('(max-width: 640px)');
+  const labelW = narrow ? 136 : 260;
+  const boxRef = useRef<HTMLDivElement>(null);
+  const [boxW, setBoxW] = useState(0);
+  useEffect(() => {
+    const el = boxRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setBoxW(el.clientWidth));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const COL = Math.max(MIN_COL, Math.floor((boxW - labelW - 1) / span));
+
   /** 막대의 시작 칸과 길이를 구한다. 화면 밖이면 null. */
   const bar = (t: Task) => {
     const s = t.start ? parse(t.start) : t.due ? parse(t.due) : null;
@@ -144,25 +161,26 @@ export default function Timeline({
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-auto rounded-tm border border-tm-line bg-white shadow-tm">
+      <div ref={boxRef} className="min-h-0 flex-1 overflow-auto rounded-tm border border-tm-line bg-white shadow-tm">
         <div className="flex min-w-max">
           {/* 왼쪽 고정 열 */}
-          <div className="sticky left-0 z-20 w-[260px] shrink-0 border-r border-tm-line bg-white">
-            <div className="sticky top-0 z-10 flex h-[52px] items-end border-b border-tm-line bg-white px-4 pb-2.5 text-[13px] font-bold text-tm-sub">
+          <div className="sticky left-0 z-20 shrink-0 border-r border-tm-line bg-white" style={{ width: labelW }}>
+            <div className="sticky top-0 z-10 flex h-[52px] items-end border-b border-tm-line bg-white px-4 pb-2.5 text-[13px] font-bold text-tm-sub max-[640px]:px-3">
               작업
             </div>
             {groups.map((g) => (
               <div key={g.id}>
-                <div className="flex h-9 items-center gap-2 border-b border-tm-line bg-tm-bg px-4">
+                <div className="flex h-9 items-center gap-2 border-b border-tm-line bg-tm-bg px-4 max-[640px]:px-3">
                   <span className="truncate text-[13.5px] font-extrabold text-tm-deep">{g.label}</span>
                   <span className={tmCount}>{g.items.length}</span>
                 </div>
                 {g.items.map((t) => (
                   /* 막대가 화면 밖에 있어도 여기서 열 수 있다 - 높이는 격자 줄과 같아야 한다 */
                   <button key={t.id} type="button" onClick={() => onOpen(t.id)}
-                    className="flex h-11 w-full items-center gap-2 border-b border-tm-line px-4 text-left transition-colors duration-150 hover:bg-tm-tint">
+                    title={t.title}
+                    className="flex h-11 w-full items-center gap-2 border-b border-tm-line px-4 text-left transition-colors duration-150 hover:bg-tm-tint max-[640px]:px-3">
                     <PriorityDot p={t.priority} />
-                    <span className={`truncate text-[14.5px] font-semibold ${t.status === 'done' ? 'text-tm-sub line-through' : 'text-tm-ink'}`}
+                    <span className={`truncate text-[14.5px] font-semibold max-[640px]:text-[13.5px] ${t.status === 'done' ? 'text-tm-sub line-through' : 'text-tm-ink'}`}
                       title={t.title}>
                       {t.title}
                     </span>
@@ -186,9 +204,9 @@ export default function Timeline({
                       weekend ? 'bg-tm-bg' : ''}`}>
                     {/* 달이 바뀌는 칸은 요일 자리에 달을 적는다 */}
                     {monthStart ? (
-                      <span className="whitespace-nowrap text-[11px] font-extrabold text-tm-deep">{d.getMonth() + 1}월</span>
+                      <span className="whitespace-nowrap text-[12px] font-extrabold leading-none text-tm-deep">{d.getMonth() + 1}월</span>
                     ) : (
-                      <span className="text-[11px] font-semibold text-tm-sub">{WEEKDAY[d.getDay()]}</span>
+                      <span className="text-[12px] font-semibold leading-none text-tm-sub">{WEEKDAY[d.getDay()]}</span>
                     )}
                     <span className={`grid h-[22px] w-[22px] place-items-center rounded-full text-[12.5px] tabular-nums ${
                       isToday ? 'bg-tm-blue font-bold text-white' : 'font-semibold text-tm-ink'}`}>
@@ -228,6 +246,7 @@ export default function Timeline({
                           aria-label={`${t.key} ${t.title}`}
                           style={{ left: b.left + 3, width: b.width, backgroundColor: c ? PAINT[c].solid : undefined }}
                           className={`absolute top-[9px] flex h-[26px] items-center gap-1.5 px-2.5 text-[12.5px] font-bold
+                                      [@media(pointer:coarse)]:top-[6px] [@media(pointer:coarse)]:h-8
                                       shadow-tm transition-[filter,box-shadow] duration-150 hover:shadow-tm-up hover:brightness-110
                                       ${c ? 'text-white' : 'border border-dashed border-tm-edge bg-white text-tm-ink'} ${done ? 'opacity-45' : ''}
                                       ${b.cutLeft ? 'rounded-l-none' : 'rounded-l-lg'}

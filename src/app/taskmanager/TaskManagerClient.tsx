@@ -18,7 +18,7 @@ import {
   Avatar, DOMAIN_FILL, DomainChip, DueBadge, IconChevron, IconNav, IconPlus, IconSearch, Modal,
   PRIORITY_STYLE, PageHead, PriorityDot, STATUS_STYLE, StatusPill, TaskCard, Toast,
   tmBtn, tmBtnPrimary, tmCallout, tmCount, tmEditBtn, tmGhostBtn, tmIconBtnSm, tmInput, tmSelect, tmTab, tmTextBtn,
-  type NavIcon,
+  useMediaQuery, type NavIcon,
 } from './ui';
 import { NewTaskDialog, TaskPanel, type Draft } from './TaskPanel';
 import Timeline from './Timeline';
@@ -96,6 +96,8 @@ type AssigneeFilter = 'all' | 'none' | string;
 type Prefs = {
   section: Section; view: View; scope: Scope; priority: Priority | 'all'; hideDone: boolean;
   assignee: AssigneeFilter; colorBy: ColorBy;
+  /** 넓은 화면의 왼쪽 메뉴를 아이콘 줄로 접었는지 */
+  rail: boolean;
 };
 
 function readPrefs(): Partial<Prefs> | null {
@@ -149,6 +151,11 @@ function AccountButton({ member, pending, onOpen }: { member: Member; pending: n
     </button>
   );
 }
+
+/** 접힌 왼쪽 메뉴의 아래 칸(위젯 앱 · 홈페이지) - 아이콘 위, 짧은 이름 아래 */
+const railItem =
+  'flex min-h-[50px] w-full flex-col items-center justify-center gap-1 rounded-tm-sm px-1 text-[12px] font-semibold leading-tight text-tm-ink ' +
+  'transition-colors duration-150 hover:bg-tm-tint';
 
 const logoutBtn =
   'h-[42px] w-full rounded-tm-sm border border-tm-edge bg-white text-[14px] font-semibold text-tm-ink transition-colors duration-150 ' +
@@ -254,6 +261,12 @@ function Workspace({ account }: { account?: Account }) {
   const [refocus, setRefocus] = useState<{ id: string; alt: string | null } | null>(null);
   /** 좁은 화면의 전체 메뉴 창 */
   const [menu, setMenu] = useState(false);
+  /** 넓은 화면의 왼쪽 메뉴를 아이콘 줄(88px)로 접었다 - 처음 오면 1200px 아래 화면(작은 노트북 · 가로 태블릿)에서 접어 둔다 */
+  const [rail, setRail] = useState(false);
+  /** 휴대폰: 걸러 보기 칸(우선순위 · 담당자 · 완료 숨기기)을 펼쳤다 - 접어 두면 검색 한 줄만 남는다 */
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  /** 걸러 보기를 단추 하나로 접는 화면 - 휴대폰, 그리고 가로로 든 휴대폰(높이 500 아래) */
+  const compactFilters = useMediaQuery('(max-width: 720px), (max-height: 500px)');
   /** Supabase 모드 - 팀원 창 */
   const [teamOpen, setTeamOpen] = useState(false);
   const [appOpen, setAppOpen] = useState(false);
@@ -296,6 +309,7 @@ function Workspace({ account }: { account?: Account }) {
       if (typeof p.assignee === 'string' && p.assignee) setAssigneeFilter(p.assignee);
       if (COLOR_BYS.some((c) => c.id === p.colorBy)) setColorBy(p.colorBy as ColorBy);
     }
+    setRail(typeof p?.rail === 'boolean' ? p.rail : window.innerWidth < 1200);
     // 위키 문서 링크(?doc=)로 들어왔으면 위키를 연다
     const q = new URLSearchParams(window.location.search);
     if (q.has('doc')) setSection('docs');
@@ -311,9 +325,9 @@ function Workspace({ account }: { account?: Account }) {
     if (!prefsLoaded) return;
     try {
       window.localStorage.setItem(PREF_KEY, JSON.stringify(
-        { section, view, scope, priority: priorityFilter, hideDone, assignee: assigneeFilter, colorBy } satisfies Prefs));
+        { section, view, scope, priority: priorityFilter, hideDone, assignee: assigneeFilter, colorBy, rail } satisfies Prefs));
     } catch { /* noop */ }
-  }, [prefsLoaded, section, view, scope, priorityFilter, hideDone, assigneeFilter, colorBy]);
+  }, [prefsLoaded, section, view, scope, priorityFilter, hideDone, assigneeFilter, colorBy, rail]);
 
   const pickMe = (id: string) => {
     setLocalMe(id);
@@ -648,6 +662,8 @@ function Workspace({ account }: { account?: Account }) {
   /* 범위(왼쪽 메뉴)는 걸러 보기가 아니라 지금 있는 곳이라 초기화에 넣지 않는다 */
   const assigneeOn = scope.kind !== 'mine' && assigneeFilter !== 'all';
   const filtersOn = query.trim() !== '' || priorityFilter !== 'all' || assigneeOn || hideDone;
+  /** 휴대폰의 '걸러 보기' 단추에 적는 켜진 수(검색 말고 고르기 칸) */
+  const filterCount = Number(priorityFilter !== 'all') + Number(assigneeOn) + Number(hideDone);
   const clearFilters = () => {
     setQuery(''); setPriorityFilter('all'); setAssigneeFilter('all'); setHideDone(false);
   };
@@ -781,10 +797,12 @@ function Workspace({ account }: { account?: Account }) {
     },
   ];
 
-  const navLinks = (after?: () => void) =>
+  const navLinks = (after?: () => void, compact = false) =>
     nav.map((g, gi) => (
       <div key={gi} className="contents">
-        {g.label && (
+        {/* 접힌 메뉴: 묶음 이름 대신 가는 선. 영역 '관리'는 메뉴를 펼쳐서 쓴다 */}
+        {g.label && compact && <hr className="mx-2 my-1.5 border-tm-line" />}
+        {g.label && !compact && (
           <div className="mx-3 mb-1 mt-3 flex items-center justify-between gap-2">
             <p className="text-[12.5px] font-bold text-tm-sub">{g.label}</p>
             {g.action && (
@@ -796,7 +814,27 @@ function Workspace({ account }: { account?: Account }) {
             )}
           </div>
         )}
-        {g.items.map((it) => (
+        {g.items.map((it) => compact ? (
+          <button key={it.key} type="button" aria-current={it.active ? 'page' : undefined}
+            onClick={() => { it.go(); after?.(); }}
+            title={`${it.label} ${it.count}건`} aria-label={`${it.label} ${it.count}건`}
+            className={`flex min-h-[54px] w-full flex-col items-center justify-center gap-1 rounded-tm-sm px-1 py-1.5 text-[12px] leading-tight
+                        transition-colors duration-150 ${
+              it.active ? 'bg-tm-blue font-bold text-white' : 'font-semibold text-tm-ink hover:bg-tm-tint'}`}>
+            <span className="relative grid h-6 w-6 place-items-center" aria-hidden>
+              {it.icon ? <IconNav name={it.icon} /> : (
+                <span className={`h-3 w-3 rounded-[4px] ${it.dot ? DOMAIN_FILL[it.dot] : ''} ${it.active ? 'ring-2 ring-white' : ''}`} />
+              )}
+              {it.count > 0 && (
+                <span className={`absolute -right-3 -top-1.5 inline-grid h-[18px] min-w-[20px] place-items-center rounded-full px-1 text-[12px] font-bold leading-none tabular-nums ${
+                  it.active ? 'bg-white text-tm-blue' : 'bg-tm-tint text-tm-deep'}`}>
+                  {it.count}
+                </span>
+              )}
+            </span>
+            <span className="block w-full truncate text-center" aria-hidden>{it.label}</span>
+          </button>
+        ) : (
           <button key={it.key} type="button" aria-current={it.active ? 'page' : undefined}
             onClick={() => { it.go(); after?.(); }}
             className={`group flex min-h-[42px] w-full items-center gap-3 rounded-tm-sm px-3 text-left text-[15px] transition-colors duration-150
@@ -836,21 +874,65 @@ function Workspace({ account }: { account?: Account }) {
   }
 
   const page = (
-    <div className="grid h-[100dvh] grid-cols-[268px_minmax(0,1fr)] grid-rows-[minmax(0,1fr)] overflow-hidden bg-tm-bg text-[15.5px] leading-[1.6] text-tm-ink
-                    max-[900px]:grid-cols-[minmax(0,1fr)]">
+    <div className={`grid h-[100dvh] grid-rows-[minmax(0,1fr)] overflow-hidden bg-tm-bg text-[15.5px] leading-[1.6] text-tm-ink
+                    transition-[grid-template-columns] duration-200 max-[900px]:grid-cols-[minmax(0,1fr)] ${
+                    rail ? 'grid-cols-[88px_minmax(0,1fr)]' : 'grid-cols-[268px_minmax(0,1fr)]'}`}>
 
       {/* ── 넓은 화면: 왼쪽 메뉴 ── */}
-      <aside className="flex min-h-0 flex-col overflow-y-auto border-r border-tm-line bg-white px-4 pb-3.5 pt-[22px] max-[900px]:hidden">
-        <button type="button" onClick={() => goTasks({ kind: 'all' })} aria-label="작업 관리 처음 화면"
-          className="mb-1 flex flex-col items-start gap-2.5 rounded-tm-sm px-2.5 pb-3.5 text-left">
-          <Image src="/images/logo.png" alt="" width={124} height={31} priority className="h-auto w-[124px]" />
-          <span className="rounded-full bg-tm-tint px-[11px] py-[3px] text-[12.5px] font-bold text-tm-deep">작업 관리</span>
-        </button>
+      <aside className={`flex min-h-0 flex-col overflow-y-auto overflow-x-hidden border-r border-tm-line bg-white pb-3.5 max-[900px]:hidden ${
+        rail ? 'px-2 pt-4' : 'px-4 pt-[22px]'}`}>
+        {rail ? (
+          <div className="mb-2 flex flex-col items-center gap-1.5">
+            <button type="button" onClick={() => goTasks({ kind: 'all' })} aria-label="작업 관리 처음 화면"
+              className="grid min-h-11 place-items-center rounded-tm-sm px-1.5">
+              <Image src="/images/logo.png" alt="" width={64} height={16} priority className="h-auto w-[64px]" />
+            </button>
+            <button type="button" onClick={() => setRail(false)} aria-expanded={false} aria-label="메뉴 펼치기" title="메뉴 펼치기"
+              className={tmIconBtnSm}>
+              <IconNav name="sidebar" />
+            </button>
+          </div>
+        ) : (
+          <div className="mb-1 flex items-start justify-between gap-2">
+            <button type="button" onClick={() => goTasks({ kind: 'all' })} aria-label="작업 관리 처음 화면"
+              className="flex flex-col items-start gap-2.5 rounded-tm-sm px-2.5 pb-3.5 text-left">
+              <Image src="/images/logo.png" alt="" width={124} height={31} priority className="h-auto w-[124px]" />
+              <span className="rounded-full bg-tm-tint px-[11px] py-[3px] text-[12.5px] font-bold text-tm-deep">작업 관리</span>
+            </button>
+            <button type="button" onClick={() => setRail(true)} aria-expanded aria-label="메뉴 접기" title="메뉴 접기"
+              className={`-mr-1.5 ${tmIconBtnSm}`}>
+              <IconNav name="sidebar" />
+            </button>
+          </div>
+        )}
 
-        <nav className="flex flex-col gap-1" aria-label="작업 관리 메뉴">
-          {navLinks()}
+        <nav className={`flex flex-col ${rail ? 'gap-0.5' : 'gap-1'}`} aria-label="작업 관리 메뉴">
+          {navLinks(undefined, rail)}
         </nav>
 
+        {rail ? (
+          <div className="mt-auto flex flex-col gap-0.5 border-t border-tm-line pt-2">
+            <button type="button" onClick={() => setAppOpen(true)} title="갤럭시 위젯 앱" aria-label="갤럭시 위젯 앱" className={railItem}>
+              <IconNav name="phone" />
+              <span aria-hidden>위젯 앱</span>
+            </button>
+            <Link href="/" title="홈페이지로" aria-label="홈페이지로" className={railItem}>
+              <IconNav name="home" />
+              <span aria-hidden>홈페이지</span>
+            </Link>
+            {/* 로그인했으면 팀원 창(내 정보), 아니면 '지금 쓰는 사람'을 고르도록 메뉴를 편다. 로그아웃도 펼친 메뉴에 있다 */}
+            <button type="button" onClick={() => (account ? setTeamOpen(true) : setRail(false))}
+              aria-haspopup={account ? 'dialog' : undefined}
+              title={account ? '내 정보 · 팀원 (로그아웃은 메뉴를 펼쳐서)' : '지금 쓰는 사람 바꾸기'}
+              aria-label={account ? '내 정보 · 팀원' : '지금 쓰는 사람 바꾸기'}
+              className="relative mx-auto mt-1 grid h-12 w-12 place-items-center rounded-full transition-colors duration-150 hover:bg-tm-tint">
+              <Avatar id={me} size={36} />
+              {pendingCount > 0 && (
+                <span className="absolute right-0.5 top-0.5 h-3 w-3 rounded-full bg-tm-red ring-2 ring-white" aria-label={`승인 대기 ${pendingCount}명`} />
+              )}
+            </button>
+          </div>
+        ) : (
         <div className="mt-auto flex flex-col gap-1.5 border-t border-tm-line pt-2.5">
           <button type="button" onClick={() => setAppOpen(true)}
             className="flex min-h-[42px] items-center gap-3 rounded-tm-sm px-3 text-left text-[15px] font-semibold text-tm-ink transition-colors duration-150 hover:bg-tm-tint">
@@ -873,6 +955,7 @@ function Workspace({ account }: { account?: Account }) {
             <MePicker me={me} onPick={pickMe} id="tm-me" />
           )}
         </div>
+        )}
       </aside>
 
       <div className="flex min-h-0 min-w-0 flex-col">
@@ -881,7 +964,7 @@ function Workspace({ account }: { account?: Account }) {
         <header className="relative z-30 flex h-[58px] flex-none items-center justify-between gap-3 border-b border-tm-line bg-white px-4 min-[901px]:hidden
                            [@media(max-height:500px)]:h-12">
           <button type="button" onClick={() => goTasks({ kind: 'all' })} aria-label="작업 관리 처음 화면"
-            className="flex min-w-0 items-center gap-2.5 rounded-tm-sm">
+            className="flex min-h-11 min-w-0 items-center gap-2.5 rounded-tm-sm">
             <Image src="/images/logo.png" alt="" width={96} height={24} className="h-auto w-[96px]" />
             <span className="whitespace-nowrap rounded-full bg-tm-tint px-[9px] py-0.5 text-[12px] font-bold text-tm-deep">작업 관리</span>
           </button>
@@ -919,7 +1002,7 @@ function Workspace({ account }: { account?: Account }) {
 
         {/* ── 본문 - 좁거나 낮은 화면에서는 쪽 머리째 스크롤한다(globals.css 의 tm-page · tm-fill) ── */}
         <div className="tm-page flex min-h-0 flex-1 flex-col px-11 pb-7 pt-10 max-[1500px]:px-8 max-[900px]:px-4 max-[900px]:pb-4 max-[900px]:pt-5">
-          <div className="tm-page-inner mx-auto flex min-h-0 w-full max-w-[1560px] flex-1 flex-col">
+          <div className="tm-page-inner mx-auto flex min-h-0 w-full max-w-[1560px] flex-1 flex-col min-[1800px]:max-w-[2200px]">
 
             {section === 'docs' ? (
               <Docs store={docStore} me={me} tasks={store.tasks}
@@ -958,7 +1041,7 @@ function Workspace({ account }: { account?: Account }) {
 
                 {/* 찾기 · 걸러 보기 */}
                 <div className="mb-[18px] flex flex-none flex-wrap items-center gap-2.5 max-[720px]:mb-3.5">
-                  <div className="relative min-w-0 max-w-[420px] flex-[1_1_260px] max-[720px]:max-w-none max-[720px]:basis-full">
+                  <div className="relative min-w-0 max-w-[420px] flex-[1_1_260px] max-[720px]:max-w-none max-[720px]:flex-[1_1_150px]">
                     <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-tm-sub">
                       <IconSearch />
                     </span>
@@ -974,6 +1057,17 @@ function Workspace({ account }: { account?: Account }) {
                     </kbd>
                   </div>
 
+                  {compactFilters && (
+                  <button type="button" onClick={() => setFiltersOpen(!filtersOpen)} aria-expanded={filtersOpen} aria-controls="tm-filters"
+                    className="inline-flex h-12 flex-none items-center gap-2 rounded-tm-sm border border-tm-edge bg-white px-3.5 text-[15px] font-bold text-tm-ink
+                               transition-colors duration-150 aria-expanded:border-tm-blue aria-expanded:bg-tm-tint">
+                    <IconNav name="filter" size={18} />
+                    걸러 보기
+                    {filterCount > 0 && <span className={tmCount} aria-label={`${filterCount}개 켜짐`}>{filterCount}</span>}
+                  </button>
+                  )}
+
+                  <div id="tm-filters" className={compactFilters && !filtersOpen ? 'hidden' : 'contents'}>
                   <label className="sr-only" htmlFor="tm-filter-priority">우선순위로 걸러 보기</label>
                   <select id="tm-filter-priority" value={priorityFilter}
                     onChange={(e) => setPriorityFilter(e.target.value as Priority | 'all')}
@@ -998,6 +1092,7 @@ function Workspace({ account }: { account?: Account }) {
                   <button type="button" onClick={() => setHideDone(!hideDone)} aria-pressed={hideDone} className={tmTab}>
                     완료 숨기기
                   </button>
+                  </div>
 
                   {filtersOn && (
                     <button type="button" onClick={clearFilters} className={tmTextBtn}>
@@ -1075,7 +1170,8 @@ function Workspace({ account }: { account?: Account }) {
                   <div className="min-h-0 flex-1 overflow-auto rounded-tm border border-tm-line bg-white shadow-tm">{emptyState}</div>
                 )}
                 {slot === 'board' && !(filtersOn && visible.length === 0) && (
-                  <div className="-mx-1 -mb-1 min-h-0 flex-1 overflow-x-auto overflow-y-hidden px-1 pb-1">
+                  <div className="-mx-1 -mb-1 min-h-0 flex-1 overflow-x-auto overflow-y-hidden px-1 pb-1
+                                  max-[900px]:snap-x max-[900px]:snap-mandatory max-[900px]:scroll-px-1">
                     {/* 넓은 화면(1280~)에서는 다섯 칸을 나눠 채운다 - 1366 노트북에서도 가로 스크롤 없이 다 보이게 */}
                     <div className="flex h-full min-w-max items-stretch gap-3 xl:min-w-0">
                       {STATUSES.map((s) => {
@@ -1086,7 +1182,7 @@ function Workspace({ account }: { account?: Account }) {
                             onDragOver={(e) => onColumnDragOver(e, s.id, null)}
                             onDrop={(e) => onDrop(e, s.id, null)}
                             className={`flex h-full min-h-0 w-[288px] shrink-0 flex-col rounded-tm border shadow-tm transition-colors duration-150
-                                        max-[900px]:w-[272px] xl:w-auto xl:min-w-[196px] xl:flex-1 ${
+                                        max-[900px]:w-[272px] max-[900px]:snap-start max-[560px]:w-[calc(100vw-72px)] xl:w-auto xl:min-w-[196px] xl:flex-1 ${
                               active ? 'border-tm-blue bg-tm-tint' : 'border-tm-line bg-white'
                             }`}>
                             <div className="flex flex-none items-center gap-2.5 py-3 pl-4 pr-2.5">
@@ -1163,7 +1259,7 @@ function Workspace({ account }: { account?: Account }) {
 
                 {/* ── 목록 ── */}
                 {slot === 'list' && (
-                  <div className="min-h-0 flex-1 overflow-auto rounded-tm border border-tm-line bg-white shadow-tm">
+                  <div className="min-h-0 flex-1 overflow-auto rounded-tm border border-tm-line bg-white shadow-tm max-[640px]:hidden">
                     <table className="w-full min-w-[780px] border-collapse text-[15px]">
                       <thead>
                         <tr className="text-left text-[13px] text-tm-sub">
@@ -1181,7 +1277,7 @@ function Workspace({ account }: { account?: Account }) {
                               {/* 손가락 기기에서는 칸 높이만큼 누를 자리를 넓힌다 - 글자 높이(21px)로는 잘 안 눌린다 */}
                               <button type="button" onClick={() => toggleSort(by)}
                                 className="group/sort inline-flex items-center gap-1 rounded-md transition-colors duration-150 hover:text-tm-ink
-                                           [@media(pointer:coarse)]:-my-3 [@media(pointer:coarse)]:py-3">
+                                           [@media(pointer:coarse)]:-my-3 [@media(pointer:coarse)]:py-3 [@media(pointer:coarse)]:-mx-2 [@media(pointer:coarse)]:px-2">
                                 {label}
                                 {/* 정렬 표시는 고른 열에만 - 흐린 화살표를 모든 열에 두면 어느 열 기준인지 안 보인다 */}
                                 <span className={`text-[10px] leading-none text-tm-blue transition-opacity duration-150 ${
@@ -1232,6 +1328,59 @@ function Workspace({ account }: { account?: Account }) {
                     </table>
 
                     {visible.length === 0 && emptyState}
+                  </div>
+                )}
+                {/* 휴대폰: 표는 가로로 밀어야 상태 뒤 칸이 보였다 - 한 작업을 두 줄 카드로, 정렬은 고르기 칸으로 */}
+                {slot === 'list' && (
+                  <div className="hidden min-h-0 flex-1 flex-col max-[640px]:flex">
+                    <div className="mb-2.5 flex flex-none items-center gap-2.5">
+                      <label className="sr-only" htmlFor="tm-list-sort">줄 세우기</label>
+                      <select id="tm-list-sort" value={sort ? `${sort.by}:${sort.dir}` : 'none'}
+                        onChange={(e) => {
+                          const [by, dir] = e.target.value.split(':');
+                          setSort(by === 'none' ? null : { by: by as NonNullable<typeof sort>['by'], dir: dir === '-1' ? -1 : 1 });
+                        }}
+                        className={`${tmSelect} min-w-0 flex-1`}>
+                        <option value="none">상태 순(보드와 같은 순서)</option>
+                        <option value="due:1">마감 빠른 순</option>
+                        <option value="priority:1">우선순위 높은 순</option>
+                        <option value="title:1">제목 가나다순</option>
+                        <option value="domain:1">영역 순</option>
+                        <option value="assignee:1">담당자 이름 순</option>
+                      </select>
+                      <span className="flex-none text-[14px] font-semibold tabular-nums text-tm-sub">{visible.length}건</span>
+                    </div>
+                    <div className="min-h-0 flex-1 overflow-auto rounded-tm border border-tm-line bg-white shadow-tm">
+                      <ul>
+                        {sorted.map((t) => (
+                          <li key={t.id} className="border-b border-tm-line last:border-0">
+                            <button type="button" onClick={() => setOpenId(t.id)}
+                              className="flex w-full flex-col gap-2 px-4 py-3.5 text-left transition-colors duration-150 hover:bg-tm-tint">
+                              <span className="flex w-full min-w-0 items-start gap-3">
+                                <span className="min-w-0 flex-1">
+                                  <span className="block text-[13px] font-bold tabular-nums text-tm-sub">{t.key}</span>
+                                  <span className={`block text-[15px] font-semibold leading-[1.45] ${
+                                    t.status === 'done' ? 'text-tm-sub line-through' : 'text-tm-ink'}`}>
+                                    {t.title}
+                                  </span>
+                                </span>
+                                <Avatar id={t.assignee} size={28} />
+                              </span>
+                              <span className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                                <StatusPill s={t.status} />
+                                <span className={`inline-flex items-center gap-1.5 whitespace-nowrap text-[13.5px] ${PRIORITY_STYLE[t.priority].text}`}>
+                                  <PriorityDot p={t.priority} />
+                                  {priorityLabel(t.priority)}
+                                </span>
+                                <DomainChip id={t.domain} />
+                                <DueBadge due={t.due} done={t.status === 'done'} />
+                              </span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                      {visible.length === 0 && emptyState}
+                    </div>
                   </div>
                 )}
                 </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import {
   COLOR_BYS, STATUSES, statusLabel,
@@ -240,8 +240,21 @@ function IconCalendar() {
   );
 }
 
+/**
+ * 화면 크기 조건(@media)이 맞는지 - 창 크기를 바꾸거나 기기를 돌리면 다시 그린다.
+ * 서버에서 그릴 때와 첫 그림은 false(넓은 화면 기준)다.
+ */
+export function useMediaQuery(query: string): boolean {
+  const subscribe = useCallback((on: () => void) => {
+    const mq = window.matchMedia(query);
+    mq.addEventListener('change', on);
+    return () => mq.removeEventListener('change', on);
+  }, [query]);
+  return useSyncExternalStore(subscribe, () => window.matchMedia(query).matches, () => false);
+}
+
 /** 메뉴 아이콘 */
-export type NavIcon = 'board' | 'mine' | 'wiki' | 'memo' | 'home' | 'menu' | 'phone';
+export type NavIcon = 'board' | 'mine' | 'wiki' | 'memo' | 'home' | 'menu' | 'phone' | 'sidebar' | 'filter';
 export function IconNav({ name, size = 20 }: { name: NavIcon; size?: number }) {
   const paths: Record<NavIcon, React.ReactNode> = {
     /* 모든 작업 - 보드의 칸 */
@@ -281,6 +294,15 @@ export function IconNav({ name, size = 20 }: { name: NavIcon; size?: number }) {
         <path d="M8.5 14.5h3" />
       </>
     ),
+    /* 메뉴 접기 · 펼치기 - 왼쪽 칸이 있는 창 */
+    sidebar: (
+      <>
+        <rect x="3" y="4" width="14" height="12" rx="2" />
+        <path d="M8 4v12" />
+      </>
+    ),
+    /* 걸러 보기 - 깔때기 */
+    filter: <path d="M3.5 5h13l-5 6v4.5l-3 1.5v-6z" />,
   };
   return (
     <svg viewBox="0 0 20 20" width={size} height={size} aria-hidden className="flex-none" {...svg}>
@@ -313,7 +335,7 @@ function MemberAvatar({ id, initial, title, size }: { id: string; initial: strin
   return (
     <span
       className="inline-flex shrink-0 items-center justify-center rounded-full font-bold tracking-[-0.02em]"
-      style={{ width: size, height: size, fontSize: Math.max(9, size * 0.38), backgroundColor: p.tint, color: p.solid }}
+      style={{ width: size, height: size, fontSize: Math.max(size >= 22 ? 11 : 9, size * 0.4), backgroundColor: p.tint, color: p.solid }}
       title={title}
     >
       {initial}
@@ -418,20 +440,26 @@ export function PageHead({
   return (
     /* 좁은 화면: 오른쪽 묶음을 풀어(contents) 버튼은 제목 옆에 붙인다. 보기 알약처럼 긴 줄은
        쓰는 쪽에서 order · basis-full 을 주어 다음 줄을 다 쓰게 한다 - 버튼 밑에 깔리지 않는다 */
-    <div className="mb-6 flex flex-none flex-wrap items-end justify-between gap-x-7 gap-y-4 max-[720px]:mb-4 max-[720px]:items-center">
+    /* 저장 상태 알약은 제목 옆에 둔다(제 줄을 따로 쓰지 않는다). 낮은 화면(노트북 768 · 가로로 든 휴대폰)에서는
+       쓰는 법 안내 줄을 접고 여백을 줄여 보기 자리를 넓힌다 */
+    <div className="mb-6 flex flex-none flex-wrap items-end justify-between gap-x-7 gap-y-4 max-[720px]:mb-4 max-[720px]:items-center
+                    [@media(max-height:820px)]:mb-4 [@media(max-height:820px)]:items-center [@media(max-height:820px)]:gap-y-3">
       <div className="min-w-0 max-w-[68ch] flex-[1_1_360px] max-[720px]:basis-[150px]">
-        <h1 className="text-[28px] font-extrabold leading-[1.25] tracking-[-0.02em] text-tm-deep max-[900px]:text-[24px]">{title}</h1>
-        {lead && <p className="mt-2 text-[15.5px] leading-[1.7] text-tm-ink max-[720px]:hidden">{lead}</p>}
-        {saved && (
-          <p
-            className={`mt-3.5 inline-flex items-center gap-2 rounded-full border border-tm-line bg-white px-3 py-[5px] text-[13px] font-semibold text-tm-sub ${
-              saved.tone === 'warn' ? 'max-[720px]:mt-2.5' : 'max-[720px]:hidden'}`}
-          >
-            <i className={`h-2 w-2 rounded-full ${
-              saved.tone === 'ok' ? 'bg-tm-ok' : saved.tone === 'busy' ? 'bg-tm-edge' : 'bg-tm-red'}`} aria-hidden />
-            {saved.text}
-          </p>
-        )}
+        <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5">
+          <h1 className="text-[28px] font-extrabold leading-[1.25] tracking-[-0.02em] text-tm-deep max-[900px]:text-[24px]
+                         [@media(max-height:500px)]:text-[22px]">{title}</h1>
+          {saved && (
+            <p
+              className={`inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-tm-line bg-white px-3 py-[5px] text-[13px] font-semibold text-tm-sub ${
+                saved.tone === 'warn' ? '' : 'max-[720px]:hidden'}`}
+            >
+              <i className={`h-2 w-2 rounded-full ${
+                saved.tone === 'ok' ? 'bg-tm-ok' : saved.tone === 'busy' ? 'bg-tm-edge' : 'bg-tm-red'}`} aria-hidden />
+              {saved.text}
+            </p>
+          )}
+        </div>
+        {lead && <p className="mt-2 text-[15.5px] leading-[1.7] text-tm-ink max-[720px]:hidden [@media(max-height:820px)]:hidden">{lead}</p>}
       </div>
       {children && <div className="flex min-w-0 max-w-full flex-none items-center gap-2 max-[720px]:contents">{children}</div>}
     </div>

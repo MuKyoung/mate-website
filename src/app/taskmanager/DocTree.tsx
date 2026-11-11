@@ -130,7 +130,8 @@ export default function DocTree({ roots, activeId, openSet, onToggle, onSelect, 
           {hasKids ? (
             <button type="button" onClick={() => onToggle(node.id)}
               aria-label={expanded ? `${titleOf(node)} 접기` : `${titleOf(node)} 펼치기`} aria-expanded={expanded}
-              className={`grid h-7 w-7 shrink-0 place-items-center rounded-md transition-colors duration-150 ${
+              className={`grid h-7 w-7 shrink-0 place-items-center rounded-md transition-colors duration-150
+                          [@media(pointer:coarse)]:h-9 [@media(pointer:coarse)]:w-9 ${
                 active ? 'text-white hover:bg-white/20 focus-visible:outline-white' : 'text-tm-sub hover:bg-white hover:text-tm-ink'}`}>
               <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden
                 className={`transition-transform duration-150 ${expanded ? 'rotate-90' : ''}`}>
