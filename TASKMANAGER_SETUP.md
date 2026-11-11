@@ -100,6 +100,10 @@ https://devteammate.co.kr/taskmanager/ → 로그인.
 MATE Studio(https://matephotoshop.vercel.app)와 설치형 MATE Hub 도 이 Supabase 의 계정 · 승인을 그대로 씁니다
 (MATE_Photoshop 저장소의 `src/account/` · `desktop/src/account.mjs`). 따로 설정할 것은 없습니다 — 2단계(가입 허용 · Confirm email 끄기)만 그대로 둡니다.
 
+> **프로젝트는 하나만.** MATE Studio · MATE Hub 는 Vercel 의 `NEXT_PUBLIC_SUPABASE_URL` 과 같은 프로젝트(`duxqhatypwcjiqmddcmu`)를 씁니다.
+> 이 PC 의 `.env.local` 도 같은 두 줄이어야 합니다. 2026-11-06 ~ 11-11 에는 MATE Hub 가 `.env.local` 에 있던 다른 프로젝트(`yvcarrajucbpzfxkyxzd`)를
+> 가리켜, MATE Hub 에서 보낸 가입 요청이 여기 팀원 창에 뜨지 않았습니다(계정이 두 곳에 따로 생겼다). 프로젝트를 옮기면 MATE_Photoshop 의 두 파일과 시험도 같이 바꿉니다.
+
 - 어느 쪽 로그인 화면에서 **가입 요청**을 보내도 여기 팀원 창에 '승인 대기'로 들어옵니다. **승인**하면 작업 관리 · MATE Studio · MATE Hub 를 같은 메일 · 비밀번호로 씁니다.
 - **승인 취소**하면 MATE Studio · MATE Hub 도 다음 확인(창으로 돌아올 때 · 10분마다) 때 막힙니다. 열려 있던 작업 화면은 지우지 않고 덮어 둡니다.
   **거절**하면 계정째 지워져 그쪽 로그인도 끝납니다.
