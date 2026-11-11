@@ -293,7 +293,7 @@ begin
   end if;
   delete from auth.users u where u.id = target;
 end;
-$;
+$$;
 
 -- 승인하면 메일 인증도 끝낸다. 메일 인증을 켜 둔 때 가입한 계정은 승인돼도 메일의 링크를 누르기 전까지 로그인이 막혔다
 -- (Supabase Auth 가 email_not_confirmed 로 거절 — '승인해도 로그인 안 됨'). 관리자가 승인한 계정은 관리자가 알아본 사람이므로
@@ -304,14 +304,14 @@ returns trigger
 language plpgsql
 security definer
 set search_path = ''
-as $
+as $$
 begin
   if new.active and not old.active then
     update auth.users u set email_confirmed_at = now() where u.id = new.id and u.email_confirmed_at is null;
   end if;
   return new;
 end;
-$;
+$$;
 
 -- 영역 지우기 - 그 영역의 작업을 move_to 로 옮기고 지운다. 영역을 맡은 사람만.
 -- 옮길 영역이 따로 있어야 하므로 마지막 영역은 지울 수 없다. 둘이 동시에 서로 다른 영역을 지워 하나도 남지 않게 되지 않도록 영역 줄을 잠근다
