@@ -254,7 +254,7 @@ export function useMediaQuery(query: string): boolean {
 }
 
 /** 메뉴 아이콘 */
-export type NavIcon = 'board' | 'mine' | 'wiki' | 'memo' | 'home' | 'menu' | 'phone' | 'sidebar' | 'filter';
+export type NavIcon = 'board' | 'mine' | 'wiki' | 'memo' | 'home' | 'menu' | 'phone' | 'sidebar' | 'filter' | 'mindmap';
 export function IconNav({ name, size = 20 }: { name: NavIcon; size?: number }) {
   const paths: Record<NavIcon, React.ReactNode> = {
     /* 모든 작업 - 보드의 칸 */
@@ -303,6 +303,16 @@ export function IconNav({ name, size = 20 }: { name: NavIcon; size?: number }) {
     ),
     /* 걸러 보기 - 깔때기 */
     filter: <path d="M3.5 5h13l-5 6v4.5l-3 1.5v-6z" />,
+    /* 마인드맵 - 가운데 노드에서 세 가지 */
+    mindmap: (
+      <>
+        <circle cx="10" cy="10" r="2.6" />
+        <circle cx="4" cy="4.8" r="1.8" />
+        <circle cx="16" cy="4.8" r="1.8" />
+        <circle cx="16" cy="15.2" r="1.8" />
+        <path d="M8 8.3L5.4 6M12 8.3l2.6-2.3M12 11.7l2.6 2.3" />
+      </>
+    ),
   };
   return (
     <svg viewBox="0 0 20 20" width={size} height={size} aria-hidden className="flex-none" {...svg}>

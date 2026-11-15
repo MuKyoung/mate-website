@@ -1,8 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import type { Editor } from '@tiptap/react';
-import { DOC_TEMPLATES, localDay, type Doc, type DocVersion, type Task } from './types';
+import { DOC_TEMPLATES, WIKI_CATEGORIES, localDay, type Doc, type DocVersion, type Task, type WikiCategoryId } from './types';
 import { useMember, useMembers } from './members';
 import { isUntouchedSampleDoc, type DocStore } from './docStore';
 import { docLinkIds } from './docMarkdown';
@@ -16,9 +17,19 @@ import {
   type MenuEntry,
 } from './DocPanels';
 import {
-  Avatar, IconPlus, IconSearch, PageHead,
-  tmBtn, tmBtnPrimary, tmCallout, tmEditBtn, tmFieldBase, tmGhostBtn, tmIconBtn, tmSelect,
+  Avatar, IconNav, IconPlus, IconSearch, PageHead,
+  tmBtn, tmBtnPrimary, tmCallout, tmEditBtn, tmFieldBase, tmGhostBtn, tmIconBtn, tmSelect, tmTab,
 } from './ui';
+
+/* 마인드맵 엔진(Mind Elixir)은 마인드맵을 열 때만 불러온다 - 문서 화면의 첫 짐을 늘리지 않는다. 브라우저에서만 그린다 */
+const WikiMap = dynamic(() => import('./WikiMap'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex min-w-0 flex-1 items-center justify-center rounded-tm border border-tm-line bg-white text-[15px] font-semibold text-tm-sub shadow-tm">
+      마인드맵을 불러오는 중…
+    </div>
+  ),
+});
 
 /*
  * 팀 위키 - 노션 · Confluence 처럼 쓰는 문서 화면.
@@ -63,6 +74,9 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
   const [headings, setHeadings] = useState<WikiHeading[]>([]);
   const [here, setHere] = useState<number | null>(null);
   const [wide, setWide] = useState(false);
+  /** 문서로 볼지, 카테고리를 마인드맵으로 볼지 - 이 브라우저에 사람마다. 문서 링크(?doc=)로 들어오면 문서부터 */
+  const viewKey = `mate.taskmanager.docs.view.v1:${me}`;
+  const [view, setViewState] = useState<'doc' | 'map'>('doc');
   const [retrying, setRetrying] = useState(false);
   /* 보던 문서를 다른 팀원이 영구 삭제했다(Supabase 모드). 쓰던 글을 새 문서로 남길 수 있게 마지막 모습을 들고 있는다 */
   const [lost, setLost] = useState<{ doc: Doc; unsaved: boolean; editing: boolean } | null>(null);
@@ -74,6 +88,13 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
   const importRef = useRef<HTMLInputElement>(null);
   /** 들어온 주소의 ?doc= - 위키를 떠날 때 주소에서 지우므로 처음 그릴 때 읽어 둔다 */
   const [urlDoc] = useState(() => (typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('doc')));
+  useEffect(() => {
+    try { if (!urlDoc && window.localStorage.getItem(viewKey) === 'map') setViewState('map'); } catch { /* 저장이 막힌 환경 */ }
+  }, [urlDoc, viewKey]);
+  const setView = (v: 'doc' | 'map') => {
+    setViewState(v);
+    try { window.localStorage.setItem(viewKey, v); } catch { /* noop */ }
+  };
   const [askDelete, deleteNode] = useDeleteConfirm();
 
   const [starred, setStarred] = useStoredList(`mate.taskmanager.docs.stars.v1:${me}`);
@@ -345,6 +366,27 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
     setActiveId(created.id);
     setEditingId(created.id);
     setFocusFor(created.id);
+    // 마인드맵에서 만들었으면 바로 쓰도록 문서 화면으로
+    setView('doc');
+  };
+
+  /** 마인드맵이 권하는 카테고리(프로젝트 · 개발자)를 맨 위 문서로 만든다 - 쓰는 법을 본문에 넣는다 */
+  const createCategory = (id: WikiCategoryId): string | null => {
+    const c = WIKI_CATEGORIES.find((x) => x.id === id);
+    if (!c) return null;
+    const last = siblingsOf(null).at(-1);
+    const created = store.create({
+      title: c.title, icon: c.icon, body: c.body, parentId: null, author: me, order: between(last?.order, undefined),
+    });
+    onNotice?.(`'${c.title}' 카테고리를 만들었습니다. 그 아래에 문서를 만들면 가지로 펼쳐집니다`);
+    return created.id;
+  };
+
+  /** 카테고리(맨 위 문서) 바로 아래에 만들면 그 카테고리의 양식(프로젝트 정보 · 개발자 정보)을 먼저 골라 둔다 */
+  const templateFor = (parentId: string | null | undefined) => {
+    const p = parentId ? byId.get(parentId) : undefined;
+    if (!p || p.parentId) return undefined;
+    return WIKI_CATEGORIES.find((c) => c.title === p.title.trim())?.template;
   };
 
   /** [[ 목록의 '새 문서' - 지금 문서 아래에 빈 문서를 만든다 */
@@ -560,6 +602,7 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
   const menu: MenuEntry[] = doc ? [
     { label: starred.includes(doc.id) ? '즐겨찾기에서 빼기' : '즐겨찾기에 넣기', onSelect: () => toggleStar(doc.id), disabled: !canEdit },
     { label: '링크 복사', onSelect: () => void copyLink(doc) },
+    { label: '마인드맵으로 보기', onSelect: () => setView('map') },
     { label: '아래에 새 문서', onSelect: () => setCreatingUnder(doc.id), disabled: !canEdit, sep: true },
     { label: '사본 만들기', onSelect: () => duplicate(doc), disabled: !canEdit },
     { label: '옮기기', onSelect: () => setDialog('move'), disabled: !canEdit },
@@ -574,12 +617,26 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
     <>
       <PageHead
         title="팀 위키"
-        lead="회의록, 요구사항, 인수인계처럼 팀이 함께 보는 문서를 모읍니다. 편집에서 / 를 누르면 표 · 목록 · 알림 상자를, [[ 를 치면 다른 문서나 작업을 넣습니다."
+        lead={view === 'map'
+          ? '카테고리(맨 위 문서)를 고르면 그 아래 문서가 가지로 펼쳐집니다. 문서를 누르면 그 문서가 열리고, 문서 사이 링크는 점선으로 이어집니다.'
+          : '회의록, 요구사항, 인수인계처럼 팀이 함께 보는 문서를 모읍니다. 편집에서 / 를 누르면 표 · 목록 · 알림 상자를, [[ 를 치면 다른 문서나 작업을 넣습니다.'}
       >
-        <button type="button" onClick={() => setDialog('find')} className={`${tmBtn} max-[720px]:ml-auto max-[720px]:px-3.5`} title="문서 찾기 (Ctrl+K)">
+        {/* 좁은 화면: 보기 알약은 '새 문서' 뒤로(같은 줄에 들어가면 한 줄) */}
+        <div role="group" aria-label="위키 보기" className="flex flex-none items-center gap-1.5 max-[720px]:order-1">
+          <button type="button" aria-pressed={view === 'doc'} onClick={() => setView('doc')} className={tmTab}>
+            <span className="max-[400px]:hidden"><IconNav name="wiki" size={18} /></span>
+            문서
+          </button>
+          <button type="button" aria-pressed={view === 'map'} onClick={() => setView('map')} className={tmTab}>
+            <span className="max-[400px]:hidden"><IconNav name="mindmap" size={18} /></span>
+            마인드맵
+          </button>
+        </div>
+        {/* 태블릿 이하: 그림만(보기 알약이 같은 줄에 들어가게) */}
+        <button type="button" onClick={() => setDialog('find')} className={`${tmBtn} max-[720px]:ml-auto max-[1024px]:px-3.5`} title="문서 찾기 (Ctrl+K)">
           <IconSearch />
-          <span className="max-[720px]:sr-only">찾기</span>
-          <kbd className="rounded-md border border-tm-line bg-tm-bg px-1.5 text-[11.5px] font-bold text-tm-sub max-[720px]:hidden">Ctrl K</kbd>
+          <span className="max-[1024px]:sr-only">찾기</span>
+          <kbd className="rounded-md border border-tm-line bg-tm-bg px-1.5 text-[11.5px] font-bold text-tm-sub max-[1024px]:hidden">Ctrl K</kbd>
         </button>
         <button type="button" onClick={() => setCreatingUnder(null)} className={tmBtnPrimary}>
           <IconPlus />
@@ -624,6 +681,15 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
 
       {/* tm-fill - 휴대폰에서는 쪽 머리를 넘기면 화면 한 장 높이를 다 쓴다(globals.css) */}
       <div className="tm-fill flex min-h-0 flex-1 gap-5">
+        {view === 'map' ? (
+          /* ── 마인드맵 - 문서를 누르면 문서 화면으로 돌아와 그 문서를 연다 ── */
+          <WikiMap docs={live} tasks={tasks} me={me} activeId={activeId} canCreate={store.ready && !store.loadError}
+            onOpenDoc={(id) => { select(id); setView('doc'); }}
+            onOpenTask={(key) => onTaskClick?.(key)}
+            onAddChild={(id) => setCreatingUnder(id)}
+            onCreateCategory={createCategory} />
+        ) : (
+        <>
 
         {/* ── 문서 트리 ── */}
         <aside className="hidden w-[272px] shrink-0 flex-col overflow-hidden rounded-tm border border-tm-line bg-white shadow-tm md:flex">
@@ -945,11 +1011,14 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
             </div>
           </div>
         )}
+        </>
+        )}
       </div>
 
       {creatingUnder !== undefined && (
         <NewDocDialog
           parentTitle={creatingUnder ? titleOf(byId.get(creatingUnder) ?? { title: '' }) : null}
+          initialTemplate={templateFor(creatingUnder)}
           onCreate={handleCreate}
           onClose={() => setCreatingUnder(undefined)} />
       )}

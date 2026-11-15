@@ -243,14 +243,16 @@ export function EmojiPicker({ value, onPick, onClose }: { value: string; onPick(
 /* ── 새 문서 ─────────────────────────────────────────── */
 
 export function NewDocDialog({
-  parentTitle, onCreate, onClose,
+  parentTitle, initialTemplate, onCreate, onClose,
 }: {
   parentTitle: string | null;
+  /** 처음 골라 둘 양식 - 카테고리(프로젝트 · 개발자) 바로 아래에 만들 때. 없으면 회의록 */
+  initialTemplate?: string;
   onCreate(templateId: string, title: string): void;
   onClose(): void;
 }) {
-  const [picked, setPicked] = useState('meeting');
-  const [title, setTitle] = useState(() => DOC_TEMPLATES.find((x) => x.id === 'meeting')?.title ?? '');
+  const [picked, setPicked] = useState(() => (DOC_TEMPLATES.some((x) => x.id === initialTemplate) ? initialTemplate as string : 'meeting'));
+  const [title, setTitle] = useState(() => DOC_TEMPLATES.find((x) => x.id === picked)?.title ?? '');
   const titleRef = useRef<HTMLInputElement>(null);
   /* 양식을 마우스 · 손가락으로 골랐는가. 화살표로 양식을 넘겨 보는 중에는 초점을 옮기지 않는다
      (그때는 Tab 으로 제목 칸에 들어오면 브라우저가 글자를 모두 골라 준다) */

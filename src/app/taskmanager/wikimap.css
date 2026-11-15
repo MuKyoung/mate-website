@@ -1,0 +1,171 @@
+/*
+ * 팀 위키 마인드맵(WikiMap.tsx) - Mind Elixir 기본 모양 위에 작업 관리(tm) 모양을 입힌다.
+ * 노드 안은 WikiMap 이 그린 HTML(wm-*)이다. 색은 tailwind.config.ts 의 tm 값과 같다.
+ */
+
+.tm-wikimap .map-container {
+  font-family: inherit;
+  letter-spacing: 0;
+  background-color: #f4f6f9;
+}
+.tm-wikimap .wm-host:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px #2644cb;
+}
+
+/* ── 노드 ── */
+.tm-wikimap .map-container .me-tpc {
+  cursor: pointer;
+  transition: box-shadow 0.15s, border-color 0.15s, background-color 0.15s;
+}
+.tm-wikimap .map-container .me-parent .me-tpc {
+  max-width: 300px;
+  padding: 7px 11px;
+  border: 1px solid #d7dce4;
+  border-radius: 10px;
+  background-color: #ffffff;
+  box-shadow: 0 1px 2px rgba(22, 39, 60, 0.06);
+}
+.tm-wikimap .map-container .me-main > .me-wrapper > .me-parent > .me-tpc {
+  padding: 9px 13px;
+  border-radius: 12px;
+  background-color: #ffffff;
+}
+.tm-wikimap .map-container .me-root .me-tpc {
+  max-width: 340px;
+  padding: 12px 22px;
+  font-size: 20px;
+  box-shadow: 0 14px 32px rgba(22, 39, 60, 0.14);
+}
+.tm-wikimap .map-container .me-tpc:hover {
+  box-shadow: 0 0 0 3px rgba(38, 68, 203, 0.18);
+}
+.tm-wikimap .map-container .selected {
+  outline: 2px solid #2644cb;
+  outline-offset: 2px;
+}
+
+/* 펼치기 단추 - 잔가지 선이 상자 옆 가운데에서 나가므로 단추도 옆 가운데에 둔다 */
+.tm-wikimap .map-container .me-epd {
+  top: calc(50% - 9px);
+}
+
+/* 노드 안 - 제목 줄 · 한 줄 요약 · 사람 */
+.tm-wikimap .wm-n {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  white-space: normal;
+}
+.tm-wikimap .wm-t {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14.5px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #1b2430;
+}
+.tm-wikimap .me-main > .me-wrapper > .me-parent .wm-t {
+  font-size: 15.5px;
+  font-weight: 800;
+}
+.tm-wikimap .wm-root .wm-t {
+  font-size: 20px;
+  font-weight: 800;
+  color: #ffffff;
+}
+.tm-wikimap .wm-tt {
+  overflow-wrap: anywhere;
+}
+.tm-wikimap .wm-ic {
+  flex: none;
+  font-size: 1.1em;
+  line-height: 1;
+}
+.tm-wikimap .wm-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+}
+.tm-wikimap .wm-m {
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #5b6676;
+}
+.tm-wikimap .wm-root .wm-m {
+  color: rgba(255, 255, 255, 0.85);
+}
+.tm-wikimap .wm-n i,
+.tm-wikimap .wm-p i {
+  font-style: normal;
+}
+.tm-wikimap .wm-t > i[title],
+.tm-wikimap .wm-p i {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.tm-wikimap .wm-p {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.tm-wikimap .wm-p b {
+  font-size: 12px;
+  font-weight: 700;
+  color: #5b6676;
+}
+
+/* 작업 잎 - 상태 점 · 번호 · 제목 한 줄 */
+.tm-wikimap .wm-k {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 250px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #1b2430;
+  white-space: nowrap;
+}
+.tm-wikimap .wm-k i {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+}
+.tm-wikimap .wm-k b {
+  flex: none;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #5b6676;
+}
+.tm-wikimap .wm-kt {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tm-wikimap .wm-k[data-s='done'] .wm-kt {
+  color: #5b6676;
+  text-decoration: line-through;
+}
+.tm-wikimap .wm-more {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #2644cb;
+  white-space: nowrap;
+}
+
+/* 문서 링크 화살표의 빈 이름표는 그리지 않는다 */
+.tm-wikimap .map-container .svg-label:empty {
+  display: none;
+}
