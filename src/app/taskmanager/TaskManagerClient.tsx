@@ -11,7 +11,7 @@ import { DomainsContext, defaultDomain, domainOf, useDomainStore, type DomainSto
 import { ColorsContext, useColorStore, type ColorStore } from './colorStore';
 import {
   COLOR_BYS, MEMBERS, PRIORITIES, STATUSES,
-  memberById, priorityLabel,
+  localISO, memberById, priorityLabel,
   type ColorBy, type DomainColor, type DomainKey, type Member, type Priority, type Status, type Task,
 } from './types';
 import {
@@ -21,7 +21,7 @@ import {
   useMediaQuery, type NavIcon,
 } from './ui';
 import { NewTaskDialog, TaskPanel, type Draft } from './TaskPanel';
-import Timeline from './Timeline';
+import Timeline, { useToday } from './Timeline';
 import Calendar from './Calendar';
 import Roadmap from './Roadmap';
 /* 위키 편집기(TipTap)는 크다 - 위키를 열 때만 받아 작업 보드의 첫 로딩을 가볍게 둔다 */
@@ -584,15 +584,19 @@ function Workspace({ account }: { account?: Account }) {
     [store.tasks],
   );
 
+  /** 오늘(이 기기 날짜) - 탭을 밤새 열어 두었다가 돌아와도 다시 잰다 */
+  const todayKey = localISO(useToday());
   const counts = useMemo(() => {
-    const mine = store.tasks.filter((t) => t.assignee === me && t.status !== 'done').length;
+    /* 왼쪽 메뉴의 숫자(모든 작업 · 내 작업 · 영역)는 기간이 지난 작업(마감일이 오늘보다 앞)을 빼고 센다. 오늘 마감은 센다 */
+    const counted = (t: Task) => t.status !== 'done' && !(t.due && t.due < todayKey);
+    const mine = store.tasks.filter((t) => t.assignee === me && counted(t)).length;
     const perDomain = new Map<DomainKey, number>();
     store.tasks.forEach((t) => {
-      if (t.status !== 'done') perDomain.set(t.domain, (perDomain.get(t.domain) ?? 0) + 1);
+      if (counted(t)) perDomain.set(t.domain, (perDomain.get(t.domain) ?? 0) + 1);
     });
-    const open = store.tasks.filter((t) => t.status !== 'done').length;
+    const open = store.tasks.filter(counted).length;
     return { mine, perDomain, open, total: store.tasks.length };
-  }, [store.tasks, me]);
+  }, [store.tasks, me, todayKey]);
 
   /* 보던 영역이 지워졌으면(다른 곳에서 지웠거나 저장해 둔 화면의 영역이 없어졌으면) 모든 작업으로 */
   const scopeGone = scope.kind === 'domain' && domainStore.ready && !domains.some((d) => d.id === scope.id);
