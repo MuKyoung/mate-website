@@ -30,6 +30,15 @@
 }
 .tm-prose [data-level='3'] { font-size: 17px; font-weight: 700; margin: 24px 0 12px; }
 .tm-prose [data-level='4'] { font-size: 15.5px; font-weight: 700; color: #1b2430; margin: 20px 0 10px; }
+/* 제목 링크 복사(#) - 읽기 모드에서 제목에 올리거나 초점이 가면 보인다. 손가락 기기는 늘 옅게 */
+.tm-prose .tm-anchor {
+  margin-left: 8px; padding: 0 7px; border-radius: 6px; font-size: 0.78em; font-weight: 700; line-height: 1.6;
+  color: #5b6676; vertical-align: 0.1em; opacity: 0; cursor: pointer; transition: opacity 120ms, background-color 120ms;
+}
+.tm-prose [data-anchor]:hover .tm-anchor, .tm-prose .tm-anchor:focus-visible { opacity: 1; }
+.tm-prose .tm-anchor:hover { color: #2644cb; background: #eef2ff; }
+.tm-prose[contenteditable='true'] .tm-anchor { display: none; }
+@media (hover: none) { .tm-prose .tm-anchor { opacity: 0.7; } }
 
 /* 목록 */
 .tm-prose ul, .tm-prose ol { margin: 14px 0; padding-left: 24px; }
@@ -170,6 +179,31 @@
 }
 .tm-prose .tm-figcaption-input:focus { outline: none; border-color: #2644cb; box-shadow: 0 0 0 3px rgba(38, 68, 203, 0.2); }
 
+/* 올리는 중인 파일 - 넣을 자리의 표시(저장되지 않는 꾸밈) */
+.tm-prose .tm-upload {
+  display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; max-width: 100%; margin: 2px 0; padding: 4px 10px;
+  border: 1px dashed #7f8b9e; border-radius: 10px; background: #f4f6f9; font-size: 13.5px; line-height: 1.5; color: #1b2430;
+  vertical-align: middle; user-select: none;
+}
+.tm-prose .tm-upload b { font-weight: 700; overflow-wrap: anywhere; }
+.tm-prose .tm-upload.is-failed { border-color: #f0c1bd; border-style: solid; background: #fdeeec; color: #a81f1b; }
+.tm-prose .tm-upload button {
+  height: 28px; padding: 0 10px; border: 1px solid #7f8b9e; border-radius: 9999px; background: #fff;
+  font-size: 12.5px; font-weight: 700; color: #1b2430; cursor: pointer;
+}
+.tm-prose .tm-upload button:hover { border-color: #2644cb; background: #eef2ff; }
+.tm-upload-spin {
+  flex: none; width: 12px; height: 12px; border: 2px solid #c7d1f5; border-top-color: #2644cb; border-radius: 50%;
+  animation: tm-upload-spin 0.8s linear infinite;
+}
+.tm-upload-mark {
+  flex: none; display: grid; place-items: center; width: 16px; height: 16px; border-radius: 50%;
+  background: #d32d27; color: #fff; font-size: 11px; font-weight: 800;
+}
+@keyframes tm-upload-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .tm-upload-spin { animation: none; } }
+@media (pointer: coarse) { .tm-prose .tm-upload button { height: 44px; } }
+
 /* 글 안 - 링크 · 형광펜 · 언급 · 문서 링크 · 작업 */
 .tm-prose a {
   color: #2644cb; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer;
@@ -212,41 +246,41 @@
 
 /* ── 편집 도구 ─────────────────────────────────────── */
 
+/* 한 줄 - 넘치면 줄바꿈 대신 옆으로 밀어 본다(휴대폰 56px 안) */
 .tm-toolbar {
-  position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; align-items: center; gap: 2px;
+  position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: nowrap; align-items: center; gap: 2px;
   margin: 0 0 18px; padding: 6px; border: 1px solid #d7dce4; border-radius: 12px; background: #fff;
   box-shadow: 0 1px 2px rgba(22, 39, 60, 0.06);
+  overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none;
 }
+.tm-toolbar::-webkit-scrollbar { display: none; }
 .tm-tool-btn {
-  display: inline-grid; place-items: center; min-width: 34px; height: 34px; padding: 0 6px; border-radius: 8px;
+  flex: none; display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+  min-width: 34px; height: 34px; padding: 0 6px; border-radius: 8px;
   color: #1b2430; transition: background-color 120ms, color 120ms;
 }
+.tm-tool-btn.has-text { padding: 0 10px 0 8px; }
+.tm-tool-text { font-size: 13.5px; font-weight: 700; white-space: nowrap; }
 .tm-tool-btn:hover:not(:disabled) { background: #eef2ff; color: #2644cb; }
-.tm-tool-btn[aria-pressed='true'] { background: #2644cb; color: #fff; }
+.tm-tool-btn[aria-pressed='true'], .tm-tool-btn[aria-expanded='true'] { background: #2644cb; color: #fff; }
 .tm-tool-btn:disabled { opacity: 0.35; cursor: default; }
-.tm-tool-sep { width: 1px; height: 20px; margin: 0 4px; background: #d7dce4; }
+.tm-tool-sep { flex: none; width: 1px; height: 20px; margin: 0 4px; background: #d7dce4; }
 .tm-tool-select {
-  height: 34px; padding: 0 6px; border: 1px solid #d7dce4; border-radius: 8px; background: #fff;
+  flex: none; height: 34px; padding: 0 6px; border: 1px solid #d7dce4; border-radius: 8px; background: #fff;
   font-size: 14px; font-weight: 600; color: #1b2430; cursor: pointer;
 }
-.tm-table-tools { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; padding: 6px 2px 2px; border-top: 1px solid #d7dce4; margin-top: 4px; }
-.tm-chip-btn {
-  height: 30px; padding: 0 12px; border: 1px solid #7f8b9e; border-radius: 9999px; background: #fff;
-  font-size: 13px; font-weight: 600; color: #1b2430; transition: background-color 120ms, border-color 120ms;
-}
-.tm-chip-btn:hover { border-color: #2644cb; background: #eef2ff; }
-.tm-chip-btn.is-danger { border-color: #dc8f8b; color: #a81f1b; }
-.tm-chip-btn.is-danger:hover { border-color: #a81f1b; background: #fdeeec; }
 @media (pointer: coarse) {
+  .tm-toolbar { padding: 4px; }
   .tm-tool-btn { min-width: 44px; height: 44px; }
-  .tm-tool-select, .tm-chip-btn { height: 44px; }
+  .tm-tool-select { height: 44px; }
   /* iPhone · iPad 는 16px 보다 작은 입력 칸 · 편집 영역을 누르면 화면을 확대해 버린다 - 손가락 기기에서만 16px */
   .tm-tool-select, .tm-bubble-input, .tm-prose .tm-figcaption-input { font-size: 16px; }
   .tm-prose[contenteditable='true'] { font-size: 16px; }
 }
 
-.tm-popover {
-  position: absolute; top: calc(100% + 6px); z-index: 60; min-width: 190px; max-height: 70vh; overflow-y: auto;
+/* 떠 있는 메뉴(FloatMenu) - body 에 붙어 스크롤 칸에 잘리지 않는다. 자리 · 높이는 스크립트가 정한다 */
+.tm-float {
+  position: fixed; top: 0; left: 0; z-index: 300; visibility: hidden; min-width: 190px; overflow-y: auto; overscroll-behavior: contain;
   padding: 6px; border: 1px solid #d7dce4; border-radius: 12px; background: #fff;
   box-shadow: 0 14px 32px rgba(22, 39, 60, 0.14);
 }
@@ -257,6 +291,21 @@
 .tm-menu-item:hover, .tm-menu-item:focus-visible { background: #eef2ff; outline: none; }
 .tm-menu-item.is-danger { color: #a81f1b; }
 .tm-menu-item.is-danger:hover { background: #fdeeec; }
+.tm-menu-item:disabled { opacity: 0.4; cursor: default; background: none; }
+.tm-menu-item[aria-disabled='true'] { opacity: 0.6; cursor: not-allowed; }
+/* 넣기 메뉴 - 이름 아래에 쓰임새 */
+.tm-menu-item.is-rich { min-height: 44px; padding: 5px 10px; white-space: normal; }
+.tm-menu-item.is-rich b { display: block; font-size: 14px; font-weight: 700; color: #1b2430; }
+.tm-menu-item.is-rich small { display: block; font-size: 12.5px; font-weight: 500; line-height: 1.4; color: #5b6676; }
+.tm-menu-icon {
+  display: grid; place-items: center; flex: none; width: 30px; height: 30px; border: 1px solid #d7dce4; border-radius: 8px;
+  background: #fff; font-size: 12.5px; font-weight: 800; color: #18308f;
+}
+/* 마크다운처럼 바로 치는 법 */
+.tm-menu-md {
+  flex: none; margin-left: auto; padding: 1px 6px; border: 1px solid #d7dce4; border-radius: 6px; background: #f4f6f9;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; font-weight: 600; line-height: 1.5; color: #5b6676;
+}
 .tm-menu-item[aria-checked='true']::after { content: '✓'; margin-left: auto; color: #2644cb; font-weight: 800; }
 .tm-menu-label { padding: 8px 10px 4px; font-size: 12px; font-weight: 700; color: #5b6676; }
 .tm-menu-sep { height: 1px; margin: 4px 6px; background: #d7dce4; }
@@ -274,7 +323,7 @@
   background: #fff; box-shadow: 0 14px 32px rgba(22, 39, 60, 0.14);
 }
 .tm-bubble-input {
-  width: 260px; height: 34px; padding: 0 10px; border: 1px solid #7f8b9e; border-radius: 8px; font-size: 14px; color: #1b2430;
+  width: min(260px, calc(100vw - 170px)); height: 34px; padding: 0 10px; border: 1px solid #7f8b9e; border-radius: 8px; font-size: 14px; color: #1b2430;
 }
 .tm-bubble-input:focus { outline: none; border-color: #2644cb; box-shadow: 0 0 0 3px rgba(38, 68, 203, 0.2); }
 .tm-bubble-input[aria-invalid='true'] { border-color: #d32d27; }
@@ -285,6 +334,10 @@
 .tm-bubble-btn:hover { background: #eef2ff; color: #2644cb; }
 .tm-bubble-btn.is-primary { background: #2644cb; color: #fff; }
 .tm-bubble-btn.is-primary:hover { background: #2e5bf0; }
+/* 링크 쓰기 - 표시할 글 · 주소 */
+.tm-link-form { display: grid; gap: 6px; padding: 4px; }
+.tm-link-row { display: grid; grid-template-columns: 64px 1fr; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 700; color: #5b6676; }
+.tm-link-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; }
 .tm-bubble-href { max-width: 260px; padding: 0 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13.5px; color: #5b6676; }
 .tm-bubble-error { padding: 0 6px; font-size: 12.5px; font-weight: 700; color: #a81f1b; }
 
@@ -295,6 +348,8 @@
   background: #fff; box-shadow: 0 14px 32px rgba(22, 39, 60, 0.18); font-family: inherit;
 }
 .tm-suggest-title { padding: 6px 10px 4px; font-size: 12px; font-weight: 700; color: #5b6676; }
+.tm-suggest-group { padding: 8px 10px 2px; font-size: 11.5px; font-weight: 700; color: #5b6676; }
+.tm-suggest-item[aria-disabled='true'] { opacity: 0.6; cursor: not-allowed; }
 .tm-suggest-empty { padding: 10px; font-size: 14px; color: #5b6676; }
 .tm-suggest-item {
   display: flex; width: 100%; align-items: center; gap: 10px; min-height: 44px; padding: 6px 10px; border-radius: 10px; text-align: left;
@@ -315,7 +370,6 @@
 }
 .tm-handle-btn:hover { background: #eef2ff; color: #2644cb; }
 .tm-handle-btn.is-grip { cursor: grab; }
-.tm-handle .tm-popover { left: 0; }
 @media (pointer: coarse), (max-width: 767px) { .tm-handle { display: none; } }
 
 /* ── 인쇄 · PDF ─────────────────────────────────────── */
@@ -327,6 +381,7 @@
   .tm-print-root h1 { font-size: 26px; font-weight: 800; color: #18308f; margin: 0 0 6px; }
   .tm-print-root .tm-print-meta { font-size: 12px; color: #5b6676; margin-bottom: 20px; }
   .tm-print-root .tm-prose { min-height: 0; }
+  .tm-print-root .tm-anchor, .tm-print-root .tm-upload { display: none !important; }
   .tm-print-root .tm-details [data-type='detailsContent'] { display: block !important; }
   .tm-print-root pre, .tm-print-root blockquote, .tm-print-root .tm-callout, .tm-print-root table, .tm-print-root img { break-inside: avoid; }
 }

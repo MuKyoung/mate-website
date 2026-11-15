@@ -5,11 +5,11 @@ import dynamic from 'next/dynamic';
 import type { Editor } from '@tiptap/react';
 import { DOC_TEMPLATES, WIKI_CATEGORIES, localDay, type Doc, type DocVersion, type Task, type WikiCategoryId } from './types';
 import { useMember, useMembers } from './members';
-import { isUntouchedSampleDoc, type DocStore } from './docStore';
+import { isUntouchedSampleDoc, type DocStore, type SaveResult } from './docStore';
 import { docLinkIds } from './docMarkdown';
 import { isRemote } from './supabase';
 import { useNoPresence, useRemotePresence, type Presence } from './remote';
-import DocEditor, { focusEditor, scrollToPos, scrollWithin, type WikiHeading, type WikiRefs } from './DocEditor';
+import DocEditor, { focusEditor, scrollToAnchor, scrollToPos, type WikiHeading, type WikiRefs } from './DocEditor';
 import DocTree, { FlatRow, buildTree, type DropZone } from './DocTree';
 import {
   Comments, DocIcon, DropMenu, EmojiPicker, HistoryDialog, LabelEditor, MoveDialog, NewDocDialog, QuickFind, Snippet,
@@ -18,7 +18,7 @@ import {
 } from './DocPanels';
 import {
   Avatar, IconNav, IconPlus, IconSearch, PageHead,
-  tmBtn, tmBtnPrimary, tmCallout, tmEditBtn, tmFieldBase, tmGhostBtn, tmIconBtn, tmSelect, tmTab,
+  tmBtn, tmBtnPrimary, tmCallout, tmEditBtn, tmFieldBase, tmGhostBtn, tmIconBtn, tmTab, tmTextBtn,
 } from './ui';
 
 /* 마인드맵 엔진(Mind Elixir)은 마인드맵을 열 때만 불러온다 - 문서 화면의 첫 짐을 늘리지 않는다. 브라우저에서만 그린다 */
@@ -70,6 +70,8 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
   const [creatingUnder, setCreatingUnder] = useState<string | null | undefined>(undefined);
   const [query, setQuery] = useState('');
   const [dialog, setDialog] = useState<null | 'find' | 'move' | 'trash' | 'history'>(null);
+  /** 옮길 문서 - 트리 줄 메뉴에서 고르면 연 문서가 아닐 수 있다 */
+  const [moveId, setMoveId] = useState<string | null>(null);
   const [iconOpen, setIconOpen] = useState(false);
   const [headings, setHeadings] = useState<WikiHeading[]>([]);
   const [here, setHere] = useState<number | null>(null);
@@ -82,7 +84,11 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
   const [lost, setLost] = useState<{ doc: Doc; unsaved: boolean; editing: boolean } | null>(null);
   /** 새로 만든 문서는 본문에 커서를 두고 연다 */
   const [focusFor, setFocusFor] = useState<string | null>(null);
+  /** 편집기에 아직 내보내지 않은 글이 있다(치고 0.25초 안) - 저장 상태에 '저장 중'으로 센다 */
+  const [editorPending, setEditorPending] = useState(false);
   const lastDoc = useRef<Doc | null>(null);
+  /** 다음 문서 바꿈을 방문 기록에 쌓을지(push) 지금 기록만 고칠지(replace) - 사람이 고르면 push */
+  const navMode = useRef<'push' | 'replace'>('replace');
   const editorRef = useRef<Editor | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const importRef = useRef<HTMLInputElement>(null);
@@ -134,18 +140,6 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
   const here2 = doc ? presence.byDoc.get(doc.id) ?? [] : [];
   const othersEditing = here2.filter((p) => p.editing);
 
-  /** 트리를 평탄화한 목록 - 좁은 화면의 선택기 */
-  const flat = useMemo(() => {
-    const out: { id: string; label: string }[] = [];
-    const walk = (ns: ReturnType<typeof buildTree>, depth: number) => {
-      ns.forEach((n) => {
-        out.push({ id: n.id, label: `${'  '.repeat(depth)}${depth ? '└ ' : ''}${n.icon ? `${n.icon} ` : ''}${titleOf(n)}` });
-        walk(n.children, depth + 1);
-      });
-    };
-    walk(tree, 0);
-    return out;
-  }, [tree]);
 
   /* ── 처음 고를 문서 · 사라진 문서 ── */
   useEffect(() => {
@@ -167,6 +161,8 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
     // 고른 문서가 없으면 - 들어온 주소의 ?doc= → 마지막으로 본 문서 → 맨 위 문서.
     // 몇 번을 다시 돌아도 같은 답이 나오게 둔다(개발 모드는 효과를 두 번 돌린다)
     const want = [urlDoc, ...recent].find((id) => !!id && store.docs.some((d) => d.id === id && (id === urlDoc || !hidden.has(id))));
+    // 저절로 고른 문서는 방문 기록을 새로 만들지 않는다
+    navMode.current = 'replace';
     if (want) { setActiveId(want); return; }
     const firstRoot = tree.find((n) => !n.parentId) ?? tree[0];
     if (firstRoot) setActiveId(firstRoot.id);
@@ -176,14 +172,37 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
     if (doc) lastDoc.current = doc;
   }, [doc]);
 
-  /* 주소에 고른 문서를 적는다 - 링크로 나눌 수 있게. 위키를 떠나면 지운다 */
+  /*
+   * 주소에 고른 문서를 적는다 - 링크로 나눌 수 있고, 사람이 문서를 옮겨 다니면 방문 기록에 쌓여 뒤로 · 앞으로 간다.
+   * 처음 고른 문서(주소 · 최근 본 문서)와 뒤로 · 앞으로 온 것은 기록을 새로 만들지 않는다(replace)
+   */
   useEffect(() => {
     if (!activeId) return;
+    const mode = navMode.current;
+    navMode.current = 'push';
     const url = new URL(window.location.href);
     if (url.searchParams.get('doc') === activeId) return;
     url.searchParams.set('doc', activeId);
-    window.history.replaceState(window.history.state, '', url);
+    url.hash = '';
+    // Next 의 기록 상태를 그대로 실어야 뒤로 갈 때 쪽을 새로 불러오지 않는다
+    if (mode === 'push') window.history.pushState(window.history.state, '', url);
+    else window.history.replaceState(window.history.state, '', url);
   }, [activeId]);
+  /* 뒤로 · 앞으로 - 주소의 문서를 연다(기록은 브라우저가 이미 옮겼다) */
+  const activeRef = useRef(activeId);
+  activeRef.current = activeId;
+  useEffect(() => {
+    const onPop = () => {
+      const id = new URLSearchParams(window.location.search).get('doc');
+      if (!id || id === activeRef.current) return;
+      navMode.current = 'replace';
+      setActiveId(id);
+      setQuery('');
+      setDialog(null);
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
   useEffect(() => () => {
     const url = new URL(window.location.href);
     if (!url.searchParams.has('doc')) return;
@@ -217,6 +236,60 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
   useEffect(() => {
     try { setWide(window.localStorage.getItem(WIDE_KEY) === '1'); } catch { /* 저장이 막힌 환경 */ }
   }, []);
+
+  /* ── 읽는 자리 넓히기 · 휴대폰 서랍 ── */
+  /** 왼쪽 문서 트리를 펼칠지 - 사람마다 이 브라우저에. 정한 적 없으면 1280px 이상에서만 편다(좁으면 본문 폭이 먼저) */
+  const treeKey = `mate.taskmanager.docs.tree.v1:${me}`;
+  const [treePref, setTreePref] = useState<boolean | null>(null);
+  const [roomy, setRoomy] = useState(true);
+  useEffect(() => {
+    try {
+      const v = window.localStorage.getItem(treeKey);
+      setTreePref(v === '1' ? true : v === '0' ? false : null);
+    } catch { /* 저장이 막힌 환경 */ }
+    const mq = window.matchMedia('(min-width: 1280px)');
+    const on = () => setRoomy(mq.matches);
+    on();
+    mq.addEventListener('change', on);
+    return () => mq.removeEventListener('change', on);
+  }, [treeKey]);
+  const treeOpen = treePref ?? roomy;
+  const setTreeOpen = (v: boolean) => {
+    setTreePref(v);
+    try { window.localStorage.setItem(treeKey, v ? '1' : '0'); } catch { /* noop */ }
+  };
+  /** 휴대폰(768px 미만) - 찾기 · 즐겨찾기 · 트리 · 휴지통을 담은 서랍 */
+  const [drawer, setDrawer] = useState(false);
+  const drawerBtn = useRef<HTMLButtonElement>(null);
+  const closeDrawer = (focusBack = true) => {
+    setDrawer(false);
+    if (focusBack) requestAnimationFrame(() => drawerBtn.current?.focus({ preventScroll: true }));
+  };
+  /** 라벨 · 찾기 결과가 보이게 - 휴대폰은 서랍을, PC 는 접힌 트리를 연다 */
+  const revealSearch = () => {
+    if (window.matchMedia('(max-width: 767px)').matches) setDrawer(true);
+    else if (!treeOpen) setTreeOpen(true);
+  };
+  /** 예시 안내 띠를 접어 둘지 - 뜻(팀 규칙이 아님)은 접어도 한 줄로 남긴다 */
+  const foldKey = `mate.taskmanager.docs.samplefold.v1:${me}`;
+  const [sampleFold, setSampleFold] = useState(false);
+  useEffect(() => {
+    try { setSampleFold(window.localStorage.getItem(foldKey) === '1'); } catch { /* noop */ }
+  }, [foldKey]);
+  const foldSamples = (v: boolean) => {
+    setSampleFold(v);
+    try { window.localStorage.setItem(foldKey, v ? '1' : '0'); } catch { /* noop */ }
+  };
+  /** 목차를 본문 옆에 둘 만큼 문서 칸이 넓은가(본문 760 + 목차 188 + 사이 32 + 여백) - 좁으면 본문 위 접는 목차 */
+  const [sideToc, setSideToc] = useState(false);
+  /** 댓글 패널 - 읽던 자리를 그대로 둔 채 옆에서 연다 */
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [commentFilter, setCommentFilter] = useState<'open' | 'resolved' | 'all'>('open');
+  const commentBtn = useRef<HTMLButtonElement>(null);
+  const closeComments = () => {
+    setCommentsOpen(false);
+    requestAnimationFrame(() => commentBtn.current?.focus({ preventScroll: true }));
+  };
   const toggleWide = () => {
     setWide((v) => {
       try { window.localStorage.setItem(WIDE_KEY, v ? '0' : '1'); } catch { /* noop */ }
@@ -231,6 +304,26 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
     setIconOpen(false);
     scrollRef.current?.scrollTo({ top: 0 });
   }, [activeId]);
+
+  /* 제목 링크(#제목)로 들어왔으면 그 제목으로 - 문서 스크롤 칸 안에서만 움직인다 */
+  const anchored = useRef<string | null>(null);
+  useEffect(() => {
+    if (!activeId || !headings.length || anchored.current === activeId) return;
+    anchored.current = activeId;
+    let slug = window.location.hash.slice(1);
+    if (!slug) return;
+    try { slug = decodeURIComponent(slug); } catch { /* 이미 풀린 글자 */ }
+    // 편집기가 막 섰을 때는 아직 연결 전일 수 있다 - 잠깐씩 몇 번 더 찾아본다(그사이 다른 문서로 가면 그만둔다)
+    const target = activeId;
+    let tries = 0;
+    const find = () => {
+      if (activeRef.current !== target) return;
+      if (scrollToAnchor(editorRef.current?.view.dom ?? null, slug) || tries >= 10) return;
+      tries += 1;
+      setTimeout(find, 100);
+    };
+    requestAnimationFrame(find);
+  }, [activeId, headings]);
 
   /* 목차 - 지금 읽는 자리의 제목을 표시한다 */
   useEffect(() => {
@@ -259,12 +352,24 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
     };
   }, [headings]);
 
+  /* 문서 칸 너비를 보고 목차 자리를 정한다(트리를 접거나 창 크기를 바꾸면 다시) */
+  const hasCard = !!doc && view === 'doc';
+  useEffect(() => {
+    const box = scrollRef.current;
+    if (!box || !hasCard) return;
+    const measure = () => setSideToc(box.clientWidth >= 1014);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(box);
+    return () => ro.disconnect();
+  }, [hasCard]);
+
   /* ── 단축키 - Ctrl(⌘)+K 찾기, E 편집 ── */
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.isComposing) return;
       if ((e.ctrlKey || e.metaKey) && !e.altKey && (e.key === 'k' || e.key === 'K' || e.code === 'KeyK')) {
-        // 편집기에서 글을 고른 채 누른 것은 링크 - 편집기가 먼저 받는다
+        // 편집 중 본문에서 누른 것은 링크 쓰기 - 편집기가 먼저 받아 막는다
         if (e.defaultPrevented) return;
         if (document.querySelector('[aria-modal="true"]')) return;
         e.preventDefault();
@@ -422,30 +527,40 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
     }
   };
 
-  /** 휴지통으로 - 위키 표가 없으면(예전 표) 예전처럼 묻고 바로 지운다 */
+  /** 저장하지 못한 동작의 알림 - 다른 곳에서 지운 문서인지, 서버가 받지 않았는지 */
+  const failNotice = (r: SaveResult, what: string) =>
+    onNotice?.(r === 'gone' ? '다른 곳에서 이미 지운 문서라 할 수 없었습니다' : `${what} 못했습니다. 화면은 저장된 내용으로 돌아갔으니 다시 해 주세요`, 'err');
+
+  /**
+   * 휴지통으로 - 서버가 받은 뒤에 알린다. 휴지통을 쓸 수 없는 위키(Supabase 에 위키 SQL 이 없음)에서는
+   * 되살릴 길이 없는 영구 삭제로 대신하지 않고 막는다
+   */
   const trashDoc = async (d: Doc) => {
     if (!wikiOn) {
-      const yes = await askDelete(d, store.docs.some((x) => x.parentId === d.id));
-      if (yes) store.remove(d.id);
+      onNotice?.('문서를 안전하게 삭제할 수 없습니다. 휴지통을 쓸 수 없는 위키라 지우지 않았습니다', 'err');
       return;
     }
     if (editingId === d.id) setEditingId(null);
-    store.update(d.id, { trashedAt: new Date().toISOString(), trashedBy: me });
-    onNotice?.(`'${titleOf(d)}' 문서를 휴지통으로 옮겼습니다. 휴지통에서 되살릴 수 있습니다`, 'ok');
+    const r = await store.save(d.id, { trashedAt: new Date().toISOString(), trashedBy: me });
+    if (r === 'ok') onNotice?.(`'${titleOf(d)}' 문서를 휴지통으로 옮겼습니다. 휴지통에서 되살릴 수 있습니다`, 'ok');
+    else failNotice(r, `'${titleOf(d)}' 문서를 휴지통으로 옮기지`);
   };
 
   /** 되살리기 - 위 문서가 없거나 아직 휴지통에 있으면 맨 위로 */
-  const restoreDoc = (id: string) => {
+  const restoreDoc = async (id: string) => {
     const d = byId.get(id);
     if (!d) return;
     const parentOk = !d.parentId || (byId.has(d.parentId) && !hidden.has(d.parentId));
-    store.update(id, { trashedAt: null, trashedBy: null, ...(parentOk ? {} : { parentId: null }) });
-    onNotice?.(`'${titleOf(d)}' 문서를 되살렸습니다`, 'ok');
+    const r = await store.save(id, { trashedAt: null, trashedBy: null, ...(parentOk ? {} : { parentId: null }) });
+    if (r === 'ok') onNotice?.(`'${titleOf(d)}' 문서를 되살렸습니다`, 'ok');
+    else failNotice(r, `'${titleOf(d)}' 문서를 되살리지`);
   };
 
-  const purge = (ids: string[]) => {
-    ids.forEach((id) => store.remove(id));
-    onNotice?.(ids.length > 1 ? `문서 ${ids.length}건을 영구 삭제했습니다` : '문서를 영구 삭제했습니다', 'ok');
+  const purge = async (ids: string[]) => {
+    const rs = await Promise.all(ids.map((id) => store.remove(id)));
+    const done = rs.filter((r) => r === 'ok').length;
+    if (done === ids.length) onNotice?.(ids.length > 1 ? `문서 ${ids.length}건을 영구 삭제했습니다` : '문서를 영구 삭제했습니다', 'ok');
+    else onNotice?.(done ? `${ids.length}건 중 ${ids.length - done}건을 영구 삭제하지 못했습니다. 휴지통에 남아 있으니 다시 해 주세요` : '영구 삭제하지 못했습니다. 휴지통에 남아 있으니 다시 해 주세요', 'err');
   };
 
   const duplicate = (d: Doc) => {
@@ -459,12 +574,18 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
     onNotice?.('사본을 만들었습니다', 'ok');
   };
 
-  const moveTo = (d: Doc, parentId: string | null) => {
+  /** 옮기기 - 서버가 받은 뒤 창을 닫고 알린다. 받지 않았으면 창 · 고른 곳을 그대로 둔다 */
+  const moveTo = async (d: Doc, parentId: string | null): Promise<SaveResult> => {
     const last = siblingsOf(parentId, d.id).at(-1);
-    store.update(d.id, { parentId, order: between(last?.order, undefined) });
+    const r = await store.save(d.id, { parentId, order: between(last?.order, undefined) });
+    if (r !== 'ok') {
+      failNotice(r, `'${titleOf(d)}' 문서를 옮기지`);
+      return r;
+    }
     if (parentId) setOpenList((prev) => [...new Set([...prev, parentId])]);
     setDialog(null);
     onNotice?.(parentId ? `'${titleOf(byId.get(parentId) ?? d)}' 아래로 옮겼습니다` : '맨 위 문서로 옮겼습니다', 'ok');
+    return r;
   };
 
   /** 트리에서 끌어 놓기 */
@@ -472,14 +593,14 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
     const d = byId.get(id);
     if (!d) return;
     if (target === null) {
-      moveTo(d, null);
+      void moveTo(d, null);
       return;
     }
     const t = byId.get(target);
     if (!t || t.id === id) return;
     if (zone === 'inside') {
       if (t.id === d.parentId) return;
-      moveTo(d, t.id);
+      void moveTo(d, t.id);
       return;
     }
     const parentId = t.parentId ?? null;
@@ -579,7 +700,12 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
     }
     // 되돌린 모습은 보기 모드로 보여 준다(편집기가 다른 사람의 저장으로 바뀐 것처럼 알리지 않게)
     setEditingId(null);
-    store.update(doc.id, { title: v.title.trim() || doc.title, body: v.body, updatedBy: me });
+    const r = await store.save(doc.id, { title: v.title.trim() || doc.title, body: v.body, updatedBy: me });
+    // 받지 않았으면 기록 창을 그대로 둔다 - 고른 판에서 다시 되돌릴 수 있게
+    if (r !== 'ok') {
+      failNotice(r, '예전 판으로 되돌리지');
+      return;
+    }
     setDialog(null);
     onNotice?.(`${localDay(v.editedAt)} 판으로 되돌렸습니다. 되돌리기 전 모습은 기록에 남았습니다`, 'ok');
   };
@@ -599,18 +725,121 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
   }
 
   const starredDocs = starred.map((id) => byId.get(id)).filter((d): d is Doc => !!d && !hidden.has(d.id));
+  /** 트리 줄 메뉴(⋯ · 오른쪽 누르기 · Shift+F10) */
+  const rowMenu = (d: Doc): MenuEntry[] => [
+    { label: '아래에 새 문서', onSelect: () => setCreatingUnder(d.id) },
+    { label: '링크 복사', onSelect: () => void copyLink(d) },
+    { label: starred.includes(d.id) ? '즐겨찾기에서 빼기' : '즐겨찾기에 넣기', onSelect: () => toggleStar(d.id) },
+    { label: '사본 만들기', onSelect: () => duplicate(d), sep: true },
+    { label: '옮기기', onSelect: () => { setMoveId(d.id); setDialog('move'); } },
+  ];
+  const moveDoc = (moveId ? byId.get(moveId) : null) ?? doc;
+
+  /** 찾기 · 즐겨찾기 · 트리 · 휴지통 · 가져오기 - PC 의 왼쪽 칸과 휴대폰 서랍이 같이 쓴다. 서랍에서 문서를 고르면 서랍을 닫는다 */
+  const treePanel = (inDrawer: boolean) => {
+    const pick = (id: string) => {
+      select(id);
+      if (inDrawer) closeDrawer();
+    };
+    return (
+      <>
+        <div className="relative flex-none border-b border-tm-line p-3">
+          <span className="pointer-events-none absolute left-[26px] top-1/2 -translate-y-1/2 text-tm-sub">
+            <IconSearch size={17} />
+          </span>
+          <input value={query} onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Escape' && query) { e.stopPropagation(); setQuery(''); } }}
+            placeholder="문서 검색 · #라벨" aria-label="문서 검색"
+            className={`${tmFieldBase} h-11 w-full pl-10 pr-3 text-[15px] [@media(pointer:coarse)]:text-[16px]`} />
+        </div>
+
+        <nav aria-label="문서 목록" className="min-h-0 flex-1 overflow-y-auto p-2">
+          {searchHits ? (
+            searchHits.length === 0 ? (
+              <p className="px-2 py-8 text-center text-[14px] text-tm-sub">찾는 문서가 없습니다.</p>
+            ) : (
+              <ul className="space-y-0.5" aria-label={`찾은 문서 ${searchHits.length}건`}>
+                {searchHits.map(({ d, text }) => (
+                  <li key={d.id}>
+                    <FlatRow doc={d} active={d.id === activeId} onSelect={() => pick(d.id)}
+                      sub={text && !titleOf(d).toLowerCase().includes(query.trim().toLowerCase())
+                        ? <Snippet text={text} q={query.trim()} /> : pathOf(d, byId) || undefined} />
+                  </li>
+                ))}
+              </ul>
+            )
+          ) : (
+            <>
+              {starredDocs.length > 0 && (
+                <div className="mb-2 border-b border-tm-line pb-2">
+                  <p className="mx-2 mb-1 mt-1 text-[12.5px] font-bold text-tm-sub">즐겨찾기</p>
+                  <ul className="space-y-0.5">
+                    {starredDocs.map((d) => (
+                      <li key={d.id}><FlatRow doc={d} active={d.id === activeId} onSelect={() => pick(d.id)} /></li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <DocTree roots={tree} activeId={activeId} openSet={openSet} onToggle={toggleOpen} onSelect={select}
+                onAfterSelect={inDrawer ? () => closeDrawer() : undefined}
+                onAddChild={(id) => setCreatingUnder(id)} onDrop={onDrop} canDrag={!inDrawer} watched={watched} menuFor={rowMenu} />
+            </>
+          )}
+        </nav>
+
+        <div className="flex flex-none items-center gap-1 border-t border-tm-line p-2">
+          {wikiOn && (
+            <button type="button" onClick={() => { if (inDrawer) closeDrawer(false); setDialog('trash'); }}
+              className="flex min-h-[38px] flex-1 items-center gap-2 rounded-tm-sm px-2.5 text-[14px] font-semibold text-tm-ink transition-colors hover:bg-tm-tint [@media(pointer:coarse)]:min-h-11">
+              <TrashGlyph />
+              휴지통
+              {trashed.length > 0 && <span className="ml-auto rounded-full bg-tm-bg px-2 text-[12.5px] font-bold tabular-nums text-tm-sub">{trashed.length}</span>}
+            </button>
+          )}
+          <button type="button" onClick={() => importRef.current?.click()} title="마크다운(.md) 파일을 문서로 가져옵니다"
+            className="flex min-h-[38px] items-center gap-2 rounded-tm-sm px-2.5 text-[14px] font-semibold text-tm-ink transition-colors hover:bg-tm-tint [@media(pointer:coarse)]:min-h-11">
+            가져오기
+          </button>
+          <input ref={importRef} type="file" accept=".md,.markdown,.txt,text/markdown,text/plain" multiple hidden
+            onChange={(e) => {
+              const files = [...(e.target.files ?? [])];
+              e.target.value = '';
+              void importFiles(files);
+            }} />
+        </div>
+      </>
+    );
+  };
+
+  /** 목차 - 넓으면 본문 옆, 좁으면 본문 위의 접는 칸 */
+  const tocList = (
+    <ul className="space-y-0.5 border-l-2 border-tm-line">
+      {headings.map((h) => (
+        <li key={h.pos}>
+          <button type="button" onClick={() => scrollToPos(editorRef.current, h.pos)}
+            aria-current={here === h.pos ? 'location' : undefined}
+            className={`-ml-0.5 block w-full border-l-2 py-1 text-left text-[13.5px] font-semibold leading-snug transition-colors duration-150 [@media(pointer:coarse)]:py-2.5 ${
+              here === h.pos ? 'border-tm-blue text-tm-blue' : 'border-transparent text-tm-sub hover:border-tm-blue hover:text-tm-ink'}`}
+            style={{ paddingLeft: 12 + (h.level - 1) * 10 }}>
+            {h.text}
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
+  const showToc = headings.length > 1;
   const menu: MenuEntry[] = doc ? [
     { label: starred.includes(doc.id) ? '즐겨찾기에서 빼기' : '즐겨찾기에 넣기', onSelect: () => toggleStar(doc.id), disabled: !canEdit },
     { label: '링크 복사', onSelect: () => void copyLink(doc) },
     { label: '지도로 보기', onSelect: () => setView('map') },
     { label: '아래에 새 문서', onSelect: () => setCreatingUnder(doc.id), disabled: !canEdit, sep: true },
     { label: '사본 만들기', onSelect: () => duplicate(doc), disabled: !canEdit },
-    { label: '옮기기', onSelect: () => setDialog('move'), disabled: !canEdit },
+    { label: '옮기기', onSelect: () => { setMoveId(doc.id); setDialog('move'); }, disabled: !canEdit },
     ...(wikiOn ? [{ label: '기록 · 예전 판', onSelect: () => setDialog('history'), sep: true }] : []),
     { label: '마크다운으로 내려받기', onSelect: () => exportMd(doc), sep: !wikiOn },
     { label: '인쇄 · PDF', onSelect: () => printDoc(doc) },
     { label: '넓게 보기', onSelect: toggleWide, checked: wide, sep: true },
-    ...(canEdit ? [{ label: wikiOn ? '휴지통으로 옮기기' : '문서 삭제', onSelect: () => void trashDoc(doc), danger: true, sep: true }] : []),
+    ...(canEdit ? [{ label: '휴지통으로 옮기기', onSelect: () => void trashDoc(doc), danger: true, sep: true }] : []),
   ] : [];
 
   return (
@@ -644,19 +873,31 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
         </button>
       </PageHead>
 
-      {/* 예시 문서 안내 - 규칙 문서의 모양을 하고 있어, 말해 주지 않으면 팀이 정한 규칙으로 읽힌다 */}
-      {sampleCount > 0 && (
+      {/* 예시 문서 안내 - 규칙 문서의 모양을 하고 있어, 말해 주지 않으면 팀이 정한 규칙으로 읽힌다.
+          접어도 '팀 규칙이 아님'은 한 줄로 남긴다 */}
+      {sampleCount > 0 && (sampleFold ? (
+        <div role="status" className="mb-3 flex flex-none flex-wrap items-center gap-x-2.5 gap-y-1 text-[13.5px] text-tm-sub">
+          <span className="rounded-full bg-tm-tint px-2.5 py-0.5 font-bold text-tm-deep">예시 문서 {sampleCount}건</span>
+          <span>팀이 정한 규칙이 아닌 예시입니다.</span>
+          <button type="button" onClick={() => foldSamples(false)} aria-expanded={false} className={tmTextBtn}>안내 펼치기</button>
+        </div>
+      ) : (
         <div role="status" className={`${tmCallout} mb-[18px] flex-none max-[720px]:mb-3.5`}>
           <p className="min-w-0 flex-[1_1_320px] max-[720px]:flex-[1_1_180px]">
             <b className="font-bold text-tm-deep">예시 문서 {sampleCount}건</b>이 들어 있습니다.{' '}
             <span className="max-[720px]:hidden">쓰는 법을 보여 주려고 채운 글이고 </span>팀이 정한 규칙이 아닙니다.
             <span className="max-[720px]:hidden"> 고쳐 쓰면 그 문서는 예시에서 빠집니다.</span>
           </p>
-          <button type="button" onClick={() => { store.clearSamples(); setActiveId(null); }} className={tmGhostBtn}>
-            예시 지우기
-          </button>
+          <div className="flex flex-none gap-2">
+            <button type="button" onClick={() => foldSamples(true)} aria-expanded className={tmGhostBtn}>
+              접기
+            </button>
+            <button type="button" onClick={() => { store.clearSamples(); setActiveId(null); }} className={tmGhostBtn}>
+              예시 지우기
+            </button>
+          </div>
         </div>
-      )}
+      ))}
 
       {/* 보던 문서를 다른 팀원이 지웠다 - 말없이 다른 문서로 넘어가지 않게 알린다 */}
       {lost && (
@@ -691,71 +932,10 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
         ) : (
         <>
 
-        {/* ── 문서 트리 ── */}
-        <aside className="hidden w-[272px] shrink-0 flex-col overflow-hidden rounded-tm border border-tm-line bg-white shadow-tm md:flex">
-          <div className="relative flex-none border-b border-tm-line p-3">
-            <span className="pointer-events-none absolute left-[26px] top-1/2 -translate-y-1/2 text-tm-sub">
-              <IconSearch size={17} />
-            </span>
-            <input value={query} onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Escape') { setQuery(''); e.currentTarget.blur(); } }}
-              placeholder="문서 검색 · #라벨" aria-label="문서 검색"
-              className={`${tmFieldBase} h-11 w-full pl-10 pr-3 text-[15px] [@media(pointer:coarse)]:text-[16px]`} />
-          </div>
-
-          <nav aria-label="문서 목록" className="min-h-0 flex-1 overflow-y-auto p-2">
-            {searchHits ? (
-              searchHits.length === 0 ? (
-                <p className="px-2 py-8 text-center text-[14px] text-tm-sub">찾는 문서가 없습니다.</p>
-              ) : (
-                <ul className="space-y-0.5">
-                  {searchHits.map(({ d, text }) => (
-                    <li key={d.id}>
-                      <FlatRow doc={d} active={d.id === activeId} onSelect={() => select(d.id)}
-                        sub={text && !titleOf(d).toLowerCase().includes(query.trim().toLowerCase())
-                          ? <Snippet text={text} q={query.trim()} /> : pathOf(d, byId) || undefined} />
-                    </li>
-                  ))}
-                </ul>
-              )
-            ) : (
-              <>
-                {starredDocs.length > 0 && (
-                  <div className="mb-2 border-b border-tm-line pb-2">
-                    <p className="mx-2 mb-1 mt-1 text-[12.5px] font-bold text-tm-sub">즐겨찾기</p>
-                    <ul className="space-y-0.5">
-                      {starredDocs.map((d) => (
-                        <li key={d.id}><FlatRow doc={d} active={d.id === activeId} onSelect={() => select(d.id)} /></li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                <DocTree roots={tree} activeId={activeId} openSet={openSet} onToggle={toggleOpen} onSelect={select}
-                  onAddChild={(id) => setCreatingUnder(id)} onDrop={onDrop} canDrag watched={watched} />
-              </>
-            )}
-          </nav>
-
-          <div className="flex flex-none items-center gap-1 border-t border-tm-line p-2">
-            {wikiOn && (
-              <button type="button" onClick={() => setDialog('trash')}
-                className="flex min-h-[38px] flex-1 items-center gap-2 rounded-tm-sm px-2.5 text-[14px] font-semibold text-tm-ink transition-colors hover:bg-tm-tint">
-                <TrashGlyph />
-                휴지통
-                {trashed.length > 0 && <span className="ml-auto rounded-full bg-tm-bg px-2 text-[12.5px] font-bold tabular-nums text-tm-sub">{trashed.length}</span>}
-              </button>
-            )}
-            <button type="button" onClick={() => importRef.current?.click()} title="마크다운(.md) 파일을 문서로 가져옵니다"
-              className="flex min-h-[38px] items-center gap-2 rounded-tm-sm px-2.5 text-[14px] font-semibold text-tm-ink transition-colors hover:bg-tm-tint">
-              가져오기
-            </button>
-            <input ref={importRef} type="file" accept=".md,.markdown,.txt,text/markdown,text/plain" multiple hidden
-              onChange={(e) => {
-                const files = [...(e.target.files ?? [])];
-                e.target.value = '';
-                void importFiles(files);
-              }} />
-          </div>
+        {/* ── 문서 트리(PC) - 접으면 본문이 넓어진다. 휴대폰은 서랍(아래)에 같은 것을 담는다 ── */}
+        <aside id="doc-tree-panel" aria-label="문서 목록"
+          className={`hidden w-[272px] shrink-0 flex-col overflow-hidden rounded-tm border border-tm-line bg-white shadow-tm ${treeOpen ? 'md:flex' : ''}`}>
+          {treePanel(false)}
         </aside>
 
         {/* ── 본문 ── */}
@@ -783,14 +963,22 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
           <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-tm border border-tm-line bg-white shadow-tm">
             {/* 문서 막대 - 경로 · 함께 보는 사람 · 동작 */}
             <div className="flex flex-none flex-wrap items-center gap-2 border-b border-tm-line px-5 py-2.5 max-[720px]:px-3">
+              {/* 휴대폰 - 문서 목록 서랍(찾기 · 즐겨찾기 · 트리 · 휴지통)을 연다 */}
               <div className="min-w-0 flex-1 basis-full md:hidden">
-                <label className="sr-only" htmlFor="doc-pick">문서 고르기</label>
-                <select id="doc-pick" value={hidden.has(doc.id) ? '' : doc.id} onChange={(e) => select(e.target.value)}
-                  className={`${tmSelect} h-10 w-full text-[15px]`}>
-                  {hidden.has(doc.id) && <option value="">{titleOf(doc)} (휴지통)</option>}
-                  {flat.map((f) => <option key={f.id} value={f.id}>{f.label}</option>)}
-                </select>
+                <button ref={drawerBtn} type="button" onClick={() => setDrawer(true)} aria-haspopup="dialog" aria-expanded={drawer}
+                  aria-label={`문서 목록 열기 - 지금 문서 ${titleOf(doc)}`}
+                  className={`${tmFieldBase} flex h-11 w-full items-center gap-2 px-3 text-left text-[15px] font-semibold`}>
+                  <span className="text-tm-sub"><DocIcon icon={doc.icon} size={18} /></span>
+                  <span className="min-w-0 flex-1 truncate">{titleOf(doc)}{hidden.has(doc.id) ? ' (휴지통)' : ''}</span>
+                  <span className="flex-none text-[13px] font-bold text-tm-blue">목록</span>
+                </button>
               </div>
+              {/* PC - 문서 트리 접기 · 펼치기(접으면 본문이 넓어진다) */}
+              <button type="button" onClick={() => setTreeOpen(!treeOpen)} aria-controls="doc-tree-panel" aria-expanded={treeOpen}
+                title={treeOpen ? '문서 트리 접기' : '문서 트리 펼치기'} aria-label={treeOpen ? '문서 트리 접기' : '문서 트리 펼치기'}
+                className={`${tmIconBtn} hidden md:grid`}>
+                <PanelGlyph open={treeOpen} />
+              </button>
               <nav aria-label="문서 경로" className="hidden min-w-0 flex-1 flex-wrap items-center gap-1 text-[13.5px] font-semibold text-tm-sub md:flex">
                 {breadcrumb.map((b, i) => (
                   <span key={b.id} className="flex min-w-0 items-center gap-1">
@@ -815,10 +1003,11 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
                   </span>
                 )}
                 {wikiOn && (
-                  <button type="button" title="댓글로 가기" aria-label={`댓글 ${commentCount}개`}
+                  <button ref={commentBtn} type="button" title={commentsOpen ? '댓글 닫기' : '댓글 보기'} aria-label={`댓글 ${commentCount}개 ${commentsOpen ? '닫기' : '보기'}`}
+                    aria-expanded={commentsOpen} aria-controls="doc-comment-panel"
                     className="inline-flex h-[38px] items-center gap-1.5 rounded-tm-sm border border-tm-edge bg-white px-2.5 text-[13.5px] font-bold text-tm-ink transition-colors
-                               hover:border-tm-blue hover:bg-tm-tint [@media(pointer:coarse)]:h-11"
-                    onClick={() => scrollWithin(document.getElementById(`comments-${doc.id}`))}>
+                               hover:border-tm-blue hover:bg-tm-tint aria-expanded:border-tm-blue aria-expanded:bg-tm-tint [@media(pointer:coarse)]:h-11"
+                    onClick={() => (commentsOpen ? closeComments() : setCommentsOpen(true))}>
                     <CommentGlyph />
                     <span className="tabular-nums">{commentCount}</span>
                   </button>
@@ -847,7 +1036,9 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
 
             {/* 본문 + 목차 */}
             <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
-              <div className={`mx-auto flex gap-8 px-7 pb-16 pt-6 max-[720px]:px-4 max-[720px]:pt-4 md:pl-[66px] ${wide ? 'max-w-none' : 'max-w-[1120px]'}`}>
+              {/* 본문은 760px 안팎에서 읽기 좋게 - 목차를 옆에 둘 만큼 넓을 때만 그 폭을 더한다. '넓게 보기'는 제한 없음 */}
+              <div className={`mx-auto flex gap-8 px-7 pb-16 pt-6 max-[720px]:px-4 max-[720px]:pt-4 md:pl-[66px] ${
+                wide ? 'max-w-none' : sideToc && showToc ? 'max-w-[1080px]' : 'max-w-[860px]'}`}>
                 <article className="min-w-0 flex-1">
                   {/* 휴지통 · 함께 편집 알림 */}
                   {doc.trashedAt && (
@@ -869,7 +1060,7 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
                     <div role="status" className={`${tmCallout} mb-5 border-l-tm-warn`}>
                       <p className="min-w-0 flex-[1_1_280px]">
                         <b className="font-bold text-tm-deep">{othersEditing.map((p) => members.find((m) => m.id === p.member)?.name ?? '팀원').join(', ')}</b>
-                        님이 이 문서를 편집하고 있습니다. 같은 곳을 함께 고치면 나중에 저장한 쪽이 남으니 말을 맞추세요. 덮인 내용은 기록에서 찾을 수 있습니다.
+                        님이 이 문서를 편집하고 있습니다. 같은 곳을 함께 고치면 나중에 저장한 쪽만 남고, 덮인 글이 기록에 남지 않을 수도 있으니 미리 말을 맞추세요.
                       </p>
                     </div>
                   )}
@@ -905,7 +1096,20 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
                   </div>
 
                   <DocMeta doc={doc} editing={editing} onLabels={(labels) => store.update(doc.id, { labels })}
-                    onLabelClick={(l) => setQuery(`#${l}`)} sync={editing ? store.sync : undefined} />
+                    onLabelClick={(l) => { setQuery(`#${l}`); revealSearch(); }} sync={store.sync} pending={editorPending} />
+
+                  {/* 좁은 문서 칸 - 목차는 본문 위에 접어 둔다(읽기 모드에서만) */}
+                  {showToc && !sideToc && !editing && (
+                    <details className="group/toc mt-5 rounded-tm-sm border border-tm-line bg-tm-bg px-4 py-1.5">
+                      <summary className="flex min-h-[36px] cursor-pointer list-none items-center gap-2 text-[13.5px] font-bold text-tm-sub [@media(pointer:coarse)]:min-h-11 [&::-webkit-details-marker]:hidden">
+                        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden className="transition-transform duration-150 group-open/toc:rotate-90">
+                          <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        이 문서에서 · 제목 {headings.length}개
+                      </summary>
+                      <nav aria-label="목차" className="pb-2.5 pt-1">{tocList}</nav>
+                    </details>
+                  )}
 
                   <div className="mt-6">
                     <DocEditor key={doc.id}
@@ -919,10 +1123,10 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
                       allowData={!isRemote}
                       onCreateDoc={canEdit ? createSub : undefined}
                       onNotice={onNotice}
+                      onPending={setEditorPending}
                       onHeadings={setHeadings}
                       editorRef={editorRef}
                       autoFocus={focusFor === doc.id}
-                      onRequestEdit={canEdit ? () => setEditingId(doc.id) : undefined}
                       className={canEdit ? '' : 'tm-readonly-checks'} />
                   </div>
 
@@ -980,30 +1184,18 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
 
                   {wikiOn && (
                     <Comments docId={doc.id} comments={docComments} me={me} canWrite={canEdit}
-                      onAdd={(body, parentId) => store.addComment({ docId: doc.id, parentId, body, author: me })}
+                      onAdd={(body, parentId, id) => store.addComment({ id, docId: doc.id, parentId, body, author: me })}
                       onUpdate={(id, patch) => store.updateComment(id, patch)}
                       onTaskClick={onTaskClick} />
                   )}
                 </article>
 
-                {/* 목차 */}
-                {headings.length > 1 && (
-                  <nav aria-label="목차" className="hidden w-[188px] shrink-0 xl:block">
+                {/* 목차 - 문서 칸이 넓을 때만 본문 옆에 */}
+                {showToc && sideToc && (
+                  <nav aria-label="목차" className="w-[188px] shrink-0">
                     <div className="sticky top-0 max-h-[calc(100dvh-220px)] overflow-y-auto pt-1">
                       <p className="mb-2.5 text-[13px] font-bold text-tm-sub">이 문서에서</p>
-                      <ul className="space-y-0.5 border-l-2 border-tm-line">
-                        {headings.map((h) => (
-                          <li key={h.pos}>
-                            <button type="button" onClick={() => scrollToPos(editorRef.current, h.pos)}
-                              aria-current={here === h.pos ? 'location' : undefined}
-                              className={`-ml-0.5 block w-full border-l-2 py-1 text-left text-[13.5px] font-semibold leading-snug transition-colors duration-150 ${
-                                here === h.pos ? 'border-tm-blue text-tm-blue' : 'border-transparent text-tm-sub hover:border-tm-blue hover:text-tm-ink'}`}
-                              style={{ paddingLeft: 12 + (h.level - 1) * 10 }}>
-                              {h.text}
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
+                      {tocList}
                     </div>
                   </nav>
                 )}
@@ -1025,8 +1217,8 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
       {dialog === 'find' && (
         <QuickFind docs={live} recent={recent} starred={starred} onOpen={select} onClose={() => setDialog(null)} />
       )}
-      {dialog === 'move' && doc && (
-        <MoveDialog doc={doc} docs={live} onMove={(p) => moveTo(doc, p)} onClose={() => setDialog(null)} />
+      {dialog === 'move' && moveDoc && (
+        <MoveDialog key={moveDoc.id} doc={moveDoc} docs={live} onMove={(p) => moveTo(moveDoc, p)} onClose={() => setDialog(null)} />
       )}
       {dialog === 'trash' && (
         <TrashDialog docs={trashed} onOpen={select} onRestore={restoreDoc} onPurge={purge} onClose={() => setDialog(null)} />
@@ -1034,18 +1226,43 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
       {dialog === 'history' && doc && (
         <HistoryDialog doc={doc} store={store} refs={refs} onRestore={restoreVersion} onClose={() => setDialog(null)} />
       )}
+
+      {/* 휴대폰 문서 목록 서랍 - 고르면 닫히고 '목록' 단추로 초점이 돌아온다 */}
+      {drawer && view === 'doc' && (
+        <Drawer onClose={() => closeDrawer()}>{treePanel(true)}</Drawer>
+      )}
+
+      {/* 댓글 패널 - 읽던 자리를 그대로 둔 채 오른쪽에서. 좁은 화면은 전체 화면. 닫으면 댓글 단추로 초점이 돌아온다 */}
+      {commentsOpen && doc && wikiOn && view === 'doc' && (
+        <CommentPanel count={commentCount}
+          openCount={docComments.filter((c) => !c.parentId && !c.removed && !c.resolved).length}
+          resolvedCount={docComments.filter((c) => !c.parentId && !c.removed && c.resolved).length}
+          filter={commentFilter} onFilter={setCommentFilter} onClose={closeComments}>
+          <Comments key={doc.id} panel filter={commentFilter} docId={doc.id} comments={docComments} me={me} canWrite={canEdit}
+            onAdd={(body, parentId, id) => store.addComment({ id, docId: doc.id, parentId, body, author: me })}
+            onUpdate={(id, patch) => store.updateComment(id, patch)}
+            onTaskClick={onTaskClick} />
+        </CommentPanel>
+      )}
       {deleteNode}
     </>
   );
 }
 
-/** 쓴 사람 · 고친 사람 · 읽는 시간 · 라벨 */
-function DocMeta({ doc, editing, onLabels, onLabelClick, sync }: {
-  doc: Doc; editing: boolean; onLabels(labels: string[]): void; onLabelClick(l: string): void; sync?: DocStore['sync'];
+/** 쓴 사람 · 고친 사람 · 읽는 시간 · 라벨 · 저장 상태 */
+function DocMeta({ doc, editing, onLabels, onLabelClick, sync, pending }: {
+  doc: Doc; editing: boolean; onLabels(labels: string[]): void; onLabelClick(l: string): void;
+  /** 저장소의 상태(브라우저 저장 모드는 없음 = 바로 저장) */
+  sync?: DocStore['sync'];
+  /** 편집기가 아직 내보내지 않은 글 */
+  pending?: boolean;
 }) {
   const author = useMember(doc.author);
   const editor = useMember(doc.updatedBy);
   const reading = readingLabel(doc);
+  /* 편집 중에는 늘, 읽기 모드에서는 보내는 중이거나 못 보낸 것이 있을 때만(체크박스 · 댓글 · 편집을 끝낸 직후) */
+  const state = pending ? 'saving' : sync ?? 'idle';
+  const showSync = editing || state !== 'idle';
   return (
     <div className="mt-2.5 flex flex-wrap items-center gap-x-3.5 gap-y-2 text-[13.5px] text-tm-sub">
       <span className="inline-flex items-center gap-2 font-semibold">
@@ -1066,11 +1283,11 @@ function DocMeta({ doc, editing, onLabels, onLabelClick, sync }: {
           </button>
         ))
       )}
-      {editing && sync !== undefined && (
+      {showSync && (
         <span className="ml-auto inline-flex items-center gap-2 text-[13px] font-semibold" aria-live="polite">
-          <i className={`h-2 w-2 rounded-full ${sync === 'error' ? 'bg-tm-red' : sync === 'saving' ? 'bg-tm-edge' : 'bg-tm-ok'}`} aria-hidden />
+          <i className={`h-2 w-2 rounded-full ${state === 'error' ? 'bg-tm-red' : state === 'saving' ? 'bg-tm-edge' : 'bg-tm-ok'}`} aria-hidden />
           {/* error = 아직 서버에 닿지 않은 고침이 있다(저절로 다시 보내는 중이거나 서버가 거절했다) */}
-          {sync === 'error' ? '저장하지 못한 변경이 있습니다' : sync === 'saving' ? '저장 중…' : '자동 저장됨'}
+          {state === 'error' ? '저장하지 못한 변경이 있습니다' : state === 'saving' ? '저장 중…' : '자동 저장됨'}
         </span>
       )}
     </div>
@@ -1090,6 +1307,102 @@ function TrashBanner({ doc, onRestore, onPurge }: { doc: Doc; onRestore(): void;
         <button type="button" className={`${tmGhostBtn} text-tm-red-deep`} onClick={onPurge}>영구 삭제</button>
       </div>
     </div>
+  );
+}
+
+/** 칸 안의 Tab 이 바깥으로 새지 않게 - 첫 칸 · 마지막 칸에서 돌린다 */
+function trapTab(e: React.KeyboardEvent, box: HTMLElement | null) {
+  if (e.key !== 'Tab' || !box) return;
+  const els = [...box.querySelectorAll<HTMLElement>('button:not(:disabled),input:not(:disabled),select,textarea,[href],[tabindex="0"]')]
+    .filter((el) => el.offsetParent !== null);
+  if (!els.length) return;
+  const first = els[0];
+  const last = els[els.length - 1];
+  if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+}
+
+/** 휴대폰 문서 목록 서랍 - 왼쪽에서 나온다. 바깥 · Esc 로 닫는다(흐림 없이 어둡게만) */
+function Drawer({ onClose, children }: { onClose(): void; children: React.ReactNode }) {
+  const box = useRef<HTMLDivElement>(null);
+  const close = useRef(onClose);
+  close.current = onClose;
+  useEffect(() => {
+    // 처음 초점은 닫기 단추 - 찾기 칸에 두면 휴대폰 자판이 바로 올라온다
+    box.current?.querySelector<HTMLElement>('[data-drawer-close]')?.focus({ preventScroll: true });
+  }, []);
+  return (
+    <div role="dialog" aria-modal="true" aria-label="문서 목록" className="fixed inset-0 z-[90] md:hidden"
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') { e.stopPropagation(); close.current(); return; }
+        trapTab(e, box.current);
+      }}>
+      <div aria-hidden className="absolute inset-0 bg-[rgba(15,26,41,0.5)]" onClick={() => close.current()} />
+      <div ref={box} className="absolute inset-y-0 left-0 flex w-[min(88vw,340px)] flex-col bg-white shadow-tm-pop">
+        <div className="flex flex-none items-center justify-between gap-3 border-b border-tm-line py-2.5 pl-4 pr-3">
+          <b className="text-[16px] font-extrabold text-tm-deep">문서 목록</b>
+          <button type="button" data-drawer-close onClick={() => close.current()} aria-label="문서 목록 닫기" className={tmIconBtn}>
+            <CloseGlyph />
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/** 댓글 패널 - 오른쪽에 붙어 읽던 자리를 가리지 않게 열고, 좁은 화면(720px 이하)에서는 전체 화면 */
+function CommentPanel({ count, openCount, resolvedCount, filter, onFilter, onClose, children }: {
+  count: number; openCount: number; resolvedCount: number;
+  filter: 'open' | 'resolved' | 'all'; onFilter(f: 'open' | 'resolved' | 'all'): void;
+  onClose(): void; children: React.ReactNode;
+}) {
+  const box = useRef<HTMLElement>(null);
+  useEffect(() => {
+    box.current?.querySelector<HTMLElement>('[data-panel-title]')?.focus({ preventScroll: true });
+  }, []);
+  const tabs = [['open', `미해결 ${openCount}`], ['resolved', `해결 ${resolvedCount}`], ['all', '전체']] as const;
+  return (
+    <aside ref={box} id="doc-comment-panel" aria-label="댓글"
+      className="fixed inset-y-0 right-0 z-[80] flex w-[min(420px,100vw)] flex-col border-l border-tm-line bg-white shadow-tm-pop max-[720px]:w-full"
+      onKeyDown={(e) => { if (e.key === 'Escape' && !e.defaultPrevented) { e.stopPropagation(); onClose(); } }}>
+      <div className="flex flex-none items-center gap-3 border-b border-tm-line py-2.5 pl-5 pr-3">
+        <b data-panel-title tabIndex={-1} className="min-w-0 flex-1 truncate text-[16px] font-extrabold text-tm-deep outline-none">
+          댓글 <span className="ml-1 text-[14px] font-bold tabular-nums text-tm-sub">{count}</span>
+        </b>
+        <button type="button" onClick={onClose} aria-label="댓글 닫기" className={tmIconBtn}>
+          <CloseGlyph />
+        </button>
+      </div>
+      <div role="group" aria-label="댓글 거르기" className="flex flex-none flex-wrap gap-1.5 border-b border-tm-line px-5 py-2.5">
+        {tabs.map(([k, label]) => (
+          <button key={k} type="button" aria-pressed={filter === k} onClick={() => onFilter(k)}
+            className="h-8 rounded-full border border-tm-edge px-3 text-[13px] font-bold tabular-nums text-tm-ink aria-pressed:border-tm-blue aria-pressed:bg-tm-blue aria-pressed:text-white [@media(pointer:coarse)]:h-11">
+            {label}
+          </button>
+        ))}
+      </div>
+      <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">{children}</div>
+    </aside>
+  );
+}
+
+function CloseGlyph() {
+  return (
+    <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round">
+      <path d="M5 5l10 10M15 5L5 15" />
+    </svg>
+  );
+}
+
+/** 트리 접기 단추 - 왼쪽 칸이 있는 창 모양 */
+function PanelGlyph({ open }: { open: boolean }) {
+  return (
+    <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round">
+      <rect x="2.5" y="3.5" width="15" height="13" rx="2" />
+      <path d="M8 3.5v13" />
+      {open ? <path d="M6 8.5L4.6 10 6 11.5" strokeLinecap="round" /> : <path d="M4.6 8.5L6 10l-1.4 1.5" strokeLinecap="round" />}
+    </svg>
   );
 }
 

@@ -2,12 +2,14 @@
 
 import { useMemo, useRef, useState } from 'react';
 import type { Doc } from './types';
-import { DocIcon, titleOf } from './DocPanels';
+import { DocIcon, titleOf, type MenuEntry } from './DocPanels';
+import { FloatMenu } from './DocEditor';
 import { IconPlus } from './ui';
 
 /*
  * 문서 트리 - 왼쪽 목록. 줄을 끌어 놓으면 위 · 아래(같은 깊이에서 순서) 또는 가운데(그 문서 아래)로 옮긴다.
- * HTML5 끌기는 터치 기기에서 동작하지 않으므로 같은 일을 문서 메뉴의 '옮기기'로도 할 수 있다.
+ * HTML5 끌기는 터치 기기에서 동작하지 않으므로 같은 일을 줄 메뉴(⋯) · 문서 메뉴의 '옮기기'로도 할 수 있다.
+ * 키보드: ↑ ↓ 줄 이동 · → 펼치기 / 첫 하위 문서 · ← 접기 / 위 문서 · Home End · Enter 열기 · Shift+F10 줄 메뉴
  */
 
 export interface TreeNode extends Doc {
@@ -56,13 +58,26 @@ interface Props {
   canDrag: boolean;
   /** 다른 팀원이 보고 있는 문서 */
   watched?: ReadonlySet<string>;
+  /** 줄 메뉴(⋯) 항목 - 없으면 메뉴 단추를 두지 않는다 */
+  menuFor?(node: TreeNode): MenuEntry[];
+  /** 문서를 연 뒤(서랍을 닫는 등) */
+  onAfterSelect?(): void;
 }
 
-export default function DocTree({ roots, activeId, openSet, onToggle, onSelect, onAddChild, onDrop, canDrag, watched }: Props) {
+export default function DocTree({ roots, activeId, openSet, onToggle, onSelect, onAddChild, onDrop, canDrag, watched, menuFor, onAfterSelect }: Props) {
   const [drag, setDrag] = useState<string | null>(null);
   const [over, setOver] = useState<{ id: string | null; zone: DropZone } | null>(null);
   /* 끄는 문서와 그 아래 문서 - 그 위로는 놓을 수 없다 */
   const blocked = useRef<Set<string>>(new Set());
+  /** 키보드 초점이 머무는 줄(Tab 은 트리에 한 번만 멈춘다) */
+  const [focusId, setFocusId] = useState<string | null>(null);
+  /** 메뉴가 열린 줄과 그 단추 */
+  const [menu, setMenu] = useState<{ id: string; anchor: HTMLElement } | null>(null);
+  const treeRef = useRef<HTMLUListElement>(null);
+  const open = (id: string) => {
+    onSelect(id);
+    onAfterSelect?.();
+  };
 
   const byId = useMemo(() => {
     const m = new Map<string, TreeNode>();
@@ -111,15 +126,69 @@ export default function DocTree({ roots, activeId, openSet, onToggle, onSelect, 
     },
   } : {};
 
+  /* 보이는 줄(접힌 문서의 아래 줄은 그리지 않는다) */
+  const rows = () => [...(treeRef.current?.querySelectorAll<HTMLElement>('[role="treeitem"]') ?? [])];
+  const focusRow = (el: HTMLElement | undefined | null) => {
+    if (!el) return;
+    setFocusId(el.dataset.id ?? null);
+    el.focus();
+  };
+  const openMenu = (id: string, anchor: HTMLElement | null) => {
+    if (!menuFor || !anchor) return;
+    setMenu({ id, anchor });
+  };
+
+  const onTreeKey = (e: React.KeyboardEvent<HTMLUListElement>) => {
+    const cur = (e.target as HTMLElement).closest<HTMLElement>('[role="treeitem"]');
+    if (!cur || e.target !== cur) return;
+    const id = cur.dataset.id ?? '';
+    const node = byId.get(id);
+    if (!node) return;
+    const list = rows();
+    const i = list.indexOf(cur);
+    const hasKids = node.children.length > 0;
+    const expanded = openSet.has(id);
+    const stop = () => { e.preventDefault(); e.stopPropagation(); };
+    if (e.key === 'ArrowDown') { stop(); focusRow(list[i + 1]); }
+    else if (e.key === 'ArrowUp') { stop(); focusRow(list[i - 1]); }
+    else if (e.key === 'Home') { stop(); focusRow(list[0]); }
+    else if (e.key === 'End') { stop(); focusRow(list[list.length - 1]); }
+    else if (e.key === 'ArrowRight') {
+      stop();
+      if (hasKids && !expanded) onToggle(id);
+      else if (hasKids) focusRow(list[i + 1]);
+    } else if (e.key === 'ArrowLeft') {
+      stop();
+      if (hasKids && expanded) onToggle(id);
+      else focusRow(cur.parentElement?.closest<HTMLElement>('[role="treeitem"]'));
+    } else if (e.key === 'Enter' || e.key === ' ') { stop(); open(id); }
+    else if ((e.key === 'F10' && e.shiftKey) || e.key === 'ContextMenu') {
+      stop();
+      openMenu(id, cur.querySelector<HTMLElement>('[data-row-menu]') ?? cur);
+    }
+  };
+
+  /* 트리에 들어올 때 멈출 줄 - 키보드로 고른 줄, 없으면 연 문서, 그것도 없으면 첫 줄 */
+  const tabId = (focusId && byId.has(focusId) ? focusId : null) ?? (activeId && byId.has(activeId) ? activeId : null) ?? roots[0]?.id ?? null;
+
   const item = (node: TreeNode, depth: number): React.ReactNode => {
     const hasKids = node.children.length > 0;
     const expanded = openSet.has(node.id);
     const active = node.id === activeId;
     const zone = over?.id === node.id ? over.zone : null;
+    const menuOpen = menu?.id === node.id;
     return (
-      <li key={node.id}>
+      <li key={node.id} role="treeitem" data-id={node.id} aria-level={depth + 1} aria-selected={active}
+        aria-expanded={hasKids ? expanded : undefined} aria-label={titleOf(node)}
+        tabIndex={node.id === tabId ? 0 : -1}
+        onFocus={(e) => { if (e.target === e.currentTarget) setFocusId(node.id); }}
+        className="group/item rounded-tm-sm outline-none [&:focus-visible>div]:ring-2 [&:focus-visible>div]:ring-tm-blue [&:focus-visible>div]:ring-offset-1">
         <div
           {...rowDnD(node)}
+          onContextMenu={menuFor ? (e) => {
+            e.preventDefault();
+            openMenu(node.id, e.currentTarget.querySelector<HTMLElement>('[data-row-menu]'));
+          } : undefined}
           className={`group relative flex min-h-[38px] items-center gap-0.5 rounded-tm-sm pr-1 transition-colors duration-150 [@media(pointer:coarse)]:min-h-11 ${
             active ? 'bg-tm-blue text-white' : 'text-tm-ink hover:bg-tm-tint'} ${
             zone === 'inside' ? 'ring-2 ring-inset ring-tm-blue' : ''} ${drag === node.id ? 'opacity-40' : ''}`}
@@ -127,12 +196,13 @@ export default function DocTree({ roots, activeId, openSet, onToggle, onSelect, 
         >
           {zone === 'before' && <span aria-hidden className="pointer-events-none absolute inset-x-1 -top-px h-[3px] rounded-full bg-tm-blue" />}
           {zone === 'after' && <span aria-hidden className="pointer-events-none absolute inset-x-1 -bottom-px h-[3px] rounded-full bg-tm-blue" />}
+          {/* 펼치기 · 메뉴 · 새 문서 단추는 마우스 · 손가락용 - 키보드는 화살표 · Shift+F10 으로 같은 일을 한다 */}
           {hasKids ? (
-            <button type="button" onClick={() => onToggle(node.id)}
-              aria-label={expanded ? `${titleOf(node)} 접기` : `${titleOf(node)} 펼치기`} aria-expanded={expanded}
+            <button type="button" tabIndex={-1} onClick={() => onToggle(node.id)}
+              aria-label={expanded ? `${titleOf(node)} 접기` : `${titleOf(node)} 펼치기`}
               className={`grid h-7 w-7 shrink-0 place-items-center rounded-md transition-colors duration-150
                           [@media(pointer:coarse)]:h-9 [@media(pointer:coarse)]:w-9 ${
-                active ? 'text-white hover:bg-white/20 focus-visible:outline-white' : 'text-tm-sub hover:bg-white hover:text-tm-ink'}`}>
+                active ? 'text-white hover:bg-white/20' : 'text-tm-sub hover:bg-white hover:text-tm-ink'}`}>
               <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden
                 className={`transition-transform duration-150 ${expanded ? 'rotate-90' : ''}`}>
                 <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -141,24 +211,36 @@ export default function DocTree({ roots, activeId, openSet, onToggle, onSelect, 
           ) : (
             <span className="h-7 w-7 shrink-0" />
           )}
-          <button type="button" onClick={() => onSelect(node.id)} aria-current={active ? 'page' : undefined}
-            className={`flex min-w-0 flex-1 items-center gap-2 self-stretch rounded-md text-left text-[14.5px] ${
-              active ? 'font-bold focus-visible:outline-white' : 'font-semibold'}`}>
+          <div role="none" onClick={(e) => { open(node.id); focusRow(e.currentTarget.closest<HTMLElement>('[role="treeitem"]')); }}
+            className={`flex min-w-0 flex-1 cursor-pointer items-center gap-2 self-stretch rounded-md text-left text-[14.5px] ${active ? 'font-bold' : 'font-semibold'}`}>
             <span className={active ? 'text-white' : 'text-tm-sub'}><DocIcon icon={node.icon} /></span>
             <span className="truncate">{titleOf(node)}</span>
             {watched?.has(node.id) && (
               <span aria-label="다른 팀원이 보는 중" title="다른 팀원이 보는 중"
                 className={`h-2 w-2 flex-none rounded-full ${active ? 'bg-white' : 'bg-tm-ok'}`} />
             )}
-          </button>
-          <button type="button" onClick={() => onAddChild(node.id)} aria-label={`${titleOf(node)} 아래에 새 문서`} title="아래에 새 문서"
-            className={`grid h-7 w-7 shrink-0 place-items-center rounded-md opacity-0 transition-[opacity,background-color] duration-150 group-hover:opacity-100 focus-visible:opacity-100
-                        [@media(pointer:coarse)]:hidden ${active ? 'text-white hover:bg-white/20 focus-visible:outline-white' : 'text-tm-sub hover:bg-white hover:text-tm-blue'}`}>
+          </div>
+          {menuFor && (
+            <button type="button" tabIndex={-1} data-row-menu aria-label={`${titleOf(node)} 메뉴`} title="문서 메뉴"
+              aria-haspopup="menu" aria-expanded={menuOpen}
+              onClick={(e) => { if (menuOpen) setMenu(null); else openMenu(node.id, e.currentTarget); }}
+              className={`grid h-7 w-7 shrink-0 place-items-center rounded-md transition-[opacity,background-color] duration-150
+                          [@media(pointer:coarse)]:h-9 [@media(pointer:coarse)]:w-9 [@media(pointer:coarse)]:opacity-100 ${
+                active || menuOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 group-focus-within/item:opacity-100'} ${
+                active ? 'text-white hover:bg-white/20' : 'text-tm-sub hover:bg-white hover:text-tm-blue'}`}>
+              <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden fill="currentColor">
+                <circle cx="4.5" cy="10" r="1.5" /><circle cx="10" cy="10" r="1.5" /><circle cx="15.5" cy="10" r="1.5" />
+              </svg>
+            </button>
+          )}
+          <button type="button" tabIndex={-1} onClick={() => onAddChild(node.id)} aria-label={`${titleOf(node)} 아래에 새 문서`} title="아래에 새 문서"
+            className={`grid h-7 w-7 shrink-0 place-items-center rounded-md opacity-0 transition-[opacity,background-color] duration-150 group-hover:opacity-100
+                        [@media(pointer:coarse)]:hidden ${active ? 'text-white hover:bg-white/20' : 'text-tm-sub hover:bg-white hover:text-tm-blue'}`}>
             <IconPlus size={15} />
           </button>
         </div>
         {hasKids && expanded && (
-          <ul className="mt-0.5 space-y-0.5">
+          <ul role="group" className="mt-0.5 space-y-0.5">
             {node.children.map((c) => item(c, depth + 1))}
           </ul>
         )}
@@ -166,11 +248,35 @@ export default function DocTree({ roots, activeId, openSet, onToggle, onSelect, 
     );
   };
 
+  const menuNode = menu ? byId.get(menu.id) : undefined;
+
   return (
     <>
-      <ul className="space-y-0.5">
+      <ul ref={treeRef} role="tree" aria-label="문서 트리" onKeyDown={onTreeKey} className="space-y-0.5">
         {roots.map((n) => item(n, 0))}
       </ul>
+      {menu && menuNode && menuFor && (
+        <FloatMenu anchor={menu.anchor} label={`${titleOf(menuNode)} 메뉴`} align="end" width={220}
+          onClose={(why) => {
+            setMenu(null);
+            // 키보드로 연 메뉴는 그 줄로 돌아간다
+            if (why === 'escape') focusRow(treeRef.current?.querySelector<HTMLElement>(`[role="treeitem"][data-id="${CSS.escape(menu.id)}"]`));
+          }}>
+          {menuFor(menuNode).map((it) => (
+            <div key={it.label} className="contents">
+              {it.sep && <div className="tm-menu-sep" role="separator" />}
+              <button type="button" role="menuitem" tabIndex={-1} disabled={it.disabled}
+                className={`tm-menu-item${it.danger ? ' is-danger' : ''}`}
+                onClick={() => {
+                  setMenu(null);
+                  it.onSelect();
+                }}>
+                <span className="min-w-0 flex-1 truncate">{it.label}</span>
+              </button>
+            </div>
+          ))}
+        </FloatMenu>
+      )}
       {/* 끄는 동안만 - 맨 아래(최상위 문서)로 놓는 자리 */}
       {drag && (
         <div

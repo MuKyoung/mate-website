@@ -4,8 +4,8 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { DOC_TEMPLATES, localDay, type Doc, type DocComment, type DocVersion } from './types';
 import { useMember, useMembers } from './members';
 import { diffBlocks, mdToDoc, plainText } from './docMarkdown';
-import type { DocStore } from './docStore';
-import DocEditor, { keepInView, type WikiRefs } from './DocEditor';
+import type { DocStore, SaveResult } from './docStore';
+import DocEditor, { FloatMenu, keepInView, type WikiRefs } from './DocEditor';
 import Markdown from './Markdown';
 import {
   Avatar, IconSearch, Modal,
@@ -136,63 +136,45 @@ export interface MenuEntry {
   sep?: boolean;
 }
 
-/** 버튼 + 아래로 펼치는 메뉴. ↑ ↓ 로 오가고 Esc · 바깥 누르기 · Tab 으로 닫는다 */
+/**
+ * 버튼 + 펼치는 메뉴. 메뉴는 화면 맨 위 층에 떠서 스크롤 칸에 잘리지 않는다(FloatMenu).
+ * ↑ ↓ Home End 로 오가고(체크 항목 포함), Esc 는 닫고 단추로, Tab 은 닫고 다음 칸으로, 바깥을 누르면 닫는다
+ */
 export function DropMenu({ label, items, children, className, align = 'right' }: {
   label: string; items: MenuEntry[]; children: React.ReactNode; className: string; align?: 'left' | 'right';
 }) {
   const [open, setOpen] = useState(false);
   const btn = useRef<HTMLButtonElement>(null);
-  const box = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const down = (e: PointerEvent) => {
-      if (!box.current?.contains(e.target as Node) && !btn.current?.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener('pointerdown', down);
-    box.current?.querySelector<HTMLElement>('[role="menuitem"]:not(:disabled)')?.focus({ preventScroll: true });
-    return () => document.removeEventListener('pointerdown', down);
-  }, [open]);
-
-  const onKey = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape' || e.key === 'Tab') {
-      e.preventDefault();
-      e.stopPropagation();
-      setOpen(false);
-      btn.current?.focus();
-      return;
-    }
-    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
-    e.preventDefault();
-    const els = [...(box.current?.querySelectorAll<HTMLElement>('[role="menuitem"]:not(:disabled)') ?? [])];
-    const i = els.indexOf(document.activeElement as HTMLElement);
-    els[(i + (e.key === 'ArrowDown' ? 1 : -1) + els.length) % els.length]?.focus();
-  };
 
   return (
-    <div className="relative">
+    <>
       <button ref={btn} type="button" aria-label={label} title={label} aria-haspopup="menu" aria-expanded={open}
         onClick={() => setOpen((v) => !v)} className={className}>
         {children}
       </button>
       {open && (
-        <div ref={box} role="menu" aria-label={label} onKeyDown={onKey}
-          className={`tm-popover ${align === 'right' ? 'right-0' : 'left-0'} w-[236px]`}>
+        <FloatMenu anchor={btn.current} label={label} align={align === 'right' ? 'end' : 'start'} width={236}
+          onClose={() => setOpen(false)}>
           {items.map((it) => (
             <div key={it.label} className="contents">
               {it.sep && <div className="tm-menu-sep" role="separator" />}
-              <button type="button" role={it.checked === undefined ? 'menuitem' : 'menuitemcheckbox'}
+              <button type="button" role={it.checked === undefined ? 'menuitem' : 'menuitemcheckbox'} tabIndex={-1}
                 aria-checked={it.checked} disabled={it.disabled}
                 className={`tm-menu-item${it.danger ? ' is-danger' : ''} disabled:opacity-40`}
-                onClick={() => { setOpen(false); it.onSelect(); }}>
+                onClick={() => {
+                  // 고른 뒤 초점은 단추로 - 창을 여는 항목이면 창이 초점을 가져간다
+                  btn.current?.focus({ preventScroll: true });
+                  setOpen(false);
+                  it.onSelect();
+                }}>
                 <span className="min-w-0 flex-1 truncate">{it.label}</span>
                 {it.hint && <kbd className="text-[11.5px] font-semibold text-tm-sub">{it.hint}</kbd>}
               </button>
             </div>
           ))}
-        </div>
+        </FloatMenu>
       )}
-    </div>
+    </>
   );
 }
 
@@ -417,14 +399,20 @@ export function QuickFind({ docs, recent, starred, onOpen, onClose }: {
 
 /* ── 옮기기 ──────────────────────────────────────────── */
 
+/** 옮길 곳 고르기 → 옮긴 뒤의 전체 경로 확인 → '옮기기'. 서버가 받지 않으면 창과 고른 곳을 그대로 둔다 */
 export function MoveDialog({ doc, docs, onMove, onClose }: {
   doc: Doc;
   /** 살아 있는 문서 */
   docs: Doc[];
-  onMove(parentId: string | null): void;
+  onMove(parentId: string | null): Promise<SaveResult>;
   onClose(): void;
 }) {
   const [q, setQ] = useState('');
+  /** 고른 곳 - undefined 아직 안 고름 · null 맨 위 */
+  const [dest, setDest] = useState<string | null | undefined>(undefined);
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const byId = useMemo(() => new Map(docs.map((d) => [d.id, d])), [docs]);
   /* 자기 자신과 그 아래 문서 밑으로는 옮길 수 없다 */
   const blocked = useMemo(() => {
     const out = new Set([doc.id]);
@@ -456,34 +444,71 @@ export function MoveDialog({ doc, docs, onMove, onClose }: {
     return query ? out.filter(({ d }) => titleOf(d).toLowerCase().includes(query)).map((r) => ({ ...r, depth: 0 })) : out;
   }, [docs, blocked, q]);
 
+  /** 옮긴 뒤의 경로 - 위 문서들 / 이 문서 */
+  const destDoc = dest ? byId.get(dest) : undefined;
+  const destPath = dest === undefined ? null
+    : dest === null || !destDoc ? `맨 위 / ${titleOf(doc)}`
+      : [pathOf(destDoc, byId), titleOf(destDoc), titleOf(doc)].filter(Boolean).join(' / ');
+  const pick = (id: string | null) => {
+    setDest(id);
+    setFailed(false);
+  };
+  const confirm = async () => {
+    if (dest === undefined || busy) return;
+    setBusy(true);
+    setFailed(false);
+    const r = await onMove(dest);
+    // ok 면 부르는 쪽이 창을 닫는다. 받지 않았으면 고른 곳을 그대로 두고 다시 누를 수 있게
+    setBusy(false);
+    if (r !== 'ok') setFailed(true);
+  };
+  const row = (id: string | null, label: React.ReactNode, sub: string | null, depth: number, here: boolean, icon?: string) => {
+    const on = dest === id;
+    return (
+      <li key={id ?? '__top'}>
+        <button type="button" disabled={here || busy} aria-pressed={on} onClick={() => pick(id)}
+          style={{ paddingLeft: 12 + depth * 18 }}
+          className={`flex min-h-[42px] w-full items-center gap-2.5 rounded-tm-sm pr-3 text-left transition-colors disabled:opacity-45 [@media(pointer:coarse)]:min-h-11 ${
+            on ? 'bg-tm-blue text-white' : 'hover:bg-tm-tint'}`}>
+          {id === null ? null : <span className={on ? 'text-white' : 'text-tm-sub'}><DocIcon icon={icon} /></span>}
+          <span className="min-w-0 flex-1">
+            <span className={`block truncate text-[15px] ${id === null ? 'font-bold' : 'font-semibold'} ${on ? '' : id === null ? 'text-tm-deep' : 'text-tm-ink'}`}>{label}</span>
+            {sub && <span className={`block truncate text-[12.5px] ${on ? 'text-white/85' : 'text-tm-sub'}`}>{sub}</span>}
+          </span>
+          {here && <span className="flex-none text-[12.5px] font-semibold text-tm-sub">지금 자리</span>}
+        </button>
+      </li>
+    );
+  };
+
   return (
-    <Modal title="옮기기" sub={`'${titleOf(doc)}' 문서를 어디 아래에 둘까요`} onClose={onClose}>
+    <Modal title="옮기기" sub={`'${titleOf(doc)}' 문서를 어디 아래에 둘까요`} onClose={onClose} busy={busy}
+      foot={
+        <>
+          <p className="min-w-0 basis-full text-[13.5px] leading-[1.5] text-tm-ink sm:flex-1 sm:basis-auto" aria-live="polite">
+            {failed ? (
+              <b className="font-bold text-tm-red-deep">옮기지 못했습니다. 고른 곳은 그대로이니 다시 눌러 주세요.</b>
+            ) : destPath ? (
+              <>옮긴 뒤: <b className="font-bold text-tm-deep [overflow-wrap:anywhere]">{destPath}</b></>
+            ) : (
+              <span className="text-tm-sub">옮길 곳을 고르세요.</span>
+            )}
+          </p>
+          <button type="button" onClick={onClose} disabled={busy} className={`${tmBtn} ml-auto`}>취소</button>
+          <button type="button" onClick={() => void confirm()} disabled={dest === undefined || busy} className={tmBtnPrimary}>
+            {busy ? '옮기는 중…' : '옮기기'}
+          </button>
+        </>
+      }>
       <div className="relative mb-3">
         <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-tm-sub"><IconSearch /></span>
         <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="문서 이름으로 찾기" aria-label="옮길 곳 찾기"
           className={`${tmInput} pl-11`} />
       </div>
-      <ul className="max-h-[52vh] space-y-0.5 overflow-y-auto">
-        {!q.trim() && (
-          <li>
-            <button type="button" disabled={doc.parentId === null} onClick={() => onMove(null)}
-              className="flex min-h-[42px] w-full items-center gap-2.5 rounded-tm-sm px-3 text-left text-[15px] font-bold text-tm-deep transition-colors hover:bg-tm-tint disabled:opacity-45">
-              맨 위(최상위 문서로)
-              {doc.parentId === null && <span className="text-[12.5px] font-semibold text-tm-sub">지금 자리</span>}
-            </button>
-          </li>
-        )}
-        {rows.map(({ d, depth }) => (
-          <li key={d.id}>
-            <button type="button" disabled={d.id === doc.parentId} onClick={() => onMove(d.id)}
-              style={{ paddingLeft: 12 + depth * 18 }}
-              className="flex min-h-[42px] w-full items-center gap-2.5 rounded-tm-sm pr-3 text-left text-[15px] font-semibold text-tm-ink transition-colors hover:bg-tm-tint disabled:opacity-45">
-              <span className="text-tm-sub"><DocIcon icon={d.icon} /></span>
-              <span className="min-w-0 truncate">{titleOf(d)}</span>
-              {d.id === doc.parentId && <span className="ml-auto flex-none text-[12.5px] font-semibold text-tm-sub">지금 자리</span>}
-            </button>
-          </li>
-        ))}
+      <ul className="max-h-[48vh] space-y-0.5 overflow-y-auto" aria-label="옮길 곳">
+        {!q.trim() && row(null, '맨 위(최상위 문서로)', null, 0, doc.parentId === null)}
+        {/* 찾을 때는 들여쓰기가 없어지므로 줄마다 전체 경로를 보인다 */}
+        {rows.map(({ d, depth }) => row(d.id, titleOf(d), q.trim() ? pathOf(d, byId) || '맨 위' : null, depth, d.id === doc.parentId, d.icon))}
         {rows.length === 0 && <li className="py-8 text-center text-[14px] text-tm-sub">옮길 수 있는 문서가 없습니다.</li>}
       </ul>
     </Modal>
@@ -577,7 +602,10 @@ export function HistoryDialog({ doc, store, refs, onRestore, onClose }: {
   const members = useMembers();
   const [list, setList] = useState<DocVersion[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  /** 비교 기준 = 목록에서 고른 판(되돌리기도 이 판으로) */
   const [pick, setPick] = useState<string>('now');
+  /** 비교 대상 - 처음에는 지금. 옛 판 둘을 견줄 수도 있다 */
+  const [target, setTarget] = useState<string>('now');
   const [mode, setMode] = useState<'diff' | 'full'>('diff');
   const [busy, setBusy] = useState(false);
 
@@ -593,19 +621,22 @@ export function HistoryDialog({ doc, store, refs, onRestore, onClose }: {
   const current: DocVersion = { id: 'now', docId: doc.id, title: doc.title, body: doc.body, editedBy: doc.updatedBy, editedAt: doc.updatedAt };
   const versions = [current, ...(list ?? [])];
   const chosen = versions.find((v) => v.id === pick) ?? current;
+  const against = versions.find((v) => v.id === target) ?? current;
   const nameOf = (id: string | null) => members.find((m) => m.id === id)?.name ?? '알 수 없음';
+  /** 판 이름 - 순서 번호가 아니라 그 모습이 저장된 때와 사람 */
+  const labelOf = (v: DocVersion) => (v.id === 'now' ? '지금' : `${localDay(v.editedAt)} ${new Date(v.editedAt).toTimeString().slice(0, 5)}`);
 
-  /* 고른 판 → 지금으로 무엇이 바뀌었나(초록 = 그 뒤에 생김, 빨강 = 그 뒤에 사라짐) */
+  /* 기준 판 → 대상 판으로 무엇이 바뀌었나(초록 = 대상에서 생김, 빨강 = 대상에서 사라짐) */
   const view = useMemo(() => {
-    if (chosen.id === 'now' || mode === 'full') return { content: mdToDoc(chosen.body), marks: undefined, add: 0, del: 0 };
-    const d = diffBlocks(chosen.body, doc.body);
+    if (chosen.id === 'now' || mode === 'full' || chosen.id === against.id) return { content: mdToDoc(chosen.body), marks: undefined, add: 0, del: 0 };
+    const d = diffBlocks(chosen.body, against.body);
     return {
       content: { type: 'doc', content: d.blocks.length ? d.blocks : [{ type: 'paragraph' }] },
       marks: d.marks,
       add: d.marks.filter((m) => m === 'add').length,
       del: d.marks.filter((m) => m === 'del').length,
     };
-  }, [chosen.id, chosen.body, doc.body, mode]);
+  }, [chosen.id, chosen.body, against.id, against.body, mode]);
 
   const restore = async () => {
     if (chosen.id === 'now') return;
@@ -618,31 +649,36 @@ export function HistoryDialog({ doc, store, refs, onRestore, onClose }: {
   };
 
   return (
-    <Modal title="문서 기록" sub="고치기 시작할 때마다 그 전 모습을 남깁니다" size="lg" busy={busy} onClose={onClose}
+    <Modal title="문서 기록" sub="자동으로 남긴 이전 내용을 확인하고 복원합니다" size="lg" busy={busy} onClose={onClose}
       foot={
         <>
+          {/* 휴대폰에서는 안내가 한 줄을 다 쓰고 단추는 다음 줄에 - 좁은 칸에서 글자가 한 낱말씩 꺾이지 않게 */}
           {chosen.id !== 'now' && (
-            <p className="min-w-0 flex-1 text-[13.5px] text-tm-sub">
+            <p className="min-w-0 basis-full text-[13.5px] leading-[1.5] text-tm-sub sm:flex-1 sm:basis-auto">
               되돌려도 지금 모습은 기록에 남아 다시 돌아올 수 있습니다.
             </p>
           )}
-          <span className="flex-1" />
-          <button type="button" onClick={onClose} className={tmBtn} disabled={busy}>닫기</button>
+          <button type="button" onClick={onClose} className={`${tmBtn} ml-auto`} disabled={busy}>닫기</button>
           <button type="button" onClick={() => void restore()} disabled={chosen.id === 'now' || busy} className={tmBtnPrimary}>
             {busy ? '되돌리는 중…' : '이 판으로 되돌리기'}
           </button>
         </>
       }>
       <div className="flex min-h-[56vh] gap-5 max-[720px]:flex-col">
-        <ol className="w-[248px] flex-none space-y-1 overflow-y-auto max-[720px]:max-h-[30vh] max-[720px]:w-full" aria-label="판 목록">
+        <ol className="w-[248px] flex-none space-y-1 overflow-y-auto max-[720px]:max-h-[30vh] max-[720px]:w-full" aria-label="판 목록 - 고른 판이 비교 기준이고 되돌릴 판입니다">
           {versions.map((v) => (
             <li key={v.id}>
-              <button type="button" onClick={() => setPick(v.id)} aria-current={v.id === pick ? 'true' : undefined}
+              <button type="button" aria-current={v.id === pick ? 'true' : undefined}
+                onClick={() => {
+                  setPick(v.id);
+                  // 기준이 대상과 같아지면 대상은 지금으로
+                  if (v.id === target) setTarget('now');
+                }}
                 className={`flex w-full items-center gap-2.5 rounded-tm-sm px-3 py-2.5 text-left transition-colors ${
                   v.id === pick ? 'bg-tm-blue text-white' : 'hover:bg-tm-tint'}`}>
                 <Avatar id={v.editedBy} size={26} />
                 <span className="min-w-0 flex-1">
-                  <b className="block truncate text-[14px] font-bold">{v.id === 'now' ? '지금' : `${localDay(v.editedAt)} ${new Date(v.editedAt).toTimeString().slice(0, 5)}`}</b>
+                  <b className="block truncate text-[14px] font-bold">{labelOf(v)}</b>
                   <small className={`block truncate text-[12.5px] ${v.id === pick ? 'text-white/85' : 'text-tm-sub'}`}>
                     {nameOf(v.editedBy)} · {ago(v.editedAt)}
                   </small>
@@ -653,7 +689,9 @@ export function HistoryDialog({ doc, store, refs, onRestore, onClose }: {
           {list === null && !error && <li className="px-3 py-4 text-[13.5px] text-tm-sub">불러오는 중…</li>}
           {error && <li role="alert" className="px-3 py-4 text-[13.5px] font-semibold text-tm-red-deep">{error}</li>}
           {list && list.length === 0 && (
-            <li className="px-3 py-4 text-[13.5px] leading-[1.6] text-tm-sub">아직 남은 기록이 없습니다. 다른 사람이 고치거나 10분 넘게 쉬었다가 고치면 그 전 모습이 남습니다.</li>
+            <li className="px-3 py-4 text-[13.5px] leading-[1.6] text-tm-sub">
+              아직 남은 기록이 없습니다. 고친 사람이 바뀌거나, 10분 넘게 쉬었다가 고치거나, 30분이 지나면 고치기 전 모습이 자동으로 남습니다.
+            </li>
           )}
         </ol>
 
@@ -663,26 +701,41 @@ export function HistoryDialog({ doc, store, refs, onRestore, onClose }: {
             {chosen.id !== 'now' && (
               <div role="group" aria-label="보기" className="flex gap-1">
                 <button type="button" aria-pressed={mode === 'diff'} onClick={() => setMode('diff')}
-                  className="h-8 rounded-full border border-tm-edge px-3 text-[13px] font-bold aria-pressed:border-tm-blue aria-pressed:bg-tm-blue aria-pressed:text-white">
+                  className="h-8 rounded-full border border-tm-edge px-3 text-[13px] font-bold aria-pressed:border-tm-blue aria-pressed:bg-tm-blue aria-pressed:text-white [@media(pointer:coarse)]:h-11">
                   바뀐 곳
                 </button>
                 <button type="button" aria-pressed={mode === 'full'} onClick={() => setMode('full')}
-                  className="h-8 rounded-full border border-tm-edge px-3 text-[13px] font-bold aria-pressed:border-tm-blue aria-pressed:bg-tm-blue aria-pressed:text-white">
+                  className="h-8 rounded-full border border-tm-edge px-3 text-[13px] font-bold aria-pressed:border-tm-blue aria-pressed:bg-tm-blue aria-pressed:text-white [@media(pointer:coarse)]:h-11">
                   그 판 전체
                 </button>
               </div>
             )}
           </div>
+          {/* 무엇과 무엇을 견주는지 - 기준은 목록에서 고른 판, 대상은 고를 수 있다(처음에는 지금) */}
+          {chosen.id !== 'now' && mode === 'diff' && (
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 border-b border-tm-line px-5 py-2.5 text-[13.5px]">
+              <span className="font-bold text-tm-sub">비교</span>
+              <span className="rounded-full bg-tm-tint px-2.5 py-0.5 font-bold text-tm-deep">기준 {labelOf(chosen)} · {nameOf(chosen.editedBy)}</span>
+              <span aria-hidden className="text-tm-sub">→</span>
+              <label className="sr-only" htmlFor="doc-history-target">비교 대상</label>
+              <select id="doc-history-target" value={against.id} onChange={(e) => setTarget(e.target.value)}
+                className={`${tmFieldBase} h-8 max-w-full px-2 text-[13.5px] font-semibold [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:text-[16px]`}>
+                {versions.filter((v) => v.id !== chosen.id).map((v) => (
+                  <option key={v.id} value={v.id}>대상 {labelOf(v)} · {nameOf(v.editedBy)}</option>
+                ))}
+              </select>
+            </div>
+          )}
           {view.marks && (
             <p className="flex flex-wrap gap-x-4 gap-y-1 border-b border-tm-line bg-tm-bg px-5 py-2 text-[13px] font-semibold text-tm-sub">
-              <span><i className="mr-1.5 inline-block h-2.5 w-2.5 rounded-sm bg-tm-ok align-middle" />그 뒤에 생긴 블록 {view.add}</span>
-              <span><i className="mr-1.5 inline-block h-2.5 w-2.5 rounded-sm bg-tm-red align-middle" />그 뒤에 사라진 블록 {view.del}</span>
-              {chosen.title !== doc.title && <span>제목: {titleOf(chosen)} → {titleOf(doc)}</span>}
+              <span><i className="mr-1.5 inline-block h-2.5 w-2.5 rounded-sm bg-tm-ok align-middle" />대상에서 생긴 블록 {view.add}</span>
+              <span><i className="mr-1.5 inline-block h-2.5 w-2.5 rounded-sm bg-tm-red align-middle" />대상에서 사라진 블록 {view.del}</span>
+              {chosen.title !== against.title && <span>제목: {titleOf(chosen)} → {titleOf(against)}</span>}
             </p>
           )}
           <div className="max-h-[60vh] overflow-y-auto px-6 py-5 pl-9">
-            {/* 미리 보기는 처음 내용만 그린다 - 판 · 보기 · 지금 문서가 바뀌면 새로 세운다 */}
-            <DocEditor key={`${chosen.id}-${mode}-${doc.updatedAt}`} body="" content={view.content} diff={view.marks} editable={false} refs={refs} />
+            {/* 미리 보기는 처음 내용만 그린다 - 판 · 대상 · 보기 · 지금 문서가 바뀌면 새로 세운다 */}
+            <DocEditor key={`${chosen.id}-${against.id}-${mode}-${doc.updatedAt}`} body="" content={view.content} diff={view.marks} editable={false} refs={refs} />
           </div>
         </div>
       </div>
@@ -692,16 +745,27 @@ export function HistoryDialog({ doc, store, refs, onRestore, onClose }: {
 
 /* ── 댓글 ────────────────────────────────────────────── */
 
-export function Comments({ docId, comments, me, canWrite, onAdd, onUpdate, onTaskClick }: {
+type CommentPatch = Partial<Pick<DocComment, 'body' | 'resolved' | 'removed'>>;
+
+/** 아직 보내지 않은 글 - 사람 · 문서 · 자리(새 댓글 · 답글 · 고치기)마다 따로 둔다. 다른 문서로 갔다 와도 섞이지 않고 남는다 */
+const drafts = new Map<string, string>();
+const newCommentId = () => (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+  ? crypto.randomUUID() : `c${Date.now()}-${Math.random().toString(36).slice(2, 9)}`);
+
+export function Comments({ docId, comments, me, canWrite, onAdd, onUpdate, onTaskClick, panel = false, filter = 'all' }: {
   docId: string;
   /** 이 문서의 댓글 */
   comments: DocComment[];
   me: string;
   /** 휴지통의 문서에는 쓰지 않는다 */
   canWrite: boolean;
-  onAdd(body: string, parentId: string | null): void;
-  onUpdate(id: string, patch: Partial<Pick<DocComment, 'body' | 'resolved' | 'removed'>>): void;
+  /** 남기고 결과를 돌려준다. id 는 같은 글을 다시 보낼 때 같은 값이다 */
+  onAdd(body: string, parentId: string | null, id: string): Promise<SaveResult>;
+  onUpdate(id: string, patch: CommentPatch): Promise<SaveResult>;
   onTaskClick?(key: string): void;
+  /** 댓글 패널 안 - 제목 · 구역 줄 없이, 거르기(미해결 · 해결 · 전체)대로 보인다 */
+  panel?: boolean;
+  filter?: 'open' | 'resolved' | 'all';
 }) {
   const [showResolved, setShowResolved] = useState(false);
   const roots = comments.filter((c) => !c.parentId).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
@@ -712,15 +776,40 @@ export function Comments({ docId, comments, me, canWrite, onAdd, onUpdate, onTas
   const resolved = visible.filter((r) => r.resolved);
   const count = comments.filter((c) => !c.removed).length;
 
+  if (panel) {
+    const shown = filter === 'open' ? open : filter === 'resolved' ? resolved : [...open, ...resolved];
+    return (
+      <div>
+        {canWrite && filter !== 'resolved' && (
+          <Composer key={`${me}:${docId}`} me={me} draftKey={`${me}:${docId}:top`}
+            placeholder="의견이나 질문을 남기세요. Ctrl+Enter 로 남깁니다." onSubmit={(b, id) => onAdd(b, null, id)} />
+        )}
+        <ul className="mt-5 space-y-4">
+          {shown.map((r) => (
+            <Thread key={r.id} docId={docId} root={r} replies={replies(r.id)} me={me} canWrite={canWrite} onAdd={onAdd} onUpdate={onUpdate} onTaskClick={onTaskClick} />
+          ))}
+        </ul>
+        {shown.length === 0 && (
+          <p className="mt-4 text-[14px] text-tm-sub">
+            {filter === 'resolved' ? '해결된 댓글이 없습니다.' : filter === 'open' && count ? '해결되지 않은 댓글이 없습니다.' : '아직 댓글이 없습니다.'}
+          </p>
+        )}
+      </div>
+    );
+  }
+
   return (
     <section id={`comments-${docId}`} aria-labelledby={`comments-title-${docId}`} className="mt-12 border-t border-tm-line pt-7">
       <h3 id={`comments-title-${docId}`} className="mb-4 text-[17px] font-extrabold text-tm-deep">
         댓글 <span className="ml-1 text-[14px] font-bold tabular-nums text-tm-sub">{count}</span>
       </h3>
-      {canWrite && <Composer me={me} placeholder="의견이나 질문을 남기세요. Ctrl+Enter 로 남깁니다." onSubmit={(b) => onAdd(b, null)} />}
+      {canWrite && (
+        <Composer key={`${me}:${docId}`} me={me} draftKey={`${me}:${docId}:top`}
+          placeholder="의견이나 질문을 남기세요. Ctrl+Enter 로 남깁니다." onSubmit={(b, id) => onAdd(b, null, id)} />
+      )}
       <ul className="mt-5 space-y-4">
         {open.map((r) => (
-          <Thread key={r.id} root={r} replies={replies(r.id)} me={me} canWrite={canWrite} onAdd={onAdd} onUpdate={onUpdate} onTaskClick={onTaskClick} />
+          <Thread key={r.id} docId={docId} root={r} replies={replies(r.id)} me={me} canWrite={canWrite} onAdd={onAdd} onUpdate={onUpdate} onTaskClick={onTaskClick} />
         ))}
       </ul>
       {open.length === 0 && count === 0 && <p className="mt-4 text-[14px] text-tm-sub">아직 댓글이 없습니다.</p>}
@@ -732,7 +821,7 @@ export function Comments({ docId, comments, me, canWrite, onAdd, onUpdate, onTas
           {showResolved && (
             <ul className="mt-3 space-y-4 opacity-90">
               {resolved.map((r) => (
-                <Thread key={r.id} root={r} replies={replies(r.id)} me={me} canWrite={canWrite} onAdd={onAdd} onUpdate={onUpdate} onTaskClick={onTaskClick} />
+                <Thread key={r.id} docId={docId} root={r} replies={replies(r.id)} me={me} canWrite={canWrite} onAdd={onAdd} onUpdate={onUpdate} onTaskClick={onTaskClick} />
               ))}
             </ul>
           )}
@@ -742,68 +831,140 @@ export function Comments({ docId, comments, me, canWrite, onAdd, onUpdate, onTas
   );
 }
 
-function Composer({ me, placeholder, onSubmit, autoFocus, initial = '', submitLabel = '댓글 남기기', onCancel }: {
-  me: string; placeholder: string; onSubmit(body: string): void; autoFocus?: boolean; initial?: string;
-  submitLabel?: string; onCancel?(): void;
+/**
+ * 댓글 쓰는 칸. 서버가 받을 때까지 '보내는 중…', 받으면 비우고, 받지 않았으면 쓴 글을 그대로 두고
+ * '다시 보내기 · 복사'를 보인다. 보내는 동안 다시 누를 수 없고, 같은 글을 다시 보내면 같은 id 로 보낸다
+ */
+function Composer({ me, draftKey, placeholder, onSubmit, autoFocus, initial = '', submitLabel = '댓글 남기기', onCancel, onSent }: {
+  me: string;
+  /** 보내지 않은 글을 들고 있을 자리 - 사람 · 문서 · 자리마다 다르다 */
+  draftKey: string;
+  placeholder: string;
+  onSubmit(body: string, id: string): Promise<SaveResult>;
+  autoFocus?: boolean; initial?: string; submitLabel?: string; onCancel?(): void;
+  /** 서버가 받은 뒤(답글 칸 접기 · 고치기 끝내기) */
+  onSent?(): void;
 }) {
-  const [text, setText] = useState(initial);
+  const [text, setText] = useState(() => drafts.get(draftKey) ?? initial);
+  const [phase, setPhase] = useState<'idle' | 'sending' | 'failed'>('idle');
+  const [copied, setCopied] = useState(false);
+  /** 보낸 글과 그 id - 같은 글을 다시 보내면 같은 id */
+  const sent = useRef<{ id: string; body: string } | null>(null);
+  const alive = useRef(true);
+  useEffect(() => {
+    alive.current = true;
+    return () => { alive.current = false; };
+  }, []);
   const id = useId();
-  const submit = () => {
-    const body = text.trim();
-    if (!body) return;
-    onSubmit(body);
-    setText('');
+  const keep = (v: string) => {
+    setText(v);
+    if (v.trim() && v !== initial) drafts.set(draftKey, v);
+    else drafts.delete(draftKey);
   };
+  const submit = async () => {
+    const body = text.trim();
+    if (!body || phase === 'sending') return;
+    if (!sent.current || sent.current.body !== body) sent.current = { id: newCommentId(), body };
+    setPhase('sending');
+    setCopied(false);
+    const r = await onSubmit(body, sent.current.id);
+    if (r === 'ok') drafts.delete(draftKey);
+    if (!alive.current) return;
+    if (r === 'ok') {
+      sent.current = null;
+      setText('');
+      setPhase('idle');
+      onSent?.();
+    } else setPhase('failed');
+  };
+  const copy = () => {
+    void navigator.clipboard.writeText(text).then(() => setCopied(true), () => setCopied(false));
+  };
+  /* 취소는 쓰던 글을 버린다는 뜻 - 다음에 열 때 되살리지 않는다 */
+  const cancel = () => {
+    drafts.delete(draftKey);
+    onCancel?.();
+  };
+  const sending = phase === 'sending';
   return (
     <div className="flex items-start gap-3">
       <Avatar id={me} size={30} />
       <div className="min-w-0 flex-1">
         <label className="sr-only" htmlFor={id}>{placeholder}</label>
-        <textarea id={id} value={text} autoFocus={autoFocus} rows={2}
-          onChange={(e) => setText(e.target.value)} placeholder={placeholder}
+        <textarea id={id} value={text} autoFocus={autoFocus} rows={2} readOnly={sending} aria-busy={sending || undefined}
+          onChange={(e) => {
+            keep(e.target.value);
+            if (phase === 'failed') setPhase('idle');
+          }}
+          placeholder={placeholder}
           onKeyDown={(e) => {
             if (e.nativeEvent.isComposing) return;
-            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); submit(); }
-            if (e.key === 'Escape' && onCancel) { e.preventDefault(); e.stopPropagation(); onCancel(); }
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); void submit(); }
+            if (e.key === 'Escape' && onCancel && !sending) { e.preventDefault(); e.stopPropagation(); cancel(); }
           }}
-          className={`${tmTextarea} min-h-[64px] text-[15px]`} />
-        <div className="mt-2 flex justify-end gap-2">
-          {onCancel && <button type="button" onClick={onCancel} className={tmGhostBtn}>취소</button>}
-          <button type="button" onClick={submit} disabled={!text.trim()} className={`${tmBtnPrimary} h-[38px] px-4 text-[14px]`}>{submitLabel}</button>
+          className={`${tmTextarea} min-h-[64px] text-[15px] read-only:bg-tm-bg`} />
+        {phase === 'failed' && (
+          <p role="alert" className="mt-2 text-[13.5px] font-semibold leading-[1.5] text-tm-red-deep">
+            보내지 못했습니다. 쓴 글은 그대로 남아 있습니다.
+          </p>
+        )}
+        <div className="mt-2 flex flex-wrap items-center justify-end gap-2">
+          {sending && <span role="status" className="mr-auto text-[13px] font-semibold text-tm-sub">보내는 중…</span>}
+          {phase === 'failed' && (
+            <button type="button" onClick={copy} className={tmGhostBtn}>{copied ? '복사했습니다' : '복사'}</button>
+          )}
+          {onCancel && <button type="button" onClick={cancel} disabled={sending} className={tmGhostBtn}>취소</button>}
+          <button type="button" onClick={() => void submit()} disabled={!text.trim() || sending} className={`${tmBtnPrimary} h-[38px] px-4 text-[14px]`}>
+            {sending ? '보내는 중…' : phase === 'failed' ? '다시 보내기' : submitLabel}
+          </button>
         </div>
       </div>
     </div>
   );
 }
 
-function Thread({ root, replies, me, canWrite, onAdd, onUpdate, onTaskClick }: {
-  root: DocComment; replies: DocComment[]; me: string; canWrite: boolean;
-  onAdd(body: string, parentId: string | null): void;
-  onUpdate(id: string, patch: Partial<Pick<DocComment, 'body' | 'resolved' | 'removed'>>): void;
+/** 해결 · 다시 열기 · 지우기의 결과 - 받지 않았으면 그 자리에 알린다 */
+function useCommentAct() {
+  const [err, setErr] = useState<string | null>(null);
+  const act = async (p: Promise<SaveResult>, what: string) => {
+    setErr(null);
+    const r = await p;
+    if (r !== 'ok') setErr(r === 'gone' ? '다른 곳에서 지운 댓글입니다.' : `${what} 저장하지 못했습니다. 다시 눌러 주세요.`);
+  };
+  const node = err ? <p role="alert" className="mt-2 text-[13px] font-semibold text-tm-red-deep">{err}</p> : null;
+  return [act, node] as const;
+}
+
+function Thread({ docId, root, replies, me, canWrite, onAdd, onUpdate, onTaskClick }: {
+  docId: string; root: DocComment; replies: DocComment[]; me: string; canWrite: boolean;
+  onAdd(body: string, parentId: string | null, id: string): Promise<SaveResult>;
+  onUpdate(id: string, patch: CommentPatch): Promise<SaveResult>;
   onTaskClick?(key: string): void;
 }) {
   const [replying, setReplying] = useState(false);
+  const [act, actNode] = useCommentAct();
   return (
     <li className={`rounded-tm border border-tm-line bg-white p-4 ${root.resolved ? 'bg-tm-bg' : ''}`}>
-      <CommentItem c={root} me={me} canWrite={canWrite} onUpdate={onUpdate} onTaskClick={onTaskClick}
+      <CommentItem c={root} docId={docId} me={me} canWrite={canWrite} onUpdate={onUpdate} onTaskClick={onTaskClick}
         extra={canWrite && !root.removed ? (
           <button type="button" className="text-[13px] font-bold text-tm-sub hover:text-tm-blue"
-            onClick={() => onUpdate(root.id, { resolved: !root.resolved })}>
+            onClick={() => void act(onUpdate(root.id, { resolved: !root.resolved }), root.resolved ? '다시 열기를' : '해결 표시를')}>
             {root.resolved ? '다시 열기' : '해결'}
           </button>
         ) : null} />
+      {actNode}
       {replies.length > 0 && (
         <ul className="ml-10 mt-3 space-y-3 border-l-2 border-tm-line pl-4">
           {replies.map((c) => (
-            <li key={c.id}><CommentItem c={c} me={me} canWrite={canWrite} onUpdate={onUpdate} onTaskClick={onTaskClick} /></li>
+            <li key={c.id}><CommentItem c={c} docId={docId} me={me} canWrite={canWrite} onUpdate={onUpdate} onTaskClick={onTaskClick} /></li>
           ))}
         </ul>
       )}
       {canWrite && !root.resolved && (
         <div className="ml-10 mt-3">
           {replying ? (
-            <Composer me={me} placeholder="답글을 적으세요" autoFocus submitLabel="답글 남기기"
-              onSubmit={(b) => { onAdd(b, root.id); setReplying(false); }} onCancel={() => setReplying(false)} />
+            <Composer me={me} draftKey={`${me}:${docId}:reply:${root.id}`} placeholder="답글을 적으세요" autoFocus submitLabel="답글 남기기"
+              onSubmit={(b, id) => onAdd(b, root.id, id)} onSent={() => setReplying(false)} onCancel={() => setReplying(false)} />
           ) : (
             <button type="button" className={tmTextBtn} onClick={() => setReplying(true)}>답글</button>
           )}
@@ -813,15 +974,16 @@ function Thread({ root, replies, me, canWrite, onAdd, onUpdate, onTaskClick }: {
   );
 }
 
-function CommentItem({ c, me, canWrite, onUpdate, onTaskClick, extra }: {
-  c: DocComment; me: string; canWrite: boolean;
-  onUpdate(id: string, patch: Partial<Pick<DocComment, 'body' | 'resolved' | 'removed'>>): void;
+function CommentItem({ c, docId, me, canWrite, onUpdate, onTaskClick, extra }: {
+  c: DocComment; docId: string; me: string; canWrite: boolean;
+  onUpdate(id: string, patch: CommentPatch): Promise<SaveResult>;
   onTaskClick?(key: string): void;
   extra?: React.ReactNode;
 }) {
   const who = useMember(c.author);
   const [editing, setEditing] = useState(false);
   const [confirm, confirmNode] = useConfirm();
+  const [act, actNode] = useCommentAct();
   const mine = c.author === me;
   const edited = !c.removed && Date.parse(c.updatedAt) - Date.parse(c.createdAt) > 1500;
 
@@ -844,7 +1006,7 @@ function CommentItem({ c, me, canWrite, onUpdate, onTaskClick, extra }: {
                 <button type="button" className="text-[13px] font-bold text-tm-sub hover:text-tm-red-deep"
                   onClick={async () => {
                     const yes = await confirm({ title: '댓글을 지울까요?', body: '지운 댓글은 되살릴 수 없습니다.', ok: '지우기', tone: 'danger' });
-                    if (yes) onUpdate(c.id, { removed: true });
+                    if (yes) await act(onUpdate(c.id, { removed: true }), '지우기를');
                   }}>
                   지우기
                 </button>
@@ -852,10 +1014,11 @@ function CommentItem({ c, me, canWrite, onUpdate, onTaskClick, extra }: {
             )}
           </span>
         </p>
+        {actNode}
         {editing ? (
           <div className="mt-2">
-            <Composer me={me} placeholder="댓글 고치기" initial={c.body} autoFocus submitLabel="저장"
-              onSubmit={(b) => { onUpdate(c.id, { body: b }); setEditing(false); }} onCancel={() => setEditing(false)} />
+            <Composer me={me} draftKey={`${me}:${docId}:edit:${c.id}`} placeholder="댓글 고치기" initial={c.body} autoFocus submitLabel="저장"
+              onSubmit={(b) => onUpdate(c.id, { body: b })} onSent={() => setEditing(false)} onCancel={() => setEditing(false)} />
           </div>
         ) : (
           <div className="mt-1 [&_p]:my-1 [&_p]:text-[15px] [&_p]:leading-[1.65] [&_ul]:my-1 [&_ol]:my-1">

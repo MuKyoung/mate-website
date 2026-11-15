@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { LOCAL_ME_KEY, LOCAL_TASKS_KEY, isUntouchedSample, type Store, type StoreOptions, type SyncState } from './store';
-import { LOCAL_DOCS_KEY, isUntouchedSampleDoc, type DocStore } from './docStore';
+import { LOCAL_DOCS_KEY, isUntouchedSampleDoc, type DocStore, type SaveResult } from './docStore';
 import { byOrder, defaultDomain, nextOrder, type DomainStore } from './domainStore';
 import type { ColorStore } from './colorStore';
 import type { MemoStore } from './memoStore';
@@ -112,6 +112,8 @@ class RowSync<T extends Entity, R extends Entity> {
   /** 칸마다 그 값을 마지막으로 실어 보낸 요청의 차례 - 앞 요청이 늦게 끝나도 뒤 요청이 실어 간 값을 옛 값으로 덮지 않는다 */
   private sentSeq = new Map<string, Record<string, number>>();
   private seq = 0;
+  /** 한 줄의 저장이 끝나기를 기다리는 쪽(whenSettled) - 그사이 가장 나빴던 결과를 돌려준다. 쓰지 않으면 비어 있다 */
+  private waiters = new Map<string, { worst: SaveResult; done: ((r: SaveResult) => void)[] }>();
 
   constructor(
     public opt: SyncOptions<T, R>,
@@ -292,16 +294,51 @@ class RowSync<T extends Entity, R extends Entity> {
         this.later();
       } else if (o === 'fail') {
         this.stale = true;
-        void this.reload(true).then((ok) => this.opt.onError?.(failText ?? (ok ? FAIL_RESYNCED : FAIL_UNSENT)));
+        void this.reload(true).then((ok) => {
+          this.opt.onError?.(failText ?? (ok ? FAIL_RESYNCED : FAIL_UNSENT));
+          // 기다리는 쪽에는 서버 목록으로 되돌린 뒤에 알린다 - 그쪽의 자세한 알림이 마지막에 남게
+          this.settleWaiters(id, 'fail', p);
+        });
       }
       if (!this.failed.size && !this.redo.size) this.warned = false;
       this.status();
+      if (o === 'ok' || o === 'gone') this.settleWaiters(id, o, p);
     });
     this.chains.set(id, p);
     void p.then(() => {
       if (this.chains.get(id) === p) this.chains.delete(id);
     });
     return p;
+  }
+
+  /** id 줄에 아직 보낼 것 · 보내는 중인 것이 남았는가(except = 지금 끝난 요청) */
+  private pending(id: string, except?: Promise<void>) {
+    const chain = this.chains.get(id);
+    return (!!chain && chain !== except) || this.queued.has(id) || this.timers.has(id)
+      || this.failed.has(id) || this.redo.has(id) || this.creating.has(id);
+  }
+
+  /**
+   * id 줄의 고치기 · 만들기 · 지우기가 서버에서 끝나면 결과를 알린다. 연결 문제로 다시 보내는 동안은 기다리고,
+   * 그사이 한 번이라도 거절당했으면 fail. 보낼 것이 없으면 바로 ok
+   */
+  whenSettled(id: string): Promise<SaveResult> {
+    if (!this.pending(id)) return Promise.resolve('ok');
+    return new Promise((resolve) => {
+      const w = this.waiters.get(id) ?? { worst: 'ok' as SaveResult, done: [] };
+      w.done.push(resolve);
+      this.waiters.set(id, w);
+    });
+  }
+
+  private settleWaiters(id: string, o: Outcome, finished?: Promise<void>) {
+    const w = this.waiters.get(id);
+    if (!w) return;
+    if (o === 'fail') w.worst = 'fail';
+    else if (o === 'gone' && w.worst !== 'fail') w.worst = 'gone';
+    if (o === 'retry' || this.pending(id, finished)) return;
+    this.waiters.delete(id);
+    w.done.forEach((f) => f(w.worst));
   }
 
   /** 잠시 뒤 다시 보낸다 - 2초에서 시작해 30초까지 늘린다 */
@@ -427,15 +464,18 @@ class RowSync<T extends Entity, R extends Entity> {
     }
   }
 
-  /** 새 줄. upsert 는 되돌리기(지운 것 되살리기)에 쓴다 */
-  create(item: T, row: Partial<R> & Entity, upsert = false) {
+  /**
+   * 새 줄. upsert 는 되돌리기(지운 것 되살리기)에 쓴다. again 이면 같은 id 로 다시 보내는 것이다 -
+   * 앞서 보낸 것이 실은 들어갔으면(중복 키) 그 줄을 읽어 와 두 번 생기지 않게 한다
+   */
+  create(item: T, row: Partial<R> & Entity, upsert = false, again = false) {
     this.creating.add(item.id);
     this.removing.delete(item.id);
     this.redo.delete(item.id);
     this.touch(item.id);
     this.revive(item.id);
     this.set([item, ...this.items.filter((x) => x.id !== item.id)]);
-    this.insert(item, row, upsert, false);
+    this.insert(item, row, upsert, again);
   }
 
   /** again = 다시 보내기. 앞서 보낸 것이 실은 들어갔는데 답만 못 받았으면 이미 있는 줄을 읽어 온다 */
@@ -795,6 +835,13 @@ export function useRemoteDocStore(opts: StoreOptions = {}): DocStore {
     eng.patch(id, { ...patch, updatedAt: new Date().toISOString() });
   }, [eng]);
 
+  /* 바로 보내고 서버가 받을 때까지 기다린다 - 성공 알림은 그다음에 */
+  const save = useCallback<DocStore['save']>((id, patch) => {
+    if (!eng.items.some((d) => d.id === id)) return Promise.resolve('gone');
+    eng.patch(id, { ...patch, updatedAt: new Date().toISOString() }, true);
+    return eng.whenSettled(id);
+  }, [eng]);
+
   const remove = useCallback<DocStore['remove']>((id) => {
     const doomed = new Set<string>([id]);
     let grew = true;
@@ -807,7 +854,9 @@ export function useRemoteDocStore(opts: StoreOptions = {}): DocStore {
         }
       });
     }
+    if (!eng.items.some((d) => d.id === id)) return Promise.resolve('gone');
     eng.remove([...doomed], id);
+    return eng.whenSettled(id);
   }, [eng]);
 
   const versions = useCallback<DocStore['versions']>(async (docId) => {
@@ -825,18 +874,25 @@ export function useRemoteDocStore(opts: StoreOptions = {}): DocStore {
   }, [eng]);
 
   const addComment = useCallback<DocStore['addComment']>((input) => {
+    const id = input.id ?? crypto.randomUUID();
+    // 같은 제출을 다시 보냈다 - 보내는 중이면 그 결과를 기다리고, 이미 들어가 있으면 ok
+    if (notes.eng.items.some((x) => x.id === id)) return notes.eng.whenSettled(id);
     const now = new Date().toISOString();
     const c: DocComment = {
-      id: crypto.randomUUID(), docId: input.docId, parentId: input.parentId, author: input.author,
+      id, docId: input.docId, parentId: input.parentId, author: input.author,
       body: input.body, resolved: false, removed: false, createdAt: now, updatedAt: now,
     };
-    notes.eng.create(c, { id: c.id, doc_id: c.docId, parent_id: c.parentId, author: c.author, body: c.body });
+    // id 를 받았으면 다시 보내기일 수 있다 - 앞서 보낸 것이 실은 들어갔으면(중복 키) 그 줄을 읽어 온다
+    notes.eng.create(c, { id: c.id, doc_id: c.docId, parent_id: c.parentId, author: c.author, body: c.body }, false, !!input.id);
+    return notes.eng.whenSettled(id);
   }, [notes.eng]);
 
   const updateComment = useCallback<DocStore['updateComment']>((id, patch) => {
+    if (!notes.eng.items.some((x) => x.id === id)) return Promise.resolve('gone');
     const now = new Date().toISOString();
     const body = patch.removed ? { body: '' } : {};
     notes.eng.patch(id, { ...patch, ...body, ...(patch.body !== undefined && !patch.removed ? { updatedAt: now } : {}) }, true);
+    return notes.eng.whenSettled(id);
   }, [notes.eng]);
 
   const upload = useCallback<DocStore['upload']>(async (file, docId) => {
@@ -874,7 +930,7 @@ export function useRemoteDocStore(opts: StoreOptions = {}): DocStore {
 
   return {
     docs: items, ready, sync: allSync, loadError, deletedElsewhere: deleted,
-    create, update, remove, flush, reload, clearSamples: noop,
+    create, update, save, remove, flush, reload, clearSamples: noop,
     features: { wiki: wiki === true, files: wiki === true },
     versions, snapshot, comments: notes.items, addComment, updateComment, upload, fileUrl,
   };

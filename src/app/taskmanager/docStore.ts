@@ -260,6 +260,12 @@ function read(): Doc[] | null {
 /** 브라우저 저장 모드의 기록 - 판마다 남긴 시각(savedAt)으로 30분 규칙을 따진다 */
 type LocalVersion = DocVersion & { savedAt: string };
 
+/**
+ * 저장 결과 - ok 서버(브라우저 저장 모드는 이 브라우저)가 받았다 · fail 받지 않아 화면을 저장된 내용으로 되돌렸다 ·
+ * gone 그사이 다른 곳에서 지웠다. 연결 문제로 다시 보내는 동안은 결과를 기다린다
+ */
+export type SaveResult = 'ok' | 'fail' | 'gone';
+
 export interface DocStore {
   /** 휴지통에 든 문서도 들어 있다(trashedAt) - 화면이 가려 쓴다 */
   docs: Doc[];
@@ -268,9 +274,12 @@ export interface DocStore {
     title: string; body: string; parentId: string | null; author: string;
     icon?: string; labels?: string[]; order?: number;
   }): Doc;
+  /** 고친다 - 화면을 바로 바꾸고 저장은 모아서 한다(글 쓰기 · 체크박스) */
   update(id: string, patch: Partial<Doc>): void;
+  /** 바로 보내고 저장된 것을 확인한다 - 휴지통 · 되살리기 · 옮기기 · 되돌리기처럼 끝났다고 알려야 하는 동작 */
+  save(id: string, patch: Partial<Doc>): Promise<SaveResult>;
   /** 영구 삭제 - 하위 문서까지 함께 지운다 */
-  remove(id: string): void;
+  remove(id: string): Promise<SaveResult>;
   /** 손대지 않은 예시 문서를 지운다. 그 아래에 사람이 쓴 문서가 있으면 위로 올려 남긴다 */
   clearSamples(): void;
   /**
@@ -283,8 +292,9 @@ export interface DocStore {
   /** 지금 모습을 기록에 남긴다 - 예전 판으로 되돌리기 직전에 */
   snapshot(docId: string): Promise<void>;
   comments: DocComment[];
-  addComment(input: { docId: string; parentId: string | null; body: string; author: string }): void;
-  updateComment(id: string, patch: Partial<Pick<DocComment, 'body' | 'resolved' | 'removed'>>): void;
+  /** 댓글 남기기. 같은 제출을 다시 보낼 때는 같은 id 를 준다 - 먼저 보낸 것이 실은 들어갔으면 두 번 생기지 않는다 */
+  addComment(input: { id?: string; docId: string; parentId: string | null; body: string; author: string }): Promise<SaveResult>;
+  updateComment(id: string, patch: Partial<Pick<DocComment, 'body' | 'resolved' | 'removed'>>): Promise<SaveResult>;
   /** 파일을 올리고 본문에 넣을 주소를 돌려준다 */
   upload(file: File, docId: string): Promise<string>;
   /** 본문의 파일 주소(tmfile:) → 볼 수 있는 주소 */
@@ -354,15 +364,20 @@ export function useDocStore(opts?: StoreOptions): DocStore {
     full.current = true;
     onError.current?.('브라우저 저장 공간이 꽉 차 저장하지 못했습니다. 그림이 많은 문서를 줄이거나 휴지통을 비워 주세요.');
   }, []);
+  /** 목록을 바꾸고 이 브라우저에 적는다 - 적었으면 참(저장 칸이 꽉 차면 거짓) */
   const commitDocs = useCallback((next: Doc[]) => {
     docsRef.current = next;
     setDocs(next);
-    warnFull(writeJson(KEY, next));
+    const ok = writeJson(KEY, next);
+    warnFull(ok);
+    return ok;
   }, [warnFull]);
   const commitComments = useCallback((next: DocComment[]) => {
     commentsRef.current = next;
     setComments(next);
-    warnFull(writeJson(COMMENTS_KEY, next));
+    const ok = writeJson(COMMENTS_KEY, next);
+    warnFull(ok);
+    return ok;
   }, [warnFull]);
   /** 기록 저장 - 칸이 모자라면 문서마다 최근 5판만 남기고, 그래도 안 되면 기록을 비운다(문서 본문이 먼저다) */
   const commitVersions = useCallback((all: Record<string, LocalVersion[]>) => {
@@ -423,10 +438,11 @@ export function useDocStore(opts?: StoreOptions): DocStore {
     return doc;
   }, [commitDocs]);
 
-  const update = useCallback<DocStore['update']>((id, patch) => {
+  /** 고치고 이 브라우저에 적었는가(null = 그런 문서가 없다) */
+  const write = useCallback((id: string, patch: Partial<Doc>): boolean | null => {
     const prev = docsRef.current;
     const old = prev.find((d) => d.id === id);
-    if (!old) return;
+    if (!old) return null;
     const now = new Date().toISOString();
     const content = (patch.title !== undefined && patch.title !== old.title) || (patch.body !== undefined && patch.body !== old.body);
     if (content) {
@@ -444,10 +460,23 @@ export function useDocStore(opts?: StoreOptions): DocStore {
         commitVersions({ ...versionsRef.current, [id]: [v, ...list].slice(0, LOCAL_VERSIONS_PER_DOC) });
       }
     }
-    commitDocs(prev.map((d) => (d.id === id ? { ...d, ...patch, updatedAt: now } : d)));
+    return commitDocs(prev.map((d) => (d.id === id ? { ...d, ...patch, updatedAt: now } : d)));
   }, [commitDocs, commitVersions]);
 
-  const remove = useCallback<DocStore['remove']>((id) => {
+  const update = useCallback<DocStore['update']>((id, patch) => { write(id, patch); }, [write]);
+
+  /** 적지 못했으면(저장 칸이 꽉 참) 화면을 고치기 전으로 돌리고 fail */
+  const save = useCallback<DocStore['save']>(async (id, patch) => {
+    const prev = docsRef.current;
+    const ok = write(id, patch);
+    if (ok === null) return 'gone';
+    if (ok) return 'ok';
+    docsRef.current = prev;
+    setDocs(prev);
+    return 'fail';
+  }, [write]);
+
+  const remove = useCallback<DocStore['remove']>(async (id) => {
     const prev = docsRef.current;
     // 하위 문서가 고아로 남지 않도록 가지째 지운다
     const doomed = new Set<string>([id]);
@@ -461,13 +490,19 @@ export function useDocStore(opts?: StoreOptions): DocStore {
         }
       });
     }
-    commitDocs(prev.filter((d) => !doomed.has(d.id)));
+    if (!prev.some((d) => d.id === id)) return 'gone';
+    if (!commitDocs(prev.filter((d) => !doomed.has(d.id)))) {
+      docsRef.current = prev;
+      setDocs(prev);
+      return 'fail';
+    }
     // 지운 문서의 기록 · 댓글도 함께(Supabase 에서는 DB 가 함께 지운다)
     const all = { ...versionsRef.current };
     doomed.forEach((d) => { delete all[d]; });
     commitVersions(all);
     const kept = commentsRef.current.filter((c) => !doomed.has(c.docId));
     if (kept.length !== commentsRef.current.length) commitComments(kept);
+    return 'ok';
   }, [commitDocs, commitComments, commitVersions]);
 
   const clearSamples = useCallback(() => {
@@ -504,24 +539,36 @@ export function useDocStore(opts?: StoreOptions): DocStore {
     });
   }, [commitVersions]);
 
-  const addComment = useCallback<DocStore['addComment']>((input) => {
-    const now = new Date().toISOString();
-    const c: DocComment = {
-      id: `c${now}-${Math.random().toString(36).slice(2, 7)}`,
-      docId: input.docId, parentId: input.parentId, author: input.author, body: input.body,
-      resolved: false, removed: false, createdAt: now, updatedAt: now,
-    };
-    commitComments([...commentsRef.current, c]);
+  /** 댓글 목록을 바꾼다. 적지 못했으면 되돌리고 fail */
+  const writeComments = useCallback((next: DocComment[]): 'ok' | 'fail' => {
+    const prev = commentsRef.current;
+    if (commitComments(next)) return 'ok';
+    commentsRef.current = prev;
+    setComments(prev);
+    return 'fail';
   }, [commitComments]);
 
-  const updateComment = useCallback<DocStore['updateComment']>((id, patch) => {
+  const addComment = useCallback<DocStore['addComment']>(async (input) => {
     const now = new Date().toISOString();
-    commitComments(commentsRef.current.map((c) => {
+    const id = input.id ?? `c${now}-${Math.random().toString(36).slice(2, 7)}`;
+    // 같은 제출을 다시 보냈다 - 이미 들어가 있으면 또 넣지 않는다
+    if (commentsRef.current.some((c) => c.id === id)) return 'ok';
+    const c: DocComment = {
+      id, docId: input.docId, parentId: input.parentId, author: input.author, body: input.body,
+      resolved: false, removed: false, createdAt: now, updatedAt: now,
+    };
+    return writeComments([...commentsRef.current, c]);
+  }, [writeComments]);
+
+  const updateComment = useCallback<DocStore['updateComment']>(async (id, patch) => {
+    if (!commentsRef.current.some((c) => c.id === id)) return 'gone';
+    const now = new Date().toISOString();
+    return writeComments(commentsRef.current.map((c) => {
       if (c.id !== id) return c;
       const body = patch.removed ? '' : patch.body ?? c.body;
       return { ...c, ...patch, body, updatedAt: patch.body !== undefined && !patch.removed ? now : c.updatedAt };
     }));
-  }, [commitComments]);
+  }, [writeComments]);
 
   const upload = useCallback<DocStore['upload']>(async (file) => {
     if (!/^image\/(png|jpe?g|gif|webp)$/.test(file.type)) {
@@ -536,7 +583,7 @@ export function useDocStore(opts?: StoreOptions): DocStore {
   const fileUrl = useCallback<DocStore['fileUrl']>(async (src) => src, []);
 
   return {
-    docs, ready, create, update, remove, clearSamples,
+    docs, ready, create, update, save, remove, clearSamples,
     features: { wiki: true, files: true },
     versions, snapshot, comments, addComment, updateComment, upload, fileUrl,
   };
