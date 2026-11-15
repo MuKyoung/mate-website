@@ -1,7 +1,8 @@
 'use client';
 
 /**
- * 팀 위키 마인드맵 - 세 가지 보기: 마인드맵(가지) · 3D 그래프 · 프레젠테이션(Prezi 꼴, WikiPresent).
+ * 팀 위키 마인드맵 - 네 가지 보기: 마인드맵(가지) · 3D 그래프 · 그래프(옵시디언 그래프 보기 그대로, WikiObsidian) ·
+ * 프레젠테이션(Prezi 꼴, WikiPresent).
  *
  * 카테고리(맨 위 문서) 하나를 고르면 그 아래 문서를 가지로 펼친다. '전체'는 카테고리를 모두 한 장에 둔다.
  * 고른 카테고리 · 켠 것 · 보기 방식은 세 보기가 함께 쓴다. 3D 는 three.js 를 쓰므로 고를 때만 불러온다.
@@ -508,12 +509,13 @@ function ElixirCanvas({ data, cat, label, toggled, onActivate, api, onZoom }: {
 
 /* ── 틀 - 보기 방식 · 카테고리 · 켜고 끄기 · 확대, 그리고 고른 보기 ── */
 
-type Mode = 'map' | '3d' | 'present';
+type Mode = 'map' | '3d' | 'obsidian' | 'present';
 type Prefs = { cat: string; tasks: boolean; links: boolean; mode: Mode; rotate: boolean };
 
 const MODES: { id: Mode; label: string; hint: string }[] = [
   { id: 'map', label: '마인드맵', hint: '가운데에서 가지로 펼친 지도' },
   { id: '3d', label: '3D', hint: '옵시디언 그래프처럼 문서 · 링크 · 작업을 3D 로' },
+  { id: 'obsidian', label: '그래프', hint: '옵시디언 그래프 보기처럼 - 필터 · 그룹 · 표시 · 포스, 로컬 그래프, 애니메이션 재생' },
   { id: 'present', label: '프레젠테이션', hint: 'Prezi 처럼 원 안으로 확대해 들어가며 넘겨 보기' },
 ];
 
@@ -523,6 +525,15 @@ const PAIRS: [string, string][] = TASK_COLORS.map((c) => [PAINT[c.id].solid, PAI
 function ModeIcon({ mode }: { mode: Mode }) {
   if (mode === 'map') return <IconNav name="mindmap" size={17} />;
   const svg = { width: 17, height: 17, viewBox: '0 0 20 20', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round' } as const;
+  if (mode === 'obsidian') {
+    return (
+      /* 점과 선 - 그래프 보기 */
+      <svg {...svg} aria-hidden>
+        <circle cx="5" cy="6" r="2" /><circle cx="15" cy="5.5" r="2" /><circle cx="10.5" cy="15" r="2.4" />
+        <path d="M6.9 6.7l2.6 6.2M13.9 7.3l-2.5 5.6M7 5.9l6-.3" />
+      </svg>
+    );
+  }
   return mode === '3d' ? (
     /* 정육면체 */
     <svg {...svg} aria-hidden><path d="M10 2.8l6.2 3.5v7.4L10 17.2l-6.2-3.5V6.3z" /><path d="M3.8 6.3L10 9.8l6.2-3.5M10 9.8v7.4" /></svg>
@@ -531,6 +542,14 @@ function ModeIcon({ mode }: { mode: Mode }) {
     <svg {...svg} aria-hidden><circle cx="10" cy="10" r="7.2" /><circle cx="12.4" cy="11.6" r="3" /><circle cx="7" cy="7.6" r="1.4" /></svg>
   );
 }
+
+/* 그래프(옵시디언식)는 force-graph 를 쓴다 - 고를 때만 불러온다 */
+const ObsidianGraph = dynamic(() => import('./WikiObsidian'), {
+  ssr: false,
+  loading: () => (
+    <div className="absolute inset-0 grid place-items-center bg-[#1e1e1e] text-[15px] font-semibold text-white/70">그래프를 불러오는 중…</div>
+  ),
+});
 
 /* 3D 는 three.js 를 쓴다 - 고를 때만 불러온다 */
 const Graph3D = dynamic(() => import('./WikiGraph3D'), {
@@ -600,6 +619,16 @@ export default function WikiMap({
   }), [roots, cat, tasksByKey, tasks, members, paint, showTasks, showLinks, activeId]);
   /** 3D · 프레젠테이션이 쓰는 그래프 */
   const graph = useMemo(() => buildGraph({ roots, cat, tasks, members, palette: PAIRS }), [roots, cat, tasks, members]);
+  /** 그래프(옵시디언식)에 올릴 문서 - 카테고리를 골랐으면 그 문서와 아래 문서 */
+  const scopeDocs = useMemo(() => {
+    if (cat === ALL) return docs;
+    const out: Doc[] = [];
+    const walk = (n: TreeNode) => { out.push(n); n.children.forEach(walk); };
+    const r = roots.find((x) => x.id === cat);
+    if (r) walk(r);
+    return out;
+  }, [cat, docs, roots]);
+  const categoryTitles = useMemo(() => roots.map((r) => titleOf(r)), [roots]);
 
   const handlers = useRef({ onOpenDoc, onOpenTask });
   handlers.current = { onOpenDoc, onOpenTask };
@@ -646,7 +675,8 @@ export default function WikiMap({
               onClick={() => setPrefs((p) => ({ ...p, mode: m.id }))}
               className="inline-flex h-[34px] items-center gap-1.5 whitespace-nowrap rounded-full px-3 text-[14px] font-bold text-tm-ink transition-colors duration-150
                          hover:bg-white aria-pressed:bg-tm-blue aria-pressed:text-white [@media(pointer:coarse)]:h-10">
-              <ModeIcon mode={m.id} />
+              {/* 휴대폰: 네 보기가 한 줄에 들어가게 그림은 뺀다 */}
+              <span className="max-[720px]:hidden"><ModeIcon mode={m.id} /></span>
               {m.label}
             </button>
           ))}
@@ -680,10 +710,11 @@ export default function WikiMap({
 
         {/* 켜고 끄기 · 확대 - 휴대폰에서는 한 줄을 다 쓰고, 모자라면 확대 단추가 다음 줄 오른쪽으로 */}
         <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5 max-[720px]:w-full">
-          {toggle('작업', showTasks, (v) => setPrefs((p) => ({ ...p, tasks: v })))}
-          {mode !== 'present' && toggle('문서 링크', showLinks, (v) => setPrefs((p) => ({ ...p, links: v })))}
+          {/* 그래프(옵시디언식)는 제 설정 칸(필터)에서 고른다 */}
+          {mode !== 'obsidian' && toggle('작업', showTasks, (v) => setPrefs((p) => ({ ...p, tasks: v })))}
+          {mode !== 'present' && mode !== 'obsidian' && toggle('문서 링크', showLinks, (v) => setPrefs((p) => ({ ...p, links: v })))}
           {mode === '3d' && toggle('천천히 돌기', rotate, (v) => setPrefs((p) => ({ ...p, rotate: v })))}
-          <span className="mx-1 h-6 w-px bg-tm-line max-[720px]:hidden" aria-hidden />
+          {mode !== 'obsidian' && <span className="mx-1 h-6 w-px bg-tm-line max-[720px]:hidden" aria-hidden />}
           <div className="flex items-center gap-1.5 max-[720px]:ml-auto" role="group" aria-label="확대">
             <button type="button" onClick={() => apiRef.current?.zoomOut()} className={tmIconBtn} aria-label="작게">
               <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M4 10h12" /></svg>
@@ -703,13 +734,17 @@ export default function WikiMap({
       </div>
 
       {/* 고른 보기 */}
-      <div className={`relative min-h-0 flex-1 ${mode === 'map' ? '' : 'bg-[#0b1220]'}`}>
+      <div className={`relative min-h-0 flex-1 ${mode === 'map' ? '' : mode === 'obsidian' ? 'bg-[#1e1e1e]' : 'bg-[#0b1220]'}`}>
         {mode === 'map' && (
           <ElixirCanvas data={built.data} cat={cat} label={label} toggled={toggled} onActivate={activate} api={apiRef} onZoom={setZoom} />
         )}
         {mode === '3d' && (
           <Graph3D graph={graph} showTasks={showTasks} showLinks={showLinks} rotate={rotate}
             onOpenDoc={openDoc} onOpenTask={openTask} api={apiRef} />
+        )}
+        {mode === 'obsidian' && (
+          <ObsidianGraph docs={scopeDocs} allDocs={docs} tasks={tasks} categories={categoryTitles} activeId={activeId}
+            storageKey={`mate.taskmanager.docs.obsidian.v1:${me}`} onOpenDoc={openDoc} onOpenTask={openTask} api={apiRef} />
         )}
         {mode === 'present' && (
           <WikiPresent graph={graph} label={label} onOpenDoc={openDoc} onOpenTask={openTask} api={apiRef} />
@@ -751,13 +786,19 @@ export default function WikiMap({
               <span className="hidden max-[900px]:inline">끌어서 돌리기 · 두 번 누르면 열림</span>
             </>
           )}
+          {mode === 'obsidian' && (
+            <>
+              <span className="max-[900px]:hidden">노트를 누르면 열립니다 · 오른쪽 누르기는 메뉴 · 휠이나 +/- 로 확대, 방향키로 이동 · 오른쪽 위 톱니바퀴에서 필터 · 그룹 · 표시 · 포스</span>
+              <span className="hidden max-[900px]:inline">누르면 열림 · 톱니바퀴에서 설정</span>
+            </>
+          )}
           {mode === 'present' && (
             <>
               <span className="max-[900px]:hidden">← → 로 넘기고 원을 누르면 들어갑니다 · 빈 곳을 누르면 한 단계 밖으로 · 두 번 누르면 문서가 열립니다</span>
               <span className="hidden max-[900px]:inline">원을 누르면 들어갑니다 · 두 번 누르면 열림</span>
             </>
           )}
-          {mode !== 'present' && links > 0 && (
+          {(mode === 'map' || mode === '3d') && links > 0 && (
             <span className="inline-flex items-center gap-1.5">
               {mode === 'map'
                 ? <svg width="26" height="6" aria-hidden><path d="M1 3h24" stroke="#5b6676" strokeWidth="1.6" strokeDasharray="6 5" /></svg>
@@ -765,7 +806,7 @@ export default function WikiMap({
               문서 링크 {links}
             </span>
           )}
-          {showTasks && taskCount > 0 && (
+          {mode !== 'obsidian' && showTasks && taskCount > 0 && (
             <span className="inline-flex items-center gap-1.5">
               {(['todo', 'doing', 'review', 'done'] as const).map((st) => (
                 <i key={st} className="h-2 w-2 rounded-full" style={{ background: STATUS_DOT[st] }} title={statusLabel(st)} />
