@@ -43,6 +43,8 @@ export interface WikiRefs {
   openTask(key: string): void;
   /** tmfile: 주소 → 볼 수 있는 주소 */
   fileUrl(src: string): Promise<string>;
+  /** 링크를 눌렀는데 열 수 없을 때 까닭을 알린다(없는 문서 · 없는 제목 · 열지 못한 파일) */
+  notice?(text: string): void;
 }
 
 const WikiContext = createContext<WikiRefs | null>(null);
@@ -111,11 +113,12 @@ function DocLinkView({ node, editor }: NodeViewProps) {
     <NodeViewWrapper as="span" className={`tm-doclink${!d || d.gone ? ' is-gone' : ''}`}
       title={!d ? '찾을 수 없는 문서' : d.gone ? '휴지통에 있는 문서' : `${title} 열기`}
       onClick={(e: React.MouseEvent) => {
-        if (!d) return;
         // 편집 중에는 Ctrl(⌘)과 함께 눌러야 연다 - 그냥 누르면 고르기만
         if (editor.isEditable && !(e.ctrlKey || e.metaKey)) return;
         e.preventDefault();
-        wiki?.openDoc(d.id);
+        // 영구 삭제된 문서 - 아무 일 없이 끝나지 않게 까닭을 알린다
+        if (!d) wiki?.notice?.(`'${title}' 문서를 찾을 수 없습니다. 영구 삭제된 문서라 열 수 없습니다`);
+        else wiki?.openDoc(d.id);
       }}>
       {d?.icon ? <span className="tm-doclink-icon" aria-hidden>{d.icon}</span> : <DocGlyph />}
       {title}
@@ -1142,11 +1145,17 @@ function openHref(href: string, refs: WikiRefs, root?: HTMLElement | null) {
     refs.fileUrl(href).then((u) => {
       if (w) w.location.href = u;
       else window.open(u, '_blank', 'noopener,noreferrer');
-    }).catch(() => w?.close());
+    }).catch(() => {
+      w?.close();
+      refs.notice?.('파일을 열지 못했습니다. 지워졌거나 받을 수 없는 파일일 수 있습니다');
+    });
     return;
   }
   const to = linkTo(href);
-  if (!to) return;
+  if (!to) {
+    refs.notice?.('열 수 없는 주소입니다. 링크를 고쳐 주세요');
+    return;
+  }
   if (to.external) window.open(to.href, '_blank', 'noopener,noreferrer');
   else if (to.href.startsWith('#')) {
     let slug = to.href.slice(1);
@@ -1155,7 +1164,7 @@ function openHref(href: string, refs: WikiRefs, root?: HTMLElement | null) {
       const url = new URL(window.location.href);
       url.hash = slug;
       window.history.replaceState(window.history.state, '', url);
-    }
+    } else refs.notice?.(`'${slug}' 제목을 이 문서에서 찾을 수 없습니다. 제목이 바뀌었거나 지워졌을 수 있습니다`);
   } else window.location.assign(to.href);
 }
 

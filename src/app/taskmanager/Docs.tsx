@@ -96,6 +96,9 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
   const [urlDoc] = useState(() => (typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('doc')));
   /** 주소의 문서가 있는지 한 번 따져 보았다 */
   const urlChecked = useRef(false);
+  /** 효과 · 편집기 안에서 쓰는 알림 - 부르는 쪽이 그릴 때마다 새 함수를 주어도 다시 묶지 않게 */
+  const noticeRef = useRef(onNotice);
+  noticeRef.current = onNotice;
   useEffect(() => {
     try { if (!urlDoc && window.localStorage.getItem(viewKey) === 'map') setViewState('map'); } catch { /* 저장이 막힌 환경 */ }
   }, [urlDoc, viewKey]);
@@ -325,7 +328,12 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
     let tries = 0;
     const find = () => {
       if (activeRef.current !== target) return;
-      if (scrollToAnchor(editorRef.current?.view.dom ?? null, slug) || tries >= 10) return;
+      if (scrollToAnchor(editorRef.current?.view.dom ?? null, slug)) return;
+      // 끝내 없으면 맨 위에서 보여 주되 까닭을 알린다(제목을 고친 뒤 옛 링크로 들어온 경우)
+      if (tries >= 10) {
+        noticeRef.current?.(`링크한 '${slug}' 제목을 이 문서에서 찾을 수 없어 맨 위부터 보여 드립니다`, 'err');
+        return;
+      }
       tries += 1;
       setTimeout(find, 100);
     };
@@ -454,6 +462,7 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
     openDoc: (id) => { setActiveId(id); setQuery(''); },
     openTask: (key) => taskClick.current?.(key),
     fileUrl,
+    notice: (text) => noticeRef.current?.(text, 'err'),
   }), [docRefs, taskRefs, fileUrl]);
 
   /* ── 동작 ── */
@@ -466,7 +475,7 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
 
   /**
    * 펼치기 · 접기. 지금 보는 문서의 위 문서는 접지 않는다(접어도 지금 문서를 보이려고 바로 다시 펼쳐진다) -
-   * 아무 일 없이 끝나지 않게 까닭을 알린다. 막은 동작은 위키의 다른 막힘 알림처럼 빨간 알림(줄을 넘겨 다 보인다)
+   * 아무 일 없이 끝나지 않게 까닭을 알린다. 막은 동작은 위키의 다른 막힘 알림처럼 빨간 알림
    */
   const toggleOpen = (id: string) => {
     const above = doc && doc.id !== id && !hidden.has(doc.id) ? breadcrumb.find((b) => b.id === id) : undefined;
@@ -571,9 +580,8 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
     if (!d) return;
     const parentOk = !d.parentId || (byId.has(d.parentId) && !hidden.has(d.parentId));
     const r = await store.save(id, { trashedAt: null, trashedBy: null, ...(parentOk ? {} : { parentId: null }) });
-    // 원래 자리로 못 가고 맨 위로 갔으면 그렇다고 알린다 - 트리에서 엉뚱한 곳에 생긴 줄 알지 않게.
-    // 보통 알림은 한 줄로 잘리므로 알맹이(맨 위로)를 앞에 둔다
-    if (r === 'ok') onNotice?.(parentOk ? `'${titleOf(d)}' 문서를 되살렸습니다` : '되살린 문서를 맨 위로 옮겼습니다. 원래 위 문서가 휴지통에 있거나 지워졌습니다', 'ok');
+    // 원래 자리로 못 가고 맨 위로 갔으면 그렇다고 알린다 - 트리에서 엉뚱한 곳에 생긴 줄 알지 않게
+    if (r === 'ok') onNotice?.(parentOk ? `'${titleOf(d)}' 문서를 되살렸습니다` : `'${titleOf(d)}' 문서를 맨 위로 되살렸습니다. 원래 위 문서가 휴지통에 있거나 지워졌습니다`, 'ok');
     else failNotice(r, `'${titleOf(d)}' 문서를 되살리지`);
   };
 

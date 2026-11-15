@@ -678,8 +678,8 @@ export function Toast({
       {text && (
         <div className={`pointer-events-auto flex max-w-[min(640px,100%)] animate-tm-rise items-center gap-3.5 rounded-tm py-[11px] pl-5 pr-3 text-[15px] font-semibold leading-[1.5] text-white shadow-tm-toast ${
           tone === 'err' ? 'bg-tm-red-deep' : 'bg-tm-deep'}`}>
-          {/* 실패 알림은 문장이 길어 줄을 넘기고, 보통 알림은 한 줄로 자른다 */}
-          <span className={`min-w-0 ${tone === 'err' ? '' : 'truncate'}`}>{text}</span>
+          {/* 알림은 자르지 않고 줄을 넘겨 끝까지 보인다 - 까닭 · 할 일이 뒤에 오는 문장이 많다. 띄어쓰기 없는 긴 제목도 칸 안에서 꺾는다 */}
+          <span className="min-w-0 [overflow-wrap:anywhere]">{text}</span>
           {action && (
             <button
               type="button"
