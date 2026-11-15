@@ -26,7 +26,7 @@ import { titleOf } from './DocPanels';
 import { docLinkIds } from './docMarkdown';
 import { useMembers } from './members';
 import { usePainter, type Painter } from './colorStore';
-import { IconNav, IconPlus, PAINT, tmCount, tmGhostBtn, tmIconBtn, tmTab } from './ui';
+import { IconNav, IconPlus, PAINT, tmCount, tmGhostBtn, tmIconBtn, tmTab, useMediaQuery } from './ui';
 import { ALL, MENTION_RE, STATUS_DOT, TASK_RE, buildGraph, type CanvasApi } from './wikiGraph';
 import WikiPresent from './WikiPresent';
 
@@ -487,8 +487,9 @@ function ElixirCanvas({ data, cat, label, toggled, onActivate, api, onZoom }: {
 
   return (
     <>
-      {/* 엔진이 그리는 칸에 position: relative 를 박아 넣는다 - 크기는 바깥 틀(absolute)이 정한다 */}
-      <div className="absolute inset-0">
+      {/* 엔진이 그리는 칸에 position: relative 를 박아 넣는다 - 크기는 바깥 틀(absolute)이 정한다.
+          isolate: 엔진 안의 z-index 가 손가락 막(WikiMap 의 '지도 조작' 꺼짐) 위로 올라오지 않게 */}
+      <div className="absolute inset-0 isolate">
         <div ref={hostRef} tabIndex={0} onKeyDown={onKeyDown}
           onFocus={(e) => {
             // 키보드로 들어왔으면 가운데 노드를 골라 두고 읽어 준다(마우스로 누른 것은 엔진이 이미 골랐다)
@@ -510,11 +511,15 @@ function ElixirCanvas({ data, cat, label, toggled, onActivate, api, onZoom }: {
 /* ── 틀 - 보기 방식 · 카테고리 · 켜고 끄기 · 확대, 그리고 고른 보기 ── */
 
 type Mode = 'map' | '3d' | 'obsidian' | 'present';
-type Prefs = { cat: string; tasks: boolean; links: boolean; mode: Mode; rotate: boolean };
+type Prefs = {
+  cat: string; tasks: boolean; links: boolean; mode: Mode; rotate: boolean;
+  /** 프레젠테이션에서 카테고리마다 마지막으로 보던 문서 id(개요면 가운데 id) */
+  present: Record<string, string>;
+};
 
-const MODES: { id: Mode; label: string; hint: string }[] = [
+const MODES: { id: Mode; label: string; hint: string; aria?: string }[] = [
   { id: 'map', label: '마인드맵', hint: '가운데에서 가지로 펼친 지도' },
-  { id: '3d', label: '3D', hint: '옵시디언 그래프처럼 문서 · 링크 · 작업을 3D 로' },
+  { id: '3d', label: '3D', aria: '3D 그래프', hint: '옵시디언 그래프처럼 문서 · 링크 · 작업을 3D 로' },
   { id: 'obsidian', label: '그래프', hint: '옵시디언 그래프 보기처럼 - 필터 · 그룹 · 표시 · 포스, 로컬 그래프, 애니메이션 재생' },
   { id: 'present', label: '프레젠테이션', hint: 'Prezi 처럼 원 안으로 확대해 들어가며 넘겨 보기' },
 ];
@@ -601,6 +606,7 @@ export default function WikiMap({
       links: p.links ?? true,
       mode: MODES.some((m) => m.id === p.mode) ? (p.mode as Mode) : 'map',
       rotate: p.rotate ?? false,
+      present: p.present && typeof p.present === 'object' ? p.present : {},
     };
   });
   useEffect(() => {
@@ -646,6 +652,30 @@ export default function WikiMap({
   const apiRef = useRef<CanvasApi | null>(null);
   const [zoom, setZoom] = useState(1);
 
+  /* ── 휴대폰 · 손가락 기기 ── */
+  const narrow = useMediaQuery('(max-width: 720px)');
+  const coarse = useMediaQuery('(pointer: coarse)');
+  /** 마우스 올리기가 없는 기기 - 그래프는 누르면 선택만 한다(WikiObsidian) */
+  const noHover = useMediaQuery('(hover: none)');
+  /** 휴대폰: 작업 · 문서 링크 · 회전을 '표시' 단추로 펼친다 */
+  const [showOpts, setShowOpts] = useState(false);
+  /** 손가락 기기: 지도 조작 - 꺼져 있으면 지도 위를 밀어도 쪽이 스크롤되고 엔진은 손가락을 받지 않는다 */
+  const [touchOn, setTouchOn] = useState(false);
+  const [lockHint, setLockHint] = useState(false);
+  const hintTimer = useRef(0);
+  useEffect(() => () => window.clearTimeout(hintTimer.current), []);
+  const showLockHint = () => {
+    setLockHint(true);
+    window.clearTimeout(hintTimer.current);
+    hintTimer.current = window.setTimeout(() => setLockHint(false), 2200);
+  };
+
+  /** 프레젠테이션 - 카테고리마다 마지막으로 보던 문서(다른 보기로 나갔다 와도 그 장부터) */
+  const presentStart = prefs.present[cat] ?? null;
+  const onPresentStep = useCallback((id: string) => {
+    setPrefs((p) => (p.present[cat] === id ? p : { ...p, present: { ...p.present, [cat]: id } }));
+  }, [cat]);
+
   /* ── 막대 ── */
   const setCat = (c: string) => setPrefs((p) => ({ ...p, cat: c }));
   const missing = WIKI_CATEGORIES.filter((c) => !roots.some((r) => r.title.trim() === c.title));
@@ -664,17 +694,45 @@ export default function WikiMap({
       {label2}
     </label>
   );
+  /** 그래프(옵시디언식)는 제 설정 칸(필터)에서 고른다 */
+  const hasOpts = mode !== 'obsidian';
+  const opts = hasOpts && (
+    <>
+      {toggle('작업', showTasks, (v) => setPrefs((p) => ({ ...p, tasks: v })))}
+      {(mode === 'map' || mode === '3d') && toggle('문서 링크', showLinks, (v) => setPrefs((p) => ({ ...p, links: v })))}
+      {mode === '3d' && toggle('천천히 돌기', rotate, (v) => setPrefs((p) => ({ ...p, rotate: v })))}
+    </>
+  );
+  /** 휴대폰 막대의 44px 단추 */
+  const touchBtn = 'inline-flex h-11 flex-none items-center justify-center gap-1 whitespace-nowrap rounded-tm-sm border px-2.5 text-[14px] font-bold transition-colors duration-150';
+  const fitLabel = mode === 'present' ? '개요' : '맞춤';
+  /** 보기마다 아래 띠의 읽는 법 - 손가락 기기는 실제 조작대로 */
+  const guide: Record<Mode, { long: string; short: string }> = {
+    map: { long: '문서를 누르면 열립니다 · 끌거나 휠로 옮기고 Ctrl+휠로 확대합니다', short: '누르면 열립니다 · 두 손가락으로 확대' },
+    '3d': noHover
+      ? { long: '누르면 가까이 가고 정보 칸이 열립니다 · 정보 칸의 문서 열기로 엽니다', short: '누르면 선택 · 정보 칸에서 문서 열기' }
+      : { long: '끌어서 돌리고 휠로 확대합니다 · 누르면 가까이 가고 정보 칸의 문서 열기로 엽니다', short: '누르면 선택 · 정보 칸에서 문서 열기' },
+    obsidian: noHover
+      ? { long: '누르면 선택 · 열기 단추로 문서 열기 · 빈 곳을 누르면 선택 해제 · 톱니바퀴에서 설정', short: '누르면 선택 · 열기 단추로 문서 열기' }
+      : { long: '노트를 누르면 열립니다 · 오른쪽 누르기는 메뉴 · 휠이나 +/- 로 확대, 방향키로 이동 · 오른쪽 위 톱니바퀴에서 필터 · 그룹 · 표시 · 포스', short: '누르면 열림 · 톱니바퀴에서 설정' },
+    present: {
+      long: '← → 로 넘기고 원을 누르면 들어갑니다 · 빈 곳은 한 단계 밖 · 아래 막대의 문서 열기로 엽니다',
+      short: '원을 누르면 들어감 · 문서 열기 단추로 열기',
+    },
+  };
 
   return (
     <div className="tm-wikimap flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-tm border border-tm-line bg-white shadow-tm">
-      <div className="flex flex-none flex-wrap items-center gap-x-3 gap-y-2 border-b border-tm-line px-4 py-3 max-[720px]:px-3">
+      <div className="flex flex-none flex-wrap items-center gap-x-3 gap-y-2 border-b border-tm-line px-4 py-3 max-[720px]:px-3 max-[720px]:py-2.5">
         {/* 보기 방식 */}
-        <div role="group" aria-label="보기 방식" className="flex flex-none items-center gap-1 rounded-full border border-tm-line bg-tm-bg p-1">
+        <div role="group" aria-label="보기 방식"
+          className="flex flex-none items-center gap-1 rounded-full border border-tm-line bg-tm-bg p-1 max-[720px]:w-full max-[720px]:p-0.5">
           {MODES.map((m) => (
-            <button key={m.id} type="button" aria-pressed={mode === m.id} title={m.hint}
+            <button key={m.id} type="button" aria-pressed={mode === m.id} title={m.hint} aria-label={m.aria}
               onClick={() => setPrefs((p) => ({ ...p, mode: m.id }))}
-              className="inline-flex h-[34px] items-center gap-1.5 whitespace-nowrap rounded-full px-3 text-[14px] font-bold text-tm-ink transition-colors duration-150
-                         hover:bg-white aria-pressed:bg-tm-blue aria-pressed:text-white [@media(pointer:coarse)]:h-10">
+              className="inline-flex h-[34px] items-center justify-center gap-1.5 whitespace-nowrap rounded-full px-3 text-[14px] font-bold text-tm-ink transition-colors duration-150
+                         hover:bg-white aria-pressed:bg-tm-blue aria-pressed:text-white max-[720px]:flex-auto max-[720px]:px-2.5 max-[720px]:text-[13.5px]
+                         [@media(pointer:coarse)]:h-11">
               {/* 휴대폰: 네 보기가 한 줄에 들어가게 그림은 뺀다 */}
               <span className="max-[720px]:hidden"><ModeIcon mode={m.id} /></span>
               {m.label}
@@ -684,7 +742,7 @@ export default function WikiMap({
 
         {/* 카테고리 고르기 - 맨 위 문서가 카테고리다 */}
         <div role="group" aria-label="카테고리"
-          className="no-scrollbar -my-1 flex min-w-0 flex-[1_1_320px] items-center gap-1.5 overflow-x-auto py-1">
+          className="no-scrollbar -my-1 flex min-w-0 flex-[1_1_320px] items-center gap-1.5 overflow-x-auto py-1 max-[720px]:basis-full">
           <button type="button" aria-pressed={cat === ALL} onClick={() => setCat(ALL)} className={tmTab}>
             전체
           </button>
@@ -699,7 +757,7 @@ export default function WikiMap({
           ))}
           {canCreate && missing.map((c) => (
             <button key={c.id} type="button" onClick={() => createCategory(c.id)}
-              title={`맨 위에 '${c.title}' 문서를 만들고 쓰는 법을 넣습니다`}
+              title={`카테고리는 맨 위 문서입니다. 필요한 분류만 추가하세요. 누르면 '${c.title}' 문서를 만들고 쓰는 법을 넣습니다`}
               className="inline-flex h-[42px] flex-none items-center gap-1.5 whitespace-nowrap rounded-full border border-dashed border-tm-edge bg-white px-4
                          text-[14.5px] font-bold text-tm-blue transition-colors duration-150 hover:border-tm-blue hover:bg-tm-tint [@media(pointer:coarse)]:h-11">
               <IconPlus size={16} />
@@ -708,29 +766,57 @@ export default function WikiMap({
           ))}
         </div>
 
-        {/* 켜고 끄기 · 확대 - 휴대폰에서는 한 줄을 다 쓰고, 모자라면 확대 단추가 다음 줄 오른쪽으로 */}
-        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5 max-[720px]:w-full">
-          {/* 그래프(옵시디언식)는 제 설정 칸(필터)에서 고른다 */}
-          {mode !== 'obsidian' && toggle('작업', showTasks, (v) => setPrefs((p) => ({ ...p, tasks: v })))}
-          {mode !== 'present' && mode !== 'obsidian' && toggle('문서 링크', showLinks, (v) => setPrefs((p) => ({ ...p, links: v })))}
-          {mode === '3d' && toggle('천천히 돌기', rotate, (v) => setPrefs((p) => ({ ...p, rotate: v })))}
-          {mode !== 'obsidian' && <span className="mx-1 h-6 w-px bg-tm-line max-[720px]:hidden" aria-hidden />}
-          <div className="flex items-center gap-1.5 max-[720px]:ml-auto" role="group" aria-label="확대">
+        {/* 조작 - PC 는 켜고 끄기를 바로, 휴대폰은 '표시' 로 펼친다. 손가락 기기는 '지도 조작' */}
+        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5 max-[720px]:w-full max-[720px]:flex-nowrap max-[720px]:gap-x-1.5">
+          {!narrow && opts}
+          {narrow && hasOpts && (
+            <button type="button" onClick={() => setShowOpts((v) => !v)} aria-expanded={showOpts} aria-controls={showOpts ? 'wm-opts' : undefined}
+              className={`${touchBtn} ${showOpts ? 'border-tm-blue bg-tm-tint text-tm-deep' : 'border-tm-edge bg-white text-tm-ink'}`}>
+              표시
+              <svg viewBox="0 0 20 20" width="12" height="12" aria-hidden fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
+                className={`transition-transform duration-150 ${showOpts ? 'rotate-180' : ''}`}>
+                <path d="M5 8l5 5 5-5" />
+              </svg>
+            </button>
+          )}
+          {coarse && (
+            <button type="button" onClick={() => setTouchOn((v) => !v)} aria-pressed={touchOn}
+              title={touchOn ? '지도를 끌고 확대할 수 있습니다. 다시 누르면 쪽 스크롤로 돌아갑니다' : '켜면 지도를 끌고 확대하고 누를 수 있습니다'}
+              className={`${touchBtn} ${touchOn ? 'border-tm-blue bg-tm-blue text-white' : 'border-tm-edge bg-white text-tm-ink'}`}>
+              지도 조작
+            </button>
+          )}
+          {!narrow && hasOpts && <span className="mx-1 h-6 w-px bg-tm-line" aria-hidden />}
+          <div className="flex items-center gap-1.5 max-[720px]:ml-auto max-[720px]:gap-1" role="group" aria-label="확대">
             <button type="button" onClick={() => apiRef.current?.zoomOut()} className={tmIconBtn} aria-label="작게">
               <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M4 10h12" /></svg>
             </button>
-            {mode === 'map' && (
+            {mode === 'map' && !narrow && (
               <span className="w-[46px] text-center text-[13.5px] font-bold tabular-nums text-tm-sub" aria-live="off">{Math.round(zoom * 100)}%</span>
             )}
             <button type="button" onClick={() => apiRef.current?.zoomIn()} className={tmIconBtn} aria-label="크게">
               <IconPlus size={16} />
             </button>
-            <button type="button" onClick={() => apiRef.current?.fit()} className={tmGhostBtn}
-              title={mode === 'present' ? '처음 장(개요)으로' : '전체가 보이게 맞추기 (0)'}>
-              {mode === 'present' ? '개요' : '맞춤'}
-            </button>
+            {narrow ? (
+              <button type="button" onClick={() => apiRef.current?.fit()} className={tmIconBtn} aria-label={fitLabel}
+                title={mode === 'present' ? '처음 장(개요)으로' : '전체가 보이게 맞추기'}>
+                <svg viewBox="0 0 20 20" width="17" height="17" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3.5 7.5v-4h4M16.5 7.5v-4h-4M3.5 12.5v4h4M16.5 12.5v4h-4" />
+                </svg>
+              </button>
+            ) : (
+              <button type="button" onClick={() => apiRef.current?.fit()} className={tmGhostBtn}
+                title={mode === 'present' ? '처음 장(개요)으로' : '전체가 보이게 맞추기 (0)'}>
+                {fitLabel}
+              </button>
+            )}
           </div>
         </div>
+        {narrow && hasOpts && showOpts && (
+          <div id="wm-opts" role="group" aria-label="표시" className="-mt-1 flex w-full flex-wrap items-center gap-x-1 gap-y-0.5">
+            {opts}
+          </div>
+        )}
       </div>
 
       {/* 고른 보기 */}
@@ -747,7 +833,19 @@ export default function WikiMap({
             storageKey={`mate.taskmanager.docs.obsidian.v1:${me}`} onOpenDoc={openDoc} onOpenTask={openTask} api={apiRef} />
         )}
         {mode === 'present' && (
-          <WikiPresent graph={graph} label={label} onOpenDoc={openDoc} onOpenTask={openTask} api={apiRef} />
+          <WikiPresent graph={graph} label={label} showTasks={showTasks} startId={presentStart} onStep={onPresentStep}
+            onOpenDoc={openDoc} onOpenTask={openTask} api={apiRef} />
+        )}
+
+        {/* 손가락 기기 · 지도 조작 꺼짐: 지도 위를 세로로 밀면 쪽이 스크롤된다(엔진은 손가락을 받지 않고 노드도 열리지 않는다).
+            안내 · 정보 칸 · 설정 · 넘기기 막대는 z-10 이라 이 막 위에서 그대로 누를 수 있다 */}
+        {coarse && !touchOn && (
+          <div aria-hidden onClick={showLockHint} className="absolute inset-0 z-[5]" style={{ touchAction: 'pan-y' }} />
+        )}
+        {lockHint && coarse && !touchOn && (
+          <p role="status" className="pointer-events-none absolute left-1/2 top-3 z-10 -translate-x-1/2 whitespace-nowrap rounded-full bg-tm-ink px-3.5 py-2 text-[13px] font-semibold text-white shadow-tm-up">
+            지도를 움직이려면 &apos;지도 조작&apos;을 켜세요
+          </p>
         )}
 
         {/* 아래 문서가 없는 카테고리 - 무엇을 하면 되는지(위쪽에 - 프레젠테이션의 넘기기 막대와 겹치지 않게) */}
@@ -774,28 +872,12 @@ export default function WikiMap({
       {/* 읽는 법 · 새 문서 - 지도 아래 띠(지도 위에 띄우면 가장자리 노드를 가린다) */}
       {!built.empty && (
         <div className="flex flex-none flex-wrap items-center gap-x-4 gap-y-2 border-t border-tm-line px-4 py-2 text-[13px] font-semibold text-tm-sub max-[720px]:px-3">
-          {mode === 'map' && (
+          {coarse && !touchOn ? (
+            <span>지도 위를 밀면 화면이 움직입니다 · &apos;지도 조작&apos;을 켜면 지도를 누르고 끌 수 있습니다</span>
+          ) : (
             <>
-              <span className="max-[900px]:hidden">문서를 누르면 열립니다 · 끌거나 휠로 옮기고 Ctrl+휠로 확대합니다</span>
-              <span className="hidden max-[900px]:inline">누르면 열립니다 · 두 손가락으로 확대</span>
-            </>
-          )}
-          {mode === '3d' && (
-            <>
-              <span className="max-[900px]:hidden">끌어서 돌리고 휠로 확대합니다 · 누르면 가까이 가고, 두 번 누르면 문서가 열립니다</span>
-              <span className="hidden max-[900px]:inline">끌어서 돌리기 · 두 번 누르면 열림</span>
-            </>
-          )}
-          {mode === 'obsidian' && (
-            <>
-              <span className="max-[900px]:hidden">노트를 누르면 열립니다 · 오른쪽 누르기는 메뉴 · 휠이나 +/- 로 확대, 방향키로 이동 · 오른쪽 위 톱니바퀴에서 필터 · 그룹 · 표시 · 포스</span>
-              <span className="hidden max-[900px]:inline">누르면 열림 · 톱니바퀴에서 설정</span>
-            </>
-          )}
-          {mode === 'present' && (
-            <>
-              <span className="max-[900px]:hidden">← → 로 넘기고 원을 누르면 들어갑니다 · 빈 곳을 누르면 한 단계 밖으로 · 두 번 누르면 문서가 열립니다</span>
-              <span className="hidden max-[900px]:inline">원을 누르면 들어갑니다 · 두 번 누르면 열림</span>
+              <span className="max-[900px]:hidden">{guide[mode].long}</span>
+              <span className="hidden max-[900px]:inline">{guide[mode].short}</span>
             </>
           )}
           {(mode === 'map' || mode === '3d') && links > 0 && (

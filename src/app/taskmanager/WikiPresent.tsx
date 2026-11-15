@@ -8,7 +8,9 @@
  * - 화면 이동은 van Wijk & Nuij(2003)의 부드러운 확대 경로를 따른다(d3-interpolate 의 interpolateZoom 과 같은 식).
  *   멀리 떨어진 원으로 갈 때 Prezi 처럼 잠깐 빠져나왔다가 다시 들어간다.
  * - impress.js 처럼 큰 판(world) 하나에 CSS transform 하나로 카메라를 움직인다 - 따로 라이브러리를 쓰지 않는다.
- * - 휠로 확대 · 끌어서 이동 · 두 손가락 확대, 빈 곳을 누르면 한 단계 밖으로, 원을 두 번 누르면 문서가 열린다.
+ * - 휠로 확대 · 끌어서 이동 · 두 손가락 확대, 빈 곳을 누르면 한 단계 밖으로.
+ *   문서는 아래 넘기기 막대의 '문서 열기'로 연다(원을 두 번 눌러도 열린다).
+ * - 카테고리마다 마지막으로 보던 문서를 WikiMap 이 기억해 두고(startId · onStep), 다시 오면 그 원에서 시작한다.
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
 import { STATUS_DOT, pathTo, type CanvasApi, type GDoc, type WikiGraph } from './wikiGraph';
@@ -77,13 +79,23 @@ function zoomPath(a: View, b: View): { S: number; at(t: number): View } {
 const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
 
 const hudBtn =
-  'inline-flex h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-tm-sm border border-white/25 px-3 text-[13.5px] font-bold text-white ' +
-  'transition-colors duration-150 hover:bg-white/10 disabled:cursor-default disabled:opacity-35 [@media(pointer:coarse)]:h-11';
+  'inline-flex h-9 min-w-[36px] items-center justify-center gap-1.5 whitespace-nowrap rounded-tm-sm border border-white/25 px-3 text-[13.5px] font-bold text-white ' +
+  'transition-colors duration-150 hover:bg-white/10 disabled:cursor-default disabled:opacity-35 ' +
+  'max-[720px]:h-11 max-[720px]:min-w-[44px] [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:min-w-[44px]';
 
-export default function WikiPresent({ graph, label, onOpenDoc, onOpenTask, api }: {
+/** 맞춘 원과 무대 가장자리(아래 넘기기 막대) 사이의 최소 틈(px) */
+const GAP = 12;
+
+export default function WikiPresent({ graph, label, showTasks, startId, onStep, onOpenDoc, onOpenTask, api }: {
   graph: WikiGraph;
   /** 보는 것의 이름(카테고리 또는 '팀 위키 전체') - 화면 읽기 프로그램용 */
   label: string;
+  /** 끄면 원 안의 작업 단추 목록을 숨긴다(작업 수 · 맡은 작업 요약은 남는다) */
+  showTasks: boolean;
+  /** 처음 볼 문서 - 이 카테고리에서 마지막으로 보던 문서 id. 없거나 지워졌으면 개요 */
+  startId: string | null;
+  /** 넘겨서 보는 문서가 바뀌었다(개요로 가면 가운데 id) - 손으로 옮긴 것만 알린다 */
+  onStep(id: string): void;
   onOpenDoc(id: string): void;
   onOpenTask(key: string): void;
   api: MutableRefObject<CanvasApi | null>;
@@ -99,6 +111,8 @@ export default function WikiPresent({ graph, label, onOpenDoc, onOpenTask, api }
   const worldRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<View | null>(null);
   const animRef = useRef(0);
+  /** 지금 맞춘 문서 - go 가 바로 적는다(창 크기 감시가 첫 그리기 전에 돌아도 같은 원에 맞추게) */
+  const shownId = useRef<string | null>(null);
   /** 방금 끌어서 옮겼다 - 이어서 오는 click 을 무시한다 */
   const dragged = useRef(false);
   const [full, setFull] = useState(false);
@@ -120,7 +134,9 @@ export default function WikiPresent({ graph, label, onOpenDoc, onOpenTask, api }
     const c = pos.get(id);
     if (!c) return null;
     const { W, H } = size();
-    const s = (0.9 * Math.min(W, H)) / (2 * c.r);
+    const m = Math.min(W, H);
+    const d = Math.max(1, Math.min(0.9 * m, (m - GAP * 2) / 1.03));
+    const s = d / (2 * c.r);
     return { cx: c.x, cy: c.y, w: W / s };
   }, [pos]);
 
@@ -140,27 +156,41 @@ export default function WikiPresent({ graph, label, onOpenDoc, onOpenTask, api }
     animRef.current = requestAnimationFrame(tick);
   }, [apply]);
 
-  /* 넘김 - 고른 문서로 카메라를 옮긴다 */
-  const go = useCallback((i: number, instant = false) => {
+  /* 넘김 - 고른 문서로 카메라를 옮긴다. record: 손으로 옮긴 것(개요로 간 것도)만 기억하게 알린다 */
+  const go = useCallback((i: number, instant = false, record = true) => {
     const n = Math.max(0, Math.min(order.length - 1, i));
     setStep(n);
-    const v = viewOf(order[n]?.id ?? graph.rootId);
+    const id = order[n]?.id ?? graph.rootId;
+    shownId.current = id;
+    const v = viewOf(id);
     if (v) animateTo(v, instant);
-  }, [order, viewOf, animateTo, graph.rootId]);
+    if (record) onStep(id);
+  }, [order, viewOf, animateTo, graph.rootId, onStep]);
   const goId = useCallback((id: string) => {
     const i = order.findIndex((d) => d.id === id);
     if (i >= 0) go(i);
   }, [order, go]);
 
-  /* 처음 · 카테고리를 바꿈 - 보던 문서가 새 판에도 있으면 그 자리, 없으면 가운데 */
-  const shownId = useRef<string | null>(null);
+  /* 처음 · 카테고리를 바꿈 · 문서가 바뀜
+     - 같은 판(문서 내용만 바뀜): 보던 문서
+     - 다시 왔거나 카테고리를 바꿈: 그 카테고리에서 마지막으로 보던 문서(문서 id 로), 없으면 보던 문서
+     - 둘 다 판에 없으면(지워짐) 개요. 기억한 값은 손으로 옮길 때만 바꾼다 */
+  const boardRef = useRef<string | null>(null);
+  const startRef = useRef(startId);
+  startRef.current = startId;
   useEffect(() => {
-    const keep = shownId.current ? order.findIndex((d) => d.id === shownId.current) : -1;
-    go(keep >= 0 ? keep : 0, true);
+    const same = boardRef.current === graph.rootId;
+    boardRef.current = graph.rootId;
+    const want = same ? [shownId.current] : [startRef.current, shownId.current];
+    let i = -1;
+    for (const id of want) {
+      if (id) i = order.findIndex((d) => d.id === id);
+      if (i >= 0) break;
+    }
+    go(i >= 0 ? i : 0, true, false);
     // 판이 바뀔 때만
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [graph]);
-  useEffect(() => { shownId.current = cur?.id ?? null; }, [cur]);
 
   /* 창 크기가 바뀌면 지금 문서를 다시 맞춘다 */
   useEffect(() => {
@@ -318,82 +348,85 @@ export default function WikiPresent({ graph, label, onOpenDoc, onOpenTask, api }
   };
 
   return (
-    <div ref={wrapRef} className="tm-present absolute inset-0 overflow-hidden bg-[#0b1220]">
-      <div ref={stageRef} tabIndex={0} onKeyDown={onKeyDown}
-        role="application" aria-roledescription="프레젠테이션"
-        aria-label={`${label} 프레젠테이션. 화살표로 넘기고 Enter 로 문서를 엽니다`}
-        aria-describedby="wp-live"
-        onClick={(e) => {
-          // 빈 곳을 누르면 한 단계 밖으로(Prezi 와 같다)
-          if (dragged.current || e.target !== e.currentTarget) return;
-          if (cur.parent) goId(cur.parent);
-        }}
-        className="absolute inset-0 cursor-grab touch-none select-none outline-none focus-visible:shadow-[inset_0_0_0_2px_#7aa2ff] active:cursor-grabbing">
-        <div ref={worldRef} className="pointer-events-none absolute left-0 top-0 origin-top-left">
-          {order.map((d) => {
-            const c = pos.get(d.id);
-            if (!c) return null;
-            const leaf = d.children.length === 0;
-            const root = d.depth === 0;
-            const on = d.id === cur.id;
-            const meta = [
-              d.person ? `맡은 작업 ${d.assigned}건` : '',
-              d.descendants ? `문서 ${d.descendants}` : '',
-              d.tasks.length ? `작업 ${d.tasks.length}` : '',
-            ].filter(Boolean);
-            return (
-              <div key={d.id} data-id={d.id}
-                onClick={(e) => { e.stopPropagation(); if (!dragged.current) goId(d.id); }}
-                onDoubleClick={(e) => { e.stopPropagation(); open(d); }}
-                title={d.virtual ? d.title : `${d.title} · 누르면 들어가고, 두 번 누르면 문서가 열립니다`}
-                className="pointer-events-auto absolute cursor-pointer rounded-full"
-                style={{
-                  left: c.x - c.r, top: c.y - c.r, width: c.r * 2, height: c.r * 2, fontSize: c.r * 0.085,
-                  background: root ? '#13203d' : d.depth === 1 ? '#ffffff' : d.tint,
-                  border: `${c.r * (root ? 0.008 : 0.028)}px solid ${root ? '#2f4fd6' : d.color}`,
-                  boxShadow: on && !root ? `0 0 0 ${c.r * 0.03}px rgba(122, 162, 255, 0.55)` : undefined,
-                  color: root ? '#ffffff' : '#1b2430',
-                }}>
-                <div className={`absolute flex flex-col items-center gap-[0.18em] text-center ${
-                  leaf ? 'inset-x-[13%] inset-y-[14%] justify-center' : 'inset-x-[18%] top-[9%]'}`}>
-                  <p className="flex max-w-full items-center justify-center gap-[0.25em] font-extrabold leading-[1.2] tracking-[-0.02em]"
-                    style={{ fontSize: leaf ? '2em' : root ? '1em' : '1.45em' }}>
-                    {d.person ? avatar(d.person) : d.icon ? <span aria-hidden className="flex-none">{d.icon}</span> : null}
-                    <span className={`[overflow-wrap:anywhere] ${leaf || root ? 'line-clamp-2' : 'line-clamp-1'}`}>{d.title}</span>
-                  </p>
-                  {meta.length > 0 && (
-                    <p className={`font-semibold ${leaf ? 'text-[0.72em]' : 'text-[0.42em]'}`} style={{ color: root ? 'rgba(255,255,255,0.75)' : '#5b6676' }}>
-                      {meta.join(' · ')}
+    <div ref={wrapRef} className="tm-present absolute inset-0 flex flex-col overflow-hidden bg-[#0b1220]">
+      {/* 무대 - 넘기기 막대를 뺀 나머지 높이. 맞춤 · 창 크기 다시 맞추기가 이 크기를 쓴다 */}
+      <div className="relative min-h-0 flex-1">
+        <div ref={stageRef} tabIndex={0} onKeyDown={onKeyDown}
+          role="application" aria-roledescription="프레젠테이션"
+          aria-label={`${label} 프레젠테이션. 화살표로 넘기고 Enter 로 문서를 엽니다`}
+          aria-describedby="wp-live"
+          onClick={(e) => {
+            // 빈 곳을 누르면 한 단계 밖으로(Prezi 와 같다)
+            if (dragged.current || e.target !== e.currentTarget) return;
+            if (cur.parent) goId(cur.parent);
+          }}
+          className="absolute inset-0 cursor-grab touch-none select-none outline-none focus-visible:shadow-[inset_0_0_0_2px_#7aa2ff] active:cursor-grabbing">
+          <div ref={worldRef} className="pointer-events-none absolute left-0 top-0 origin-top-left">
+            {order.map((d) => {
+              const c = pos.get(d.id);
+              if (!c) return null;
+              const leaf = d.children.length === 0;
+              const root = d.depth === 0;
+              const on = d.id === cur.id;
+              const meta = [
+                d.person ? `맡은 작업 ${d.assigned}건` : '',
+                d.descendants ? `문서 ${d.descendants}` : '',
+                d.tasks.length ? `작업 ${d.tasks.length}` : '',
+              ].filter(Boolean);
+              return (
+                <div key={d.id} data-id={d.id}
+                  onClick={(e) => { e.stopPropagation(); if (!dragged.current) goId(d.id); }}
+                  onDoubleClick={(e) => { e.stopPropagation(); open(d); }}
+                  title={d.virtual ? d.title : `${d.title} · 누르면 들어갑니다 · 아래 문서 열기(또는 두 번 누르기)로 엽니다`}
+                  className="pointer-events-auto absolute cursor-pointer rounded-full"
+                  style={{
+                    left: c.x - c.r, top: c.y - c.r, width: c.r * 2, height: c.r * 2, fontSize: c.r * 0.085,
+                    background: root ? '#13203d' : d.depth === 1 ? '#ffffff' : d.tint,
+                    border: `${c.r * (root ? 0.008 : 0.028)}px solid ${root ? '#2f4fd6' : d.color}`,
+                    boxShadow: on && !root ? `0 0 0 ${c.r * 0.03}px rgba(122, 162, 255, 0.55)` : undefined,
+                    color: root ? '#ffffff' : '#1b2430',
+                  }}>
+                  <div className={`absolute flex flex-col items-center gap-[0.18em] text-center ${
+                    leaf ? 'inset-x-[13%] inset-y-[14%] justify-center' : 'inset-x-[18%] top-[9%]'}`}>
+                    <p className="flex max-w-full items-center justify-center gap-[0.25em] font-extrabold leading-[1.2] tracking-[-0.02em]"
+                      style={{ fontSize: leaf ? '2em' : root ? '1em' : '1.45em' }}>
+                      {d.person ? avatar(d.person) : d.icon ? <span aria-hidden className="flex-none">{d.icon}</span> : null}
+                      <span className={`[overflow-wrap:anywhere] ${leaf || root ? 'line-clamp-2' : 'line-clamp-1'}`}>{d.title}</span>
                     </p>
-                  )}
-                  {leaf && d.excerpt && (
-                    <p className="line-clamp-4 max-w-full text-[0.78em] font-medium leading-[1.55]" style={{ color: root ? 'rgba(255,255,255,0.85)' : '#334155' }}>
-                      {d.excerpt}
-                    </p>
-                  )}
-                  {leaf && d.people.length > 0 && (
-                    <p className="flex items-center gap-[0.15em] text-[1.3em]">{d.people.slice(0, 6).map(avatar)}</p>
-                  )}
-                  {leaf && d.tasks.length > 0 && (
-                    <ul className="mt-[0.2em] flex max-w-full flex-col items-stretch gap-[0.12em] text-[0.62em]">
-                      {d.tasks.slice(0, 4).map((t) => (
-                        <li key={t.id}>
-                          <button type="button" tabIndex={-1}
-                            onClick={(e) => { e.stopPropagation(); onOpenTask(t.key); }}
-                            className="flex w-full items-center gap-[0.4em] rounded-[0.5em] bg-white/85 px-[0.6em] py-[0.25em] text-left font-semibold text-[#1b2430] ring-1 ring-black/10 hover:bg-white">
-                            <i className="h-[0.6em] w-[0.6em] flex-none rounded-full" style={{ background: STATUS_DOT[t.status] }} />
-                            <b className="flex-none tabular-nums text-[#5b6676]">{t.key}</b>
-                            <span className="truncate">{t.title}</span>
-                          </button>
-                        </li>
-                      ))}
-                      {d.tasks.length > 4 && <li className="text-center font-bold text-[#5b6676]">작업 {d.tasks.length - 4}건 더</li>}
-                    </ul>
-                  )}
+                    {meta.length > 0 && (
+                      <p className={`font-semibold ${leaf ? 'text-[0.72em]' : 'text-[0.42em]'}`} style={{ color: root ? 'rgba(255,255,255,0.75)' : '#5b6676' }}>
+                        {meta.join(' · ')}
+                      </p>
+                    )}
+                    {leaf && d.excerpt && (
+                      <p className="line-clamp-4 max-w-full text-[0.78em] font-medium leading-[1.55]" style={{ color: root ? 'rgba(255,255,255,0.85)' : '#334155' }}>
+                        {d.excerpt}
+                      </p>
+                    )}
+                    {leaf && d.people.length > 0 && (
+                      <p className="flex items-center gap-[0.15em] text-[1.3em]">{d.people.slice(0, 6).map(avatar)}</p>
+                    )}
+                    {leaf && showTasks && d.tasks.length > 0 && (
+                      <ul className="mt-[0.2em] flex max-w-full flex-col items-stretch gap-[0.12em] text-[0.62em]">
+                        {d.tasks.slice(0, 4).map((t) => (
+                          <li key={t.id}>
+                            <button type="button" tabIndex={-1}
+                              onClick={(e) => { e.stopPropagation(); onOpenTask(t.key); }}
+                              className="flex w-full items-center gap-[0.4em] rounded-[0.5em] bg-white/85 px-[0.6em] py-[0.25em] text-left font-semibold text-[#1b2430] ring-1 ring-black/10 hover:bg-white">
+                              <i className="h-[0.6em] w-[0.6em] flex-none rounded-full" style={{ background: STATUS_DOT[t.status] }} />
+                              <b className="flex-none tabular-nums text-[#5b6676]">{t.key}</b>
+                              <span className="truncate">{t.title}</span>
+                            </button>
+                          </li>
+                        ))}
+                        {d.tasks.length > 4 && <li className="text-center font-bold text-[#5b6676]">작업 {d.tasks.length - 4}건 더</li>}
+                      </ul>
+                    )}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </div>
 
@@ -401,9 +434,9 @@ export default function WikiPresent({ graph, label, onOpenDoc, onOpenTask, api }
         {`${step + 1} / ${order.length}, ${cur.title}${cur.children.length ? `, 아래 문서 ${cur.children.length}개` : ''}`}
       </p>
 
-      {/* 넘기기 막대 */}
-      <div data-hud className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center p-3 max-[720px]:p-2">
-        <div className="pointer-events-auto flex max-w-full flex-wrap items-center justify-center gap-2 rounded-tm border border-white/15 bg-[#0b1220] px-3 py-2 text-white shadow-tm-up">
+      {/* 넘기기 막대 - 무대 아래 따로 한 줄(z-10: 손가락 기기에서 지도 조작이 꺼져도 누를 수 있게) */}
+      <div data-hud className="relative z-10 flex flex-none justify-center border-t border-white/15 bg-[#0b1220] px-3 py-2 max-[720px]:px-2 max-[720px]:py-1.5">
+        <div className="flex max-w-full flex-wrap items-center justify-center gap-2 text-white max-[720px]:gap-1.5">
           <button type="button" onClick={() => go(step - 1)} disabled={step === 0} className={hudBtn} aria-label="이전">
             <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.5 4.5L7 10l5.5 5.5" /></svg>
           </button>

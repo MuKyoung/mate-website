@@ -26,7 +26,7 @@ const WikiMap = dynamic(() => import('./WikiMap'), {
   ssr: false,
   loading: () => (
     <div className="flex min-w-0 flex-1 items-center justify-center rounded-tm border border-tm-line bg-white text-[15px] font-semibold text-tm-sub shadow-tm">
-      마인드맵을 불러오는 중…
+      지도를 불러오는 중…
     </div>
   ),
 });
@@ -602,7 +602,7 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
   const menu: MenuEntry[] = doc ? [
     { label: starred.includes(doc.id) ? '즐겨찾기에서 빼기' : '즐겨찾기에 넣기', onSelect: () => toggleStar(doc.id), disabled: !canEdit },
     { label: '링크 복사', onSelect: () => void copyLink(doc) },
-    { label: '마인드맵으로 보기', onSelect: () => setView('map') },
+    { label: '지도로 보기', onSelect: () => setView('map') },
     { label: '아래에 새 문서', onSelect: () => setCreatingUnder(doc.id), disabled: !canEdit, sep: true },
     { label: '사본 만들기', onSelect: () => duplicate(doc), disabled: !canEdit },
     { label: '옮기기', onSelect: () => setDialog('move'), disabled: !canEdit },
@@ -618,7 +618,7 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
       <PageHead
         title="팀 위키"
         lead={view === 'map'
-          ? '카테고리(맨 위 문서)를 마인드맵 · 3D 그래프 · 프레젠테이션으로 봅니다. 문서를 누르면(3D · 프레젠테이션은 두 번) 그 문서가 열리고, 문서 사이 링크는 선으로 이어집니다.'
+          ? '카테고리(맨 위 문서)를 마인드맵 · 3D 그래프 · 그래프 · 프레젠테이션으로 봅니다. 마인드맵과 PC 의 그래프는 문서를 누르면 바로 열리고, 나머지는 고른 뒤 문서 열기 단추로 엽니다. 문서 사이 링크는 선으로 이어집니다.'
           : '회의록, 요구사항, 인수인계처럼 팀이 함께 보는 문서를 모읍니다. 편집에서 / 를 누르면 표 · 목록 · 알림 상자를, [[ 를 치면 다른 문서나 작업을 넣습니다.'}
       >
         {/* 좁은 화면: 보기 알약은 '새 문서' 뒤로(같은 줄에 들어가면 한 줄) */}
@@ -629,7 +629,7 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
           </button>
           <button type="button" aria-pressed={view === 'map'} onClick={() => setView('map')} className={tmTab}>
             <span className="max-[400px]:hidden"><IconNav name="mindmap" size={18} /></span>
-            마인드맵
+            지도
           </button>
         </div>
         {/* 태블릿 이하: 그림만(보기 알약이 같은 줄에 들어가게) */}

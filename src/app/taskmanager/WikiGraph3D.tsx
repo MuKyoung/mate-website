@@ -7,13 +7,16 @@
  * - 문서 = 구(아래 문서가 많을수록 크다), 가운데 = 흰 구(카테고리 또는 전체)
  * - 위아래 문서 = 옅은 선, 문서 링크 = 파란 선(흐르는 점), 작업 = 상태 색 작은 구(본문에 적은 작업 번호)
  * - 마우스를 올리면 그 문서와 이웃만 밝게(옵시디언과 같다), 누르면 카메라가 그 문서로 날아가 정보 칸이 열리고,
- *   두 번 누르면 문서(작업)가 열린다. 끌어서 돌리고 휠로 확대한다.
+ *   정보 칸의 '문서 열기'로 연다(두 번 눌러도 열린다). 끌어서 돌리고 휠로 확대한다.
+ * - 왼쪽 위 '문서 선택'(기본 select)으로도 고른다 - 구를 누른 것과 같다(키보드 · 화면 읽기 프로그램용 길).
+ * - 움직임 줄이기(prefers-reduced-motion)를 켠 기기는 날아가기 · 확대 · 맞춤이 바로 되고, 자동 회전 · 흐르는 점이 멈춘다.
  * three.js 를 쓰므로 3D 를 고를 때만 불러온다(WikiMap 의 next/dynamic).
  */
-import { useEffect, useRef, useState, type MutableRefObject } from 'react';
+import { useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
 import ForceGraph3D, { type ForceGraph3DInstance } from '3d-force-graph';
 import SpriteText from 'three-spritetext';
 import { STATUS_DOT, pathTo, type CanvasApi, type WikiGraph } from './wikiGraph';
+import { useMediaQuery } from './ui';
 
 interface N {
   id: string;
@@ -66,6 +69,12 @@ export default function WikiGraph3D({ graph, showTasks, showLinks, rotate, onOpe
   rootRef.current = graph.rootId;
   /** 화면에 맞춰 둔 판(가운데 id) - 카테고리를 바꾸면 다시 맞춘다 */
   const fittedFor = useRef<string | null>(null);
+  /** 움직임 줄이기 - 날아가기 · 확대 · 맞춤을 바로, 자동 회전 · 흐르는 점은 멈춘다(돌기 설정 값은 그대로 둔다) */
+  const still = useMediaQuery('(prefers-reduced-motion: reduce)');
+  const stillRef = useRef(still);
+  stillRef.current = still;
+  /** 엔진 밖(문서 선택 · 닫기)에서 구를 고르거나 푼다 */
+  const actions = useRef<{ pick(id: string | null): void; focus(id: string | null): void } | null>(null);
 
   const open = (n: N) => {
     if (n.kind === 'task' && n.taskKey) handlers.current.onOpenTask(n.taskKey);
@@ -88,6 +97,8 @@ export default function WikiGraph3D({ graph, showTasks, showLinks, rotate, onOpe
     fgRef.current = fg;
     const labelMap = labels.current;
     const coarse = window.matchMedia('(pointer: coarse)').matches;
+    /** 움직임 줄이기면 0(바로) */
+    const ms = (t: number) => (stillRef.current ? 0 : t);
 
     const restyle = () => {
       fg.nodeColor(fg.nodeColor()).linkColor(fg.linkColor()).linkWidth(fg.linkWidth());
@@ -113,8 +124,17 @@ export default function WikiGraph3D({ graph, showTasks, showLinks, rotate, onOpe
       const len = Math.hypot(x, y, z);
       const d = n.kind === 'root' ? 160 : 72;
       const pos = len < 1 ? { x: 0, y: 0, z: d } : { x: x * (1 + d / len), y: y * (1 + d / len), z: z * (1 + d / len) };
-      fg.cameraPosition(pos, { x, y, z }, 900);
+      fg.cameraPosition(pos, { x, y, z }, ms(900));
     };
+    /** 구를 고른다(누르기 · 문서 선택 같은 길) - null 이면 정보 칸 · 밝히기를 푼다(카메라는 그대로) */
+    const pick = (id: string | null) => {
+      const n = id ? (fg.graphData().nodes as N[]).find((m) => m.id === id) : undefined;
+      pickedRef.current = n ?? null;
+      setPicked(n ?? null);
+      focus(n?.id ?? null);
+      if (n) fly(n);
+    };
+    actions.current = { pick, focus };
     let last = { id: '', t: 0 };
 
     fg.backgroundColor(BG)
@@ -129,7 +149,7 @@ export default function WikiGraph3D({ graph, showTasks, showLinks, rotate, onOpe
       .nodeLabel((n) => {
         const x = asN(n);
         return `<div style="font:600 13px/1.4 ${FONT};padding:2px 4px">${esc(x.name)}<br><span style="opacity:.7">${
-          x.kind === 'task' ? '두 번 누르면 작업이 열립니다' : x.docId ? '누르면 가까이, 두 번 누르면 문서가 열립니다' : ''}</span></div>`;
+          x.kind === 'task' ? '누르면 정보 칸 · 작업 열기로 엽니다' : x.docId ? '누르면 가까이 · 정보 칸의 문서 열기로 엽니다' : ''}</span></div>`;
       })
       .nodeThreeObjectExtend(true)
       .nodeThreeObject((n: object) => {
@@ -142,6 +162,9 @@ export default function WikiGraph3D({ graph, showTasks, showLinks, rotate, onOpe
         s.padding = [2.5, 1.2];
         s.borderRadius = 2;
         s.center.y = -0.7; // 구 위로 올린다
+        // 고른 구가 있으면 처음부터 흐리게(판을 다시 만든 뒤에도 밝히기가 이어지게)
+        s.material.transparent = true;
+        s.material.opacity = !lit.current.focus || lit.current.nodes.has(x.id) ? 1 : 0.16;
         labels.current.set(x.id, s);
         return s;
       })
@@ -156,7 +179,7 @@ export default function WikiGraph3D({ graph, showTasks, showLinks, rotate, onOpe
         return (k.kind === 'link' ? 1.1 : k.kind === 'task' ? 0.4 : 0.6) * (on ? 2.2 : 1);
       })
       .linkOpacity(0.6)
-      .linkDirectionalParticles((l) => (asL(l).kind === 'link' ? 2 : 0))
+      .linkDirectionalParticles((l) => (!stillRef.current && asL(l).kind === 'link' ? 2 : 0))
       .linkDirectionalParticleWidth(1.6)
       .linkDirectionalParticleSpeed(0.006)
       .linkDirectionalParticleColor(() => '#c9d8ff')
@@ -171,21 +194,14 @@ export default function WikiGraph3D({ graph, showTasks, showLinks, rotate, onOpe
         const now = performance.now();
         if (last.id === x.id && now - last.t < 450) { open(x); return; }
         last = { id: x.id, t: now };
-        pickedRef.current = x;
-        setPicked(x);
-        focus(x.id);
-        fly(x);
+        pick(x.id);
       })
-      .onBackgroundClick(() => {
-        pickedRef.current = null;
-        setPicked(null);
-        focus(null);
-      })
+      .onBackgroundClick(() => pick(null))
       .onEngineStop(() => {
         // 처음, 그리고 카테고리를 바꾼 뒤 한 번 화면에 맞춘다
         if (fittedFor.current !== rootRef.current) {
           fittedFor.current = rootRef.current;
-          fg.zoomToFit(700, 40);
+          fg.zoomToFit(ms(700), 40);
         }
       });
 
@@ -198,9 +214,9 @@ export default function WikiGraph3D({ graph, showTasks, showLinks, rotate, onOpe
     const dolly = (k: number) => {
       const p = fg.cameraPosition();
       const t = (fg.controls() as { target?: { x: number; y: number; z: number } }).target ?? { x: 0, y: 0, z: 0 };
-      fg.cameraPosition({ x: t.x + (p.x - t.x) * k, y: t.y + (p.y - t.y) * k, z: t.z + (p.z - t.z) * k }, t, 350);
+      fg.cameraPosition({ x: t.x + (p.x - t.x) * k, y: t.y + (p.y - t.y) * k, z: t.z + (p.z - t.z) * k }, t, ms(350));
     };
-    api.current = { zoomIn: () => dolly(0.7), zoomOut: () => dolly(1 / 0.7), fit: () => fg.zoomToFit(600, 40) };
+    api.current = { zoomIn: () => dolly(0.7), zoomOut: () => dolly(1 / 0.7), fit: () => fg.zoomToFit(ms(600), 40) };
 
     const ro = new ResizeObserver(() => { fg.width(el.clientWidth).height(el.clientHeight); });
     ro.observe(el);
@@ -208,6 +224,7 @@ export default function WikiGraph3D({ graph, showTasks, showLinks, rotate, onOpe
     return () => {
       ro.disconnect();
       api.current = null;
+      actions.current = null;
       fg.pauseAnimation();
       fg._destructor();
       fgRef.current = null;
@@ -264,17 +281,32 @@ export default function WikiGraph3D({ graph, showTasks, showLinks, rotate, onOpe
     neighbors.current = nb;
     labels.current.clear();
     lit.current = { focus: null, nodes: new Set(), links: new Set() };
-    if (pickedRef.current && !nodes.some((n) => n.id === pickedRef.current?.id)) { pickedRef.current = null; setPicked(null); }
+    // 고른 구가 새 판에도 있으면 정보 칸 · 밝히기를 이어 가고, 없으면 푼다
+    const kept = pickedRef.current ? nodes.find((n) => n.id === pickedRef.current?.id) : undefined;
+    if (pickedRef.current && !kept) { pickedRef.current = null; setPicked(null); }
+    if (kept) pickedRef.current = kept;
     fg.graphData({ nodes, links });
+    if (kept) actions.current?.focus(kept.id);
   }, [graph, showTasks, showLinks]);
 
-  /* 천천히 돌기(옵시디언 3D 플러그인들의 자동 회전) */
+  /* 천천히 돌기(옵시디언 3D 플러그인들의 자동 회전) - 움직임 줄이기면 멈춘다(설정 값은 그대로) */
   useEffect(() => {
     const c = fgRef.current?.controls() as { autoRotate?: boolean; autoRotateSpeed?: number } | undefined;
     if (!c) return;
-    c.autoRotate = rotate;
+    c.autoRotate = rotate && !still;
     c.autoRotateSpeed = 0.9;
-  }, [rotate, failed]);
+  }, [rotate, still, failed]);
+
+  /* 흐르는 점 - 움직임 줄이기를 켜고 끌 때 바로 */
+  useEffect(() => {
+    fgRef.current?.linkDirectionalParticles((l) => (!still && asL(l).kind === 'link' ? 2 : 0));
+  }, [still]);
+
+  /** 문서 선택 - 가상의 '전체' 가운데는 빼고, 위 문서 › 제목 */
+  const options = useMemo(() => graph.docs.filter((d) => !d.virtual).map((d) => {
+    const path = pathTo(graph, d.id).map((t) => t.title);
+    return { id: d.id, label: path.length ? path.join(' › ') : d.title };
+  }), [graph]);
 
   const doc = picked?.docId ? graph.byId.get(picked.docId) : picked?.kind === 'root' ? graph.byId.get(graph.rootId) : undefined;
   const trail = doc ? pathTo(graph, doc.id).slice(0, -1) : [];
@@ -298,9 +330,20 @@ export default function WikiGraph3D({ graph, showTasks, showLinks, rotate, onOpe
           className="h-full w-full" />
       </div>
 
+      {/* 문서 선택 - 구를 누르는 것과 같다(키보드로도 고르고 아래 정보 칸의 '문서 열기'로 연다) */}
+      <label className="absolute left-3 top-3 z-10 w-[min(320px,calc(100%-24px))] max-[720px]:inset-x-2 max-[720px]:top-2 max-[720px]:w-auto">
+        <span className="sr-only">문서 선택</span>
+        <select value={picked?.docId ?? ''} onChange={(e) => actions.current?.pick(e.target.value || null)}
+          className="h-10 w-full cursor-pointer rounded-tm-sm border border-white/25 bg-[#0b1220] px-3 text-[14px] font-semibold text-white [color-scheme:dark]
+                     hover:border-white/45 focus:border-[#7aa2ff] max-[720px]:h-11 max-[720px]:text-[16px] [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:text-[16px]">
+          <option value="">문서 선택…</option>
+          {options.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+        </select>
+      </label>
+
       {/* 누른 문서 - 무엇인지, 어디에 있는지, 열기 */}
       {picked && (
-        <div className="absolute left-3 top-3 z-10 w-[min(320px,calc(100%-24px))] rounded-tm border border-white/15 bg-[#0b1220] p-4 text-white shadow-tm-up
+        <div className="absolute left-3 top-[60px] z-10 w-[min(320px,calc(100%-24px))] rounded-tm border border-white/15 bg-[#0b1220] p-4 text-white shadow-tm-up
                         max-[720px]:inset-x-2 max-[720px]:bottom-2 max-[720px]:left-2 max-[720px]:top-auto max-[720px]:w-auto">
           <p className="truncate text-[12.5px] font-semibold text-white/60">
             {picked.kind === 'task' ? '작업' : picked.kind === 'root' ? '가운데' : '문서'}
@@ -322,12 +365,12 @@ export default function WikiGraph3D({ graph, showTasks, showLinks, rotate, onOpe
           <div className="mt-3 flex flex-wrap gap-2">
             {(picked.docId || picked.taskKey) && (
               <button type="button" onClick={() => open(picked)}
-                className="inline-flex h-9 items-center rounded-tm-sm bg-[#2644cb] px-3.5 text-[13.5px] font-bold text-white transition-colors hover:bg-[#2e5bf0] [@media(pointer:coarse)]:h-11">
+                className="inline-flex h-9 items-center rounded-tm-sm bg-[#2644cb] px-3.5 text-[13.5px] font-bold text-white transition-colors hover:bg-[#2e5bf0] max-[720px]:h-11 [@media(pointer:coarse)]:h-11">
                 {picked.kind === 'task' ? '작업 열기' : '문서 열기'}
               </button>
             )}
-            <button type="button" onClick={() => { pickedRef.current = null; setPicked(null); }}
-              className="inline-flex h-9 items-center rounded-tm-sm border border-white/25 px-3.5 text-[13.5px] font-bold text-white transition-colors hover:bg-white/10 [@media(pointer:coarse)]:h-11">
+            <button type="button" onClick={() => actions.current?.pick(null)}
+              className="inline-flex h-9 items-center rounded-tm-sm border border-white/25 px-3.5 text-[13.5px] font-bold text-white transition-colors hover:bg-white/10 max-[720px]:h-11 [@media(pointer:coarse)]:h-11">
               닫기
             </button>
           </div>
