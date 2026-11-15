@@ -248,7 +248,12 @@ export function NewDocDialog({
     el.select();
   }, [picked]);
 
-  const create = () => { if (title.trim()) onCreate(picked, title.trim()); };
+  /** 제목 없이 Enter 를 눌렀다 - 만들기 단추는 막혀 있어 Enter 로만 생긴다 */
+  const [missing, setMissing] = useState(false);
+  const create = () => {
+    if (title.trim()) onCreate(picked, title.trim());
+    else setMissing(true);
+  };
 
   return (
     <Modal
@@ -295,14 +300,20 @@ export function NewDocDialog({
       </label>
       {/* Enter 의 기본 동작을 막는다 - 창이 닫히며 초점이 '새 문서' 단추로 돌아간 뒤
           같은 Enter 가 그 단추를 눌러 창을 다시 여는 일이 없게 */}
-      <input id="doc-title" ref={titleRef} value={title} onChange={(e) => setTitle(e.target.value)}
+      <input id="doc-title" ref={titleRef} value={title} onChange={(e) => { setTitle(e.target.value); setMissing(false); }}
         onKeyDown={(e) => {
           if (e.key !== 'Enter' || e.nativeEvent.isComposing) return;
           e.preventDefault();
           create();
         }}
         placeholder="검색해서 찾을 수 있는 이름으로"
+        aria-invalid={(missing && !title.trim()) || undefined} aria-describedby={missing && !title.trim() ? 'doc-title-missing' : undefined}
         className={tmInput} />
+      {missing && !title.trim() && (
+        <p id="doc-title-missing" role="alert" className="mt-1.5 text-[13px] font-semibold text-tm-red-deep">
+          제목을 적어 주세요. 제목이 비어 있으면 문서를 만들 수 없습니다.
+        </p>
+      )}
     </Modal>
   );
 }
@@ -443,6 +454,11 @@ export function MoveDialog({ doc, docs, onMove, onClose }: {
     const query = q.trim().toLowerCase();
     return query ? out.filter(({ d }) => titleOf(d).toLowerCase().includes(query)).map((r) => ({ ...r, depth: 0 })) : out;
   }, [docs, blocked, q]);
+  /** 찾는 이름에 맞는 문서 중 자기 · 자기 아래 문서라 뺀 것이 있다 */
+  const hiddenHit = useMemo(() => {
+    const query = q.trim().toLowerCase();
+    return !!query && docs.some((d) => blocked.has(d.id) && titleOf(d).toLowerCase().includes(query));
+  }, [docs, blocked, q]);
 
   /** 옮긴 뒤의 경로 - 위 문서들 / 이 문서 */
   const destDoc = dest ? byId.get(dest) : undefined;
@@ -510,6 +526,12 @@ export function MoveDialog({ doc, docs, onMove, onClose }: {
         {/* 찾을 때는 들여쓰기가 없어지므로 줄마다 전체 경로를 보인다 */}
         {rows.map(({ d, depth }) => row(d.id, titleOf(d), q.trim() ? pathOf(d, byId) || '맨 위' : null, depth, d.id === doc.parentId, d.icon))}
         {rows.length === 0 && <li className="py-8 text-center text-[14px] text-tm-sub">옮길 수 있는 문서가 없습니다.</li>}
+        {/* 찾는 이름이 자기 · 자기 아래 문서라 목록에서 빠졌으면 그렇다고 - 없는 문서로 알지 않게 */}
+        {hiddenHit && (
+          <li className="px-3 py-2.5 text-[13px] leading-[1.5] text-tm-sub">
+            이 문서와 그 아래 문서는 옮길 곳으로 고를 수 없어 목록에서 뺐습니다.
+          </li>
+        )}
       </ul>
     </Modal>
   );
@@ -653,11 +675,16 @@ export function HistoryDialog({ doc, store, refs, onRestore, onClose }: {
       foot={
         <>
           {/* 휴대폰에서는 안내가 한 줄을 다 쓰고 단추는 다음 줄에 - 좁은 칸에서 글자가 한 낱말씩 꺾이지 않게 */}
-          {chosen.id !== 'now' && (
+          {chosen.id !== 'now' ? (
             <p className="min-w-0 basis-full text-[13.5px] leading-[1.5] text-tm-sub sm:flex-1 sm:basis-auto">
               되돌려도 지금 모습은 기록에 남아 다시 돌아올 수 있습니다.
             </p>
-          )}
+          ) : list && list.length > 0 ? (
+            // '지금'을 고른 채로는 되돌리기 단추가 막혀 있다 - 무엇을 해야 하는지 알린다
+            <p className="min-w-0 basis-full text-[13.5px] leading-[1.5] text-tm-sub sm:flex-1 sm:basis-auto">
+              되돌릴 이전 판을 목록에서 고르세요.
+            </p>
+          ) : null}
           <button type="button" onClick={onClose} className={`${tmBtn} ml-auto`} disabled={busy}>닫기</button>
           <button type="button" onClick={() => void restore()} disabled={chosen.id === 'now' || busy} className={tmBtnPrimary}>
             {busy ? '되돌리는 중…' : '이 판으로 되돌리기'}
@@ -1075,11 +1102,21 @@ export function TitleField({ saved, onSave, onEnter }: { saved: string; onSave(t
 
 export function LabelEditor({ labels, onChange }: { labels: string[]; onChange(next: string[]): void }) {
   const [text, setText] = useState('');
+  /** 붙이지 않은 까닭 - 이미 있는 라벨 · 개수 한도 */
+  const [hint, setHint] = useState<string | null>(null);
   const add = () => {
     const v = text.trim().replace(/^#/, '');
-    if (!v || labels.includes(v)) { setText(''); return; }
-    onChange([...labels, v].slice(0, 12));
+    if (!v) { setText(''); return; }
+    if (labels.includes(v)) { setText(''); setHint(`'${v}' 라벨은 이미 붙어 있습니다`); return; }
+    // 쓴 글은 남겨 둔다 - 다른 라벨을 뺀 뒤 그대로 붙일 수 있게
+    if (labels.length >= 12) { setHint('라벨은 12개까지 붙일 수 있습니다. 다른 라벨을 빼고 붙여 주세요'); return; }
+    onChange([...labels, v]);
     setText('');
+    setHint(null);
+  };
+  const remove = (next: string[]) => {
+    onChange(next);
+    setHint(null);
   };
   return (
     <span className="inline-flex flex-wrap items-center gap-1.5">
@@ -1087,21 +1124,23 @@ export function LabelEditor({ labels, onChange }: { labels: string[]; onChange(n
         <span key={l} className="inline-flex items-center gap-1 rounded-full bg-tm-tint py-0.5 pl-2.5 pr-1 text-[12.5px] font-bold text-tm-deep">
           {l}
           {/* 손가락 기기에서는 칩 높이는 그대로 두고 누를 자리만 넓힌다 */}
-          <button type="button" aria-label={`라벨 ${l} 빼기`} onClick={() => onChange(labels.filter((x) => x !== l))}
+          <button type="button" aria-label={`라벨 ${l} 빼기`} onClick={() => remove(labels.filter((x) => x !== l))}
             className="grid h-5 w-5 place-items-center rounded-full text-tm-sub hover:bg-white hover:text-tm-red-deep
                        [@media(pointer:coarse)]:-my-1.5 [@media(pointer:coarse)]:h-8 [@media(pointer:coarse)]:w-8">×</button>
         </span>
       ))}
-      <input value={text} onChange={(e) => setText(e.target.value)} placeholder="+ 라벨" aria-label="라벨 더하기"
+      <input value={text} onChange={(e) => { setText(e.target.value); setHint(null); }} placeholder="+ 라벨" aria-label="라벨 더하기"
         onKeyDown={(e) => {
           if (e.nativeEvent.isComposing) return;
           if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); add(); }
-          if (e.key === 'Backspace' && !text && labels.length) onChange(labels.slice(0, -1));
+          if (e.key === 'Backspace' && !text && labels.length) remove(labels.slice(0, -1));
         }}
         onBlur={add}
         // iPhone · iPad 는 16px 보다 작은 칸을 누르면 화면을 확대한다 - 손가락 기기에서만 키운다
         className="h-7 w-[96px] rounded-full border border-dashed border-tm-edge bg-white px-2.5 text-[12.5px] font-semibold text-tm-ink placeholder:text-tm-sub focus:border-tm-blue focus:outline-none
                    [@media(pointer:coarse)]:h-9 [@media(pointer:coarse)]:w-[112px] [@media(pointer:coarse)]:text-[16px]" />
+      {/* 읽어 주는 칸은 늘 두고(비면 화면에서 뺀다) 까닭이 생기면 글자를 넣는다 */}
+      <span role="status" className={hint ? 'text-[12.5px] font-semibold text-tm-red-deep' : 'sr-only'}>{hint}</span>
     </span>
   );
 }

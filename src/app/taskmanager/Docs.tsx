@@ -94,6 +94,8 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
   const importRef = useRef<HTMLInputElement>(null);
   /** 들어온 주소의 ?doc= - 위키를 떠날 때 주소에서 지우므로 처음 그릴 때 읽어 둔다 */
   const [urlDoc] = useState(() => (typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('doc')));
+  /** 주소의 문서가 있는지 한 번 따져 보았다 */
+  const urlChecked = useRef(false);
   useEffect(() => {
     try { if (!urlDoc && window.localStorage.getItem(viewKey) === 'map') setViewState('map'); } catch { /* 저장이 막힌 환경 */ }
   }, [urlDoc, viewKey]);
@@ -158,6 +160,11 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
       setEditingId(null);
       setActiveId(null);
     }
+    // 주소로 받은 문서가 없으면(영구 삭제 · 잘못된 링크) 말없이 다른 문서를 열지 않게 처음 한 번 알린다
+    if (!urlChecked.current && !store.loadError) {
+      urlChecked.current = true;
+      if (urlDoc && !store.docs.some((d) => d.id === urlDoc)) onNotice?.('주소에 적힌 문서를 찾을 수 없습니다. 영구 삭제되었거나 잘못된 주소일 수 있습니다', 'err');
+    }
     // 고른 문서가 없으면 - 들어온 주소의 ?doc= → 마지막으로 본 문서 → 맨 위 문서.
     // 몇 번을 다시 돌아도 같은 답이 나오게 둔다(개발 모드는 효과를 두 번 돌린다)
     const want = [urlDoc, ...recent].find((id) => !!id && store.docs.some((d) => d.id === id && (id === urlDoc || !hidden.has(id))));
@@ -166,7 +173,7 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
     if (want) { setActiveId(want); return; }
     const firstRoot = tree.find((n) => !n.parentId) ?? tree[0];
     if (firstRoot) setActiveId(firstRoot.id);
-  }, [store.ready, store.docs, store.deletedElsewhere, tree, activeId, editingId, recent, recentLoaded, hidden, urlDoc]);
+  }, [store.ready, store.loadError, store.docs, store.deletedElsewhere, tree, activeId, editingId, recent, recentLoaded, hidden, urlDoc, onNotice]);
 
   useEffect(() => {
     if (doc) lastDoc.current = doc;
@@ -379,14 +386,16 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
       const el = e.target as HTMLElement | null;
       const typing = !!el && (/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.isContentEditable);
       if (typing || e.ctrlKey || e.metaKey || e.altKey || document.querySelector('[aria-modal="true"]')) return;
-      if ((e.key === 'e' || e.code === 'KeyE') && doc && canEdit) {
+      // 휴지통 문서를 보면서 누르면 아무 일 없이 끝나지 않게 까닭을 알린다
+      if ((e.key === 'e' || e.code === 'KeyE') && doc && (canEdit || hasCard)) {
         e.preventDefault();
-        setEditingId((v) => (v === doc.id ? null : doc.id));
+        if (canEdit) setEditingId((v) => (v === doc.id ? null : doc.id));
+        else onNotice?.('휴지통에 있는 문서는 고칠 수 없습니다. 되살린 뒤에 고쳐 주세요', 'err');
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [doc, canEdit]);
+  }, [doc, canEdit, hasCard, onNotice]);
 
   const breadcrumb = useMemo(() => {
     const out: Doc[] = [];
@@ -455,8 +464,18 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
     setDialog(null);
   };
 
-  const toggleOpen = (id: string) =>
+  /**
+   * 펼치기 · 접기. 지금 보는 문서의 위 문서는 접지 않는다(접어도 지금 문서를 보이려고 바로 다시 펼쳐진다) -
+   * 아무 일 없이 끝나지 않게 까닭을 알린다. 막은 동작은 위키의 다른 막힘 알림처럼 빨간 알림(줄을 넘겨 다 보인다)
+   */
+  const toggleOpen = (id: string) => {
+    const above = doc && doc.id !== id && !hidden.has(doc.id) ? breadcrumb.find((b) => b.id === id) : undefined;
+    if (above && doc && openSet.has(id)) {
+      onNotice?.(`'${titleOf(above)}' 문서는 지금 보는 '${titleOf(doc)}' 문서의 위 문서라 접을 수 없습니다`, 'err');
+      return;
+    }
     setOpenList((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  };
 
   const siblingsOf = useCallback((parentId: string | null, except?: string) =>
     live.filter((d) => (d.parentId ?? null) === parentId && d.id !== except).sort((a, b) => a.order - b.order), [live]);
@@ -552,7 +571,9 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
     if (!d) return;
     const parentOk = !d.parentId || (byId.has(d.parentId) && !hidden.has(d.parentId));
     const r = await store.save(id, { trashedAt: null, trashedBy: null, ...(parentOk ? {} : { parentId: null }) });
-    if (r === 'ok') onNotice?.(`'${titleOf(d)}' 문서를 되살렸습니다`, 'ok');
+    // 원래 자리로 못 가고 맨 위로 갔으면 그렇다고 알린다 - 트리에서 엉뚱한 곳에 생긴 줄 알지 않게.
+    // 보통 알림은 한 줄로 잘리므로 알맹이(맨 위로)를 앞에 둔다
+    if (r === 'ok') onNotice?.(parentOk ? `'${titleOf(d)}' 문서를 되살렸습니다` : '되살린 문서를 맨 위로 옮겼습니다. 원래 위 문서가 휴지통에 있거나 지워졌습니다', 'ok');
     else failNotice(r, `'${titleOf(d)}' 문서를 되살리지`);
   };
 
@@ -571,7 +592,9 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
       order: between(d.order, next?.order),
     });
     setActiveId(made.id);
-    onNotice?.('사본을 만들었습니다', 'ok');
+    // 사본은 이 문서 하나만 - 하위 문서가 따라오지 않는다는 것을 말해 둔다
+    const kids = live.filter((x) => x.parentId === d.id).length;
+    onNotice?.(kids ? `하위 문서 ${kids}건은 빼고 사본을 만들었습니다` : '사본을 만들었습니다', 'ok');
   };
 
   /** 옮기기 - 서버가 받은 뒤 창을 닫고 알린다. 받지 않았으면 창 · 고른 곳을 그대로 둔다 */
@@ -599,7 +622,10 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
     const t = byId.get(target);
     if (!t || t.id === id) return;
     if (zone === 'inside') {
-      if (t.id === d.parentId) return;
+      if (t.id === d.parentId) {
+        onNotice?.(`'${titleOf(d)}' 문서는 이미 '${titleOf(t)}' 문서 아래에 있습니다`, 'err');
+        return;
+      }
       void moveTo(d, t.id);
       return;
     }
@@ -620,6 +646,12 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
       });
     }
     store.update(id, { parentId, order });
+  };
+  /** 자기 아래 문서 위에서 놓았다 - 트리는 받지 않으므로 까닭을 알린다 */
+  const onBlockedDrop = (id: string, target: string) => {
+    const d = byId.get(id);
+    const t = byId.get(target);
+    if (d && t) onNotice?.(`'${titleOf(d)}' 문서를 자기 아래에 있는 '${titleOf(t)}' 문서 쪽으로는 옮길 수 없습니다`, 'err');
   };
 
   const copyLink = async (d: Doc) => {
@@ -649,7 +681,10 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
   /** 인쇄 · PDF - 본문을 복사해 인쇄 전용 칸에 놓고 나머지 화면은 인쇄에서 뺀다(wiki.css) */
   const printDoc = (d: Doc) => {
     const ed = editorRef.current;
-    if (!ed || ed.isDestroyed) return;
+    if (!ed || ed.isDestroyed) {
+      onNotice?.('본문을 아직 그리는 중이라 인쇄하지 못했습니다. 잠시 뒤에 다시 해 주세요', 'err');
+      return;
+    }
     const root = document.createElement('div');
     root.className = 'tm-print-root';
     const h = document.createElement('h1');
@@ -782,7 +817,7 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
               )}
               <DocTree roots={tree} activeId={activeId} openSet={openSet} onToggle={toggleOpen} onSelect={select}
                 onAfterSelect={inDrawer ? () => closeDrawer() : undefined}
-                onAddChild={(id) => setCreatingUnder(id)} onDrop={onDrop} canDrag={!inDrawer} watched={watched} menuFor={rowMenu} />
+                onAddChild={(id) => setCreatingUnder(id)} onDrop={onDrop} onBlockedDrop={onBlockedDrop} canDrag={!inDrawer} watched={watched} menuFor={rowMenu} />
             </>
           )}
         </nav>

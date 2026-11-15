@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Doc } from './types';
 import { DocIcon, titleOf, type MenuEntry } from './DocPanels';
 import { FloatMenu } from './DocEditor';
@@ -55,6 +55,8 @@ interface Props {
   onAddChild(id: string): void;
   /** 끌어 놓았다 - target 이 null 이면 맨 아래(최상위) */
   onDrop(id: string, target: string | null, zone: DropZone): void;
+  /** 자기 아래 문서(target) 위에서 놓았다 - 받지 않은 까닭을 알릴 곳 */
+  onBlockedDrop?(id: string, target: string): void;
   canDrag: boolean;
   /** 다른 팀원이 보고 있는 문서 */
   watched?: ReadonlySet<string>;
@@ -64,11 +66,13 @@ interface Props {
   onAfterSelect?(): void;
 }
 
-export default function DocTree({ roots, activeId, openSet, onToggle, onSelect, onAddChild, onDrop, canDrag, watched, menuFor, onAfterSelect }: Props) {
+export default function DocTree({ roots, activeId, openSet, onToggle, onSelect, onAddChild, onDrop, onBlockedDrop, canDrag, watched, menuFor, onAfterSelect }: Props) {
   const [drag, setDrag] = useState<string | null>(null);
   const [over, setOver] = useState<{ id: string | null; zone: DropZone } | null>(null);
   /* 끄는 문서와 그 아래 문서 - 그 위로는 놓을 수 없다 */
   const blocked = useRef<Set<string>>(new Set());
+  /** 끄는 동안 마지막으로 손이 머문 놓을 수 없는 줄(자기 아래 문서) */
+  const overBlocked = useRef<string | null>(null);
   /** 키보드 초점이 머무는 줄(Tab 은 트리에 한 번만 멈춘다) */
   const [focusId, setFocusId] = useState<string | null>(null);
   /** 메뉴가 열린 줄과 그 단추 */
@@ -85,6 +89,16 @@ export default function DocTree({ roots, activeId, openSet, onToggle, onSelect, 
     walk(roots);
     return m;
   }, [roots]);
+  /** 연 문서의 위 문서들 - 연 문서가 보이도록 펼친 채로 둔다(접으려 하면 부르는 쪽이 까닭을 알린다) */
+  const lockedOpen = useMemo(() => {
+    const out = new Set<string>();
+    let cur = activeId ? byId.get(activeId)?.parentId : null;
+    while (cur && !out.has(cur)) {
+      out.add(cur);
+      cur = byId.get(cur)?.parentId ?? null;
+    }
+    return out;
+  }, [activeId, byId]);
 
   const start = (id: string) => {
     const out = new Set<string>();
@@ -95,12 +109,28 @@ export default function DocTree({ roots, activeId, openSet, onToggle, onSelect, 
     };
     add(byId.get(id));
     blocked.current = out;
+    overBlocked.current = null;
     setDrag(id);
   };
   const reset = () => {
     setDrag(null);
     setOver(null);
   };
+
+  /*
+   * 끄는 동안 지금 손이 있는 곳이 자기 아래 문서 줄인지 - 그런 줄은 놓기를 받지 않는다(놓으면 고리가 생긴다).
+   * 거기서 놓으면 끌기가 아무 일 없이 끝나므로 끝날 때 까닭을 알린다. 줄 밖으로 나가면 지운다
+   */
+  useEffect(() => {
+    if (!drag) return;
+    const onOver = (e: DragEvent) => {
+      const row = e.target instanceof Element ? e.target.closest<HTMLElement>('[role="treeitem"]') : null;
+      const id = row && treeRef.current?.contains(row) ? row.dataset.id ?? null : null;
+      overBlocked.current = id && id !== drag && blocked.current.has(id) ? id : null;
+    };
+    document.addEventListener('dragover', onOver, true);
+    return () => document.removeEventListener('dragover', onOver, true);
+  }, [drag]);
 
   const rowDnD = (node: TreeNode) => canDrag ? {
     draggable: true,
@@ -109,9 +139,19 @@ export default function DocTree({ roots, activeId, openSet, onToggle, onSelect, 
       e.dataTransfer.setData('text/x-tm-doc', node.id);
       start(node.id);
     },
-    onDragEnd: reset,
+    onDragEnd: () => {
+      const bad = overBlocked.current;
+      overBlocked.current = null;
+      reset();
+      if (bad) onBlockedDrop?.(node.id, bad);
+    },
     onDragOver: (e: React.DragEvent) => {
-      if (!drag || blocked.current.has(node.id)) return;
+      if (!drag) return;
+      // 놓을 수 없는 줄 - 앞서 그려 둔 놓을 자리 표시를 지워 엉뚱한 곳에 놓일 것처럼 보이지 않게
+      if (blocked.current.has(node.id)) {
+        setOver((o) => (o ? null : o));
+        return;
+      }
       e.preventDefault();
       e.dataTransfer.dropEffect = 'move';
       const r = e.currentTarget.getBoundingClientRect();
@@ -200,6 +240,7 @@ export default function DocTree({ roots, activeId, openSet, onToggle, onSelect, 
           {hasKids ? (
             <button type="button" tabIndex={-1} onClick={() => onToggle(node.id)}
               aria-label={expanded ? `${titleOf(node)} 접기` : `${titleOf(node)} 펼치기`}
+              title={expanded && lockedOpen.has(node.id) ? '지금 보는 문서가 이 아래에 있어 접을 수 없습니다' : undefined}
               className={`grid h-7 w-7 shrink-0 place-items-center rounded-md transition-colors duration-150
                           [@media(pointer:coarse)]:h-9 [@media(pointer:coarse)]:w-9 ${
                 active ? 'text-white hover:bg-white/20' : 'text-tm-sub hover:bg-white hover:text-tm-ink'}`}>
