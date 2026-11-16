@@ -12,12 +12,12 @@ import { DomainsContext, defaultDomain, domainOf, useDomainStore, type DomainSto
 import { ColorsContext, useColorStore, type ColorStore } from './colorStore';
 import {
   COLOR_BYS, MEMBERS, PRIORITIES, STATUSES,
-  localISO, memberById, priorityLabel,
+  localISO, memberById, parentOf, priorityLabel,
   type ColorBy, type DomainColor, type DomainKey, type Member, type Priority, type Status, type Task,
 } from './types';
 import {
   Avatar, DOMAIN_FILL, DomainChip, DueBadge, IconChevron, IconNav, IconPlus, IconSearch, Modal,
-  PRIORITY_STYLE, PageHead, PriorityDot, STATUS_STYLE, StatusPill, TaskCard, Toast,
+  PRIORITY_STYLE, PageHead, ParentLine, PriorityDot, STATUS_STYLE, StatusPill, SubCount, TaskCard, Toast,
   tmBtn, tmBtnPrimary, tmCallout, tmCount, tmEditBtn, tmGhostBtn, tmIconBtnSm, tmInput, tmSelect, tmTab, tmTextBtn,
   useMediaQuery, type NavIcon,
 } from './ui';
@@ -671,6 +671,35 @@ function Workspace({ account }: { account?: Account }) {
     () => Array.from(new Set(store.tasks.flatMap((t) => t.labels))).sort((a, b) => a.localeCompare(b, 'ko')),
     [store.tasks],
   );
+
+  /* 상위 · 하위 업무 - Supabase 에 상위 업무 칸(SQL)이 아직 없으면 쓰지 않는다. 지운 작업을 가리키는 칸은 맨 위 업무로 본다.
+     걸러 보기와 상관없이 모든 작업으로 센다(상위 업무가 걸러져도 하위 카드에 상위가 보이게) */
+  const hierarchy = !!store.hierarchy;
+  const kin = useMemo(() => {
+    const byId = new Map(store.tasks.map((t) => [t.id, t]));
+    const sub = new Map<string, { done: number; total: number }>();
+    if (hierarchy) {
+      store.tasks.forEach((t) => {
+        const p = parentOf(t, byId);
+        if (!p) return;
+        const s = sub.get(p.id) ?? { done: 0, total: 0 };
+        s.total += 1;
+        if (t.status === 'done') s.done += 1;
+        sub.set(p.id, s);
+      });
+    }
+    return { byId, sub };
+  }, [store.tasks, hierarchy]);
+  const parentFor = (t: Task) => (hierarchy ? parentOf(t, kin.byId) : null);
+  /** 목록 줄의 상위 업무 한 줄 · 하위 업무 진행 - 없으면 그리지 않는다 */
+  const parentLine = (t: Task, className?: string) => {
+    const p = parentFor(t);
+    return p ? <ParentLine parent={p} className={className} /> : null;
+  };
+  const subCount = (t: Task) => {
+    const s = kin.sub.get(t.id);
+    return s ? <SubCount done={s.done} total={s.total} /> : null;
+  };
 
   /** 오늘(이 기기 날짜) - 탭을 밤새 열어 두었다가 돌아와도 다시 잰다 */
   const todayKey = localISO(useToday());
@@ -1326,6 +1355,7 @@ function Workspace({ account }: { account?: Account }) {
                                   )}
                                   <TaskCard task={t} dragging={dragId === t.id}
                                     mine={t.assignee === me}
+                                    parent={parentFor(t)} sub={kin.sub.get(t.id)}
                                     onMove={(st, keyboard) => {
                                       store.move(t.id, st, null);
                                       // 키보드로 옮겼으면 옮겨 간 카드에 초점을 다시 둔다 - 이어서 또 옮길 수 있게
@@ -1422,7 +1452,9 @@ function Workspace({ account }: { account?: Account }) {
                                 <span className={`min-w-0 font-semibold ${t.status === 'done' ? 'text-tm-sub line-through' : 'text-tm-ink'}`}>
                                   {t.title}
                                 </span>
+                                {subCount(t)}
                               </div>
+                              {parentLine(t, 'mt-0.5')}
                             </td>
                             <td className="px-4 py-3.5"><StatusPill s={t.status} /></td>
                             <td className="px-4 py-3.5">
@@ -1481,6 +1513,7 @@ function Workspace({ account }: { account?: Account }) {
                                     t.status === 'done' ? 'text-tm-sub line-through' : 'text-tm-ink'}`}>
                                     {t.title}
                                   </span>
+                                  {parentLine(t, 'mt-0.5')}
                                 </span>
                                 <Avatar id={t.assignee} size={28} />
                               </span>
@@ -1492,6 +1525,7 @@ function Workspace({ account }: { account?: Account }) {
                                 </span>
                                 <DomainChip id={t.domain} />
                                 <DueBadge due={t.due} done={t.status === 'done'} />
+                                {subCount(t)}
                               </span>
                             </button>
                           </li>
@@ -1526,6 +1560,13 @@ function Workspace({ account }: { account?: Account }) {
 
       {open && (
         <TaskPanel task={open} knownLabels={knownLabels} unsaved={sync === 'error'}
+          family={hierarchy ? {
+            tasks: store.tasks,
+            open: setOpenId,
+            update: (id, patch) => store.update(id, patch),
+            // 새 하위 업무는 상위 업무의 영역으로, 할 일 칸에. 창은 상위 업무에 그대로 둬 이어서 여러 개를 적게 한다
+            create: (title) => { store.create({ title, parentId: open.id, domain: open.domain, status: 'todo' }); },
+          } : undefined}
           onUpdate={(patch) => store.update(open.id, patch)}
           onRemove={() => { store.remove(open.id); setOpenId(null); }}
           onClose={() => setOpenId(null)} />
@@ -1544,6 +1585,7 @@ function Workspace({ account }: { account?: Account }) {
 
       {creating && (
         <NewTaskDialog defaultStatus={creating} defaultDomain={defaultDomain(domains)} defaultDue={creatingDue} knownLabels={knownLabels}
+          tasks={hierarchy ? store.tasks : undefined}
           onCreate={handleCreate}
           onClose={() => { setCreating(null); setCreatingDue(null); }} />
       )}

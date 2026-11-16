@@ -1,16 +1,16 @@
 'use client';
 
-import { useEffect, useId, useRef, useState } from 'react';
+import { Fragment, useEffect, useId, useMemo, useRef, useState } from 'react';
 import {
-  PRIORITIES, STATUSES, localDay,
+  PRIORITIES, STATUSES, ancestorsOf, descendantIds, localDay, statusLabel,
   type DomainKey, type Priority, type Status, type Task,
 } from './types';
 import { assignable, useMember, useMembers } from './members';
 import { useDomains } from './domainStore';
 import {
-  Avatar, DomainChip, IconClose, Modal, PriorityDot,
-  tmBtn, tmBtnPrimary, tmFieldBase, tmGhostDanger, tmIconBtn, tmInput, tmLabel, tmSelect, tmTextarea,
-  useConfirm, useFocusTrap,
+  Avatar, DomainChip, IconClose, Modal, PriorityDot, STATUS_STYLE, SubCount,
+  tmBtn, tmBtnPrimary, tmCallout, tmFieldBase, tmGhostBtn, tmGhostDanger, tmIconBtn, tmIconBtnSm, tmInput, tmLabel, tmSelect, tmTextarea,
+  useConfirm, useFocusTrap, type Confirm,
 } from './ui';
 
 /* ── 폼 입력 ──────────────────────────────────────── */
@@ -25,6 +25,8 @@ interface Draft {
   start: string | null;
   due: string | null;
   labels: string[];
+  /** 상위 업무(Task.id) - 없으면 맨 위 업무 */
+  parentId: string | null;
 }
 
 const emptyDraft = (status: Status, domain: DomainKey): Draft => ({
@@ -37,17 +39,56 @@ const emptyDraft = (status: Status, domain: DomainKey): Draft => ({
   start: null,
   due: null,
   labels: [],
+  parentId: null,
 });
+
+/** 상위 · 하위 업무를 다루는 데 필요한 것 - 주지 않으면(Supabase 에 상위 업무 칸이 아직 없을 때) 그 칸들을 숨긴다 */
+export interface Family {
+  /** 모든 작업 */
+  tasks: Task[];
+  /** 다른 작업을 이 창에 연다 */
+  open(id: string): void;
+  /** 다른 작업을 고친다 - 하위 업무 잇기 · 빼기 · 완료 */
+  update(id: string, patch: Partial<Task>): void;
+  /** 이 작업 아래에 새 하위 업무를 만든다 */
+  create(title: string): void;
+}
+
+/** 작업 고르기 칸의 항목 - 영역별로 묶고, 영역 안에서는 최근에 만든 것부터 */
+function TaskOptions({ tasks }: { tasks: Task[] }) {
+  const domains = useDomains();
+  const groups = [...domains.map((d) => ({ id: d.id, label: d.label })), { id: '', label: '영역 없음' }]
+    .map((g) => ({
+      ...g,
+      items: tasks
+        .filter((t) => (g.id ? t.domain === g.id : !domains.some((d) => d.id === t.domain)))
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+    }))
+    .filter((g) => g.items.length);
+  return (
+    <>
+      {groups.map((g) => (
+        <optgroup key={g.id || '-'} label={g.label}>
+          {g.items.map((t) => (
+            <option key={t.id} value={t.id}>{`${t.key} ${t.title || '제목 없음'}${t.status === 'done' ? ' (완료)' : ''}`}</option>
+          ))}
+        </optgroup>
+      ))}
+    </>
+  );
+}
 
 /* 날짜 칸에 연도를 치는 동안에는 0002-, 0020- 같은 값이 잠깐 들어온다 - 그때는 다른 날짜를 옮기지 않는다 */
 const settled = (v: string) => v >= '1000';
 
 /** 세종 관리자 수정 창의 칸 배치 - 두 줄씩, 좁은 화면에서는 한 줄 */
-function Fields({ draft, set, knownLabels = [] }: {
+function Fields({ draft, set, knownLabels = [], parents }: {
   draft: Draft;
   set: (p: Partial<Draft>) => void;
   /** 다른 작업에 이미 쓰인 라벨 - 라벨 칸의 추천 목록 */
   knownLabels?: string[];
+  /** 상위 업무로 고를 수 있는 작업(자기 자신 · 자기 하위 업무는 뺀 것) - 주지 않으면 상위 업무 칸을 숨긴다 */
+  parents?: Task[];
 }) {
   const [labelInput, setLabelInput] = useState('');
   /** 거꾸로 된 기간을 막으려고 옮긴 쪽 */
@@ -177,6 +218,19 @@ function Fields({ draft, set, knownLabels = [] }: {
           </div>
         )}
       </div>
+
+      {parents && (
+        <div className="col-span-full">
+          <label className={tmLabel} htmlFor="tm-parent">상위 업무</label>
+          {/* 지운 작업을 가리키고 있으면 '없음'으로 보인다 - 고르면 그 칸도 비운다 */}
+          <select id="tm-parent" className={`${tmSelect} w-full`}
+            value={draft.parentId && parents.some((t) => t.id === draft.parentId) ? draft.parentId : ''}
+            onChange={(e) => set({ parentId: e.target.value || null })}>
+            <option value="">없음 (맨 위 업무)</option>
+            <TaskOptions tasks={parents} />
+          </select>
+        </div>
+      )}
     </div>
   );
 }
@@ -184,7 +238,7 @@ function Fields({ draft, set, knownLabels = [] }: {
 /* ── 새 작업 ──────────────────────────────────────── */
 
 export function NewTaskDialog({
-  defaultStatus, defaultDomain, defaultDue, knownLabels, onCreate, onClose,
+  defaultStatus, defaultDomain, defaultDue, knownLabels, tasks, onCreate, onClose,
 }: {
   defaultStatus: Status;
   defaultDomain: DomainKey;
@@ -192,6 +246,8 @@ export function NewTaskDialog({
   defaultDue?: string | null;
   /** 이미 쓰인 라벨 - 라벨 칸 추천 목록 */
   knownLabels?: string[];
+  /** 상위 업무로 고를 수 있는 작업 - 주지 않으면 상위 업무 칸을 숨긴다 */
+  tasks?: Task[];
   onCreate(d: Draft): void;
   onClose(): void;
 }) {
@@ -257,11 +313,144 @@ export function NewTaskDialog({
               value={draft.description}
               onChange={(e) => setDraft({ ...draft, description: e.target.value })} />
           </div>
-          <Fields draft={draft} set={(p) => setDraft((d) => ({ ...d, ...p }))} knownLabels={knownLabels} />
+          <Fields draft={draft} set={(p) => setDraft((d) => ({ ...d, ...p }))} knownLabels={knownLabels} parents={tasks} />
         </form>
       </Modal>
       {confirmNode}
     </>
+  );
+}
+
+/* ── 하위 업무 ────────────────────────────────────────
+   진행 막대 · 목록(체크로 완료) · 바로 만들기 · 이미 있는 작업 잇기.
+   상태는 저절로 바꾸지 않는다 - 하위가 모두 끝났거나, 이 업무를 끝냈는데 하위가 남았을 때 한 번에 맞추는 단추만 보인다 */
+
+function Subtasks({ task, family, confirm }: { task: Task; family: Family; confirm: Confirm }) {
+  const [title, setTitle] = useState('');
+  const kids = useMemo(
+    () => family.tasks
+      .filter((t) => t.parentId === task.id && t.id !== task.id)
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
+    [family.tasks, task.id],
+  );
+  const done = kids.filter((t) => t.status === 'done').length;
+  const left = kids.filter((t) => t.status !== 'done');
+  /* 하위로 이을 수 있는 작업 - 자기 자신, 이미 하위인 것, 자기 위의 작업(고리가 된다)은 뺀다.
+     다른 작업의 하위인 것은 이 작업 아래로 옮겨 온다 */
+  const linkable = useMemo(() => {
+    const above = new Set(ancestorsOf(task, new Map(family.tasks.map((t) => [t.id, t]))).map((t) => t.id));
+    return family.tasks.filter((t) => t.id !== task.id && t.parentId !== task.id && !above.has(t.id));
+  }, [family.tasks, task]);
+
+  const add = () => {
+    const v = title.trim();
+    if (!v) return;
+    family.create(v);
+    setTitle('');
+  };
+
+  const finishAll = async () => {
+    const shown = left.slice(0, 6);
+    const yes = await confirm({
+      title: `하위 업무 ${left.length}개를 완료로 바꿀까요?`,
+      body: (
+        <>
+          {shown.map((t) => <span key={t.id} className="block"><b>{t.key}</b> {t.title || '제목 없음'}</span>)}
+          {left.length > shown.length && <span className="block text-tm-sub">외 {left.length - shown.length}개</span>}
+        </>
+      ),
+      ok: '모두 완료',
+    });
+    if (yes) left.forEach((t) => family.update(t.id, { status: 'done' }));
+  };
+
+  return (
+    <section aria-labelledby="tm-sub-head" className="mt-6 border-t border-tm-line pt-[18px]">
+      <div className="mb-2.5 flex items-center gap-2.5">
+        <h3 id="tm-sub-head" className="text-[14px] font-bold text-tm-ink">하위 업무</h3>
+        {kids.length > 0 && (
+          <span className="text-[13px] font-semibold tabular-nums text-tm-sub">{kids.length}개 중 {done}개 완료</span>
+        )}
+      </div>
+
+      {kids.length > 0 && (
+        <>
+          <div role="progressbar" aria-label="하위 업무 진행" aria-valuemin={0} aria-valuemax={kids.length} aria-valuenow={done}
+            className="mb-3 h-1.5 overflow-hidden rounded-full bg-tm-bg ring-1 ring-inset ring-tm-line">
+            <div className="h-full rounded-full bg-tm-ok transition-[width] duration-300" style={{ width: `${(done / kids.length) * 100}%` }} />
+          </div>
+          <ul className="mb-3 rounded-tm-sm border border-tm-line">
+            {kids.map((k) => {
+              const fin = k.status === 'done';
+              return (
+                <li key={k.id} className="flex items-center gap-1.5 border-b border-tm-line pr-1.5 last:border-0">
+                  {/* 체크 상자는 작아서 둘레까지 누를 수 있게 칸을 키운다. 풀면 할 일로 돌아간다 */}
+                  <label className="grid h-11 w-10 flex-none cursor-pointer place-items-center">
+                    <input type="checkbox" checked={fin} aria-label={`${k.key} ${k.title} 완료`}
+                      onChange={(e) => family.update(k.id, { status: e.target.checked ? 'done' : 'todo' })}
+                      className="h-[18px] w-[18px] cursor-pointer accent-tm-blue" />
+                  </label>
+                  <button type="button" onClick={() => family.open(k.id)}
+                    className="group/sub flex min-h-[44px] min-w-0 flex-1 items-center gap-2 text-left">
+                    <span className="flex-none text-[13px] font-bold tabular-nums text-tm-sub">{k.key}</span>
+                    <span className={`min-w-0 truncate text-[14.5px] font-semibold underline-offset-[3px] group-hover/sub:underline ${
+                      fin ? 'text-tm-sub line-through' : 'text-tm-ink'}`}>
+                      {k.title || '제목 없음'}
+                    </span>
+                  </button>
+                  <span className={`flex-none whitespace-nowrap rounded-full px-2 py-0.5 text-[12px] font-bold max-[420px]:hidden ${STATUS_STYLE[k.status].pill}`}>
+                    {statusLabel(k.status)}
+                  </span>
+                  <Avatar id={k.assignee} size={22} />
+                  <button type="button" onClick={() => family.update(k.id, { parentId: null })}
+                    aria-label={`${k.key} 하위 업무에서 빼기`} title="하위 업무에서 빼기" className={tmIconBtnSm}>
+                    <IconClose size={15} />
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </>
+      )}
+
+      {kids.length > 0 && left.length === 0 && task.status !== 'done' && (
+        <div className={`${tmCallout} mb-3`}>
+          <span className="min-w-0 flex-1">하위 업무가 모두 끝났습니다.</span>
+          <button type="button" onClick={() => family.update(task.id, { status: 'done' })} className={tmGhostBtn}>
+            이 업무도 완료
+          </button>
+        </div>
+      )}
+      {task.status === 'done' && left.length > 0 && (
+        <div className={`${tmCallout} mb-3`}>
+          <span className="min-w-0 flex-1">끝나지 않은 하위 업무가 {left.length}개 있습니다.</span>
+          <button type="button" onClick={() => void finishAll()} className={tmGhostBtn}>
+            모두 완료로
+          </button>
+        </div>
+      )}
+
+      <div className="flex items-center gap-2">
+        <label className="sr-only" htmlFor="tm-sub-new">새 하위 업무 제목</label>
+        <input id="tm-sub-new" className={tmInput} placeholder="새 하위 업무 제목 입력 후 Enter"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) { e.preventDefault(); add(); } }} />
+        <button type="button" onClick={add} disabled={!title.trim()} className={`${tmBtn} flex-none`}>
+          추가
+        </button>
+      </div>
+      {linkable.length > 0 && (
+        <div className="mt-2.5">
+          <label className="sr-only" htmlFor="tm-sub-link">이미 있는 작업을 하위 업무로 잇기</label>
+          <select id="tm-sub-link" value="" className={`${tmSelect} w-full`}
+            onChange={(e) => { if (e.target.value) family.update(e.target.value, { parentId: task.id }); }}>
+            <option value="">이미 있는 작업을 하위 업무로 잇기</option>
+            <TaskOptions tasks={linkable} />
+          </select>
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -270,23 +459,47 @@ export function NewTaskDialog({
    머리 · 본문 · 바닥의 짜임은 세종 관리자의 수정 창과 같다. */
 
 export function TaskPanel({
-  task, knownLabels, unsaved, onUpdate, onRemove, onClose,
+  task, knownLabels, unsaved, family, onUpdate, onRemove, onClose,
 }: {
   task: Task;
   /** 이미 쓰인 라벨 - 라벨 칸 추천 목록 */
   knownLabels?: string[];
   /** 서버에 아직 보내지 못한 변경이 있다 - 바닥 줄도 쪽 머리 알약과 같은 말을 한다 */
   unsaved?: boolean;
+  /** 상위 · 하위 업무 - 주지 않으면 그 칸들을 숨긴다 */
+  family?: Family;
   onUpdate(patch: Partial<Task>): void;
   onRemove(): void;
   onClose(): void;
 }) {
   const trapRef = useFocusTrap<HTMLElement>();
+  const bodyRef = useRef<HTMLDivElement>(null);
   const [confirm, confirmNode] = useConfirm();
   const owner = useMember(task.assignee);
   /* 확인 창이 떠 있는 동안의 Esc 는 확인 창 몫이다 */
   const asking = useRef(false);
   asking.current = confirmNode !== null;
+
+  /* 상위 업무 줄(맨 위부터) · 상위로 고를 수 있는 작업(자기 자신과 자기 하위 업무를 빼야 고리가 생기지 않는다) */
+  const all = family?.tasks;
+  const chain = useMemo(() => (all ? ancestorsOf(task, new Map(all.map((t) => [t.id, t]))).reverse() : []), [all, task]);
+  const parents = useMemo(() => {
+    if (!all) return undefined;
+    const below = descendantIds(task.id, all);
+    return all.filter((t) => t.id !== task.id && !below.has(t.id));
+  }, [all, task.id]);
+  const kids = all ? all.filter((t) => t.parentId === task.id && t.id !== task.id) : [];
+  const kidCount = kids.length;
+  const kidDone = kids.filter((t) => t.status === 'done').length;
+
+  /* 상위 · 하위 업무를 눌러 다른 작업으로 넘어가면 맨 위부터 보이고, 누른 단추가 사라져 잃은 초점을 창으로 되돌린다 */
+  const shown = useRef(task.id);
+  useEffect(() => {
+    if (shown.current === task.id) return;
+    shown.current = task.id;
+    bodyRef.current?.scrollTo({ top: 0 });
+    if (!trapRef.current?.contains(document.activeElement)) trapRef.current?.focus({ preventScroll: true });
+  }, [task.id, trapRef]);
 
   /* 제목은 빈 채로 저장하지 않는다. 칸의 글자는 따로 들고, 비어 있는 동안은 저장을 건너뛰고
      칸을 떠나면 마지막 제목으로 돌린다 */
@@ -316,6 +529,7 @@ export function TaskPanel({
       body: (
         <>
           <b>{task.key} {task.title}</b> 작업이 지워집니다. 지운 직후에는 화면 아래 알림의 실행 취소로 되돌릴 수 있습니다.
+          {kidCount > 0 && ` 하위 업무 ${kidCount}개는 지우지 않고 맨 위 업무로 남깁니다(실행 취소하면 다시 이어집니다).`}
         </>
       ),
       ok: '삭제',
@@ -334,24 +548,48 @@ export function TaskPanel({
     start: task.start,
     due: task.due,
     labels: task.labels,
+    parentId: task.parentId ?? null,
   };
 
   return (
     <>
       <div className="fixed inset-0 z-[60] animate-tm-fade bg-[rgba(15,26,41,0.4)] lg:bg-transparent" onClick={onClose} aria-hidden />
-      <aside ref={trapRef} role="dialog" aria-modal="true" aria-label={`${task.key} 상세`}
-        className="fixed inset-y-0 right-0 z-[60] flex w-full max-w-[480px] animate-tm-slide flex-col border-l border-tm-line bg-white text-[15.5px] leading-[1.6] shadow-tm-pop">
+      <aside ref={trapRef} role="dialog" aria-modal="true" aria-label={`${task.key} 상세`} tabIndex={-1}
+        className="fixed inset-y-0 right-0 z-[60] flex w-full max-w-[480px] animate-tm-slide flex-col border-l border-tm-line bg-white text-[15.5px] leading-[1.6] shadow-tm-pop outline-none">
 
         <header className="flex flex-none items-center gap-2.5 border-b border-tm-line py-[18px] pl-[26px] pr-5 max-[720px]:py-3.5 max-[720px]:pl-4 max-[720px]:pr-3">
           <PriorityDot p={task.priority} />
           <span className="text-[16px] font-extrabold tabular-nums text-tm-deep">{task.key}</span>
           <DomainChip id={task.domain} />
+          {/* 하위 업무 칸은 아래에 있어 머리에서 알리고, 누르면 그리로 내려간다 */}
+          {family && kidCount > 0 && (
+            <button type="button" aria-label={`하위 업무 ${kidCount}개 중 ${kidDone}개 완료, 하위 업무 칸으로`}
+              onClick={() => document.getElementById('tm-sub-head')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              className="grid min-h-[30px] place-items-center rounded-lg px-1.5 transition-colors duration-150 hover:bg-tm-tint">
+              <SubCount done={kidDone} total={kidCount} />
+            </button>
+          )}
           <button type="button" onClick={onClose} aria-label="닫기" className={`ml-auto ${tmIconBtn}`}>
             <IconClose />
           </button>
         </header>
 
-        <div className="min-h-0 flex-1 overflow-y-auto p-[26px] max-[720px]:px-4 max-[720px]:py-[18px]">
+        <div ref={bodyRef} className="min-h-0 flex-1 overflow-y-auto p-[26px] max-[720px]:px-4 max-[720px]:py-[18px]">
+          {family && chain.length > 0 && (
+            <nav aria-label="상위 업무" className="mb-3 flex min-w-0 flex-wrap items-center gap-x-1.5 text-[13.5px] leading-[1.5]">
+              <span className="font-bold text-tm-sub">상위</span>
+              {chain.map((p, i) => (
+                <Fragment key={p.id}>
+                  {i > 0 && <span aria-hidden className="text-tm-sub">›</span>}
+                  <button type="button" onClick={() => family.open(p.id)}
+                    className="max-w-full truncate rounded py-1 font-semibold text-tm-blue underline-offset-[3px] hover:underline">
+                    <span className="tabular-nums">{p.key}</span> {p.title || '제목 없음'}
+                  </button>
+                </Fragment>
+              ))}
+            </nav>
+          )}
+
           <label className={tmLabel} htmlFor="tm-edit-title">제목</label>
           <input id="tm-edit-title"
             className={`${tmFieldBase} mb-[18px] block h-auto w-full px-3.5 py-2.5 text-[19px] font-bold leading-[1.4]`}
@@ -378,7 +616,9 @@ export function TaskPanel({
             value={task.description}
             onChange={(e) => onUpdate({ description: e.target.value })} />
 
-          <Fields draft={draft} set={(p) => onUpdate(p as Partial<Task>)} knownLabels={knownLabels} />
+          <Fields draft={draft} set={(p) => onUpdate(p as Partial<Task>)} knownLabels={knownLabels} parents={parents} />
+
+          {family && <Subtasks task={task} family={family} confirm={confirm} />}
 
           <dl className="mt-6 grid grid-cols-[96px_minmax(0,1fr)] gap-x-4 gap-y-2.5 border-t border-tm-line pt-[18px] text-[14.5px] leading-[1.6]">
             <dt className="font-bold text-tm-sub">담당</dt>

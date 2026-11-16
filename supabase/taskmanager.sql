@@ -80,6 +80,10 @@ alter table public.tm_tasks drop constraint if exists tm_tasks_domain_check;
 alter table public.tm_tasks drop constraint if exists tm_tasks_domain_fkey;
 alter table public.tm_tasks add constraint tm_tasks_domain_fkey
   foreign key (domain) references public.tm_domains (id) on update cascade;
+-- 상위 업무(같은 표의 다른 작업). 외래 키는 두지 않는다 - 상위 업무를 지워도 하위 업무의 이 칸을 그대로 두어
+-- 지운 직후 '실행 취소'로 되살리면 다시 이어지게 한다. 화면은 없는 작업을 가리키면 맨 위 업무로 본다.
+-- 자기 자신 · 자기 하위 업무를 상위로 두는 고리는 아래 tm_tasks_guard 가 막는다
+alter table public.tm_tasks add column if not exists parent_id uuid;
 
 -- ── 문서 ─────────────────────────────────────────────────────
 create table if not exists public.tm_docs (
@@ -149,6 +153,7 @@ create table if not exists public.tm_doc_comments (
 create index if not exists tm_tasks_assignee_idx on public.tm_tasks (assignee);
 create index if not exists tm_tasks_created_by_idx on public.tm_tasks (created_by);
 create index if not exists tm_tasks_domain_idx on public.tm_tasks (domain);
+create index if not exists tm_tasks_parent_id_idx on public.tm_tasks (parent_id);
 create index if not exists tm_docs_parent_id_idx on public.tm_docs (parent_id);
 create index if not exists tm_docs_author_idx on public.tm_docs (author);
 create index if not exists tm_doc_versions_doc_idx on public.tm_doc_versions (doc_id, created_at desc);
@@ -423,6 +428,29 @@ begin
 end;
 $$;
 
+-- 작업을 자기 자신이나 자기 하위 업무 아래에 넣지 못하게 한다(상위 업무 고리). 화면도 막지만 두 사람이 동시에 고칠 때를 위해
+create or replace function public.tm_tasks_guard()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if new.parent_id is not null and (tg_op = 'INSERT' or new.parent_id is distinct from old.parent_id) then
+    if new.parent_id = new.id or exists (
+      with recursive up (id, parent_id) as (
+        select t.id, t.parent_id from public.tm_tasks t where t.id = new.parent_id
+        union
+        select t.id, t.parent_id from public.tm_tasks t join up on t.id = up.parent_id
+      )
+      select 1 from up where up.id = new.id
+    ) then
+      raise exception '작업을 자기 하위 업무 아래에 넣을 수 없습니다';
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
 -- 지금 모습을 기록에 남긴다 - 예전 판으로 되돌리기 직전에 화면이 부른다(되돌린 것도 되돌릴 수 있게)
 create or replace function public.tm_doc_snapshot(target uuid)
 returns void
@@ -496,6 +524,9 @@ $$;
 drop trigger if exists tm_tasks_touch on public.tm_tasks;
 create trigger tm_tasks_touch before update on public.tm_tasks
   for each row execute function public.tm_touch();
+
+create or replace trigger tm_tasks_guard before insert or update of parent_id on public.tm_tasks
+  for each row execute function public.tm_tasks_guard();
 
 drop trigger if exists tm_docs_touch on public.tm_docs;
 create trigger tm_docs_touch before update on public.tm_docs
@@ -643,6 +674,8 @@ grant select, insert (id, color), update (id, color), delete on public.tm_colors
 revoke execute on function public.tm_is_member(), public.tm_is_admin(), public.tm_touch(),
   public.tm_on_new_user(), public.tm_members_guard(), public.tm_reject_member(uuid), public.tm_confirm_on_approve() from public, anon, authenticated;
 grant execute on function public.tm_is_member(), public.tm_is_admin(), public.tm_reject_member(uuid) to authenticated;
+-- 작업 - 상위 업무 고리 막기는 트리거용이라 아무도 부르지 못하게
+revoke execute on function public.tm_tasks_guard() from public, anon, authenticated;
 -- 위키 - 트리거용은 막고, 되돌리기 전에 지금 모습을 남기는 함수만 로그인한 사람에게(함수가 팀원인지 본다)
 revoke execute on function public.tm_docs_history(), public.tm_docs_guard(), public.tm_docs_stamp(), public.tm_doc_comments_guard(),
   public.tm_doc_snapshot(uuid) from public, anon, authenticated;

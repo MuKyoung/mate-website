@@ -76,6 +76,8 @@ export interface TaskRow {
   start_date: string | null;
   due_date: string | null;
   labels: string[] | null;
+  /** 상위 업무 - SQL 로 뒤에 더한 칸이라 아직 없는 DB 에서는 오지 않는다 */
+  parent_id?: string | null;
   sort: number;
   created_at: string;
   updated_at: string;
@@ -174,13 +176,15 @@ export function taskFromRow(r: TaskRow): Task {
     start: r.start_date,
     due: r.due_date,
     labels: r.labels ?? [],
+    parentId: r.parent_id ?? null,
     order: r.sort,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   };
 }
 
-/** 바뀐 칸만 표의 칸 이름으로 옮긴다. id · key · 시각은 DB 가 맡는다 */
+/** 바뀐 칸만 표의 칸 이름으로 옮긴다. id · key · 시각은 DB 가 맡는다.
+    상위 업무를 비우는 고침(null)도 보낸다 - 새 줄을 넣을 때 비어 있는 상위 칸은 remote.ts 가 뺀다 */
 export function taskToRow(p: Partial<Task>): Partial<TaskRow> {
   const r: Partial<TaskRow> = {};
   if (p.title !== undefined) r.title = p.title;
@@ -192,6 +196,7 @@ export function taskToRow(p: Partial<Task>): Partial<TaskRow> {
   if (p.start !== undefined) r.start_date = p.start;
   if (p.due !== undefined) r.due_date = p.due;
   if (p.labels !== undefined) r.labels = p.labels;
+  if (p.parentId !== undefined) r.parent_id = p.parentId;
   if (p.order !== undefined) r.sort = p.order;
   return r;
 }

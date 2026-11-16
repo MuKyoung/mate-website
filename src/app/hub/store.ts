@@ -154,6 +154,8 @@ export interface Store {
   flush?(): Promise<void>;
   /** Supabase 모드 - 서버 목록을 다시 읽는다(가져오기 뒤처럼 실시간을 기다리지 않을 때) */
   reload?(): Promise<void>;
+  /** 상위 · 하위 업무를 쓸 수 있는가 - Supabase 에 상위 업무 칸(SQL)이 아직 없으면 거짓이라 화면이 그 칸들을 숨긴다 */
+  hierarchy?: boolean;
 }
 
 /** _opts 는 Supabase 저장소와 같은 모양으로 부르기 위한 자리 - 브라우저 모드에서는 실패할 일이 없다 */
@@ -230,6 +232,7 @@ export function useTaskStore(_opts?: StoreOptions): Store {
         start: input.start ?? null,
         due: input.due ?? null,
         labels: input.labels ?? [],
+        parentId: input.parentId ?? null,
         order: 0, // 새 작업은 해당 칼럼 맨 위로
         createdAt: now,
         updatedAt: now,
@@ -362,5 +365,6 @@ export function useTaskStore(_opts?: StoreOptions): Store {
   return {
     tasks, ready, persistent, create, update, remove, move, reset, clearSamples,
     undoLabel: undoState.label, undoSeq: undoState.seq, undo, dropUndo,
+    hierarchy: true,
   };
 }

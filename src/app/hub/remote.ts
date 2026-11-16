@@ -592,7 +592,19 @@ const keyNum = (key: string) => {
 
 /* ── 작업 ─────────────────────────────────────────────────── */
 
+/** 상위 업무 칸(SQL 의 tm_tasks.parent_id) */
+const parentProbe = () => [sb().from('tm_tasks').select('parent_id').limit(1)];
+
+/** 새 줄로 넣는 작업 - 상위 업무가 없으면 그 칸을 빼고 보낸다. 상위 업무 SQL 을 아직 돌리지 않은 DB 에서도 만들어지게 */
+const insertRow = (t: Task): Partial<TaskRow> => {
+  const row = taskToRow(t);
+  if (!row.parent_id) delete row.parent_id;
+  return row;
+};
+
 export function useRemoteTaskStore(opts: StoreOptions = {}): Store {
+  /* 상위 · 하위 업무는 그 칸이 있을 때만 - 앱을 먼저 배포하고 SQL 을 나중에 돌려도 예전처럼 돈다 */
+  const hierarchy = useTablesExist(parentProbe) === true;
   const { items, ready, sync, loadError, deleted, eng } = useRowSync<Task, TaskRow>({
     table: 'tm_tasks', fromRow: taskFromRow, toRow: taskToRow, onError: opts.onError,
     texts: {
@@ -638,11 +650,12 @@ export function useRemoteTaskStore(opts: StoreOptions = {}): Store {
       start: input.start ?? null,
       due: input.due ?? null,
       labels: input.labels ?? [],
+      parentId: input.parentId ?? null,
       order: top,
       createdAt: now,
       updatedAt: now,
     };
-    eng.create(task, { id: task.id, ...taskToRow(task) });
+    eng.create(task, { id: task.id, ...insertRow(task) });
     return task;
   }, [eng]);
 
@@ -670,7 +683,7 @@ export function useRemoteTaskStore(opts: StoreOptions = {}): Store {
       if (eng.items.some((t) => t.id === id)) return false;
       // 같은 번호로 되살린다 - 문서에 적어 둔 MATE-### 가 그대로 이어진다
       eng.create(gone, {
-        id: gone.id, num: keyNum(gone.key), ...taskToRow(gone), created_at: gone.createdAt,
+        id: gone.id, num: keyNum(gone.key), ...insertRow(gone), created_at: gone.createdAt,
       } as Partial<TaskRow> & { id: string }, true);
       return true;
     });
@@ -722,7 +735,7 @@ export function useRemoteTaskStore(opts: StoreOptions = {}): Store {
   return {
     tasks: items, ready, persistent: true, sync, loadError, deletedElsewhere: deleted,
     create, update, remove, move, flush, reload,
-    reset: noop, clearSamples: noop,
+    reset: noop, clearSamples: noop, hierarchy,
     undoLabel: undoState.label, undoSeq: undoState.seq, undo, dropUndo,
   };
 }
@@ -1206,11 +1219,17 @@ export async function importLocal(userId: string): Promise<{ tasks: number; docs
       .map((old) => ({ id: plan[old.id] ?? crypto.randomUUID(), old }));
     // 넣기 전에 새 id 를 적어 둔다 - 넣고 나서 답을 못 받아도 다시 누르면 같은 줄로 보고 건너뛴다
     writeMark({ state: 'tasks', plan: Object.fromEntries(rows.map(({ id, old }) => [old.id, id])) });
+    // 상위 업무는 새 id 로 잇는다. 상위 업무가 예시라 옮기지 않았거나 DB 에 상위 업무 칸이 아직 없으면 맨 위 업무로
+    const newId = new Map(rows.map(({ id, old }) => [old.id, id]));
+    const parents = !(await sb().from('tm_tasks').select('parent_id').limit(1)).error;
     const { data, error } = await sb()
       .from('tm_tasks')
       .upsert(rows.map(({ id, old }) => ({
         id,
-        ...taskToRow({ ...old, domain: domainFor(old.domain), assignee: old.assignee === localMe ? userId : null }),
+        ...insertRow({
+          ...old, domain: domainFor(old.domain), assignee: old.assignee === localMe ? userId : null,
+          parentId: parents && old.parentId ? newId.get(old.parentId) ?? null : null,
+        }),
         created_at: old.createdAt,
         updated_at: old.updatedAt,
       })), { onConflict: 'id', ignoreDuplicates: true })

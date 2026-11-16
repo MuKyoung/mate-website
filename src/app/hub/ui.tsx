@@ -229,6 +229,16 @@ export function IconSearch({ size = 18 }: { size?: number }) {
 export function IconChevron({ size = 16 }: { size?: number }) {
   return <svg viewBox="0 0 20 20" width={size} height={size} aria-hidden {...svg}><path d="M5.5 8l4.5 4.5L14.5 8" /></svg>;
 }
+/** 하위 업무 - 줄기에서 두 갈래 */
+export function IconSubtasks({ size = 14 }: { size?: number }) {
+  return (
+    <svg viewBox="0 0 20 20" width={size} height={size} aria-hidden className="flex-none" {...svg}>
+      <path d="M5 3.5v11h4M5 8.5h4" />
+      <rect x="10.5" y="6.5" width="6" height="4" rx="1.2" />
+      <rect x="10.5" y="12.5" width="6" height="4" rx="1.2" />
+    </svg>
+  );
+}
 export function IconCheck({ size = 16 }: { size?: number }) {
   return <svg viewBox="0 0 20 20" width={size} height={size} aria-hidden {...svg}><path d="M4.5 10.5l3.5 3.5 7.5-8" /></svg>;
 }
@@ -861,6 +871,31 @@ function StatusMenu({ task, onMove }: { task: Task; onMove(s: Status, keyboard: 
   );
 }
 
+/** 하위 업무 진행 - 아이콘과 '2/5'. 모두 끝났으면 초록 */
+export function SubCount({ done, total }: { done: number; total: number }) {
+  return (
+    <span title={`하위 업무 ${total}개 중 ${done}개 완료`}
+      className={`inline-flex items-center gap-1 whitespace-nowrap text-[12.5px] font-bold tabular-nums ${
+        done === total ? 'text-tm-ok-deep' : 'text-tm-sub'}`}>
+      <IconSubtasks />
+      <span className="sr-only">하위 업무</span>
+      {done}/{total}
+    </span>
+  );
+}
+
+/** 상위 업무 한 줄 - 보드 카드 · 목록의 제목 곁. 긴 제목은 한 줄로 자른다 */
+export function ParentLine({ parent, className = '' }: { parent: Task; className?: string }) {
+  return (
+    <span title={`상위 업무 ${parent.key} ${parent.title}`}
+      className={`flex min-w-0 items-center gap-1 text-[12.5px] font-semibold leading-[1.4] text-tm-sub ${className}`}>
+      <span className="flex-none">상위</span>
+      <span className="flex-none tabular-nums">{parent.key}</span>
+      <span className="min-w-0 truncate">{parent.title}</span>
+    </span>
+  );
+}
+
 interface CardProps {
   task: Task;
   onOpen(): void;
@@ -871,11 +906,16 @@ interface CardProps {
   onMove(s: Status, keyboard: boolean): void;
   /** 내 작업이면 왼쪽에 파란 표시선을 둔다 */
   mine?: boolean;
+  /** 상위 업무 - 있으면 제목 위에 한 줄 */
+  parent?: Task | null;
+  /** 하위 업무 진행 - 있으면 마감 곁에 */
+  sub?: { done: number; total: number } | null;
 }
 
-export function TaskCard({ task, onOpen, onDragStart, onDragEnd, dragging, onMove, mine }: CardProps) {
+export function TaskCard({ task, onOpen, onDragStart, onDragEnd, dragging, onMove, mine, parent, sub }: CardProps) {
   const done = task.status === 'done';
   const idx = STATUSES.findIndex((s) => s.id === task.status);
+  const kin = `${parent ? `, 상위 업무 ${parent.key}` : ''}${sub ? `, 하위 업무 ${sub.total}개 중 ${sub.done}개 완료` : ''}`;
   return (
     <article
       data-task={task.id}
@@ -903,7 +943,7 @@ export function TaskCard({ task, onOpen, onDragStart, onDragEnd, dragging, onMov
       }}
       tabIndex={0}
       role="button"
-      aria-label={`${task.key} ${task.title}`}
+      aria-label={`${task.key} ${task.title}${kin}`}
       className={`group relative cursor-pointer rounded-tm-btn border border-tm-line bg-white px-3.5 pb-3.5 pt-3 shadow-tm
                   transition-[border-color,box-shadow,transform] duration-200
                   hover:-translate-y-0.5 hover:border-tm-blue hover:shadow-[0_8px_20px_rgba(22,39,60,0.12)]
@@ -918,6 +958,7 @@ export function TaskCard({ task, onOpen, onDragStart, onDragEnd, dragging, onMov
         <StatusMenu task={task} onMove={onMove} />
       </div>
 
+      {parent && <ParentLine parent={parent} className="mb-1" />}
       <p
         className={`mb-3 text-[15.5px] font-bold leading-[1.45] [overflow-wrap:anywhere] ${
           done ? 'text-tm-sub line-through' : 'text-tm-ink'
@@ -938,6 +979,7 @@ export function TaskCard({ task, onOpen, onDragStart, onDragEnd, dragging, onMov
 
       <div className="flex min-h-[26px] items-center justify-between gap-2">
         <DueBadge due={task.due} done={done} />
+        {sub && <SubCount done={sub.done} total={sub.total} />}
         <span className="ml-auto"><Avatar id={task.assignee} size={26} /></span>
       </div>
     </article>

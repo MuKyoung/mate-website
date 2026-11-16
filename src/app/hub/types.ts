@@ -59,10 +59,54 @@ export interface Task {
   /** YYYY-MM-DD, 없으면 null */
   due: string | null;
   labels: string[];
+  /**
+   * 상위 업무(Task.id) - 없으면 맨 위 업무. 상위 업무를 지워도 이 칸은 그대로 두어 실행 취소로 되살리면 다시 이어진다.
+   * 그래서 없는 작업을 가리킬 수 있고, 화면은 그때 맨 위 업무로 본다(parentOf). 예전 저장본 · 칸이 없는 DB 에서는 비어 있다
+   */
+  parentId?: string | null;
   /** 같은 상태 안에서의 정렬 순서. 작을수록 위. */
   order: number;
   createdAt: string;
   updatedAt: string;
+}
+
+/* ── 상위 · 하위 업무 ── 고리(서로가 서로의 상위)는 화면과 DB(tm_tasks_guard)가 막지만, 두 사람이 동시에 고치면
+   생길 수 있어 위아래로 따라갈 때는 늘 지나온 작업을 센다 */
+
+/** 상위 업무 - 지운 작업 · 자기 자신을 가리키면 없는 것으로 본다 */
+export function parentOf(t: Task, byId: ReadonlyMap<string, Task>): Task | null {
+  const p = t.parentId ? byId.get(t.parentId) : undefined;
+  return p && p.id !== t.id ? p : null;
+}
+
+/** 위로 따라간 상위 업무들 - 가까운 것부터 */
+export function ancestorsOf(t: Task, byId: ReadonlyMap<string, Task>): Task[] {
+  const out: Task[] = [];
+  const seen = new Set([t.id]);
+  for (let cur = parentOf(t, byId); cur && !seen.has(cur.id); cur = parentOf(cur, byId)) {
+    out.push(cur);
+    seen.add(cur.id);
+  }
+  return out;
+}
+
+/** 아래로 따라간 모든 하위 업무의 id - 이 작업의 상위로 고르면 고리가 되는 것들 */
+export function descendantIds(id: string, tasks: readonly Task[]): Set<string> {
+  const kids = new Map<string, string[]>();
+  tasks.forEach((t) => {
+    if (t.parentId) kids.set(t.parentId, [...(kids.get(t.parentId) ?? []), t.id]);
+  });
+  const out = new Set<string>();
+  const stack = [id];
+  while (stack.length) {
+    (kids.get(stack.pop() as string) ?? []).forEach((k) => {
+      if (k !== id && !out.has(k)) {
+        out.add(k);
+        stack.push(k);
+      }
+    });
+  }
+  return out;
 }
 
 export const STATUSES: { id: Status; label: string; hint: string }[] = [
