@@ -731,7 +731,20 @@ create policy tm_presence_write on realtime.messages
 -- 일간보고(스크럼): 명단의 사람마다 하루에 한 줄 - 완료 · 예정 · 블로커 & 공유사항. 명단(이름 · 순서 · 계정 연결)은 관리자만 고친다.
 -- 주간보고: 한 주에 한 장(id = 그 주 월요일)과 프로젝트 줄. 숫자 · 사람별 실적은 화면이 작업 · 일간보고에서 모은다.
 -- 일간 · 주간은 승인된 팀원 누구나 읽고 쓴다(스크럼에서 한 사람이 모두의 칸을 적기도 한다). 마지막으로 고친 사람은 DB 가 적는다.
+-- 확정 · 다시 열기는 tm_weekly_finalize · tm_weekly_reopen 으로만 한다 - 확정자 · 시각 · 그때의 근거(저장본)를 서버가 남기고,
+-- 확정된 주의 본문 · 프로젝트 줄 고침은 서버가 거절한다. 승인된 팀원 누구나 다시 열 수 있다.
 -- 이 블록만 따로 실행해도 된다(위의 tm_touch · tm_is_member · tm_is_admin 이 이미 있으면). 여러 번 실행해도 된다.
+
+-- 처음 설치 표시 - 명단을 처음 9명으로 채우는 일은 새로 깔 때 한 번만 한다.
+-- 관리자가 명단을 모두 비워도 이 SQL 을 다시 실행해서 되살아나지 않는다. 명단 표가 이미 있던 곳(예전 판으로 깐 곳)은 채우지 않는다
+create table if not exists public.tm_report_setup (
+  id boolean primary key default true check (id),
+  seed_pending boolean not null default false,
+  created_at timestamptz not null default now()
+);
+insert into public.tm_report_setup (id, seed_pending)
+select true, to_regclass('public.tm_report_people') is null
+on conflict (id) do nothing;
 
 create table if not exists public.tm_report_people (
   id uuid primary key default gen_random_uuid(),
@@ -741,14 +754,15 @@ create table if not exists public.tm_report_people (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
--- 처음 명단 - 표가 비어 있을 때만 넣는다(다시 실행해도 관리자가 뺀 사람을 되살리지 않게)
+-- 처음 명단 - 새로 깔 때만(위의 표시)
 insert into public.tm_report_people (name, sort)
 select v.name, v.sort
 from (values
   ('박무경', 1000::double precision), ('정성권', 2000), ('전승원', 3000), ('박예형', 4000), ('강민정', 5000),
   ('김학동', 6000), ('조현민', 7000), ('이지영', 8000), ('박수현', 9000)
 ) as v (name, sort)
-where not exists (select 1 from public.tm_report_people);
+where exists (select 1 from public.tm_report_setup where seed_pending);
+update public.tm_report_setup set seed_pending = false where seed_pending;
 
 -- 하루 · 한 사람에 한 줄. id 는 '<날짜>:<명단 id>' 라 두 사람이 같은 칸을 처음 적어도 한 줄로 모인다(화면이 upsert 로 넣는다).
 -- 명단에서 사람을 빼도 보고는 남는다 - 외래 키를 두지 않고 적을 때의 이름을 함께 둔다
@@ -773,11 +787,15 @@ create table if not exists public.tm_weekly_reports (
   issues text not null default '' check (char_length(issues) <= 8000),
   next_plan text not null default '' check (char_length(next_plan) <= 8000),
   notes text not null default '' check (char_length(notes) <= 8000),
-  status text not null default 'draft' check (status in ('draft', 'final')),   -- 확정하면 화면이 칸을 잠근다
+  status text not null default 'draft' check (status in ('draft', 'final')),   -- final 이면 서버가 본문 · 프로젝트 줄 고침을 거절한다
   updated_by uuid default auth.uid(),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+-- 마지막으로 확정한 사람 · 시각 · 그때의 근거(저장본 v1). 다시 열어도 '직전 확정'으로 남는다. 예전 확정본에는 없다(채워 넣지 않는다)
+alter table public.tm_weekly_reports add column if not exists finalized_by uuid;
+alter table public.tm_weekly_reports add column if not exists finalized_at timestamptz;
+alter table public.tm_weekly_reports add column if not exists snapshot jsonb;
 
 -- 주간보고의 프로젝트 줄 - 줄마다 따로 두어 두 사람이 다른 줄을 함께 고쳐도 덮지 않는다
 create table if not exists public.tm_weekly_items (
@@ -795,6 +813,13 @@ create table if not exists public.tm_weekly_items (
 );
 create index if not exists tm_weekly_items_week_idx on public.tm_weekly_items (week);
 
+-- 주는 실제 있는 날짜의 월요일만(2026-02-30 · 화요일은 거절). 이미 있는 줄은 검사하지 않는다(not valid -
+-- 어긋난 줄이 있으면 지우거나 옮기지 않고 따로 살펴본다: select id from public.tm_weekly_reports where extract(isodow from id::date) <> 1)
+alter table public.tm_weekly_reports drop constraint if exists tm_weekly_reports_monday;
+alter table public.tm_weekly_reports add constraint tm_weekly_reports_monday check (extract(isodow from id::date) = 1) not valid;
+alter table public.tm_weekly_items drop constraint if exists tm_weekly_items_monday;
+alter table public.tm_weekly_items add constraint tm_weekly_items_monday check (extract(isodow from week::date) = 1) not valid;
+
 -- 마지막으로 고친 사람 - 화면이 보낸 값을 따르지 않고 로그인한 사람으로 적는다(대시보드 · SQL Editor 는 그대로)
 create or replace function public.tm_stamp_editor()
 returns trigger
@@ -809,21 +834,200 @@ begin
 end;
 $$;
 
+-- 일간 줄 규칙 - id 는 '<날짜>:<사람>' 과 같아야 하고, 날짜 · 사람은 바꿀 수 없다(다른 날 · 다른 사람의 보고로 옮기지 못하게).
+-- 같은 값으로 덮는 upsert(두 사람의 동시 첫 작성)는 그대로 된다
+create or replace function public.tm_daily_reports_guard()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if new.id is distinct from to_char(new.day, 'YYYY-MM-DD') || ':' || new.person::text then
+    raise exception '일간보고 id 는 날짜:사람이어야 합니다';
+  end if;
+  if tg_op = 'UPDATE' and (new.day, new.person) is distinct from (old.day, old.person) then
+    raise exception '일간보고의 날짜 · 사람은 바꿀 수 없습니다';
+  end if;
+  return new;
+end;
+$$;
+
+-- 주간 장 규칙 - 주(id)는 바꿀 수 없고, 확정된 동안에는 본문을 고치지 못한다. 상태 · 확정 칸은 아래 두 함수만 바꾼다(권한도 그 칸은 주지 않는다)
+create or replace function public.tm_weekly_reports_guard()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if new.id is distinct from old.id then
+    raise exception '주간보고의 주는 바꿀 수 없습니다';
+  end if;
+  if old.status = 'final' and (new.summary, new.issues, new.next_plan, new.notes)
+     is distinct from (old.summary, old.issues, old.next_plan, old.notes) then
+    raise exception '확정된 주간보고입니다. 고치려면 다시 고치기를 먼저 눌러 주세요.';
+  end if;
+  return new;
+end;
+$$;
+
+-- 프로젝트 줄 규칙 - 확정된 주의 줄은 더하거나 고치거나 지울 수 없고, 줄의 주는 바꿀 수 없다.
+-- 그 주의 장을 for share 로 읽어 확정(for update)과 차례를 맞춘다 - 확정이 먼저 끝나면 그 뒤의 고침은 거절된다
+create or replace function public.tm_weekly_items_guard()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  w text;
+  st text;
+begin
+  if tg_op = 'DELETE' then
+    w := old.week;
+  else
+    w := new.week;
+  end if;
+  if tg_op = 'UPDATE' and new.week is distinct from old.week then
+    raise exception '프로젝트 줄의 주는 바꿀 수 없습니다';
+  end if;
+  select r.status into st from public.tm_weekly_reports r where r.id = w for share;
+  if st = 'final' then
+    raise exception '확정된 주간보고의 프로젝트 줄은 고칠 수 없습니다. 다시 고치기를 먼저 눌러 주세요.';
+  end if;
+  if tg_op = 'DELETE' then
+    return old;
+  end if;
+  return new;
+end;
+$$;
+
+-- 확정 - 그 주의 장을 잠그고(없으면 만든다), 내용이 있는지 본 뒤 그때의 작업 숫자 · 명단 · 일간 근거를 저장본으로 남긴다.
+-- 저장본은 화면이 보낸 값을 받지 않고 서버가 한 문장으로 읽어 만든다(같은 시점). 모양은 화면의 makeSnapshot(reportStore.ts)과 같다(v 1).
+-- 확정자 · 시각은 로그인한 사람 · 서버 시각. 날짜는 한국 시간
+create or replace function public.tm_weekly_finalize(target text)
+returns public.tm_weekly_reports
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  mon date;
+  kst date := (now() at time zone 'Asia/Seoul')::date;
+  snap jsonb;
+  r public.tm_weekly_reports;
+begin
+  if not public.tm_is_member() then
+    raise exception '승인된 팀원만 확정할 수 있습니다';
+  end if;
+  if target is null or target !~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' then
+    raise exception '주 형식이 아닙니다';
+  end if;
+  mon := target::date;
+  if extract(isodow from mon) <> 1 then
+    raise exception '주의 월요일이 아닙니다';
+  end if;
+  insert into public.tm_weekly_reports (id) values (target) on conflict (id) do nothing;
+  select * into r from public.tm_weekly_reports w where w.id = target for update;
+  if r.status = 'final' then
+    raise exception '이미 확정된 주간보고입니다';
+  end if;
+  if btrim(r.summary) = '' and btrim(r.issues) = '' and btrim(r.next_plan) = '' and btrim(r.notes) = ''
+     and not exists (select 1 from public.tm_weekly_items i where i.week = target) then
+    raise exception '확정할 내용이 없습니다. 요약이나 프로젝트를 먼저 적어 주세요.';
+  end if;
+  select jsonb_build_object(
+    'v', 1,
+    'at', now(),
+    'today', kst,
+    'numbers', jsonb_build_object(
+      'dueThisWeek', (select count(*) from public.tm_tasks t where t.due_date between mon and mon + 6),
+      'dueThisWeekDone', (select count(*) from public.tm_tasks t where t.due_date between mon and mon + 6 and t.status = 'done'),
+      'created', (select count(*) from public.tm_tasks t where (t.created_at at time zone 'Asia/Seoul')::date between mon and mon + 6),
+      'doing', (select count(*) from public.tm_tasks t where t.status in ('doing', 'review')),
+      'overdue', (select count(*) from public.tm_tasks t where t.status <> 'done' and t.due_date < kst)
+    ),
+    'nextWeek', coalesce((
+      select jsonb_agg(jsonb_build_object('id', t.id, 'key', 'MATE-' || t.num, 'title', t.title, 'due', t.due_date, 'assignee', t.assignee)
+        order by t.due_date, t.num)
+      from public.tm_tasks t
+      where t.status <> 'done' and t.due_date between mon + 7 and mon + 13
+    ), '[]'::jsonb),
+    'people', coalesce((
+      select jsonb_agg(jsonb_build_object('id', p.id, 'name', p.name) order by p.sort, p.name)
+      from public.tm_report_people p
+    ), '[]'::jsonb),
+    'written', coalesce((
+      select jsonb_agg(jsonb_build_object('person', d.person, 'name', coalesce(p.name, nullif(d.name, ''), '이름 없음'), 'day', d.day)
+        order by d.day, p.sort nulls last, d.name)
+      from public.tm_daily_reports d left join public.tm_report_people p on p.id = d.person
+      where d.day between mon and mon + 6 and (btrim(d.done) <> '' or btrim(d.plan) <> '' or btrim(d.blocker) <> '')
+    ), '[]'::jsonb),
+    'blockers', coalesce((
+      select jsonb_agg(jsonb_build_object('person', d.person, 'name', coalesce(p.name, nullif(d.name, ''), '이름 없음'), 'day', d.day, 'text', btrim(d.blocker))
+        order by d.day, p.sort nulls last, d.name)
+      from public.tm_daily_reports d left join public.tm_report_people p on p.id = d.person
+      where d.day between mon and mon + 6 and btrim(d.blocker) <> ''
+    ), '[]'::jsonb),
+    'done', coalesce((
+      select jsonb_agg(jsonb_build_object('person', d.person, 'name', coalesce(p.name, nullif(d.name, ''), '이름 없음'), 'day', d.day, 'text', btrim(d.done))
+        order by d.day, p.sort nulls last, d.name)
+      from public.tm_daily_reports d left join public.tm_report_people p on p.id = d.person
+      where d.day between mon and mon + 6 and btrim(d.done) <> ''
+    ), '[]'::jsonb)
+  ) into snap;
+  update public.tm_weekly_reports w
+     set status = 'final', finalized_by = auth.uid(), finalized_at = now(), snapshot = snap
+   where w.id = target
+  returning * into r;
+  return r;
+end;
+$$;
+
+-- 다시 열기 - 상태만 작성 중으로. 마지막 확정 정보(확정자 · 시각 · 저장본)는 '직전 확정'으로 남긴다
+create or replace function public.tm_weekly_reopen(target text)
+returns public.tm_weekly_reports
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  r public.tm_weekly_reports;
+begin
+  if not public.tm_is_member() then
+    raise exception '승인된 팀원만 다시 열 수 있습니다';
+  end if;
+  update public.tm_weekly_reports w set status = 'draft' where w.id = target and w.status = 'final'
+  returning * into r;
+  if r.id is null then
+    raise exception '확정된 주간보고가 아닙니다';
+  end if;
+  return r;
+end;
+$$;
+
+-- 트리거는 이름 순서로 돈다: guard(규칙) → stamp(고친 사람) → touch(고친 시각)
 create or replace trigger tm_report_people_touch before update on public.tm_report_people
   for each row execute function public.tm_touch();
+create or replace trigger tm_daily_reports_guard before insert or update on public.tm_daily_reports
+  for each row execute function public.tm_daily_reports_guard();
 create or replace trigger tm_daily_reports_stamp before insert or update on public.tm_daily_reports
   for each row execute function public.tm_stamp_editor();
 create or replace trigger tm_daily_reports_touch before update on public.tm_daily_reports
   for each row execute function public.tm_touch();
+create or replace trigger tm_weekly_reports_guard before update on public.tm_weekly_reports
+  for each row execute function public.tm_weekly_reports_guard();
 create or replace trigger tm_weekly_reports_stamp before insert or update on public.tm_weekly_reports
   for each row execute function public.tm_stamp_editor();
 create or replace trigger tm_weekly_reports_touch before update on public.tm_weekly_reports
   for each row execute function public.tm_touch();
+create or replace trigger tm_weekly_items_guard before insert or update or delete on public.tm_weekly_items
+  for each row execute function public.tm_weekly_items_guard();
 create or replace trigger tm_weekly_items_stamp before insert or update on public.tm_weekly_items
   for each row execute function public.tm_stamp_editor();
 create or replace trigger tm_weekly_items_touch before update on public.tm_weekly_items
   for each row execute function public.tm_touch();
 
+alter table public.tm_report_setup enable row level security;
 alter table public.tm_report_people enable row level security;
 alter table public.tm_daily_reports enable row level security;
 alter table public.tm_weekly_reports enable row level security;
@@ -857,17 +1061,22 @@ create policy tm_weekly_items_members on public.tm_weekly_items
   using ((select public.tm_is_member()))
   with check ((select public.tm_is_member()));
 
--- 새 표에 기본으로 붙는 권한을 거두고 화면이 쓰는 것만 다시 준다. 고친 사람 · 시각은 DB 가 적으므로 주지 않는다.
--- 일간 줄 · 주간 장은 upsert 로 넣는다 - upsert 는 보낸 칸(id 포함)의 update 권한도 쓴다. 일간 · 주간 장은 지우지 않는다(글을 지우면 빈 칸)
-revoke all on public.tm_report_people, public.tm_daily_reports, public.tm_weekly_reports, public.tm_weekly_items from anon, authenticated;
+-- 새 표에 기본으로 붙는 권한을 거두고 화면이 쓰는 것만 다시 준다. 고친 사람 · 시각 · 상태 · 확정 칸은 DB(트리거 · 함수)가 적으므로 주지 않는다.
+-- 일간 줄 · 주간 장은 upsert 로 넣는다 - upsert 는 보낸 칸(id 포함)의 update 권한도 쓴다. 일간 · 주간 장은 지우지 않는다(글을 지우면 빈 칸).
+-- 처음 설치 표시는 아무에게도 주지 않는다
+revoke all on public.tm_report_setup, public.tm_report_people, public.tm_daily_reports, public.tm_weekly_reports, public.tm_weekly_items
+  from anon, authenticated;
 grant select, insert (id, name, member, sort), update (name, member, sort), delete on public.tm_report_people to authenticated;
 grant select, insert (id, day, person, name, done, plan, blocker), update (id, day, person, name, done, plan, blocker)
   on public.tm_daily_reports to authenticated;
-grant select, insert (id, summary, issues, next_plan, notes, status), update (id, summary, issues, next_plan, notes, status)
+grant select, insert (id, summary, issues, next_plan, notes), update (id, summary, issues, next_plan, notes)
   on public.tm_weekly_reports to authenticated;
 grant select, insert (id, week, name, state, done, next_plan, issue, sort), update (name, state, done, next_plan, issue, sort), delete
   on public.tm_weekly_items to authenticated;
-revoke execute on function public.tm_stamp_editor() from public, anon, authenticated;
+revoke execute on function public.tm_stamp_editor(), public.tm_daily_reports_guard(), public.tm_weekly_reports_guard(),
+  public.tm_weekly_items_guard(), public.tm_weekly_finalize(text), public.tm_weekly_reopen(text) from public, anon, authenticated;
+-- 확정 · 다시 열기만 로그인한 사람에게(함수가 승인된 팀원인지 본다)
+grant execute on function public.tm_weekly_finalize(text), public.tm_weekly_reopen(text) to authenticated;
 
 -- 실시간 - 스크럼 중에 다른 사람이 적는 칸이 새로고침 없이 보이게
 do $$
@@ -890,6 +1099,10 @@ begin
   end;
 end;
 $$;
+
+-- 일간보고 명단을 처음 9명으로 되돌리기 - 다시 실행으로는 채우지 않으므로, 꼭 필요할 때 관리자가 이 줄만 따로 실행한다.
+-- 명단이 비어 있을 때만 넣는다. 맨 앞의 -- 를 지우고 그 줄만 실행한다.
+-- insert into public.tm_report_people (name, sort) select v.name, v.sort from (values ('박무경', 1000::double precision), ('정성권', 2000), ('전승원', 3000), ('박예형', 4000), ('강민정', 5000), ('김학동', 6000), ('조현민', 7000), ('이지영', 8000), ('박수현', 9000)) as v (name, sort) where not exists (select 1 from public.tm_report_people);
 
 -- ── 첫 관리자 정하기 ─────────────────────────────────────────
 -- 위를 실행하고 첫 계정을 만든 뒤, 아래 줄의 메일을 바꾸고 맨 앞의 -- 를 지워 그 줄만 따로 실행한다.

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   DEFAULT_REPORT_PEOPLE, isProjectState, localISO,
   type DailyEntry, type DailyField, type Member, type ProjectState, type ReportPerson, type Task,
-  type WeeklyItem, type WeeklyReport, type WeeklyStatus, type WeeklyText,
+  type WeeklyItem, type WeeklyReport, type WeeklySnapshot, type WeeklyStatus, type WeeklyText,
 } from './types';
 import type { StoreOptions, SyncState } from './store';
 
@@ -12,18 +12,22 @@ import type { StoreOptions, SyncState } from './store';
  * 일간 · 주간보고 저장소.
  *
  * 브라우저 저장 모드는 이 브라우저(localStorage) 한 곳에 명단 · 일간 · 주간을 함께 두고,
- * Supabase 모드는 tm_report_people · tm_daily_reports · tm_weekly_reports · tm_weekly_items 표(remote.ts)를 쓴다.
+ * Supabase 모드는 tm_report_people · tm_daily_reports · tm_weekly_reports · tm_weekly_items 표(reportRemote.ts)를 쓴다.
  * 둘은 아래 ReportStore 모양을 함께 쓴다. 보고 화면(Reports.tsx)을 열 때만 붙는다 - 작업 화면은 이 표를 읽지 않는다.
  *
  * 누가 고치는가
  *   · 명단(이름 · 순서 · 계정 연결)은 관리자만. 화면은 관리자에게만 '명단 관리'를 보이고, 규칙은 DB(RLS)가 지킨다.
  *   · 일간 · 주간보고는 승인된 팀원 누구나 - 스크럼에서 한 사람이 모두의 칸을 적기도 한다. 마지막으로 고친 사람이 남는다.
+ *   · 확정 · 다시 열기도 팀원 누구나. Supabase 모드는 서버가 확정자 · 시각 · 저장본을 남기고 확정 중의 고침을 막는다.
  */
 
 export type PersonPatch = Partial<Pick<ReportPerson, 'name' | 'member' | 'order'>>;
 export type DailyPatch = Partial<Pick<DailyEntry, DailyField>>;
-export type WeeklyPatch = Partial<Pick<WeeklyReport, WeeklyText | 'status'>>;
+/** 주간 본문 칸 - 확정 · 다시 열기는 finalize · reopen 으로만 */
+export type WeeklyPatch = Partial<Pick<WeeklyReport, WeeklyText>>;
 export type ItemPatch = Partial<Pick<WeeklyItem, 'name' | 'state' | 'done' | 'next' | 'issue' | 'order'>>;
+/** 확정 · 다시 열기의 결과 - 서버가 받아 준 뒤에만 ok */
+export type SaveOutcome = { ok: true } | { ok: false; error: string };
 
 export interface ReportStoreOptions extends StoreOptions {
   /** 지금 쓰는 사람(Member.id) - 마지막으로 고친 사람으로 화면에 바로 적는다(Supabase 모드는 DB 가 다시 적는다) */
@@ -31,9 +35,9 @@ export interface ReportStoreOptions extends StoreOptions {
 }
 
 export interface ReportStore {
-  /** 명단 · 일간 · 주간을 다 읽었다(못 읽었으면 loadError) */
+  /** 읽기를 마쳤다 - 실패했어도 참(그때는 loadError · missing) */
   ready: boolean;
-  /** Supabase 모드 - 보고 표가 아직 DB 에 없다(SQL 을 다시 실행하기 전). 이때는 읽기 · 쓰기를 하지 않는다 */
+  /** Supabase 모드 - 보고 표가 DB 에 없다(SQL 실행 전). 연결 실패와는 다르다 */
   missing: boolean;
   /** 스크럼 순서대로 */
   people: ReportPerson[];
@@ -41,22 +45,48 @@ export interface ReportStore {
   weekly: WeeklyReport[];
   items: WeeklyItem[];
   sync: SyncState;
-  /** 처음 목록을 읽지 못했다 */
+  /** 처음 읽기 · 표 확인이 실패했다(연결). 이때 화면은 쓰기 · 복사 · 확정을 막는다 */
   loadError: string | null;
+  /** 브라우저 저장 모드 - 이 브라우저에 쓰지 못했다(저장 차단 · 공간 부족). 화면의 글은 그대로다 */
+  saveError: boolean;
   addPerson(name: string): ReportPerson;
   updatePerson(id: string, patch: PersonPatch): void;
   removePerson(id: string): void;
-  /** 그날 그 사람의 칸 - 줄이 없으면 만든다 */
-  setDaily(day: string, person: ReportPerson, patch: DailyPatch): void;
-  /** 그 주의 보고 - 없으면 만든다 */
-  setWeekly(week: string, patch: WeeklyPatch): void;
-  addItem(week: string, input?: Omit<ItemPatch, 'order'>): WeeklyItem;
-  updateItem(id: string, patch: ItemPatch): void;
+  /** 그날 그 사람의 칸 - 줄이 없으면 만든다. 글자 수를 넘으면 저장하지 않고 거짓 */
+  setDaily(day: string, person: ReportPerson, patch: DailyPatch): boolean;
+  /** 그 주의 본문 - 없으면 만든다. 글자 수를 넘거나 확정된 주면 거짓 */
+  setWeekly(week: string, patch: WeeklyPatch): boolean;
+  /** 확정된 주면 null */
+  addItem(week: string, input?: Omit<ItemPatch, 'order'>): WeeklyItem | null;
+  updateItem(id: string, patch: ItemPatch): boolean;
   removeItem(id: string): void;
-  /** Supabase 모드 - 기다리는 저장을 모두 보낸다(로그아웃 전에) */
-  flush?(): Promise<void>;
-  /** Supabase 모드 - 서버 목록을 다시 읽는다 */
-  reload?(): Promise<void>;
+  /** 확정 - local 은 브라우저 저장 모드에서 쓸 저장본(Supabase 모드는 서버가 만들고 이 값은 쓰지 않는다) */
+  finalize(week: string, local: WeeklySnapshot): Promise<SaveOutcome>;
+  reopen(week: string): Promise<SaveOutcome>;
+  /** 기다리는 저장을 보내고, 저장되지 않은 것이 남았으면 거짓 - 보고를 떠나기 전에 부른다 */
+  settle(): Promise<boolean>;
+  /** 기다리는 저장을 보낸다(로그아웃 전에) */
+  flush(): Promise<void>;
+  /** 표 확인부터 다시 읽는다 */
+  retry(): Promise<void>;
+}
+
+/* ── 글자 수 - SQL 의 check 와 같은 값 ─────────────────────── */
+
+export const DAILY_MAX = 4000;
+export const ITEM_MAX = 4000;
+export const WEEKLY_MAX = 8000;
+export const ITEM_NAME_MAX = 60;
+
+export const limitText = (len: number, max: number) => `${max}자까지 입력할 수 있습니다. 현재 ${len}자입니다.`;
+
+/** 넘는 칸이 있으면 그 길이 - 칸은 모두 같은 한도 */
+export function overLimit(patch: Record<string, unknown>, keys: readonly string[], max: number): number | null {
+  for (const k of keys) {
+    const v = patch[k];
+    if (typeof v === 'string' && v.length > max) return v.length;
+  }
+  return null;
 }
 
 /* ── 공통 규칙 ─────────────────────────────────────────── */
@@ -89,9 +119,18 @@ export function memberOfPerson(p: ReportPerson, members: Member[]): Member | nul
 /** 칸에 글이 하나라도 있는가 */
 export const isFilled = (e: Pick<DailyEntry, DailyField> | undefined) => !!e && !!(e.done.trim() || e.plan.trim() || e.blocker.trim());
 
-/** 글을 줄로 - 앞의 '-' · '•' · '·' · 번호는 떼고 빈 줄은 뺀다 */
+/** 머리표(-, •, ·, *, 1.) */
+const BULLET = /^([-•·*]|\d+[.)])\s*/;
+
+/** 글을 줄로 - 앞의 머리표는 떼고 빈 줄은 뺀다 */
 export function linesOf(text: string): string[] {
-  return text.split('\n').map((l) => l.trim().replace(/^([-•·*]|\d+[.)])\s*/, '').trim()).filter(Boolean);
+  return text.split('\n').map((l) => l.trim().replace(BULLET, '').trim()).filter(Boolean);
+}
+
+/** 글에 작업 번호가 온전히 들어 있는가 - MATE-100 이 있어도 MATE-10 은 없는 것으로 본다 */
+export function hasTaskKey(text: string, key: string): boolean {
+  const k = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(^|[^A-Za-z0-9-])${k}(?![0-9])`).test(text);
 }
 
 /* ── 날짜 ─────────────────────────────────────────────── */
@@ -126,7 +165,7 @@ export function weekOf(iso: string): string {
   return localISO(d);
 }
 
-/** 앞(-1) · 뒤(1) 근무일 - 토 · 일은 건너뛴다(공휴일은 모른다) */
+/** 앞(-1) · 뒤(1) 평일 - 토 · 일만 건너뛴다(공휴일 · 휴가는 모른다) */
 export function stepWorkday(iso: string, dir: -1 | 1): string {
   let x = addDays(iso, dir);
   while (isWeekend(x)) x = addDays(x, dir);
@@ -172,6 +211,13 @@ export function whenOf(stamp: string, today: string): string {
   if (Number.isNaN(d.getTime())) return stamp.slice(0, 10);
   if (localISO(d) === today) return d.toLocaleTimeString('ko-KR', { hour: 'numeric', minute: '2-digit' });
   return d.getFullYear() === parseDay(today).getFullYear() ? `${d.getMonth() + 1}월 ${d.getDate()}일` : localISO(d);
+}
+
+/** 2026.11.16 오후 4:59 - 확정 시각처럼 기록으로 남기는 때 */
+export function stampLabel(stamp: string): string {
+  const d = new Date(stamp);
+  if (Number.isNaN(d.getTime())) return stamp;
+  return `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()} ${d.toLocaleTimeString('ko-KR', { hour: 'numeric', minute: '2-digit' })}`;
 }
 
 /** 그 사람이 그날 전에 마지막으로 적은 '예정' - 2주 안에서만 찾는다 */
@@ -224,52 +270,136 @@ export function weekNumbers(tasks: Task[], monday: string, today: string): WeekN
   };
 }
 
+/**
+ * 한 주의 근거를 저장본 모양으로 모은다 - 브라우저 저장 모드의 확정 저장본이자, 확정 전 · '현재 참고' 화면의 자료.
+ * Supabase 모드의 확정 저장본은 서버가 같은 모양으로 만든다(supabase/taskmanager.sql 의 tm_weekly_finalize)
+ */
+export function makeSnapshot(input: {
+  week: string; today: string; at: string; tasks: Task[]; people: ReportPerson[]; daily: DailyEntry[];
+}): WeeklySnapshot {
+  const { week, today, at, tasks, people, daily } = input;
+  const n = weekNumbers(tasks, week, today);
+  const end = addDays(week, 6);
+  const ofWeek = daily.filter((e) => e.day >= week && e.day <= end);
+  const order = new Map(people.map((p, i) => [p.id, i]));
+  const names = new Map(people.map((p) => [p.id, p.name]));
+  const nameOf = (e: DailyEntry) => names.get(e.person) ?? (e.name || '이름 없음');
+  const sort = (a: DailyEntry, b: DailyEntry) =>
+    a.day.localeCompare(b.day) || (order.get(a.person) ?? 1e9) - (order.get(b.person) ?? 1e9) || nameOf(a).localeCompare(nameOf(b), 'ko');
+  const rows = ofWeek.slice().sort(sort);
+  return {
+    v: 1, at, today,
+    numbers: { dueThisWeek: n.dueThisWeek, dueThisWeekDone: n.dueThisWeekDone, created: n.created, doing: n.doing, overdue: n.overdue },
+    nextWeek: n.nextWeek.map((t) => ({ id: t.id, key: t.key, title: t.title, due: t.due ?? '', assignee: t.assignee })),
+    people: people.map((p) => ({ id: p.id, name: p.name })),
+    written: rows.filter((e) => isFilled(e)).map((e) => ({ person: e.person, name: nameOf(e), day: e.day })),
+    blockers: rows.filter((e) => e.blocker.trim()).map((e) => ({ person: e.person, name: nameOf(e), day: e.day, text: e.blocker.trim() })),
+    done: rows.filter((e) => e.done.trim()).map((e) => ({ person: e.person, name: nameOf(e), day: e.day, text: e.done.trim() })),
+  };
+}
+
+/** 저장해 둔 저장본을 읽는다 - 모양이 어긋나면 null(저장본 없음으로 본다) */
+export function parseSnapshot(v: unknown): WeeklySnapshot | null {
+  if (!v || typeof v !== 'object') return null;
+  const s = v as Record<string, unknown>;
+  const arr = (k: string) => (Array.isArray(s[k]) ? (s[k] as Record<string, unknown>[]) : null);
+  const nums = s.numbers as Record<string, unknown> | undefined;
+  if (s.v !== 1 || typeof s.at !== 'string' || typeof s.today !== 'string' || !nums || typeof nums !== 'object') return null;
+  const people = arr('people');
+  const written = arr('written');
+  const blockers = arr('blockers');
+  const done = arr('done');
+  const nextWeek = arr('nextWeek');
+  if (!people || !written || !blockers || !done || !nextWeek) return null;
+  const str = (x: unknown) => (typeof x === 'string' ? x : x == null ? '' : String(x));
+  const int = (x: unknown) => (typeof x === 'number' && Number.isFinite(x) ? x : Number(x) || 0);
+  const ref = (r: Record<string, unknown>) => ({ person: str(r.person), name: str(r.name), day: str(r.day).slice(0, 10) });
+  return {
+    v: 1, at: s.at, today: s.today.slice(0, 10),
+    numbers: {
+      dueThisWeek: int(nums.dueThisWeek), dueThisWeekDone: int(nums.dueThisWeekDone), created: int(nums.created),
+      doing: int(nums.doing), overdue: int(nums.overdue),
+    },
+    nextWeek: nextWeek.map((t) => ({
+      id: str(t.id), key: str(t.key), title: str(t.title), due: str(t.due).slice(0, 10), assignee: typeof t.assignee === 'string' ? t.assignee : null,
+    })),
+    people: people.map((p) => ({ id: str(p.id), name: str(p.name) })),
+    written: written.map(ref),
+    blockers: blockers.map((b) => ({ ...ref(b), text: str(b.text) })),
+    done: done.map((d) => ({ ...ref(d), text: str(d.text) })),
+  };
+}
+
+/** 저장본의 작성 현황 - 명단 × 월 ~ 금(확정한 날까지)에서 무엇이라도 적은 칸. 휴일 · 휴가는 모른다 */
+export function writtenCount(s: WeeklySnapshot, monday: string): { written: number; possible: number } {
+  const days = workdaysOf(monday).filter((d) => d <= s.today);
+  const ids = new Set(s.people.map((p) => p.id));
+  const seen = new Set(s.written.filter((w) => ids.has(w.person) && days.includes(w.day)).map((w) => `${w.person}:${w.day}`));
+  return { written: seen.size, possible: s.people.length * days.length };
+}
+
 /* ── 글로 옮기기(메신저 · 메일에 붙여 넣기) ─────────────────── */
 
+/** 비어 있으면 (미작성) - 사람이 직접 적은 '없음'은 그대로 둔다 */
 const bullet = (text: string, indent = '') => {
   const lines = linesOf(text);
-  return lines.length ? lines.map((l) => `${indent}- ${l}`).join('\n') : `${indent}- 없음`;
+  return lines.length ? lines.map((l) => `${indent}- ${l}`).join('\n') : `${indent}(미작성)`;
 };
 
-export function dailyText(day: string, rows: { name: string; entry: DailyEntry | undefined }[]): string {
+/** rows = 지금 명단 순서, gone = 명단에서 빠졌지만 그날 적은 사람 */
+export function dailyText(
+  day: string,
+  rows: { name: string; entry: DailyEntry | undefined }[],
+  gone: { name: string; entry: DailyEntry }[] = [],
+): string {
   const out = [`[MATE 일간보고] ${dayLabel(day, true)}`];
   const written = rows.filter((r) => isFilled(r.entry)).length;
-  out.push(`작성 ${written}/${rows.length}명`);
-  rows.forEach((r, i) => {
-    out.push('', `${i + 1}. ${r.name}`);
-    if (!isFilled(r.entry) || !r.entry) {
-      out.push('  (아직 적지 않음)');
+  out.push(`작성 ${written}/${rows.length}명 (지금 명단 기준)`);
+  const one = (n: number, name: string, e: DailyEntry | undefined) => {
+    out.push('', `${n}. ${name}`);
+    if (!e || !isFilled(e)) {
+      out.push('  (미작성)');
       return;
     }
-    const e = r.entry;
     out.push('  완료', bullet(e.done, '  '), '  예정', bullet(e.plan, '  '));
     if (e.blocker.trim()) out.push('  블로커 & 공유사항', bullet(e.blocker, '  '));
-  });
+  };
+  rows.forEach((r, i) => one(i + 1, r.name, r.entry));
+  if (gone.length) {
+    out.push('', '[명단에서 빠진 사람의 보고]');
+    gone.forEach((g, i) => one(i + 1, g.name, g.entry));
+  }
   return out.join('\n');
 }
 
 const STATE_TEXT: Record<ProjectState, string> = { good: '순조', watch: '주의', risk: '위험' };
 
+/**
+ * data = 확정 저장본(확정한 보고) 또는 지금 모은 자료(초안 · 예전 확정본). stage = 머리에 붙일 상태 글
+ * (예: '확정 · 2026.11.16 오후 4:59 · 박무경', '초안', '확정 · 확정 시점 자료 없음')
+ */
 export function weeklyText(input: {
   monday: string;
   report: WeeklyReport | undefined;
   items: WeeklyItem[];
-  numbers: WeekNumbers;
-  writtenDays: number;
-  possibleDays: number;
+  data: WeeklySnapshot;
+  fromSnapshot: boolean;
+  stage: string;
 }): string {
-  const { monday, report, items, numbers: n } = input;
+  const { monday, report, items, data, fromSnapshot, stage } = input;
   const w = weekLabel(monday);
-  const text = (s: string | undefined) => (s && s.trim() ? s.trim() : '(비어 있음)');
+  const n = data.numbers;
+  const count = writtenCount(data, monday);
+  const text = (s: string | undefined) => (s && s.trim() ? s.trim() : '(미작성)');
   const out = [
-    `[MATE 주간보고] ${w.year}년 ${w.text} (${w.range})${report?.status === 'final' ? ' · 확정' : ''}`,
+    `[MATE 주간보고] ${w.year}년 ${w.text} (${w.range}) · ${stage}`,
     '',
     '1. 한 주 요약',
     text(report?.summary),
     '',
     '2. 프로젝트별 현황',
   ];
-  if (!items.length) out.push('(비어 있음)');
+  if (!items.length) out.push('(미작성)');
   items.forEach((it) => {
     out.push(`■ ${it.name.trim() || '이름 없는 프로젝트'} [${STATE_TEXT[it.state]}]`);
     out.push('  이번 주', bullet(it.done, '  '), '  다음 주', bullet(it.next, '  '));
@@ -277,12 +407,12 @@ export function weeklyText(input: {
   });
   out.push(
     '',
-    '3. 숫자로 본 한 주 (작업 보드 기준)',
-    `- 이번 주 마감 작업 ${n.dueThisWeek}건 중 ${n.dueThisWeekDone}건 완료`,
+    fromSnapshot ? `3. 숫자로 본 한 주 (작업 보드 · 확정 시점 ${stampLabel(data.at)})` : '3. 숫자로 본 한 주 (작업 보드 · 지금 기준)',
+    `- 이번 주 마감 작업 ${n.dueThisWeek}건 중 ${fromSnapshot ? '확정 때' : '지금'} 완료 ${n.dueThisWeekDone}건`,
     `- 새로 만든 작업 ${n.created}건`,
-    `- 진행 중 · 검토 ${n.doing}건, 마감 지난 작업 ${n.overdue}건 (보고를 옮긴 때 기준)`,
-    `- 다음 주 마감 ${n.nextWeek.length}건`,
-    `- 일간보고 작성 ${input.writtenDays}/${input.possibleDays}`,
+    `- 진행 중 · 검토 ${n.doing}건, 마감 지난 작업 ${n.overdue}건`,
+    `- 다음 주 마감 ${data.nextWeek.length}건`,
+    `- 일간보고 작성 기록 ${count.written}/${count.possible} (명단 × 평일, 휴일 · 휴가 미반영)`,
     '',
     '4. 이슈 · 리스크 · 결정이 필요한 것',
     text(report?.issues),
@@ -334,6 +464,9 @@ function parse(raw: string | null): Saved {
     weekly: (arr('weekly') ?? []).map((w) => ({
       id: w.id as string, summary: str(w.summary), issues: str(w.issues), nextPlan: str(w.nextPlan), notes: str(w.notes),
       status: (w.status === 'final' ? 'final' : 'draft') as WeeklyStatus,
+      finalizedBy: typeof w.finalizedBy === 'string' ? w.finalizedBy : null,
+      finalizedAt: typeof w.finalizedAt === 'string' ? w.finalizedAt : null,
+      snapshot: parseSnapshot(w.snapshot),
       updatedBy: typeof w.updatedBy === 'string' ? w.updatedBy : null, updatedAt: str(w.updatedAt) || now,
     })),
     items: (arr('items') ?? []).flatMap((it) => (isDay(str(it.week))
@@ -355,31 +488,54 @@ function read(): Saved {
   }
 }
 
-function write(data: Saved) {
+/** 썼으면 참 - 저장이 막혔거나 공간이 모자라면 거짓(화면의 글은 그대로 둔다) */
+function write(data: Saved): boolean {
   try {
     window.localStorage.setItem(KEY, JSON.stringify(data));
+    return true;
   } catch {
-    /* 저장이 막혀 있어도 화면은 계속 동작해야 한다 */
+    return false;
   }
 }
+
+const EMPTY_REPORT = (week: string): WeeklyReport => ({
+  id: week, summary: '', issues: '', nextPlan: '', notes: '', status: 'draft',
+  finalizedBy: null, finalizedAt: null, snapshot: null, updatedBy: null, updatedAt: new Date().toISOString(),
+});
+
+/** 확정할 내용이 있는가 - 본문 한 칸이나 프로젝트 한 줄 */
+export const hasWeeklyContent = (report: WeeklyReport | undefined, items: WeeklyItem[]) =>
+  !!(report && (report.summary.trim() || report.issues.trim() || report.nextPlan.trim() || report.notes.trim())) || items.length > 0;
+
+export const NOTHING_TO_FINALIZE = '확정할 내용이 없습니다. 요약이나 프로젝트를 먼저 적어 주세요.';
+const LOCKED = '확정된 주간보고입니다. 고치려면 다시 고치기를 먼저 눌러 주세요.';
+
+const isFinal = (s: Saved, week: string) => s.weekly.find((w) => w.id === week)?.status === 'final';
 
 /** 브라우저 저장 모드 - 계정이 없어 누구나 명단을 고친다 */
 export function useReportStore(opts: ReportStoreOptions): ReportStore {
   const [data, setData] = useState<Saved>(() => ({ people: defaultPeople(), daily: [], weekly: [], items: [] }));
   const [ready, setReady] = useState(false);
+  const [saveError, setSaveError] = useState(false);
+  /** 지금 자료 - 한 틱에 여러 번 고쳐도 앞 고침 위에 쌓이게 바로 바꾼다 */
   const live = useRef(data);
-  live.current = data;
   const me = useRef(opts.me);
   me.current = opts.me;
+  const onError = useRef(opts.onError);
+  onError.current = opts.onError;
 
   useEffect(() => {
-    setData(read());
+    const first = read();
+    live.current = first;
+    setData(first);
     setReady(true);
     // 같은 보고를 다른 탭에서 열어 두었을 때 고친 것을 따라간다
     const onStorage = (e: StorageEvent) => {
       if (e.key !== KEY || !e.newValue) return;
       try {
-        setData(parse(e.newValue));
+        const next = parse(e.newValue);
+        live.current = next;
+        setData(next);
       } catch {
         /* 깨진 값은 무시 */
       }
@@ -388,13 +544,17 @@ export function useReportStore(opts: ReportStoreOptions): ReportStore {
     return () => window.removeEventListener('storage', onStorage);
   }, []);
 
+  /** 바꾸고 쓴다. 쓰지 못했으면 화면의 글은 두고 saveError 를 세운다. 썼으면 참 */
   const commit = useCallback((fn: (cur: Saved) => Saved) => {
-    setData((prev) => {
-      const next = fn(prev);
-      write(next);
-      return next;
-    });
+    const next = fn(live.current);
+    live.current = next;
+    setData(next);
+    const ok = write(next);
+    setSaveError(!ok);
+    return ok;
   }, []);
+
+  const weekFinal = useCallback((week: string) => isFinal(live.current, week), []);
 
   const addPerson = useCallback<ReportStore['addPerson']>((name) => {
     const p: ReportPerson = { id: crypto.randomUUID(), name, member: null, order: nextPersonOrder(live.current.people) };
@@ -411,6 +571,11 @@ export function useReportStore(opts: ReportStoreOptions): ReportStore {
   }, [commit]);
 
   const setDaily = useCallback<ReportStore['setDaily']>((day, person, patch) => {
+    const over = overLimit(patch, ['done', 'plan', 'blocker'], DAILY_MAX);
+    if (over !== null) {
+      onError.current?.(limitText(over, DAILY_MAX));
+      return false;
+    }
     const id = dailyId(day, person.id);
     commit((cur) => {
       const was = cur.daily.find((e) => e.id === id);
@@ -419,39 +584,97 @@ export function useReportStore(opts: ReportStoreOptions): ReportStore {
         : { id, day, person: person.id, name: person.name, done: '', plan: '', blocker: '', ...patch, ...stampOf(me.current) };
       return { ...cur, daily: was ? cur.daily.map((e) => (e.id === id ? next : e)) : [...cur.daily, next] };
     });
+    return true;
   }, [commit]);
 
   const setWeekly = useCallback<ReportStore['setWeekly']>((week, patch) => {
+    if (weekFinal(week)) {
+      onError.current?.(LOCKED);
+      return false;
+    }
+    const over = overLimit(patch, ['summary', 'issues', 'nextPlan', 'notes'], WEEKLY_MAX);
+    if (over !== null) {
+      onError.current?.(limitText(over, WEEKLY_MAX));
+      return false;
+    }
     commit((cur) => {
       const was = cur.weekly.find((w) => w.id === week);
-      const next: WeeklyReport = was
-        ? { ...was, ...patch, ...stampOf(me.current) }
-        : { id: week, summary: '', issues: '', nextPlan: '', notes: '', status: 'draft', ...patch, ...stampOf(me.current) };
+      const next: WeeklyReport = { ...(was ?? EMPTY_REPORT(week)), ...patch, ...stampOf(me.current) };
       return { ...cur, weekly: was ? cur.weekly.map((w) => (w.id === week ? next : w)) : [...cur.weekly, next] };
     });
-  }, [commit]);
+    return true;
+  }, [commit, weekFinal]);
 
   const addItem = useCallback<ReportStore['addItem']>((week, input = {}) => {
+    if (weekFinal(week)) {
+      onError.current?.(LOCKED);
+      return null;
+    }
     const it: WeeklyItem = {
       id: crypto.randomUUID(), week, name: '', state: 'good', done: '', next: '', issue: '', ...input,
       order: nextPersonOrder(live.current.items.filter((x) => x.week === week)), ...stampOf(me.current),
     };
     commit((cur) => ({ ...cur, items: [...cur.items, it] }));
     return it;
-  }, [commit]);
+  }, [commit, weekFinal]);
 
   const updateItem = useCallback<ReportStore['updateItem']>((id, patch) => {
+    const it = live.current.items.find((x) => x.id === id);
+    if (it && weekFinal(it.week)) {
+      onError.current?.(LOCKED);
+      return false;
+    }
+    const over = overLimit(patch, ['done', 'next', 'issue'], ITEM_MAX) ?? overLimit(patch, ['name'], ITEM_NAME_MAX);
+    if (over !== null) {
+      onError.current?.(limitText(over, over > ITEM_MAX ? ITEM_MAX : ITEM_NAME_MAX));
+      return false;
+    }
     commit((cur) => ({ ...cur, items: cur.items.map((x) => (x.id === id ? { ...x, ...patch, ...stampOf(me.current) } : x)) }));
-  }, [commit]);
+    return true;
+  }, [commit, weekFinal]);
 
   const removeItem = useCallback<ReportStore['removeItem']>((id) => {
+    const it = live.current.items.find((x) => x.id === id);
+    if (it && weekFinal(it.week)) {
+      onError.current?.(LOCKED);
+      return;
+    }
     commit((cur) => ({ ...cur, items: cur.items.filter((x) => x.id !== id) }));
+  }, [commit, weekFinal]);
+
+  const finalize = useCallback<ReportStore['finalize']>(async (week, local) => {
+    const report = live.current.weekly.find((w) => w.id === week);
+    if (report?.status === 'final') return { ok: false, error: '이미 확정된 주간보고입니다.' };
+    if (!hasWeeklyContent(report, live.current.items.filter((x) => x.week === week))) return { ok: false, error: NOTHING_TO_FINALIZE };
+    const ok = commit((cur) => {
+      const was = cur.weekly.find((w) => w.id === week) ?? EMPTY_REPORT(week);
+      const next: WeeklyReport = { ...was, status: 'final', finalizedBy: me.current, finalizedAt: local.at, snapshot: local, ...stampOf(me.current) };
+      return { ...cur, weekly: cur.weekly.some((w) => w.id === week) ? cur.weekly.map((w) => (w.id === week ? next : w)) : [...cur.weekly, next] };
+    });
+    return ok ? { ok: true } : { ok: false, error: '이 브라우저에 저장하지 못했습니다. 확정이 새로고침 뒤에 남지 않을 수 있습니다.' };
   }, [commit]);
+
+  const reopen = useCallback<ReportStore['reopen']>(async (week) => {
+    if (!weekFinal(week)) return { ok: false, error: '확정된 주간보고가 아닙니다.' };
+    const ok = commit((cur) => ({ ...cur, weekly: cur.weekly.map((w) => (w.id === week ? { ...w, status: 'draft', ...stampOf(me.current) } : w)) }));
+    return ok ? { ok: true } : { ok: false, error: '이 브라우저에 저장하지 못했습니다.' };
+  }, [commit, weekFinal]);
+
+  /** 다시 써 본다 - 썼으면 저장 실패 표시를 거둔다 */
+  const settle = useCallback(async () => {
+    const ok = write(live.current);
+    setSaveError(!ok);
+    return ok;
+  }, []);
+  const flush = useCallback(async () => { await settle(); }, [settle]);
+  const retry = useCallback(async () => { await settle(); }, [settle]);
 
   const people = useMemo(() => data.people.slice().sort(byPersonOrder), [data.people]);
 
   return {
-    ready, missing: false, people, daily: data.daily, weekly: data.weekly, items: data.items, sync: 'idle', loadError: null,
+    ready, missing: false, people, daily: data.daily, weekly: data.weekly, items: data.items,
+    sync: saveError ? 'error' : 'idle', loadError: null, saveError,
     addPerson, updatePerson, removePerson, setDaily, setWeekly, addItem, updateItem, removeItem,
+    finalize, reopen, settle, flush, retry,
   };
 }

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { LOCAL_ME_KEY, isUntouchedSample, useTaskStore, type Store, type StoreOptions } from './store';
 import { liveDocCount, useDocStore, type DocStore } from './docStore';
 import { useMemoStore, type MemoStore } from './memoStore';
@@ -95,6 +96,15 @@ type NavItem = { key: string; label: string; icon?: NavIcon; dot?: DomainColor; 
 type NavGroup = { label?: string; action?: { text: string; label: string; go(): void }; items: NavItem[] };
 
 const PREF_KEY = 'mate.taskmanager.prefs.v1';
+
+/** 보고 화면의 '보고 단축키 S · W'를 끈 사람인가 - Reports.tsx 의 REPORT_KEYS_KEY 와 같은 이름(보고 코드를 첫 짐에 싣지 않으려고 따로 적는다) */
+function reportKeysOff(): boolean {
+  try {
+    return window.localStorage.getItem('mate.taskmanager.reportKeys.v1') === 'off';
+  } catch {
+    return false;
+  }
+}
 
 /** 담당자로 걸러 보기 - 'all' 모두 · 'none' 미배정 · 그 밖에는 팀원 id */
 type AssigneeFilter = 'all' | 'none' | string;
@@ -243,7 +253,39 @@ function Workspace({ account }: { account?: Account }) {
   const domains = domainStore.domains;
   const colorStore = useColorList({ onError: notify });
 
-  const [section, setSection] = useState<Section>('tasks');
+  const [section, setSectionNow] = useState<Section>('tasks');
+  /** 보고 화면이 열려 있으면 떠나기 전에 부르는 확인 - 아직 저장되지 않은 글이 남았으면 거짓(보고가 그대로 남는다) */
+  const reportsLeave = useRef<(() => Promise<boolean>) | null>(null);
+  const sectionRef = useRef(section);
+  sectionRef.current = section;
+  /**
+   * 화면 바꾸기. 보고를 떠날 때만 보고에 먼저 묻고, 떠나도 되면 바꾼 뒤 then 을 부른다
+   * (작업 열기 · 보기 바꾸기처럼 화면을 옮긴 뒤에 할 일). 일간 ↔ 주간은 같은 보고라 묻지 않는다
+   */
+  const setSection = useCallback((next: Section, then?: () => void) => {
+    const cur = sectionRef.current;
+    const leaving = (cur === 'daily' || cur === 'weekly') && next !== 'daily' && next !== 'weekly';
+    const guard = reportsLeave.current;
+    if (!leaving || !guard) {
+      setSectionNow(next);
+      then?.();
+      return;
+    }
+    void guard().then((ok) => {
+      if (!ok) return;
+      setSectionNow(next);
+      then?.();
+    });
+  }, []);
+  /* 홈페이지 링크 - 보고에서 나갈 때도 먼저 묻는다 */
+  const router = useRouter();
+  const leaveHub = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    const cur = sectionRef.current;
+    const guard = reportsLeave.current;
+    if ((cur !== 'daily' && cur !== 'weekly') || !guard || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+    e.preventDefault();
+    void guard().then((ok) => { if (ok) router.push('/'); });
+  };
   const [view, setView] = useState<View>('board');
   const [scope, setScope] = useState<Scope>({ kind: 'all' });
   const [query, setQuery] = useState('');
@@ -329,7 +371,7 @@ function Workspace({ account }: { account?: Account }) {
     if (v === 'daily' || v === 'weekly') setSection(v);
     if (q.has('task')) setSection('tasks');
     setPrefsLoaded(true);
-  }, []);
+  }, [setSection]);
 
   useEffect(() => {
     if (!prefsLoaded) return;
@@ -373,6 +415,8 @@ function Workspace({ account }: { account?: Account }) {
   /* 로그아웃 - 아직 보내지 못한 저장을 먼저 끝낸다(로그인이 풀리면 더는 보낼 수 없다) */
   const logout = async () => {
     if (leaving) return;
+    // 보고 화면에 아직 저장되지 않은 글이 남았으면 묻고, 머무르면 로그아웃하지 않는다(로그인이 풀리면 더는 보낼 수 없다)
+    if (reportsLeave.current && !(await reportsLeave.current())) return;
     setLeaving(true);
     await Promise.all([store.flush?.(), docStore.flush?.(), memoStore.flush?.(), domainStore.flush?.(), colorStore.flush?.(), reportsFlush.current?.()])
       .catch(() => {});
@@ -495,10 +539,12 @@ function Workspace({ account }: { account?: Account }) {
         else { searchNext.current = true; setSection('tasks'); }
       }
       const v = VIEWS.find((x) => x.key === k);
-      if (v) { setSection('tasks'); setView(v.id); }
+      if (v) setSection('tasks', () => setView(v.id));
       if (k === 'd') setSection('docs');
       if (k === 'm') setSection('memos');
       // 보고 - S 는 스크럼(일간), W 는 주간
+      // 보고 화면의 '보고 단축키 S · W'를 끈 사람에게는 듣지 않는다
+      if ((k === 's' || k === 'w') && reportKeysOff()) return;
       if (k === 's') setSection('daily');
       if (k === 'w') setSection('weekly');
       // Ctrl/Cmd 조합은 위에서 걸러지므로 되돌리기는 여기서 따로 받는다 - 실행 취소 알림이 떠 있을 때만
@@ -509,7 +555,7 @@ function Workspace({ account }: { account?: Account }) {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [runUndo]);
+  }, [runUndo, setSection]);
 
   useEffect(() => {
     if (section !== 'tasks' || !searchNext.current || !searchRef.current) return;
@@ -783,7 +829,7 @@ function Workspace({ account }: { account?: Account }) {
   const currentView = VIEWS.find((v) => v.id === view) ?? VIEWS[0];
 
   /* ── 메뉴 ── */
-  const goTasks = (s: Scope) => { setSection('tasks'); setScope(s); };
+  const goTasks = (s: Scope) => setSection('tasks', () => setScope(s));
   const nav: NavGroup[] = [
     {
       items: [
@@ -944,7 +990,7 @@ function Workspace({ account }: { account?: Account }) {
               <IconNav name="phone" />
               <span aria-hidden>위젯 앱</span>
             </button>
-            <Link href="/" title="홈페이지로" aria-label="홈페이지로" className={railItem}>
+            <Link href="/" onClick={leaveHub} title="홈페이지로" aria-label="홈페이지로" className={railItem}>
               <IconNav name="home" />
               <span aria-hidden>홈페이지</span>
             </Link>
@@ -967,7 +1013,7 @@ function Workspace({ account }: { account?: Account }) {
             <IconNav name="phone" />
             <span>갤럭시 위젯 앱</span>
           </button>
-          <Link href="/"
+          <Link href="/" onClick={leaveHub}
             className="flex min-h-[42px] items-center gap-3 rounded-tm-sm px-3 text-[15px] font-semibold text-tm-ink transition-colors duration-150 hover:bg-tm-tint">
             <IconNav name="home" />
             <span>홈페이지로</span>
@@ -1011,7 +1057,7 @@ function Workspace({ account }: { account?: Account }) {
               ) : (
                 <MePicker me={me} onPick={pickMe} id="tm-me-m" />
               )}
-              <Link href="/"
+              <Link href="/" onClick={leaveHub}
                 className="flex min-h-[44px] items-center justify-between gap-2 rounded-tm-sm bg-tm-tint px-3 text-[14px] font-semibold text-tm-ink">
                 홈페이지로 <IconNav name="home" size={18} />
               </Link>
@@ -1036,17 +1082,17 @@ function Workspace({ account }: { account?: Account }) {
               <Docs store={docStore} me={me} tasks={store.tasks}
                 onTaskClick={(key) => {
                   const hit = store.tasks.find((t) => t.key === key);
-                  if (hit) { setSection('tasks'); setOpenId(hit.id); }
+                  if (hit) setSection('tasks', () => setOpenId(hit.id));
                   else setToast({ text: `${key} 작업을 찾을 수 없습니다`, undo: false });
                 }}
                 onNotice={(text, tone) => setToast({ text, undo: false, tone: tone === 'err' ? 'err' : undefined })} />
             ) : section === 'memos' ? (
               <Memos store={memoStore} me={me} />
             ) : section === 'daily' || section === 'weekly' ? (
-              <Reports kind={section} onKind={setSection} me={me} tasks={store.tasks} flushRef={reportsFlush}
+              <Reports kind={section} onKind={setSection} me={me} tasks={store.tasks} flushRef={reportsFlush} leaveRef={reportsLeave}
                 /* 명단은 Supabase 모드에서 관리자만(DB 도 관리자 것만 받는다). 브라우저 저장 모드는 계정이 없어 누구나 */
                 canEditPeople={!account || account.me.isAdmin === true}
-                onTaskOpen={(id) => { setSection('tasks'); setOpenId(id); }}
+                onTaskOpen={(id) => setSection('tasks', () => setOpenId(id))}
                 onNotice={(text, tone) => setToast({ text, undo: false, tone: tone === 'err' ? 'err' : undefined })} />
             ) : (
               <>

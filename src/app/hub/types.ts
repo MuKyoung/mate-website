@@ -385,6 +385,26 @@ export interface DailyEntry {
 export type WeeklyStatus = 'draft' | 'final';
 export type WeeklyText = 'summary' | 'issues' | 'nextPlan' | 'notes';
 
+/**
+ * 확정 시점 저장본 - 확정할 때의 숫자 · 명단 · 일간 근거를 그대로 남긴다(Supabase 모드는 서버가 만든다).
+ * 확정한 보고의 화면과 글 복사는 이것을 쓰고, 그 뒤의 작업 보드 값은 '현재 참고'로 따로 본다
+ */
+export interface WeeklySnapshot {
+  v: 1;
+  /** 확정한 시각 */
+  at: string;
+  /** 확정한 날(한국 시간) YYYY-MM-DD - 작성 현황의 '지난 평일'을 이 날까지로 센다 */
+  today: string;
+  numbers: { dueThisWeek: number; dueThisWeekDone: number; created: number; doing: number; overdue: number };
+  nextWeek: { id: string; key: string; title: string; due: string; assignee: string | null }[];
+  /** 확정 때 명단(순서대로) */
+  people: { id: string; name: string }[];
+  /** 무엇이라도 적은 날 - 명단에서 빠진 사람도 들어간다 */
+  written: { person: string; name: string; day: string }[];
+  blockers: { person: string; name: string; day: string; text: string }[];
+  done: { person: string; name: string; day: string; text: string }[];
+}
+
 /** 주간보고 한 장 - 직접 쓰는 칸. 숫자 · 사람별 실적 · 블로커 모음은 화면이 작업 보드와 일간보고에서 모은다 */
 export interface WeeklyReport {
   /** 그 주 월요일 YYYY-MM-DD */
@@ -393,8 +413,12 @@ export interface WeeklyReport {
   issues: string;
   nextPlan: string;
   notes: string;
-  /** 확정하면 화면이 칸을 잠근다('다시 고치기'로 풂) */
+  /** 확정하면 칸이 잠긴다(Supabase 모드는 서버도 막는다). 승인된 팀원 누구나 '다시 고치기'로 연다 */
   status: WeeklyStatus;
+  /** 마지막으로 확정한 사람 · 시각 · 저장본 - 다시 고쳐도 '직전 확정'으로 남는다. 예전 확정본에는 없다 */
+  finalizedBy: string | null;
+  finalizedAt: string | null;
+  snapshot: WeeklySnapshot | null;
   updatedBy: string | null;
   updatedAt: string;
 }
