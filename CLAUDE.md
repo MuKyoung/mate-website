@@ -31,7 +31,9 @@ Trust this map. Do not scan the file tree to rediscover structure.
 - `src/app/hub/` — internal Hub, route `/hub` (renamed from `/taskmanager` on
   2026-11-16; next.config.js redirects the old path). Tasks · wiki · memos ·
   daily/weekly reports (`Reports.tsx`, `reportStore.ts`, `reportRemote.ts`, loaded
-  only when the report screen opens). Sejong admin design, `tm-*`
+  only when the report screen opens) · Google Drive tree (`Drive.tsx`,
+  `driveTree.ts`; table `tm_drive_snapshot` filled every 30 min by the Apps
+  Script `supabase/drive-sync.gs` in contact@devteammate.co.kr). Sejong admin design, `tm-*`
   tokens). With `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY`
   at build time it uses Supabase (login, `remote.ts`, `team.ts`; schema/RLS in
   `supabase/taskmanager.sql`); without them it falls back to localStorage.

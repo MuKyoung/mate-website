@@ -35,6 +35,11 @@ const Reports = dynamic(() => import('./Reports'), {
   ssr: false,
   loading: () => <div className="flex flex-1 items-center justify-center text-[15px] font-semibold text-tm-sub">불러오는 중…</div>,
 });
+/* 구글 드라이브 트리도 열 때만 받고, 그때 드라이브 목록 표를 읽는다 */
+const Drive = dynamic(() => import('./Drive'), {
+  ssr: false,
+  loading: () => <div className="flex flex-1 items-center justify-center text-[15px] font-semibold text-tm-sub">불러오는 중…</div>,
+});
 import Memos from './Memos';
 import { isRemote } from './supabase';
 import {
@@ -78,7 +83,7 @@ interface Account {
 }
 
 type View = 'board' | 'list' | 'timeline' | 'calendar' | 'roadmap';
-type Section = 'tasks' | 'docs' | 'memos' | 'daily' | 'weekly';
+type Section = 'tasks' | 'drive' | 'docs' | 'memos' | 'daily' | 'weekly';
 
 /** 보기 - hint 는 쪽 머리의 설명 줄에 나온다 */
 const VIEWS: { id: View; label: string; key: string; hint: string }[] = [
@@ -562,7 +567,7 @@ function Workspace({ account }: { account?: Account }) {
       if (k === '/') {
         e.preventDefault();
         // 문서 · 메모 화면에서는 그 화면의 검색으로. 그 칸이 없거나(좁은 화면) 숨어 있으면 작업 화면으로 가서 그려진 뒤 검색 칸에
-        const docSearch = document.querySelector<HTMLInputElement>('input[aria-label="문서 검색"], input[aria-label="메모 검색"]');
+        const docSearch = document.querySelector<HTMLInputElement>('input[aria-label="문서 검색"], input[aria-label="메모 검색"], input[aria-label="드라이브 검색"]');
         if (docSearch?.offsetParent) docSearch.focus();
         else if (searchRef.current) searchRef.current.focus();
         else { searchNext.current = true; setSection('tasks'); }
@@ -909,6 +914,8 @@ function Workspace({ account }: { account?: Account }) {
     {
       label: '문서',
       items: [
+        // 팀 구글 드라이브 트리 - 열 때 목록을 읽으므로 숫자를 달지 않는다
+        { key: 'drive', label: '구글 드라이브', icon: 'drive', active: section === 'drive', go: () => setSection('drive') },
         { key: 'docs', label: '팀 위키', icon: 'wiki', count: liveDocCount(docStore.docs),
           active: section === 'docs', go: () => setSection('docs') },
         // 나만 보는 메모 - 브라우저 저장 모드는 '나'를 바꿔 쓸 수 있어 쓴 사람으로 센다
@@ -1145,7 +1152,9 @@ function Workspace({ account }: { account?: Account }) {
         <div className="tm-page flex min-h-0 flex-1 flex-col px-11 pb-7 pt-10 max-[1500px]:px-8 max-[900px]:px-4 max-[900px]:pb-4 max-[900px]:pt-5">
           <div className="tm-page-inner mx-auto flex min-h-0 w-full max-w-[1560px] flex-1 flex-col min-[1800px]:max-w-[2200px]">
 
-            {section === 'docs' ? (
+            {section === 'drive' ? (
+              <Drive me={me} />
+            ) : section === 'docs' ? (
               <Docs store={docStore} me={me} tasks={store.tasks}
                 onTaskClick={(key) => {
                   const hit = store.tasks.find((t) => t.key === key);

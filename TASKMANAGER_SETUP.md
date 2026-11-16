@@ -142,6 +142,17 @@ update public.tm_members set domain_editor = true where lower(email) = lower('�
 영역을 지울 때는 그 영역의 작업을 옮길 영역을 고르고, 마지막 하나는 지울 수 없습니다. 맡기기를 거두려면 `true` 를 `false` 로 바꿔 실행합니다.
 승인을 취소하면 맡기기도 함께 빠집니다.
 
+## 구글 드라이브 트리
+
+메뉴 '구글 드라이브'는 팀 구글 드라이브(contact@devteammate.co.kr 의 내 드라이브)의 폴더 · 파일을 트리로 보여 주고, 노드를 누르면 드라이브에서 엽니다.
+목록은 그 계정에 붙인 Apps Script 가 30분마다 Hub 의 `tm_drive_snapshot` 표로 보냅니다(`supabase/taskmanager.sql` 의 '구글 드라이브 지도' 블록, 스크립트는 `supabase/drive-sync.gs`).
+
+- **처음 한 번 / 다시 설치**: `supabase/drive-sync.gs` 맨 위의 순서대로 contact@ 계정의 Apps Script 에 붙여 넣고 `install` 을 실행합니다.
+  공개 키(`NEXT_PUBLIC_SUPABASE_ANON_KEY`)와 갱신 열쇠를 채운 사본을 붙여 넣습니다.
+- **갱신 열쇠**: DB 에는 sha256 만 있습니다(`tm_drive_sync_keys`). 열쇠를 잃었거나 새로 만들 때는 새 열쇠의 sha256 을 넣고 옛 줄을 지운 뒤, 스크립트의 `SYNC_KEY` 를 바꿉니다.
+- **멈췄을 때**: 쪽 머리의 갱신 알약이 빨간 점('자동 갱신이 멈췄습니다')이 됩니다. Apps Script 의 **실행** 기록에서 오류를 보고, 고친 뒤 `install` 을 다시 실행합니다.
+- 링크는 contact@ 계정으로 로그인한 브라우저에서 열립니다(폴더를 다른 계정과 공유하지 않았습니다).
+
 ## 비밀번호를 잊었을 때
 
 Supabase **Authentication → Users** 에서 그 사람의 줄 오른쪽 메뉴 → **Send password recovery**.

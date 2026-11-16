@@ -264,7 +264,7 @@ export function useMediaQuery(query: string): boolean {
 }
 
 /** 메뉴 아이콘 */
-export type NavIcon = 'board' | 'mine' | 'wiki' | 'memo' | 'home' | 'menu' | 'phone' | 'monitor' | 'sidebar' | 'filter' | 'mindmap' | 'daily' | 'weekly';
+export type NavIcon = 'board' | 'mine' | 'drive' | 'wiki' | 'memo' | 'home' | 'menu' | 'phone' | 'monitor' | 'sidebar' | 'filter' | 'mindmap' | 'daily' | 'weekly';
 export function IconNav({ name, size = 20 }: { name: NavIcon; size?: number }) {
   const paths: Record<NavIcon, React.ReactNode> = {
     /* 모든 작업 - 보드의 칸 */
@@ -279,6 +279,15 @@ export function IconNav({ name, size = 20 }: { name: NavIcon; size?: number }) {
       <>
         <circle cx="10" cy="7" r="3.2" />
         <path d="M4 16.5c.8-3 3.2-4.6 6-4.6s5.2 1.6 6 4.6" />
+      </>
+    ),
+    /* 구글 드라이브 - 폴더 하나에서 두 갈래로 뻗는 트리 */
+    drive: (
+      <>
+        <rect x="2.5" y="3" width="7" height="4.6" rx="1.2" />
+        <rect x="11" y="8.4" width="6.5" height="3.8" rx="1" />
+        <rect x="11" y="13.8" width="6.5" height="3.8" rx="1" />
+        <path d="M5.5 7.6v8.1H11M5.5 10.3H11" />
       </>
     ),
     /* 팀 위키 - 문서 */

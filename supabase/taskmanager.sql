@@ -1172,6 +1172,83 @@ $$;
 -- 명단이 비어 있을 때만 넣는다. 맨 앞의 -- 를 지우고 그 줄만 실행한다.
 -- insert into public.tm_report_people (name, sort) select v.name, v.sort from (values ('박무경', 1000::double precision), ('정성권', 2000), ('전승원', 3000), ('박예형', 4000), ('강민정', 5000), ('김학동', 6000), ('조현민', 7000), ('이지영', 8000), ('박수현', 9000)) as v (name, sort) where not exists (select 1 from public.tm_report_people);
 
+-- ── 구글 드라이브 지도 (2026-11-16) ─────────────────────────────
+-- 팀 구글 드라이브(contact@devteammate.co.kr 의 내 드라이브)의 폴더 · 파일 목록 한 벌. Hub 의 '구글 드라이브' 화면이 읽는다.
+-- 그 계정에 붙인 Apps Script(supabase/drive-sync.gs)가 30분마다 tm_drive_sync 로 통째로 바꾼다.
+-- 승인된 팀원은 읽기만 하고, 바꾸기는 갱신 열쇠를 가진 쪽(tm_drive_sync)만 한다.
+-- 이 블록만 따로 실행해도 된다(위의 tm_is_member 가 이미 있으면). 여러 번 실행해도 된다.
+create table if not exists public.tm_drive_snapshot (
+  id smallint primary key default 1 check (id = 1),   -- 한 줄만 둔다
+  root_id text not null,                              -- 내 드라이브(맨 위)의 id
+  items jsonb not null default '[]'::jsonb,           -- [{ id, parent, name, mime, url, modified }]
+  item_count integer not null default 0,
+  source text not null default '',                    -- 넣은 쪽 - apps-script(자동) · claude(손으로)
+  synced_at timestamptz not null default now()
+);
+
+-- 갱신 열쇠 - 원문은 Apps Script 에만 있고 여기에는 sha256 만 둔다. API 로는 아무도 읽지 못한다.
+-- 열쇠를 새로 만들 때(옛 열쇠는 지운다):
+-- insert into public.tm_drive_sync_keys (key_hash, label) values (encode(sha256(convert_to('<새 열쇠>', 'UTF8')), 'hex'), '<쓰는 곳>');
+create table if not exists public.tm_drive_sync_keys (
+  key_hash text primary key,
+  label text not null default '',
+  created_at timestamptz not null default now()
+);
+
+create or replace function public.tm_drive_sync(p_key text, p_root text, p_items jsonb, p_source text default 'apps-script')
+returns integer
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  n integer;
+begin
+  if p_key is null or not exists (
+    select 1 from public.tm_drive_sync_keys k where k.key_hash = encode(sha256(convert_to(p_key, 'UTF8')), 'hex')
+  ) then
+    raise exception '드라이브 갱신 열쇠가 맞지 않습니다' using errcode = '42501';
+  end if;
+  if p_root is null or char_length(p_root) not between 1 and 200 then
+    raise exception '드라이브 맨 위 id 가 없습니다' using errcode = '22023';
+  end if;
+  if p_items is null or jsonb_typeof(p_items) <> 'array' then
+    raise exception '드라이브 목록은 배열이어야 합니다' using errcode = '22023';
+  end if;
+  n := jsonb_array_length(p_items);
+  if n > 50000 then
+    raise exception '드라이브 목록이 너무 깁니다(%)', n using errcode = '22023';
+  end if;
+  -- 줄마다 id 는 글자, 링크는 https 만(화면이 그대로 연다)
+  if exists (
+    select 1 from jsonb_array_elements(p_items) e
+    where jsonb_typeof(e) <> 'object' or jsonb_typeof(e -> 'id') is distinct from 'string'
+       or coalesce(e ->> 'url', '') !~ '^(https://|$)'
+  ) then
+    raise exception '드라이브 목록의 줄 모양이 맞지 않습니다' using errcode = '22023';
+  end if;
+  insert into public.tm_drive_snapshot (id, root_id, items, item_count, source, synced_at)
+  values (1, p_root, p_items, n, left(coalesce(p_source, ''), 40), now())
+  on conflict (id) do update
+    set root_id = excluded.root_id, items = excluded.items, item_count = excluded.item_count,
+        source = excluded.source, synced_at = excluded.synced_at;
+  return n;
+end;
+$$;
+
+alter table public.tm_drive_snapshot enable row level security;
+alter table public.tm_drive_sync_keys enable row level security;
+drop policy if exists tm_drive_snapshot_read on public.tm_drive_snapshot;
+create policy tm_drive_snapshot_read on public.tm_drive_snapshot
+  for select to authenticated
+  using ((select public.tm_is_member()));
+-- 열쇠 표는 아무에게도 주지 않는다
+revoke all on public.tm_drive_snapshot, public.tm_drive_sync_keys from anon, authenticated;
+grant select on public.tm_drive_snapshot to authenticated;
+-- 갱신은 로그인하지 않은 Apps Script 가 부르므로 anon 에도 준다(함수가 열쇠를 본다)
+revoke execute on function public.tm_drive_sync(text, text, jsonb, text) from public;
+grant execute on function public.tm_drive_sync(text, text, jsonb, text) to anon, authenticated;
+
 -- ── 첫 관리자 정하기 ─────────────────────────────────────────
 -- 위를 실행하고 첫 계정을 만든 뒤, 아래 줄의 메일을 바꾸고 맨 앞의 -- 를 지워 그 줄만 따로 실행한다.
 -- 관리자 칸이 생기기 전부터 쓰던 프로젝트도 한 번 실행한다(그 전에는 아무도 승인할 수 없다).
