@@ -24,7 +24,7 @@ const field = `${tmFieldBase} h-11 w-full px-3 text-[16px]`;
  * check 가 문제를 돌려주면 치는 동안 알리고, 그대로 떠나면 저장하지 않고 저장된 값으로 돌린다.
  * 치는 동안 들어온 다른 곳의 고침은 칸을 떠난 뒤에 따른다
  */
-function CommitInput({ id, value, max, placeholder, autoFocus, check, onSave }: {
+export function CommitInput({ id, value, max, placeholder, autoFocus, check, onSave }: {
   id: string;
   value: string;
   max: number;

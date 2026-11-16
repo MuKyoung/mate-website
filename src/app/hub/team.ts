@@ -68,7 +68,7 @@ export async function signUp(name: string, email: string, password: string): Pro
     const { data, error } = await sb().auth.signUp({
       email: email.trim(),
       password,
-      options: { data: { name: name.trim() }, emailRedirectTo: `${window.location.origin}/taskmanager/` },
+      options: { data: { name: name.trim() }, emailRedirectTo: `${window.location.origin}/hub/` },
     });
     if (error) {
       if (error.code === 'user_already_exists' || error.code === 'email_exists') return { error: '이미 가입한 메일입니다. 로그인해 주세요.' };

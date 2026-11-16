@@ -1,4 +1,7 @@
-# 작업 관리 도구(/taskmanager) - Supabase 연결
+# Hub(/hub, 예전 이름 작업 관리 · /taskmanager) - Supabase 연결
+
+> 2026-11-16 에 주소를 `/taskmanager` 에서 `/hub` 로 바꿨습니다. 예전 주소는 `/hub` 로 넘어갑니다(next.config.js 의 redirects).
+> 표 이름(`tm_*`) · SQL 파일 이름 · 브라우저 저장 이름(`mate.taskmanager.*`)은 그대로입니다.
 
 작업 · 문서 · 팀원을 MATE 전용 Supabase 프로젝트에 두고, 팀원이 로그인해서 함께 씁니다.
 키를 넣지 않고 빌드하면 예전처럼 각자 브라우저에만 저장합니다(로컬 개발용).
@@ -6,9 +9,9 @@
 | 파일 | 하는 일 |
 | --- | --- |
 | `supabase/taskmanager.sql` | 표 · 권한(RLS) · 실시간 설정. SQL Editor 에서 한 번 실행 |
-| `src/app/taskmanager/supabase.ts` | 연결 · 키 읽기 |
-| `src/app/taskmanager/remote.ts` | 작업 · 문서 저장(실시간 반영, 브라우저 데이터 가져오기) |
-| `src/app/taskmanager/team.ts` | 로그인 · 팀원 목록 |
+| `src/app/hub/supabase.ts` | 연결 · 키 읽기 |
+| `src/app/hub/remote.ts` | 작업 · 문서 저장(실시간 반영, 브라우저 데이터 가져오기) |
+| `src/app/hub/team.ts` | 로그인 · 팀원 목록 |
 
 ## 처음 한 번
 
@@ -71,17 +74,18 @@ update public.tm_members set active = true, is_admin = true where lower(email) =
 
 ### 6. 비밀번호 재설정 메일이 돌아올 곳
 
-**Authentication → URL Configuration → Site URL** 을 `https://devteammate.co.kr/taskmanager/` 로 바꿉니다.
+**Authentication → URL Configuration → Site URL** 을 `https://devteammate.co.kr/hub/` 로 바꿉니다.
+예전 값(`https://devteammate.co.kr/taskmanager/`)으로 두어도 메일의 링크가 `/hub/` 로 넘어가 그대로 됩니다.
 
 ### 7. 들어가 보기
 
-https://devteammate.co.kr/taskmanager/ → 로그인.
+https://devteammate.co.kr/hub/ → 로그인.
 예전에 그 브라우저에서 쓴 작업 · 문서가 있으면 위에 안내가 뜹니다. **가져오기**를 누르면 팀 저장소로 옮깁니다.
 작업 번호는 새로 매기고, 문서 안의 `MATE-###` 도 새 번호로 바꿔 적습니다. 예시 데이터는 옮기지 않습니다.
 
 ## 팀원 추가
 
-1. 그 사람이 https://devteammate.co.kr/taskmanager/ 의 **가입 요청**에서 이름 · 이메일 · 비밀번호를 적어 보냅니다. 바로 '승인 대기' 화면이 뜹니다.
+1. 그 사람이 https://devteammate.co.kr/hub/ 의 **가입 요청**에서 이름 · 이메일 · 비밀번호를 적어 보냅니다. 바로 '승인 대기' 화면이 뜹니다.
 2. 관리자 계정 왼쪽 아래 내 이름에 승인 대기 숫자가 뜹니다. 눌러서 **팀원** 창 → **승인**. 그 사람 화면이 저절로 열립니다.
 3. 모르는 사람이면 **거절**합니다. 계정째 지워지고, 같은 메일로 다시 요청할 수 있습니다.
 4. 처음 들어온 사람은 팀원 창에서 역할을 적습니다.

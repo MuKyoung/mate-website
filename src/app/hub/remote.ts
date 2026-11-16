@@ -52,7 +52,7 @@ interface SyncView<T> {
   deleted: ReadonlyMap<string, boolean>;
 }
 
-const MISSING = 'Supabase 에 작업 관리 표가 없습니다. supabase/taskmanager.sql 을 실행해 주세요.';
+const MISSING = 'Supabase 에 Hub 표가 없습니다. supabase/taskmanager.sql 을 실행해 주세요.';
 const LOAD_FAIL = '목록을 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.';
 /** 연결 문제 알림 - 다 보내고 나면 화면이 이 알림을 거둔다 */
 export const RETRY = '서버에 닿지 않아 아직 저장하지 못했습니다. 연결되면 저절로 다시 보냅니다.';
@@ -569,7 +569,8 @@ class RowSync<T extends Entity, R extends Entity> {
   }
 }
 
-function useRowSync<T extends Entity, R extends Entity>(opt: SyncOptions<T, R>) {
+/** 표 하나를 화면 상태로 붙인다. 보고(reportRemote.ts)처럼 따로 받는 화면도 쓴다 */
+export function useRowSync<T extends Entity, R extends Entity>(opt: SyncOptions<T, R>) {
   const [state, setState] = useState<SyncView<T>>({
     items: [], sync: 'idle', ready: false, loadError: null, deleted: NONE,
   });
@@ -760,7 +761,7 @@ const domainProbe = () => [sb().from('tm_domains').select('id').limit(1)];
  * 뒤에 SQL 로 더한 표 · 칸이 있는가. 앱을 먼저 배포하고 SQL 을 나중에 실행해도 예전처럼
  * 돌 수 있게 열 때 한 번 물어본다. 연결 문제로 못 물었으면 잠시 뒤 다시 묻는다. probe 는 모듈의 고정 함수로 준다
  */
-function useTablesExist(probe: () => PromiseLike<{ error: DbError | null }>[]): boolean | null {
+export function useTablesExist(probe: () => PromiseLike<{ error: DbError | null }>[]): boolean | null {
   const [ok, setOk] = useState<boolean | null>(null);
   useEffect(() => {
     let live = true;

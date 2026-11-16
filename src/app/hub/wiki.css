@@ -1,5 +1,5 @@
 /*
- * 팀 위키 본문 · 편집기 (DocEditor) - /taskmanager 에서만 쓴다.
+ * 팀 위키 본문 · 편집기 (DocEditor) - /hub 에서만 쓴다.
  * 글자 크기 · 간격 · 색은 예전 본문 렌더러(Markdown.tsx)와 같다. 색 값은 tailwind.config.ts 의 tm 과 같다.
  */
 

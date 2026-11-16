@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import ShellScope from './ShellScope';
 
 export const metadata: Metadata = {
-  title: 'Tasks',
-  description: 'MATE 내부 작업 관리',
+  title: 'Hub',
+  description: 'MATE 내부 Hub - 작업 · 위키 · 메모 · 보고',
   // 사내 도구는 검색에 노출하지 않는다
   robots: { index: false, follow: false, nocache: true },
 };

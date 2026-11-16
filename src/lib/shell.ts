@@ -9,6 +9,6 @@ export const PINBALL_HOST = 'pinball.devteammate.co.kr';
  * /pinball/ 로 그려지므로 양쪽 모두 가린 상태라 하이드레이션 결과가 어긋나지 않는다.
  */
 export function isToolScreen(pathname: string): boolean {
-  if (pathname.startsWith('/taskmanager') || pathname.startsWith('/pinball')) return true;
+  if (pathname.startsWith('/hub') || pathname.startsWith('/taskmanager') || pathname.startsWith('/pinball')) return true;
   return pathname === '/' && typeof window !== 'undefined' && window.location.hostname === PINBALL_HOST;
 }

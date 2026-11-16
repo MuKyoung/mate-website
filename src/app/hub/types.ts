@@ -339,3 +339,88 @@ export interface Memo {
   createdAt: string;
   updatedAt: string;
 }
+
+/* ── 보고(일간 · 주간) ────────────────────────────── */
+
+/** 일간보고 명단의 한 사람 - 관리자가 이름 · 순서를 고친다. 계정이 없는 사람도 넣을 수 있다 */
+export interface ReportPerson {
+  id: string;
+  name: string;
+  /** 연결한 팀원 계정(Member.id). 비워 두면 이름이 같은 계정을 쓴다 */
+  member: string | null;
+  /** 스크럼 순서. 작을수록 위 */
+  order: number;
+}
+
+/** 처음 명단 - 2026-11-16 에 정한 스크럼 순서. 그 뒤로는 관리자가 화면에서 고친다 */
+export const DEFAULT_REPORT_PEOPLE = ['박무경', '정성권', '전승원', '박예형', '강민정', '김학동', '조현민', '이지영', '박수현'];
+
+export type DailyField = 'done' | 'plan' | 'blocker';
+
+/** 일간보고 칸 - 이 순서로 보인다(이름 다음) */
+export const DAILY_FIELDS: { id: DailyField; label: string; hint: string }[] = [
+  { id: 'done', label: '완료', hint: '지난 보고 뒤에 끝낸 일' },
+  { id: 'plan', label: '예정', hint: '오늘 할 일' },
+  { id: 'blocker', label: '블로커 & 공유사항', hint: '막힌 것 · 도움 요청 · 알릴 것' },
+];
+
+/** 일간보고 한 줄 - 하루 · 한 사람에 하나. 칸마다 한 줄에 한 가지씩 적는다 */
+export interface DailyEntry {
+  /** `${day}:${person}` - 두 사람이 같은 칸을 처음 적어도 한 줄로 모인다 */
+  id: string;
+  /** YYYY-MM-DD */
+  day: string;
+  /** ReportPerson.id */
+  person: string;
+  /** 적을 때의 이름 - 명단에서 빠져도 그날 보고에 남는다 */
+  name: string;
+  done: string;
+  plan: string;
+  blocker: string;
+  /** 마지막으로 고친 팀원(Member.id) - Supabase 모드에서는 DB 가 적는다 */
+  updatedBy: string | null;
+  updatedAt: string;
+}
+
+export type WeeklyStatus = 'draft' | 'final';
+export type WeeklyText = 'summary' | 'issues' | 'nextPlan' | 'notes';
+
+/** 주간보고 한 장 - 직접 쓰는 칸. 숫자 · 사람별 실적 · 블로커 모음은 화면이 작업 보드와 일간보고에서 모은다 */
+export interface WeeklyReport {
+  /** 그 주 월요일 YYYY-MM-DD */
+  id: string;
+  summary: string;
+  issues: string;
+  nextPlan: string;
+  notes: string;
+  /** 확정하면 화면이 칸을 잠근다('다시 고치기'로 풂) */
+  status: WeeklyStatus;
+  updatedBy: string | null;
+  updatedAt: string;
+}
+
+/** 프로젝트 상태 - 초록 · 호박색 · 빨강은 작업 관리에서 끝남 · 임박 · 급함의 뜻이라 그대로 쓴다 */
+export type ProjectState = 'good' | 'watch' | 'risk';
+export const PROJECT_STATES: { id: ProjectState; label: string }[] = [
+  { id: 'good', label: '순조' },
+  { id: 'watch', label: '주의' },
+  { id: 'risk', label: '위험' },
+];
+export const isProjectState = (v: unknown): v is ProjectState => PROJECT_STATES.some((s) => s.id === v);
+
+/** 주간보고의 프로젝트별 현황 한 줄 - 줄마다 따로 저장해 두 사람이 다른 줄을 함께 고쳐도 덮지 않는다 */
+export interface WeeklyItem {
+  id: string;
+  /** 그 주 월요일 */
+  week: string;
+  name: string;
+  state: ProjectState;
+  /** 이번 주 한 일 */
+  done: string;
+  /** 다음 주 할 일 */
+  next: string;
+  issue: string;
+  order: number;
+  updatedBy: string | null;
+  updatedAt: string;
+}

@@ -73,7 +73,7 @@ const config: Config = {
         success: "var(--success)",
         danger: "var(--danger)",
 
-        // ── 작업 관리 도구(/taskmanager) 전용 ──────────────────
+        // ── 사내 Hub(/hub) 전용 ──────────────────
         // 세종호이스트크레인 리뉴얼 관리자의 틀과 값을 옮겼다(2026-10-22).
         // 세종 네이비 자리에는 로고 파랑 #2644CB 를, 제목 글자에는 한 단계 짙은 파랑을 쓴다.
         // 빨강 · 호박색 · 초록은 급함 · 임박 · 끝남에만, 보라 · 청록은 영역을 가르는 데만 쓴다.
@@ -98,11 +98,11 @@ const config: Config = {
       // ── Shape ────────────────────────────────────────────────
       // 카드 · 이미지 모서리는 PC 10px, 태블릿 · 모바일 8px (Figma 10/17 공통 수정사항)
       borderRadius: {
-        DEFAULT: "10px", // /taskmanager 가 쓰는 값이기도 하다
+        DEFAULT: "10px", // /hub 가 쓰는 값이기도 하다
         card: "10px",
         "card-sm": "8px",
         pill: "9999px",
-        // /taskmanager - 세종 관리자의 모서리
+        // /hub - 세종 관리자의 모서리
         "tm-sm": "10px", // 메뉴 줄 · 작은 버튼 · 입력 칸
         "tm-btn": "12px", // 큰 버튼
         tm: "14px", // 카드
@@ -112,13 +112,13 @@ const config: Config = {
         // Figma effect - 0 0 15px rgba(0,0,0,.15). 목록 카드처럼 흰 면 위에 뜨는 판
         float: "0 0 15px rgba(0, 0, 0, 0.08)",
         "float-lg": "0 10px 30px rgba(22, 29, 60, 0.12)",
-        // /taskmanager - 평소에는 거의 없고, 마우스를 올리거나 띄울 때만 깊어진다
+        // /hub - 평소에는 거의 없고, 마우스를 올리거나 띄울 때만 깊어진다
         tm: "0 1px 2px rgba(22, 39, 60, 0.06)",
         "tm-up": "0 14px 32px rgba(22, 39, 60, 0.14)",
         "tm-pop": "0 28px 72px rgba(15, 26, 41, 0.34)",
         "tm-toast": "0 14px 36px rgba(15, 26, 41, 0.36)",
       },
-      // /taskmanager - 창 · 알림 · 옆 패널이 나타나는 움직임 (세종 관리자 값)
+      // /hub - 창 · 알림 · 옆 패널이 나타나는 움직임 (세종 관리자 값)
       keyframes: {
         "tm-fade": { from: { opacity: "0" }, to: { opacity: "1" } },
         "tm-pop": {

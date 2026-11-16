@@ -19,7 +19,7 @@ function GateCard({ title, children }: { title: string; children: React.ReactNod
         <div className="w-[min(440px,100%)] rounded-tm-lg border border-tm-line bg-white px-8 py-9 shadow-tm-up max-[480px]:px-5 max-[480px]:py-7">
           <div className="mb-[22px] flex items-center gap-2.5">
             <Image src="/images/logo.png" alt="MATE" width={112} height={28} priority className="h-auto w-[112px]" />
-            <span className="rounded-full bg-tm-tint px-[11px] py-[3px] text-[12.5px] font-bold text-tm-deep">작업 관리</span>
+            <span className="rounded-full bg-tm-tint px-[11px] py-[3px] text-[12.5px] font-bold text-tm-deep">Hub</span>
           </div>
           <h1 className="text-[22px] font-extrabold leading-[1.35] tracking-[-0.01em] text-tm-deep">{title}</h1>
           {children}
@@ -102,7 +102,7 @@ export function LoginScreen() {
       <GateCard title="인증 메일을 보냈습니다">
         <p className={lead}>
           <b className="font-bold text-tm-deep">{email.trim()}</b> 로 보낸 메일의 링크를 누르면 가입 요청이 들어갑니다.
-          관리자가 승인하면 작업 관리가 열립니다.
+          관리자가 승인하면 Hub 가 열립니다.
         </p>
         <button type="button" onClick={() => go('login')} className={`${tmBtn} mt-[22px]`}>
           로그인으로
@@ -114,7 +114,7 @@ export function LoginScreen() {
   if (mode === 'signup') {
     return (
       <GateCard title="가입 요청">
-        <p className="mt-1.5 text-[15px] text-tm-sub">관리자가 승인하면 작업 관리와 MATE Studio · MATE Hub 를 같은 계정으로 쓸 수 있습니다.</p>
+        <p className="mt-1.5 text-[15px] text-tm-sub">관리자가 승인하면 Hub 와 MATE Studio · 설치형 MATE Hub 를 같은 계정으로 쓸 수 있습니다.</p>
         <form onSubmit={request} className="mt-6 flex flex-col gap-4">
           <div>
             <label className={tmLabel} htmlFor="tm-join-name">이름</label>
@@ -151,8 +151,8 @@ export function LoginScreen() {
   }
 
   return (
-    <GateCard title="작업 관리 로그인">
-      <p className="mt-1.5 text-[15px] text-tm-sub">MATE 팀원 계정으로 들어갑니다. 같은 계정으로 MATE Studio · MATE Hub 에도 들어갑니다.</p>
+    <GateCard title="Hub 로그인">
+      <p className="mt-1.5 text-[15px] text-tm-sub">MATE 팀원 계정으로 들어갑니다. 같은 계정으로 MATE Studio · 설치형 MATE Hub 에도 들어갑니다.</p>
       <form onSubmit={submit} className="mt-6 flex flex-col gap-4">
         <div>
           <label className={tmLabel} htmlFor="tm-login-email">이메일</label>
@@ -202,7 +202,7 @@ export function PendingScreen({ email, missing, onSignOut }: { email: string; mi
 /** 표가 없거나(SQL 을 아직 실행하지 않았다) 불러오지 못했을 때 */
 export function TroubleScreen({ kind, onRetry, onSignOut }: { kind: 'missing' | 'error'; onRetry(): void; onSignOut(): void }) {
   return (
-    <GateCard title={kind === 'missing' ? 'Supabase 에 작업 관리 표가 아직 없습니다' : '팀원 목록을 불러오지 못했습니다'}>
+    <GateCard title={kind === 'missing' ? 'Supabase 에 Hub 표가 아직 없습니다' : '팀원 목록을 불러오지 못했습니다'}>
       <p className={lead}>
         {kind === 'missing'
           ? 'Supabase 대시보드의 SQL Editor 에서 저장소의 supabase/taskmanager.sql 을 한 번 실행해 주세요. 자세한 절차는 TASKMANAGER_SETUP.md 에 있습니다.'

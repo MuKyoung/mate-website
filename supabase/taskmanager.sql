@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════════════════
--- MATE 작업 관리 도구(/taskmanager) - Supabase 표 · 권한 · 실시간
+-- MATE 사내 Hub(/hub, 예전 이름 작업 관리 · /taskmanager) - Supabase 표 · 권한 · 실시간
 --
 -- 쓰는 법: Supabase 대시보드 → SQL Editor → New query 에 이 파일을 통째로 붙여 넣고 Run.
 -- 여러 번 실행해도 된다(있는 표는 건너뛰고 함수 · 권한 · 트리거는 새로 쓴다).
@@ -14,6 +14,7 @@
 --   · 개인 메모는 쓴 사람만 읽고 쓴다. 관리자도 남의 메모는 못 본다.
 --   · 영역(작업을 가르는 갈래)은 팀원 모두 읽고, 고치기는 영역을 맡은 사람만 한다.
 --     맡은 사람은 관리자와 따로, 이 파일 맨 아래의 문장으로 SQL Editor 에서만 정한다.
+--   · 일간 · 주간보고는 승인된 팀원 누구나 읽고 쓴다. 일간보고 명단(이름 · 순서 · 계정 연결)은 관리자만 고친다.
 -- ═══════════════════════════════════════════════════════════════════════
 
 -- ── 팀원 ─────────────────────────────────────────────────────
@@ -725,6 +726,170 @@ drop policy if exists tm_presence_write on realtime.messages;
 create policy tm_presence_write on realtime.messages
   for insert to authenticated
   with check ((select realtime.topic()) = 'tm-docs-presence' and extension = 'presence' and (select public.tm_is_member()));
+
+-- ── 일간 · 주간보고 (2026-11-16) ───────────────────────────────
+-- 일간보고(스크럼): 명단의 사람마다 하루에 한 줄 - 완료 · 예정 · 블로커 & 공유사항. 명단(이름 · 순서 · 계정 연결)은 관리자만 고친다.
+-- 주간보고: 한 주에 한 장(id = 그 주 월요일)과 프로젝트 줄. 숫자 · 사람별 실적은 화면이 작업 · 일간보고에서 모은다.
+-- 일간 · 주간은 승인된 팀원 누구나 읽고 쓴다(스크럼에서 한 사람이 모두의 칸을 적기도 한다). 마지막으로 고친 사람은 DB 가 적는다.
+-- 이 블록만 따로 실행해도 된다(위의 tm_touch · tm_is_member · tm_is_admin 이 이미 있으면). 여러 번 실행해도 된다.
+
+create table if not exists public.tm_report_people (
+  id uuid primary key default gen_random_uuid(),
+  name text not null check (char_length(btrim(name)) between 1 and 20),
+  member uuid references public.tm_members (id) on delete set null,   -- 연결한 계정. 비우면 화면이 이름이 같은 계정을 쓴다
+  sort double precision not null default 0,                           -- 스크럼 순서. 작을수록 위
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+-- 처음 명단 - 표가 비어 있을 때만 넣는다(다시 실행해도 관리자가 뺀 사람을 되살리지 않게)
+insert into public.tm_report_people (name, sort)
+select v.name, v.sort
+from (values
+  ('박무경', 1000::double precision), ('정성권', 2000), ('전승원', 3000), ('박예형', 4000), ('강민정', 5000),
+  ('김학동', 6000), ('조현민', 7000), ('이지영', 8000), ('박수현', 9000)
+) as v (name, sort)
+where not exists (select 1 from public.tm_report_people);
+
+-- 하루 · 한 사람에 한 줄. id 는 '<날짜>:<명단 id>' 라 두 사람이 같은 칸을 처음 적어도 한 줄로 모인다(화면이 upsert 로 넣는다).
+-- 명단에서 사람을 빼도 보고는 남는다 - 외래 키를 두지 않고 적을 때의 이름을 함께 둔다
+create table if not exists public.tm_daily_reports (
+  id text primary key check (id ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}:.+$'),
+  day date not null,
+  person uuid not null,
+  name text not null default '' check (char_length(name) <= 40),
+  done text not null default '' check (char_length(done) <= 4000),        -- 완료
+  plan text not null default '' check (char_length(plan) <= 4000),        -- 예정
+  blocker text not null default '' check (char_length(blocker) <= 4000),  -- 블로커 & 공유사항
+  updated_by uuid default auth.uid(),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint tm_daily_reports_day_person_key unique (day, person)
+);
+
+-- 한 주에 한 장
+create table if not exists public.tm_weekly_reports (
+  id text primary key check (id ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'),   -- 그 주 월요일
+  summary text not null default '' check (char_length(summary) <= 8000),
+  issues text not null default '' check (char_length(issues) <= 8000),
+  next_plan text not null default '' check (char_length(next_plan) <= 8000),
+  notes text not null default '' check (char_length(notes) <= 8000),
+  status text not null default 'draft' check (status in ('draft', 'final')),   -- 확정하면 화면이 칸을 잠근다
+  updated_by uuid default auth.uid(),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+-- 주간보고의 프로젝트 줄 - 줄마다 따로 두어 두 사람이 다른 줄을 함께 고쳐도 덮지 않는다
+create table if not exists public.tm_weekly_items (
+  id uuid primary key default gen_random_uuid(),
+  week text not null check (week ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'),
+  name text not null default '' check (char_length(name) <= 60),
+  state text not null default 'good' check (state in ('good', 'watch', 'risk')),   -- 순조 · 주의 · 위험
+  done text not null default '' check (char_length(done) <= 4000),             -- 이번 주 한 일
+  next_plan text not null default '' check (char_length(next_plan) <= 4000),   -- 다음 주 할 일
+  issue text not null default '' check (char_length(issue) <= 4000),
+  sort double precision not null default 0,
+  updated_by uuid default auth.uid(),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index if not exists tm_weekly_items_week_idx on public.tm_weekly_items (week);
+
+-- 마지막으로 고친 사람 - 화면이 보낸 값을 따르지 않고 로그인한 사람으로 적는다(대시보드 · SQL Editor 는 그대로)
+create or replace function public.tm_stamp_editor()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if auth.uid() is not null then
+    new.updated_by := auth.uid();
+  end if;
+  return new;
+end;
+$$;
+
+create or replace trigger tm_report_people_touch before update on public.tm_report_people
+  for each row execute function public.tm_touch();
+create or replace trigger tm_daily_reports_stamp before insert or update on public.tm_daily_reports
+  for each row execute function public.tm_stamp_editor();
+create or replace trigger tm_daily_reports_touch before update on public.tm_daily_reports
+  for each row execute function public.tm_touch();
+create or replace trigger tm_weekly_reports_stamp before insert or update on public.tm_weekly_reports
+  for each row execute function public.tm_stamp_editor();
+create or replace trigger tm_weekly_reports_touch before update on public.tm_weekly_reports
+  for each row execute function public.tm_touch();
+create or replace trigger tm_weekly_items_stamp before insert or update on public.tm_weekly_items
+  for each row execute function public.tm_stamp_editor();
+create or replace trigger tm_weekly_items_touch before update on public.tm_weekly_items
+  for each row execute function public.tm_touch();
+
+alter table public.tm_report_people enable row level security;
+alter table public.tm_daily_reports enable row level security;
+alter table public.tm_weekly_reports enable row level security;
+alter table public.tm_weekly_items enable row level security;
+
+-- 명단: 팀원 모두 읽고, 더하기 · 고치기 · 빼기는 관리자만
+drop policy if exists tm_report_people_read on public.tm_report_people;
+create policy tm_report_people_read on public.tm_report_people
+  for select to authenticated
+  using ((select public.tm_is_member()));
+drop policy if exists tm_report_people_admin on public.tm_report_people;
+create policy tm_report_people_admin on public.tm_report_people
+  for all to authenticated
+  using ((select public.tm_is_admin()))
+  with check ((select public.tm_is_admin()));
+
+-- 일간 · 주간보고 · 프로젝트 줄: 승인된 팀원 누구나
+drop policy if exists tm_daily_reports_members on public.tm_daily_reports;
+create policy tm_daily_reports_members on public.tm_daily_reports
+  for all to authenticated
+  using ((select public.tm_is_member()))
+  with check ((select public.tm_is_member()));
+drop policy if exists tm_weekly_reports_members on public.tm_weekly_reports;
+create policy tm_weekly_reports_members on public.tm_weekly_reports
+  for all to authenticated
+  using ((select public.tm_is_member()))
+  with check ((select public.tm_is_member()));
+drop policy if exists tm_weekly_items_members on public.tm_weekly_items;
+create policy tm_weekly_items_members on public.tm_weekly_items
+  for all to authenticated
+  using ((select public.tm_is_member()))
+  with check ((select public.tm_is_member()));
+
+-- 새 표에 기본으로 붙는 권한을 거두고 화면이 쓰는 것만 다시 준다. 고친 사람 · 시각은 DB 가 적으므로 주지 않는다.
+-- 일간 줄 · 주간 장은 upsert 로 넣는다 - upsert 는 보낸 칸(id 포함)의 update 권한도 쓴다. 일간 · 주간 장은 지우지 않는다(글을 지우면 빈 칸)
+revoke all on public.tm_report_people, public.tm_daily_reports, public.tm_weekly_reports, public.tm_weekly_items from anon, authenticated;
+grant select, insert (id, name, member, sort), update (name, member, sort), delete on public.tm_report_people to authenticated;
+grant select, insert (id, day, person, name, done, plan, blocker), update (id, day, person, name, done, plan, blocker)
+  on public.tm_daily_reports to authenticated;
+grant select, insert (id, summary, issues, next_plan, notes, status), update (id, summary, issues, next_plan, notes, status)
+  on public.tm_weekly_reports to authenticated;
+grant select, insert (id, week, name, state, done, next_plan, issue, sort), update (name, state, done, next_plan, issue, sort), delete
+  on public.tm_weekly_items to authenticated;
+revoke execute on function public.tm_stamp_editor() from public, anon, authenticated;
+
+-- 실시간 - 스크럼 중에 다른 사람이 적는 칸이 새로고침 없이 보이게
+do $$
+begin
+  begin
+    alter publication supabase_realtime add table public.tm_report_people;
+  exception when duplicate_object then null;
+  end;
+  begin
+    alter publication supabase_realtime add table public.tm_daily_reports;
+  exception when duplicate_object then null;
+  end;
+  begin
+    alter publication supabase_realtime add table public.tm_weekly_reports;
+  exception when duplicate_object then null;
+  end;
+  begin
+    alter publication supabase_realtime add table public.tm_weekly_items;
+  exception when duplicate_object then null;
+  end;
+end;
+$$;
 
 -- ── 첫 관리자 정하기 ─────────────────────────────────────────
 -- 위를 실행하고 첫 계정을 만든 뒤, 아래 줄의 메일을 바꾸고 맨 앞의 -- 를 지워 그 줄만 따로 실행한다.

@@ -29,6 +29,11 @@ const Docs = dynamic(() => import('./Docs'), {
   ssr: false,
   loading: () => <div className="flex flex-1 items-center justify-center text-[15px] font-semibold text-tm-sub">불러오는 중…</div>,
 });
+/* 일간 · 주간보고는 열 때만 받고, 그때 보고 표에 붙는다 - 작업 화면의 첫 로딩은 그대로 */
+const Reports = dynamic(() => import('./Reports'), {
+  ssr: false,
+  loading: () => <div className="flex flex-1 items-center justify-center text-[15px] font-semibold text-tm-sub">불러오는 중…</div>,
+});
 import Memos from './Memos';
 import { isRemote } from './supabase';
 import {
@@ -72,7 +77,7 @@ interface Account {
 }
 
 type View = 'board' | 'list' | 'timeline' | 'calendar' | 'roadmap';
-type Section = 'tasks' | 'docs' | 'memos';
+type Section = 'tasks' | 'docs' | 'memos' | 'daily' | 'weekly';
 
 /** 보기 - hint 는 쪽 머리의 설명 줄에 나온다 */
 const VIEWS: { id: View; label: string; key: string; hint: string }[] = [
@@ -84,7 +89,8 @@ const VIEWS: { id: View; label: string; key: string; hint: string }[] = [
 ];
 type Scope = { kind: 'all' } | { kind: 'mine' } | { kind: 'domain'; id: DomainKey };
 
-type NavItem = { key: string; label: string; icon?: NavIcon; dot?: DomainColor; count: number; active: boolean; go(): void };
+/** count 가 없으면 숫자 알약을 그리지 않는다(보고처럼 셀 것이 없는 메뉴) */
+type NavItem = { key: string; label: string; icon?: NavIcon; dot?: DomainColor; count?: number; active: boolean; go(): void };
 /** 메뉴 묶음 - action 은 묶음 이름 옆의 글자 버튼(영역 '관리') */
 type NavGroup = { label?: string; action?: { text: string; label: string; go(): void }; items: NavItem[] };
 
@@ -182,7 +188,7 @@ function WidgetAppDialog({ onClose }: { onClose: () => void }) {
         <li>휴대폰에서 받습니다. PC 에서 받았다면 카카오톡 나에게 보내기 같은 방법으로 휴대폰에 옮깁니다.</li>
         <li>파일을 열면 묻는 &lsquo;출처를 알 수 없는 앱&rsquo; 설치를 허용합니다.</li>
         <li>Play 프로텍트 안내가 나오면 <b>자세히</b>를 눌러 <b>무시하고 설치</b>합니다. 스토어에 올리지 않은 사내 앱이라 나오는 안내입니다.</li>
-        <li>앱을 열어 작업 관리와 같은 메일 · 비밀번호로 로그인합니다.</li>
+        <li>앱을 열어 Hub 와 같은 메일 · 비밀번호로 로그인합니다.</li>
         <li>홈 화면 빈 곳을 길게 눌러 <b>위젯</b>에서 <b>MATE 오늘</b>을 놓고, 내 작업과 팀 전체 중 하나를 고릅니다.</li>
       </ol>
     </Modal>
@@ -287,6 +293,8 @@ function Workspace({ account }: { account?: Account }) {
   const acct = useRef<HTMLDetailsElement>(null);
   const storeRef = useRef(store);
   storeRef.current = store;
+  /** 보고 화면이 열려 있으면 그 저장소의 '기다리는 저장 보내기' - 로그아웃 전에 부른다 */
+  const reportsFlush = useRef<(() => Promise<void>) | null>(null);
   /** 지금 떠 있는 알림 - 단축키 Z 는 실행 취소 알림이 떠 있을 때만 듣는다 */
   const toastRef = useRef(toast);
 
@@ -317,6 +325,8 @@ function Workspace({ account }: { account?: Account }) {
     // ?task=<id> 는 작업 화면으로 와서 목록을 읽은 뒤 그 작업을 연다(아래 효과)
     const v = q.get('view');
     if (v && VIEWS.some((x) => x.id === v)) { setSection('tasks'); setView(v as View); }
+    // 보고 링크(?view=daily&date= · ?view=weekly&week=) - 날짜 · 주는 보고 화면이 읽는다
+    if (v === 'daily' || v === 'weekly') setSection(v);
     if (q.has('task')) setSection('tasks');
     setPrefsLoaded(true);
   }, []);
@@ -364,7 +374,7 @@ function Workspace({ account }: { account?: Account }) {
   const logout = async () => {
     if (leaving) return;
     setLeaving(true);
-    await Promise.all([store.flush?.(), docStore.flush?.(), memoStore.flush?.(), domainStore.flush?.(), colorStore.flush?.()])
+    await Promise.all([store.flush?.(), docStore.flush?.(), memoStore.flush?.(), domainStore.flush?.(), colorStore.flush?.(), reportsFlush.current?.()])
       .catch(() => {});
     await signOut();
   };
@@ -488,6 +498,9 @@ function Workspace({ account }: { account?: Account }) {
       if (v) { setSection('tasks'); setView(v.id); }
       if (k === 'd') setSection('docs');
       if (k === 'm') setSection('memos');
+      // 보고 - S 는 스크럼(일간), W 는 주간
+      if (k === 's') setSection('daily');
+      if (k === 'w') setSection('weekly');
       // Ctrl/Cmd 조합은 위에서 걸러지므로 되돌리기는 여기서 따로 받는다 - 실행 취소 알림이 떠 있을 때만
       if (k === 'z' && toastRef.current?.undo) {
         e.preventDefault();
@@ -799,6 +812,14 @@ function Workspace({ account }: { account?: Account }) {
           active: section === 'memos', go: () => setSection('memos') },
       ],
     },
+    {
+      // 보고는 열 때만 표를 읽으므로 숫자를 달지 않는다
+      label: '보고',
+      items: [
+        { key: 'daily', label: '일간보고', icon: 'daily', active: section === 'daily', go: () => setSection('daily') },
+        { key: 'weekly', label: '주간보고', icon: 'weekly', active: section === 'weekly', go: () => setSection('weekly') },
+      ],
+    },
   ];
 
   const navLinks = (after?: () => void, compact = false) =>
@@ -821,7 +842,8 @@ function Workspace({ account }: { account?: Account }) {
         {g.items.map((it) => compact ? (
           <button key={it.key} type="button" aria-current={it.active ? 'page' : undefined}
             onClick={() => { it.go(); after?.(); }}
-            title={`${it.label} ${it.count}건`} aria-label={`${it.label} ${it.count}건`}
+            title={it.count === undefined ? it.label : `${it.label} ${it.count}건`}
+            aria-label={it.count === undefined ? it.label : `${it.label} ${it.count}건`}
             className={`flex min-h-[54px] w-full flex-col items-center justify-center gap-1 rounded-tm-sm px-1 py-1.5 text-[12px] leading-tight
                         transition-colors duration-150 ${
               it.active ? 'bg-tm-blue font-bold text-white' : 'font-semibold text-tm-ink hover:bg-tm-tint'}`}>
@@ -829,7 +851,7 @@ function Workspace({ account }: { account?: Account }) {
               {it.icon ? <IconNav name={it.icon} /> : (
                 <span className={`h-3 w-3 rounded-[4px] ${it.dot ? DOMAIN_FILL[it.dot] : ''} ${it.active ? 'ring-2 ring-white' : ''}`} />
               )}
-              {it.count > 0 && (
+              {(it.count ?? 0) > 0 && (
                 <span className={`absolute -right-3 -top-1.5 inline-grid h-[18px] min-w-[20px] place-items-center rounded-full px-1 text-[12px] font-bold leading-none tabular-nums ${
                   it.active ? 'bg-white text-tm-blue' : 'bg-tm-tint text-tm-deep'}`}>
                   {it.count}
@@ -850,10 +872,12 @@ function Workspace({ account }: { account?: Account }) {
               </span>
             )}
             <span className="min-w-0 truncate">{it.label}</span>
-            <span className={`ml-auto inline-grid h-[22px] min-w-[26px] flex-none place-items-center rounded-full px-2 text-[12.5px] font-bold tabular-nums ${
-              it.active ? 'bg-white/20 text-white' : 'bg-tm-tint text-tm-deep group-hover:bg-white'}`}>
-              {it.count}
-            </span>
+            {it.count !== undefined && (
+              <span className={`ml-auto inline-grid h-[22px] min-w-[26px] flex-none place-items-center rounded-full px-2 text-[12.5px] font-bold tabular-nums ${
+                it.active ? 'bg-white/20 text-white' : 'bg-tm-tint text-tm-deep group-hover:bg-white'}`}>
+                {it.count}
+              </span>
+            )}
           </button>
         ))}
       </div>
@@ -887,7 +911,7 @@ function Workspace({ account }: { account?: Account }) {
         rail ? 'px-2 pt-4' : 'px-4 pt-[22px]'}`}>
         {rail ? (
           <div className="mb-2 flex flex-col items-center gap-1.5">
-            <button type="button" onClick={() => goTasks({ kind: 'all' })} aria-label="작업 관리 처음 화면"
+            <button type="button" onClick={() => goTasks({ kind: 'all' })} aria-label="Hub 처음 화면"
               className="grid min-h-11 place-items-center rounded-tm-sm px-1.5">
               <Image src="/images/logo.png" alt="" width={64} height={16} priority className="h-auto w-[64px]" />
             </button>
@@ -898,10 +922,10 @@ function Workspace({ account }: { account?: Account }) {
           </div>
         ) : (
           <div className="mb-1 flex items-start justify-between gap-2">
-            <button type="button" onClick={() => goTasks({ kind: 'all' })} aria-label="작업 관리 처음 화면"
+            <button type="button" onClick={() => goTasks({ kind: 'all' })} aria-label="Hub 처음 화면"
               className="flex flex-col items-start gap-2.5 rounded-tm-sm px-2.5 pb-3.5 text-left">
               <Image src="/images/logo.png" alt="" width={124} height={31} priority className="h-auto w-[124px]" />
-              <span className="rounded-full bg-tm-tint px-[11px] py-[3px] text-[12.5px] font-bold text-tm-deep">작업 관리</span>
+              <span className="rounded-full bg-tm-tint px-[11px] py-[3px] text-[12.5px] font-bold text-tm-deep">Hub</span>
             </button>
             <button type="button" onClick={() => setRail(true)} aria-expanded aria-label="메뉴 접기" title="메뉴 접기"
               className={`-mr-1.5 ${tmIconBtnSm}`}>
@@ -910,7 +934,7 @@ function Workspace({ account }: { account?: Account }) {
           </div>
         )}
 
-        <nav className={`flex flex-col ${rail ? 'gap-0.5' : 'gap-1'}`} aria-label="작업 관리 메뉴">
+        <nav className={`flex flex-col ${rail ? 'gap-0.5' : 'gap-1'}`} aria-label="Hub 메뉴">
           {navLinks(undefined, rail)}
         </nav>
 
@@ -967,10 +991,10 @@ function Workspace({ account }: { account?: Account }) {
         {/* ── 좁은 화면: 위쪽 띠 ── */}
         <header className="relative z-30 flex h-[58px] flex-none items-center justify-between gap-3 border-b border-tm-line bg-white px-4 min-[901px]:hidden
                            [@media(max-height:500px)]:h-12">
-          <button type="button" onClick={() => goTasks({ kind: 'all' })} aria-label="작업 관리 처음 화면"
+          <button type="button" onClick={() => goTasks({ kind: 'all' })} aria-label="Hub 처음 화면"
             className="flex min-h-11 min-w-0 items-center gap-2.5 rounded-tm-sm">
             <Image src="/images/logo.png" alt="" width={96} height={24} className="h-auto w-[96px]" />
-            <span className="whitespace-nowrap rounded-full bg-tm-tint px-[9px] py-0.5 text-[12px] font-bold text-tm-deep">작업 관리</span>
+            <span className="whitespace-nowrap rounded-full bg-tm-tint px-[9px] py-0.5 text-[12px] font-bold text-tm-deep">Hub</span>
           </button>
           <details ref={acct} className="relative">
             <summary aria-label="사람 메뉴"
@@ -1018,6 +1042,12 @@ function Workspace({ account }: { account?: Account }) {
                 onNotice={(text, tone) => setToast({ text, undo: false, tone: tone === 'err' ? 'err' : undefined })} />
             ) : section === 'memos' ? (
               <Memos store={memoStore} me={me} />
+            ) : section === 'daily' || section === 'weekly' ? (
+              <Reports kind={section} onKind={setSection} me={me} tasks={store.tasks} flushRef={reportsFlush}
+                /* 명단은 Supabase 모드에서 관리자만(DB 도 관리자 것만 받는다). 브라우저 저장 모드는 계정이 없어 누구나 */
+                canEditPeople={!account || account.me.isAdmin === true}
+                onTaskOpen={(id) => { setSection('tasks'); setOpenId(id); }}
+                onNotice={(text, tone) => setToast({ text, undo: false, tone: tone === 'err' ? 'err' : undefined })} />
             ) : (
               <>
                 <PageHead
@@ -1394,7 +1424,7 @@ function Workspace({ account }: { account?: Account }) {
         </div>
 
         {/* ── 좁은 화면: 아래쪽 메뉴 ── */}
-        <nav aria-label="작업 관리 메뉴"
+        <nav aria-label="Hub 메뉴"
           className="grid flex-none grid-cols-4 gap-1 border-t border-tm-line bg-white px-2 pb-[calc(6px+env(safe-area-inset-bottom))] pt-1.5 min-[901px]:hidden">
           {tabs.map((t) => (
             <button key={t.key} type="button" onClick={t.go} aria-current={t.active ? 'page' : undefined} className={tabItem(t.active)}>

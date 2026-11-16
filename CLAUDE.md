@@ -28,7 +28,10 @@ Trust this map. Do not scan the file tree to rediscover structure.
 - `src/data/`        — static content sources (projects, team, services, faq, …)
 - `src/types/`       — shared TypeScript types (`index.ts`)
 - `public/`          — static assets, images, robots.txt, sitemap.xml
-- `src/app/taskmanager/` — internal task manager (Sejong admin design, `tm-*`
+- `src/app/hub/` — internal Hub, route `/hub` (renamed from `/taskmanager` on
+  2026-11-16; next.config.js redirects the old path). Tasks · wiki · memos ·
+  daily/weekly reports (`Reports.tsx`, `reportStore.ts`, `reportRemote.ts`, loaded
+  only when the report screen opens). Sejong admin design, `tm-*`
   tokens). With `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY`
   at build time it uses Supabase (login, `remote.ts`, `team.ts`; schema/RLS in
   `supabase/taskmanager.sql`); without them it falls back to localStorage.
