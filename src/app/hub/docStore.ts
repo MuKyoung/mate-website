@@ -33,17 +33,27 @@ const lines = (...xs: string[]) => xs.join(NL);
  */
 export const isUntouchedSampleDoc = (d: Doc) => /^d\d+$/.test(d.id) && d.createdAt === d.updatedAt;
 
+/**
+ * 위키의 맨 위 문서 - 팀 위키 자체. 모든 팀원이 같은 문서를 보도록 id 를 정해 두고, 없으면 위키 화면이 만든다.
+ * 이름 · 내용은 바꿀 수 있고 지우거나 옮길 수 없다. 위 문서가 없는(parentId 가 빈) 문서는 모두 이 문서 바로 아래(카테고리)다
+ */
+export const WIKI_HOME_ID = '00000000-0000-4000-8000-000000000001';
+/** 맨 위 문서의 처음 이름 - 메뉴의 '팀 위키'와 따로 바꿀 수 있다 */
+export const WIKI_HOME_TITLE = '팀 위키';
+export const isWikiHome = (id: string | null | undefined) => id === WIKI_HOME_ID;
+
 /** 팀 양식 라벨 - 이 라벨을 단 문서는 새 문서 창에서 양식으로 고를 수 있다(Confluence 에서 옮긴 양식도 이 라벨을 단다) */
 export const TEMPLATE_LABEL = '양식';
 
-/** 휴지통에 들지 않은 문서 수 - 휴지통에 든 문서의 아래 문서도 뺀다(메뉴의 숫자) */
+/** 휴지통에 들지 않은 문서 수 - 휴지통에 든 문서의 아래 문서도 뺀다(메뉴의 숫자). 맨 위 문서는 위키 자체라 세지 않는다 */
 export function liveDocCount(docs: Doc[]): number {
   const byId = new Map(docs.map((d) => [d.id, d]));
   return docs.filter((d) => {
+    if (isWikiHome(d.id)) return false;
     let cur: Doc | undefined = d;
     let guard = 0;
     while (cur && guard < 60) {
-      if (cur.trashedAt) return false;
+      if (cur.trashedAt && !isWikiHome(cur.id)) return false;
       cur = cur.parentId ? byId.get(cur.parentId) : undefined;
       guard += 1;
     }
@@ -77,8 +87,9 @@ function seed(): Doc[] {
     author: string, labels: string[], body: string,
   ): Doc => normalize({ id, icon, title, parentId, order, author, labels, body, createdAt: now, updatedAt: now });
 
+  // 맨 위 문서(팀 위키 자체)는 위키 화면이 따로 만든다 - 예시는 그 바로 아래 카테고리들
   return [
-    mk('d1', '📘', '팀 위키', null, 1, 'm7', ['안내'], lines(
+    mk('d1', '📘', '위키 쓰는 법', null, 1, 'm7', ['안내'], lines(
       'MATE가 일하면서 쌓이는 것들을 여기에 둡니다. 작업은 보드에, 결정과 기록은 문서에 남깁니다.',
       '',
       '## 어디에 무엇을 적나',
@@ -112,7 +123,7 @@ function seed(): Doc[] {
       '</details>',
     )),
 
-    mk('d2', '🛠️', '개발 규칙', 'd1', 1, 'm2', ['개발'], lines(
+    mk('d2', '🛠️', '개발 규칙', null, 2, 'm2', ['개발'], lines(
       '## 저장소',
       '',
       '- 기본 브랜치는 `main`. 직접 푸시하지 않고 PR로 들어갑니다.',
@@ -136,7 +147,7 @@ function seed(): Doc[] {
       '> 셋 중 하나라도 실패하면 배포하지 않습니다.',
     )),
 
-    mk('d3', '🧭', '외주 진행 절차', 'd1', 2, 'm7', ['프로세스'], lines(
+    mk('d3', '🧭', '외주 진행 절차', null, 3, 'm7', ['프로세스'], lines(
       '상담에서 배포까지 다섯 단계로 갑니다. 내용은 사이트의 진행 절차(process.ts)와 같습니다.',
       '',
       '| 단계 | 하는 일 |',
@@ -156,7 +167,7 @@ function seed(): Doc[] {
       '진행 상황에 따라 일정 조정이 필요할 수 있습니다. 변경이 생기면 바로 말씀드리고 방법을 같이 찾습니다.',
     )),
 
-    mk('d4', '🧩', '기술 결정 기록', 'd1', 3, 'm4', ['ADR'], lines(
+    mk('d4', '🧩', '기술 결정 기록', null, 4, 'm4', ['ADR'], lines(
       '큰 선택을 할 때마다 한 장씩 남깁니다. 나중에 "왜 이렇게 했지"를 다시 묻지 않기 위해서입니다.',
       '',
       '| 결정 | 관련 작업 |',
@@ -211,7 +222,7 @@ function seed(): Doc[] {
       '- 남은 작업은 MATE-110 에서 이어집니다.',
     )),
 
-    mk('d7', '🎓', '교육 과정 운영 안내', 'd1', 4, 'm7', ['교육'], lines(
+    mk('d7', '🎓', '교육 과정 운영 안내', null, 5, 'm7', ['교육'], lines(
       '## 표준 과정',
       '',
       '| 과정 | 대상 |',

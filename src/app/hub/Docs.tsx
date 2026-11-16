@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import type { Editor } from '@tiptap/react';
 import { DOC_TEMPLATES, localDay, type Doc, type DocVersion, type Task } from './types';
 import { useMember, useMembers } from './members';
-import { TEMPLATE_LABEL, isUntouchedSampleDoc, type DocStore, type SaveResult } from './docStore';
+import { TEMPLATE_LABEL, WIKI_HOME_ID, WIKI_HOME_TITLE, isUntouchedSampleDoc, isWikiHome, type DocStore, type SaveResult } from './docStore';
 import { docLinkIds, fillTemplate, plainText, templateVars } from './docMarkdown';
 import { isRemote } from './supabase';
 import { useNoPresence, useRemotePresence, type Presence } from './remote';
@@ -17,8 +17,8 @@ import {
   type MenuEntry,
 } from './DocPanels';
 import {
-  Avatar, IconNav, IconPlus, IconSearch, PageHead,
-  tmBtn, tmBtnPrimary, tmCallout, tmEditBtn, tmFieldBase, tmGhostBtn, tmIconBtn, tmTab, tmTextBtn,
+  Avatar, IconNav, IconPlus, IconSearch, Modal, PageHead,
+  tmBtn, tmBtnPrimary, tmCallout, tmEditBtn, tmFieldBase, tmGhostBtn, tmIconBtn, tmInput, tmTab, tmTextBtn,
 } from './ui';
 
 /* 마인드맵 엔진(Mind Elixir)은 마인드맵을 열 때만 불러온다 - 문서 화면의 첫 짐을 늘리지 않는다. 브라우저에서만 그린다 */
@@ -45,6 +45,20 @@ const ConfluenceImport = dynamic(() => import('./ConfluenceImport'), { ssr: fals
 
 const usePresence: (me: string, doc: string | null, editing: boolean, enabled: boolean) => Presence =
   isRemote ? useRemotePresence : useNoPresence;
+
+/** 맨 위 문서를 저절로 만들기 · 되살리기 - 아직 · 서버 결과를 기다림 · 받음 · 받지 않음 */
+type HomeTry = 'idle' | 'pending' | 'ok' | 'failed';
+
+/** 위 문서 - 맨 위 문서(팀 위키 자체) 바로 아래는 null(카테고리)로 센다 */
+const parentKey = (d: Doc) => (d.parentId && !isWikiHome(d.parentId) ? d.parentId : null);
+
+/** 받침에 맞춘 '로 · 으로' - 한글이 아니면 '(으)로' */
+function ro(word: string): string {
+  const c = word.trim().slice(-1).charCodeAt(0) - 0xac00;
+  if (Number.isNaN(c) || c < 0 || c > 11171) return '(으)로';
+  const jong = c % 28;
+  return jong === 0 || jong === 8 ? '로' : '으로';
+}
 
 /** 같은 위 문서 아래 순서 - 둘 사이 값 하나만 고친다 */
 function between(a: number | undefined, b: number | undefined): number {
@@ -75,6 +89,8 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
   const [dialog, setDialog] = useState<null | 'find' | 'move' | 'trash' | 'history'>(null);
   /** 옮길 문서 - 트리 줄 메뉴에서 고르면 연 문서가 아닐 수 있다 */
   const [moveId, setMoveId] = useState<string | null>(null);
+  /** 맨 위 문서(팀 위키 자체)의 이름 바꾸기 창 - 문서 메뉴와 지도에서 연다 */
+  const [renaming, setRenaming] = useState(false);
   const [iconOpen, setIconOpen] = useState(false);
   const [headings, setHeadings] = useState<WikiHeading[]>([]);
   const [here, setHere] = useState<number | null>(null);
@@ -121,14 +137,14 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
   const wikiOn = store.features.wiki;
   const byId = useMemo(() => new Map(store.docs.map((d) => [d.id, d])), [store.docs]);
 
-  /** 휴지통에 든 문서와 그 아래 문서 - 트리 · 검색에서 뺀다 */
+  /** 휴지통에 든 문서와 그 아래 문서 - 트리 · 검색에서 뺀다. 맨 위 문서는 휴지통에 들지 않는다(예전 화면이 넣었어도) */
   const hidden = useMemo(() => {
     const out = new Set<string>();
     store.docs.forEach((d) => {
       let cur: Doc | undefined = d;
       let guard = 0;
       while (cur && guard < 60) {
-        if (cur.trashedAt) { out.add(d.id); return; }
+        if (cur.trashedAt && !isWikiHome(cur.id)) { out.add(d.id); return; }
         cur = cur.parentId ? byId.get(cur.parentId) : undefined;
         guard += 1;
       }
@@ -136,8 +152,11 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
     return out;
   }, [store.docs, byId]);
   const live = useMemo(() => store.docs.filter((d) => !hidden.has(d.id)), [store.docs, hidden]);
-  const trashed = useMemo(() => store.docs.filter((d) => d.trashedAt), [store.docs]);
-  const tree = useMemo(() => buildTree(live), [live]);
+  const trashed = useMemo(() => store.docs.filter((d) => d.trashedAt && !isWikiHome(d.id)), [store.docs]);
+  /** 맨 위 문서(팀 위키 자체) - 이름 · 내용은 바꾸고 지우거나 옮기지 못한다. 트리의 맨 위 줄들은 모두 이 문서 바로 아래(카테고리) */
+  const home = byId.get(WIKI_HOME_ID) ?? null;
+  const homeTitle = home ? titleOf(home) : WIKI_HOME_TITLE;
+  const tree = useMemo(() => buildTree(live.filter((d) => !isWikiHome(d.id))), [live]);
 
   /** 아무도 고치지 않은 예시 문서 수 - 안내 띠를 띄울지 정한다 */
   const sampleCount = useMemo(() => store.docs.filter(isUntouchedSampleDoc).length, [store.docs]);
@@ -150,6 +169,37 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
   const here2 = doc ? presence.byDoc.get(doc.id) ?? [] : [];
   const othersEditing = here2.filter((p) => p.editing);
 
+  /*
+   * 맨 위 문서 - 없으면 만들고(모든 팀원이 같은 id 라 동시에 만들어도 하나), 예전 화면에서 휴지통에 넣었으면 되살린다.
+   * 만들기 · 되살리기는 이 화면에 들어와 저절로 한 번씩만 해 본다. 화면에 먼저 보인 모습(바로 반영)으로 기록을 지우지 않고
+   * 서버의 결과(settled · save)를 기다린다 - 연결 문제는 저장소가 알아서 다시 보내며 결과를 늦게 알리고, 서버가 받지 않았으면
+   * 빨간 알림을 남긴 뒤 이 화면에서는 다시 보내지 않는다. 다시 하려면 위키에 다시 들어오거나(새로 고침 포함) 이름 바꾸기로 만든다
+   */
+  const homeTry = useRef<{ create: HomeTry; restore: HomeTry }>({ create: 'idle', restore: 'idle' });
+  /** 맨 위 문서 만들기 결과 - 처음 고를 문서가 이것을 기다린다(바뀌면 그 효과를 다시 돌린다) */
+  const [homeCreate, setHomeCreate] = useState<HomeTry>('idle');
+  const { create: createDoc, save: saveDoc, settled: settledDoc } = store;
+  useEffect(() => {
+    if (!store.ready || store.loadError) return;
+    const h = store.docs.find((d) => isWikiHome(d.id));
+    const t = homeTry.current;
+    if (!h && t.create === 'idle') {
+      t.create = 'pending';
+      setHomeCreate('pending');
+      createDoc({ id: WIKI_HOME_ID, title: WIKI_HOME_TITLE, body: '', parentId: null, author: me, order: 0 });
+      void (settledDoc ? settledDoc(WIKI_HOME_ID) : Promise.resolve<SaveResult>('ok')).then((r) => {
+        t.create = r === 'ok' ? 'ok' : 'failed';
+        setHomeCreate(t.create);
+        if (r !== 'ok') noticeRef.current?.('맨 위 문서를 만들지 못했습니다. 이 화면에서는 다시 만들지 않으니 위키에 다시 들어오거나 맨 위 문서 이름 바꾸기로 다시 시도해 주세요', 'err');
+      });
+    } else if (h?.trashedAt && wikiOn && t.restore === 'idle') {
+      t.restore = 'pending';
+      void saveDoc(WIKI_HOME_ID, { trashedAt: null, trashedBy: null }).then((r) => {
+        t.restore = r === 'ok' ? 'ok' : 'failed';
+        if (r !== 'ok') noticeRef.current?.('휴지통에 든 맨 위 문서를 되살리지 못했습니다. 이 화면에서는 다시 시도하지 않으니 위키에 다시 들어와 주세요', 'err');
+      });
+    }
+  }, [store.ready, store.loadError, store.docs, createDoc, saveDoc, settledDoc, me, wikiOn]);
 
   /* ── 처음 고를 문서 · 사라진 문서 ── */
   useEffect(() => {
@@ -173,15 +223,19 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
       urlChecked.current = true;
       if (urlDoc && !store.docs.some((d) => d.id === urlDoc)) onNotice?.('주소에 적힌 문서를 찾을 수 없습니다. 영구 삭제되었거나 잘못된 주소일 수 있습니다', 'err');
     }
-    // 고른 문서가 없으면 - 들어온 주소의 ?doc= → 마지막으로 본 문서 → 맨 위 문서.
+    // 고른 문서가 없으면 - 들어온 주소의 ?doc= → 마지막으로 본 문서 → 맨 위 문서(팀 위키 자체) → 첫 카테고리.
     // 몇 번을 다시 돌아도 같은 답이 나오게 둔다(개발 모드는 효과를 두 번 돌린다)
     const want = [urlDoc, ...recent].find((id) => !!id && store.docs.some((d) => d.id === id && (id === urlDoc || !hidden.has(id))));
     // 저절로 고른 문서는 방문 기록을 새로 만들지 않는다
     navMode.current = 'replace';
     if (want) { setActiveId(want); return; }
+    if (store.docs.some((d) => isWikiHome(d.id))) { setActiveId(WIKI_HOME_ID); return; }
+    // 첫 방문 - 맨 위 문서를 만드는 중이면 결과를 기다린다(만들면 위에서 맨 위 문서를 고르고, 못 만들면 첫 카테고리).
+    // 기다리는 동안 사람이 고른 문서는 맨 위의 activeId 확인에서 그대로 둔다
+    if (homeCreate === 'pending' || homeTry.current.create === 'pending') return;
     const firstRoot = tree.find((n) => !n.parentId) ?? tree[0];
     if (firstRoot) setActiveId(firstRoot.id);
-  }, [store.ready, store.loadError, store.docs, store.deletedElsewhere, tree, activeId, editingId, recent, recentLoaded, hidden, urlDoc, onNotice]);
+  }, [store.ready, store.loadError, store.docs, store.deletedElsewhere, tree, activeId, editingId, recent, recentLoaded, hidden, urlDoc, onNotice, homeCreate]);
 
   useEffect(() => {
     if (doc) lastDoc.current = doc;
@@ -419,13 +473,15 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
       cur = cur.parentId ? byId.get(cur.parentId) ?? null : null;
       guard += 1;
     }
+    // 모든 문서는 맨 위 문서 아래 - 경로 맨 앞에 둔다
+    if (home && out.length && !isWikiHome(out[0].id)) out.unshift(home);
     return out;
-  }, [doc, byId]);
+  }, [doc, byId, home]);
 
   /** 휴지통에 든 위 문서 - 이 문서는 그 문서와 함께 숨어 있다 */
   const trashedAbove = useMemo(() => {
     if (!doc || doc.trashedAt || !hidden.has(doc.id)) return null;
-    return [...breadcrumb].reverse().find((d) => d.trashedAt) ?? null;
+    return [...breadcrumb].reverse().find((d) => d.trashedAt && !isWikiHome(d.id)) ?? null;
   }, [doc, hidden, breadcrumb]);
 
   const searchHits = useMemo(() => {
@@ -441,9 +497,10 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
       .filter(({ d, text }) => `${d.title} ${d.labels.join(' ')} ${text}`.toLowerCase().includes(q));
   }, [query, live]);
 
-  const children = useMemo(
-    () => (doc ? live.filter((d) => d.parentId === doc.id).sort((a, b) => a.order - b.order) : []),
-    [doc, live],
+  /** 하위 문서 - 맨 위 문서면 카테고리들(트리의 맨 위 줄) */
+  const children = useMemo<Doc[]>(
+    () => (!doc ? [] : isWikiHome(doc.id) ? tree : live.filter((d) => d.parentId === doc.id).sort((a, b) => a.order - b.order)),
+    [doc, live, tree],
   );
   const backlinks = useMemo(
     () => (doc ? live.filter((d) => d.id !== doc.id && d.body.includes(`(doc:${doc.id})`) && docLinkIds(d.body).includes(doc.id)) : []),
@@ -462,7 +519,7 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
   const taskRefs = useMemo(() => tasks.map((t) => ({ key: t.key, title: t.title, status: t.status })), [tasks]);
   /** 팀 양식 - '양식' 라벨을 단 문서(새 문서 창에서 고른다) */
   const teamTemplates = useMemo(
-    () => live.filter((d) => d.labels.includes(TEMPLATE_LABEL))
+    () => live.filter((d) => d.labels.includes(TEMPLATE_LABEL) && !isWikiHome(d.id))
       .sort((a, b) => titleOf(a).localeCompare(titleOf(b), 'ko'))
       .slice(0, 60)
       .map((d) => ({ id: `doc:${d.id}`, name: titleOf(d), hint: plainText(d.body).slice(0, 80), vars: templateVars(d.body) })),
@@ -499,14 +556,20 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
     setOpenList((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
 
+  /** 같은 위 문서 아래 문서 - null 이면 카테고리들(맨 위 문서 자신은 빼고) */
   const siblingsOf = useCallback((parentId: string | null, except?: string) =>
-    live.filter((d) => (d.parentId ?? null) === parentId && d.id !== except).sort((a, b) => a.order - b.order), [live]);
+    live.filter((d) => !isWikiHome(d.id) && parentKey(d) === parentId && d.id !== except).sort((a, b) => a.order - b.order), [live]);
+
+  /** 맨 위 문서는 지우거나 옮길 수 없다 - 아무 일 없이 끝나지 않게 까닭을 알린다 */
+  const homeBlocked = (what: '지울' | '옮길') =>
+    onNotice?.(`'${homeTitle}' 문서는 위키의 맨 위 문서라 ${what} 수 없습니다. 이름과 내용은 바꿀 수 있습니다`, 'err');
 
   const handleCreate = (templateId: string, title: string, values?: Record<string, string>) => {
     const tpl = DOC_TEMPLATES.find((t) => t.id === templateId);
     // 팀 양식('양식' 라벨을 단 문서) - 본문 · 아이콘 · 라벨(양식 라벨은 빼고)을 옮겨 쓴다
     const team = templateId.startsWith('doc:') ? byId.get(templateId.slice(4)) : undefined;
-    const parentId = creatingUnder ?? null;
+    // 맨 위 문서 바로 아래(카테고리)는 위 문서를 비워 둔다
+    const parentId = creatingUnder && !isWikiHome(creatingUnder) ? creatingUnder : null;
     const last = siblingsOf(parentId).at(-1);
     const created = store.create({
       // 팀 양식의 칸은 새 문서 창에서 받은 값으로 바꾼다(Confluence 양식의 변수)
@@ -525,9 +588,10 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
   /** [[ 목록의 '새 문서' - 지금 문서 아래에 빈 문서를 만든다 */
   const createSub = (title: string) => {
     if (!doc) return null;
-    const last = siblingsOf(doc.id).at(-1);
-    const made = store.create({ title, body: '', parentId: doc.id, author: me, order: between(last?.order, undefined) });
-    setOpenList((prev) => [...new Set([...prev, doc.id])]);
+    const parentId = isWikiHome(doc.id) ? null : doc.id;
+    const last = siblingsOf(parentId).at(-1);
+    const made = store.create({ title, body: '', parentId, author: me, order: between(last?.order, undefined) });
+    if (parentId) setOpenList((prev) => [...new Set([...prev, parentId])]);
     onNotice?.(`'${title}' 문서를 만들었습니다`, 'ok');
     return { id: made.id, title: made.title };
   };
@@ -564,6 +628,10 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
    * 되살릴 길이 없는 영구 삭제로 대신하지 않고 막는다
    */
   const trashDoc = async (d: Doc) => {
+    if (isWikiHome(d.id)) {
+      homeBlocked('지울');
+      return;
+    }
     if (!wikiOn) {
       onNotice?.('문서를 안전하게 삭제할 수 없습니다. 휴지통을 쓸 수 없는 위키라 지우지 않았습니다', 'err');
       return;
@@ -580,8 +648,8 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
     if (!d) return;
     const parentOk = !d.parentId || (byId.has(d.parentId) && !hidden.has(d.parentId));
     const r = await store.save(id, { trashedAt: null, trashedBy: null, ...(parentOk ? {} : { parentId: null }) });
-    // 원래 자리로 못 가고 맨 위로 갔으면 그렇다고 알린다 - 트리에서 엉뚱한 곳에 생긴 줄 알지 않게
-    if (r === 'ok') onNotice?.(parentOk ? `'${titleOf(d)}' 문서를 되살렸습니다` : `'${titleOf(d)}' 문서를 맨 위로 되살렸습니다. 원래 위 문서가 휴지통에 있거나 지워졌습니다`, 'ok');
+    // 원래 자리로 못 가고 맨 위 문서 바로 아래로 갔으면 그렇다고 알린다 - 트리에서 엉뚱한 곳에 생긴 줄 알지 않게
+    if (r === 'ok') onNotice?.(parentOk ? `'${titleOf(d)}' 문서를 되살렸습니다` : `'${titleOf(d)}' 문서를 '${homeTitle}' 바로 아래로 되살렸습니다. 원래 위 문서가 휴지통에 있거나 지워졌습니다`, 'ok');
     else failNotice(r, `'${titleOf(d)}' 문서를 되살리지`);
   };
 
@@ -593,20 +661,31 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
   };
 
   const duplicate = (d: Doc) => {
-    const sibs = siblingsOf(d.parentId ?? null);
+    const sibs = siblingsOf(parentKey(d));
     const next = sibs[sibs.findIndex((x) => x.id === d.id) + 1];
     const made = store.create({
-      title: `${titleOf(d)} (사본)`, body: d.body, parentId: d.parentId, author: me, icon: d.icon, labels: d.labels,
+      title: `${titleOf(d)} (사본)`, body: d.body, parentId: parentKey(d), author: me, icon: d.icon, labels: d.labels,
       order: between(d.order, next?.order),
     });
     setActiveId(made.id);
+    // 맨 위 문서의 사본은 새 id 의 평범한 카테고리 하나 - 내용만 옮기고 보호는 따라가지 않는다
+    if (isWikiHome(d.id)) {
+      onNotice?.(`'${made.title}' 카테고리를 만들었습니다. 카테고리와 하위 문서는 복사하지 않습니다`, 'ok');
+      return;
+    }
     // 사본은 이 문서 하나만 - 하위 문서가 따라오지 않는다는 것을 말해 둔다
     const kids = live.filter((x) => x.parentId === d.id).length;
     onNotice?.(kids ? `하위 문서 ${kids}건은 빼고 사본을 만들었습니다` : '사본을 만들었습니다', 'ok');
   };
 
   /** 옮기기 - 서버가 받은 뒤 창을 닫고 알린다. 받지 않았으면 창 · 고른 곳을 그대로 둔다 */
-  const moveTo = async (d: Doc, parentId: string | null): Promise<SaveResult> => {
+  const moveTo = async (d: Doc, to: string | null): Promise<SaveResult> => {
+    if (isWikiHome(d.id)) {
+      homeBlocked('옮길');
+      return 'fail';
+    }
+    // 맨 위 문서 아래로 = 카테고리(위 문서를 비운다)
+    const parentId = to && !isWikiHome(to) ? to : null;
     const last = siblingsOf(parentId, d.id).at(-1);
     const r = await store.save(d.id, { parentId, order: between(last?.order, undefined) });
     if (r !== 'ok') {
@@ -615,14 +694,14 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
     }
     if (parentId) setOpenList((prev) => [...new Set([...prev, parentId])]);
     setDialog(null);
-    onNotice?.(parentId ? `'${titleOf(byId.get(parentId) ?? d)}' 아래로 옮겼습니다` : '맨 위 문서로 옮겼습니다', 'ok');
+    onNotice?.(parentId ? `'${titleOf(byId.get(parentId) ?? d)}' 아래로 옮겼습니다` : `'${homeTitle}' 바로 아래로 옮겼습니다`, 'ok');
     return r;
   };
 
   /** 트리에서 끌어 놓기 */
   const onDrop = (id: string, target: string | null, zone: DropZone) => {
     const d = byId.get(id);
-    if (!d) return;
+    if (!d || isWikiHome(id)) return;
     if (target === null) {
       void moveTo(d, null);
       return;
@@ -637,7 +716,7 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
       void moveTo(d, t.id);
       return;
     }
-    const parentId = t.parentId ?? null;
+    const parentId = parentKey(t);
     const sibs = siblingsOf(parentId, id);
     const at = sibs.findIndex((x) => x.id === t.id);
     const prev = zone === 'before' ? sibs[at - 1] : t;
@@ -756,6 +835,33 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
   const toggleStar = (id: string) =>
     setStarred((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [id, ...prev]));
 
+  /**
+   * 맨 위 문서 이름 바꾸기 - 서버가 이름을 받았으면 참(그때만 알리고 창을 닫는다).
+   * 아직 없으면(저절로 만들지 못했음) 사람이 직접 다시 해 보는 것이라 만들고 서버 결과를 기다린다. 다른 팀원이 먼저 만들었으면
+   * 저장소가 그 줄을 읽어 오고(본문은 덮지 않음) 이름은 따로 저장해 확인한다
+   */
+  const renameHome = async (title: string): Promise<boolean> => {
+    if (!store.docs.some((d) => isWikiHome(d.id))) {
+      homeTry.current.create = 'pending';
+      setHomeCreate('pending');
+      store.create({ id: WIKI_HOME_ID, title, body: '', parentId: null, author: me, order: 0 });
+      const made = await (store.settled ? store.settled(WIKI_HOME_ID) : Promise.resolve<SaveResult>('ok'));
+      homeTry.current.create = made === 'ok' ? 'ok' : 'failed';
+      setHomeCreate(homeTry.current.create);
+      if (made !== 'ok') {
+        onNotice?.('맨 위 문서를 만들지 못해 이름을 저장하지 못했습니다. 서버가 받아 주지 않았으니 잠시 뒤 다시 해 주세요', 'err');
+        return false;
+      }
+    }
+    const r = await store.save(WIKI_HOME_ID, { title, updatedBy: me });
+    if (r === 'ok') {
+      onNotice?.(`맨 위 문서 이름을 '${title}'${ro(title)} 바꿨습니다`, 'ok');
+      return true;
+    }
+    failNotice(r, '맨 위 문서 이름을 바꾸지');
+    return false;
+  };
+
   /* 휴지통으로 간 문서는 편집을 푼다 */
   useEffect(() => {
     if (editingId && hidden.has(editingId)) setEditingId(null);
@@ -775,6 +881,20 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
     { label: starred.includes(d.id) ? '즐겨찾기에서 빼기' : '즐겨찾기에 넣기', onSelect: () => toggleStar(d.id) },
     { label: '사본 만들기', onSelect: () => duplicate(d), sep: true },
     { label: '옮기기', onSelect: () => { setMoveId(d.id); setDialog('move'); } },
+  ];
+  /**
+   * 트리 맨 위 줄(맨 위 문서)의 메뉴 - 문서 머리 메뉴의 같은 동작을 쓴다. 지금 연 문서가 아니어도 되는 것만 두고,
+   * 옮기기 · 지우기는 숨기지 않고 누르면 까닭을 알린다
+   */
+  const homeMenu = (h: Doc): MenuEntry[] => [
+    { label: '이름 바꾸기', onSelect: () => setRenaming(true) },
+    { label: '새 카테고리', onSelect: () => setCreatingUnder(h.id) },
+    { label: '링크 복사', onSelect: () => void copyLink(h), sep: true },
+    { label: starred.includes(h.id) ? '즐겨찾기에서 빼기' : '즐겨찾기에 넣기', onSelect: () => toggleStar(h.id) },
+    { label: '지도로 보기', onSelect: () => { select(h.id); setView('map'); } },
+    { label: '내용을 사본으로 만들기', onSelect: () => duplicate(h), sep: true },
+    { label: '옮기기', note: '옮길 수 없음', onSelect: () => homeBlocked('옮길') },
+    { label: '휴지통으로 옮기기', note: '지울 수 없음', onSelect: () => homeBlocked('지울'), sep: true },
   ];
   const moveDoc = (moveId ? byId.get(moveId) : null) ?? doc;
 
@@ -823,8 +943,44 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
                   </ul>
                 </div>
               )}
+              {/* 맨 위 문서(팀 위키 자체) - 아래 트리의 맨 위 줄들은 모두 이 문서 바로 아래(카테고리).
+                  끌 수 없는 고정 줄. 새 카테고리(+) · 메뉴(⋯)는 PC 는 줄에 올리거나 초점이 오면, 손가락 기기는 늘 보인다 */}
+              {home && (() => {
+                const on = activeId === home.id;
+                const side = `grid h-7 w-7 shrink-0 place-items-center rounded-md transition-[opacity,background-color] duration-150
+                  [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11 [@media(pointer:coarse)]:opacity-100 aria-expanded:opacity-100 ${
+                  on ? 'text-white opacity-100 hover:bg-white/20' : 'text-tm-sub opacity-0 hover:bg-white hover:text-tm-blue group-hover/home:opacity-100 group-focus-within/home:opacity-100'}`;
+                return (
+                  <div className={`group/home mb-0.5 flex min-h-[38px] items-center gap-0.5 rounded-tm-sm pr-1 transition-colors duration-150 [@media(pointer:coarse)]:min-h-11 ${
+                    on ? 'bg-tm-blue text-white' : 'text-tm-deep hover:bg-tm-tint'}`}>
+                    <button type="button" onClick={() => pick(home.id)} aria-current={on ? 'page' : undefined}
+                      title="위키의 맨 위 문서 · 이름과 내용은 바꿀 수 있고, 지우거나 옮길 수 없습니다"
+                      className={`flex min-h-[38px] min-w-0 flex-1 items-center gap-2 self-stretch rounded-tm-sm px-2.5 text-left text-[14.5px] font-bold
+                                  [@media(pointer:coarse)]:min-h-11 ${on ? 'focus-visible:outline-white' : ''}`}>
+                      <span className={on ? 'text-white' : 'text-tm-blue'}>
+                        {home.icon ? <DocIcon icon={home.icon} /> : <IconNav name="home" size={16} />}
+                      </span>
+                      <span className="min-w-0 flex-1 truncate">{homeTitle}</span>
+                      {watched.has(home.id) && (
+                        <span aria-label="다른 팀원이 보는 중" title="다른 팀원이 보는 중"
+                          className={`h-2 w-2 flex-none rounded-full ${on ? 'bg-white' : 'bg-tm-ok'}`} />
+                      )}
+                    </button>
+                    <button type="button" onClick={() => { if (inDrawer) closeDrawer(false); setCreatingUnder(home.id); }}
+                      aria-label="새 카테고리" title={`새 카테고리 · '${homeTitle}' 바로 아래에 새 문서`} className={side}>
+                      <IconPlus size={15} />
+                    </button>
+                    <DropMenu label="맨 위 문서 메뉴" className={side}
+                      items={homeMenu(home).map((it) => ({ ...it, onSelect: () => { if (inDrawer) closeDrawer(false); it.onSelect(); } }))}>
+                      <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden fill="currentColor">
+                        <circle cx="4.5" cy="10" r="1.5" /><circle cx="10" cy="10" r="1.5" /><circle cx="15.5" cy="10" r="1.5" />
+                      </svg>
+                    </DropMenu>
+                  </div>
+                );
+              })()}
               <DocTree roots={tree} activeId={activeId} openSet={openSet} onToggle={toggleOpen} onSelect={select}
-                onAfterSelect={inDrawer ? () => closeDrawer() : undefined}
+                onAfterSelect={inDrawer ? () => closeDrawer() : undefined} topTitle={homeTitle}
                 onAddChild={(id) => setCreatingUnder(id)} onDrop={onDrop} onBlockedDrop={onBlockedDrop} canDrag={!inDrawer} watched={watched} menuFor={rowMenu} />
             </>
           )}
@@ -878,18 +1034,28 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
     </ul>
   );
   const showToc = headings.length > 1;
+  /** 맨 위 문서(팀 위키 자체)를 보고 있다 - 이름은 바꾸고, 지우기 · 옮기기는 까닭을 알리며 막는다 */
+  const isHome = !!doc && isWikiHome(doc.id);
+  /** 본문이 빈 맨 위 문서를 읽는 중 - 카테고리 목록을 제목 바로 아래에 둔다 */
+  const homeCats = isHome && !editing && !doc.body.trim();
   const menu: MenuEntry[] = doc ? [
     { label: starred.includes(doc.id) ? '즐겨찾기에서 빼기' : '즐겨찾기에 넣기', onSelect: () => toggleStar(doc.id), disabled: !canEdit },
     { label: '링크 복사', onSelect: () => void copyLink(doc) },
     { label: '지도로 보기', onSelect: () => setView('map') },
-    { label: '아래에 새 문서', onSelect: () => setCreatingUnder(doc.id), disabled: !canEdit, sep: true },
-    { label: '사본 만들기', onSelect: () => duplicate(doc), disabled: !canEdit },
-    { label: '옮기기', onSelect: () => { setMoveId(doc.id); setDialog('move'); }, disabled: !canEdit },
+    ...(isHome && canEdit ? [{ label: '이름 바꾸기', onSelect: () => setRenaming(true), sep: true }] : []),
+    { label: isHome ? '새 카테고리' : '아래에 새 문서', onSelect: () => setCreatingUnder(doc.id), disabled: !canEdit, sep: !isHome },
+    { label: isHome ? '내용을 사본으로 만들기' : '사본 만들기', onSelect: () => duplicate(doc), disabled: !canEdit },
+    {
+      label: '옮기기', disabled: !canEdit, note: isHome ? '옮길 수 없음' : undefined,
+      onSelect: () => { if (isHome) homeBlocked('옮길'); else { setMoveId(doc.id); setDialog('move'); } },
+    },
     ...(wikiOn ? [{ label: '기록 · 예전 판', onSelect: () => setDialog('history'), sep: true }] : []),
     { label: '마크다운으로 내려받기', onSelect: () => exportMd(doc), sep: !wikiOn },
     { label: '인쇄 · PDF', onSelect: () => printDoc(doc) },
     { label: '넓게 보기', onSelect: toggleWide, checked: wide, sep: true },
-    ...(canEdit ? [{ label: '휴지통으로 옮기기', onSelect: () => void trashDoc(doc), danger: true, sep: true }] : []),
+    ...(canEdit ? [{
+      label: '휴지통으로 옮기기', onSelect: () => void trashDoc(doc), danger: !isHome, sep: true, note: isHome ? '지울 수 없음' : undefined,
+    }] : []),
   ] : [];
 
   return (
@@ -897,7 +1063,7 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
       <PageHead
         title="팀 위키"
         lead={view === 'map'
-          ? '카테고리(맨 위 문서)를 마인드맵 · 3D 그래프 · 그래프 · 프레젠테이션으로 봅니다. 마인드맵과 PC 의 그래프는 문서를 누르면 바로 열리고, 나머지는 고른 뒤 문서 열기 단추로 엽니다. 문서 사이 링크는 선으로 이어집니다.'
+          ? `맨 위 문서 '${homeTitle}' 아래의 카테고리를 마인드맵 · 3D 그래프 · 그래프 · 프레젠테이션으로 봅니다. 마인드맵은 단계 단추로 펼칠 깊이를 고르고, 마인드맵과 PC 의 그래프는 문서를 누르면 바로 열립니다. 나머지는 고른 뒤 문서 열기 단추로 엽니다.`
           : '회의록, 요구사항, 인수인계처럼 팀이 함께 보는 문서를 모읍니다. 편집에서 / 를 누르면 표 · 목록 · 알림 상자를, [[ 를 치면 다른 문서나 작업을 넣습니다.'}
       >
         {/* 좁은 화면: 보기 알약은 '새 문서' 뒤로(같은 줄에 들어가면 한 줄) */}
@@ -977,7 +1143,8 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
           <WikiMap docs={live} tasks={tasks} me={me} activeId={activeId} canCreate={store.ready && !store.loadError}
             onOpenDoc={(id) => { select(id); setView('doc'); }}
             onOpenTask={(key) => onTaskClick?.(key)}
-            onAddChild={(id) => setCreatingUnder(id)} />
+            onAddChild={(id) => setCreatingUnder(id)}
+            onRenameHome={store.ready && !store.loadError ? () => setRenaming(true) : undefined} />
         ) : (
         <>
 
@@ -1090,7 +1257,7 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
                 wide ? 'max-w-none' : sideToc && showToc ? 'max-w-[1080px]' : 'max-w-[860px]'}`}>
                 <article className="min-w-0 flex-1">
                   {/* 휴지통 · 함께 편집 알림 */}
-                  {doc.trashedAt && (
+                  {doc.trashedAt && !isHome && (
                     <TrashBanner doc={doc} onRestore={() => restoreDoc(doc.id)}
                       onPurge={async () => {
                         const yes = await askDelete(doc, store.docs.some((x) => x.parentId === doc.id));
@@ -1115,6 +1282,12 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
                   )}
 
                   {/* 아이콘 · 제목 */}
+                  {isHome && (
+                    <p className="mb-2 flex flex-wrap items-center gap-2 text-[13px] font-semibold text-tm-sub">
+                      <span className="rounded-full bg-tm-tint px-2.5 py-0.5 font-bold text-tm-deep">맨 위 문서</span>
+                      위키 전체의 맨 위입니다. 이름과 내용은 바꿀 수 있고, 지우거나 옮길 수 없습니다.
+                    </p>
+                  )}
                   <div className="relative mb-1">
                     {wikiOn && editing ? (
                       <div className="relative mb-1">
@@ -1146,6 +1319,44 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
 
                   <DocMeta doc={doc} editing={editing} onLabels={(labels) => store.update(doc.id, { labels })}
                     onLabelClick={(l) => { setQuery(`#${l}`); revealSearch(); }} sync={store.sync} pending={editorPending} />
+
+                  {/* 비어 있는 맨 위 문서(읽기) - 카테고리를 제목 바로 아래에. 화면에만 보이고 본문에는 아무것도 저장하지 않는다.
+                      본문이 있거나 편집 중이면 예전처럼 아래의 하위 문서 목록에 둔다 */}
+                  {homeCats && (
+                    <section aria-labelledby="home-cats" className="mt-6">
+                      <div className="mb-2.5 flex flex-wrap items-center gap-2">
+                        <h3 id="home-cats" className="mr-auto text-[14px] font-bold text-tm-sub">카테고리 {tree.length}개</h3>
+                        {canEdit && (
+                          <button type="button" onClick={() => setCreatingUnder(doc.id)} className={tmGhostBtn}>
+                            <IconPlus size={16} />
+                            새 카테고리
+                          </button>
+                        )}
+                        <button type="button" onClick={() => setView('map')} className={tmGhostBtn}>
+                          <IconNav name="mindmap" size={16} />
+                          지도로 보기
+                        </button>
+                      </div>
+                      {tree.length > 0 ? (
+                        <ul className="grid gap-1 lg:grid-cols-2">
+                          {tree.map((c) => (
+                            <li key={c.id}>
+                              <button type="button" onClick={() => select(c.id)}
+                                className="flex w-full items-center gap-2.5 rounded-tm-sm border border-tm-line px-3 py-2.5 text-left transition-colors hover:border-tm-blue hover:bg-tm-tint">
+                                <span className="text-tm-sub"><DocIcon icon={c.icon} size={18} /></span>
+                                <span className="min-w-0 flex-1 truncate text-[15px] font-bold text-tm-ink">{titleOf(c)}</span>
+                                <span className="flex-none text-[12.5px] tabular-nums text-tm-sub">{ago(c.updatedAt)}</span>
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="rounded-tm-sm border border-dashed border-tm-edge px-4 py-3.5 text-[14.5px] text-tm-ink">
+                          아직 카테고리가 없습니다. 새 카테고리를 만들어 시작하세요.
+                        </p>
+                      )}
+                    </section>
+                  )}
 
                   {/* 좁은 문서 칸 - 목차는 본문 위에 접어 둔다(읽기 모드에서만) */}
                   {showToc && !sideToc && !editing && (
@@ -1192,10 +1403,10 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
                     </p>
                   )}
 
-                  {/* 하위 문서 · 이 문서를 링크한 문서 */}
-                  {(children.length > 0 || backlinks.length > 0) && !editing && (
+                  {/* 하위 문서 · 이 문서를 링크한 문서 - 비어 있는 맨 위 문서의 카테고리는 위에 이미 있다 */}
+                  {((children.length > 0 && !homeCats) || backlinks.length > 0) && !editing && (
                     <div className="mt-12 grid gap-6 border-t border-tm-line pt-7 lg:grid-cols-2">
-                      {children.length > 0 && (
+                      {children.length > 0 && !homeCats && (
                         <section aria-labelledby={`kids-${doc.id}`}>
                           <h3 id={`kids-${doc.id}`} className="mb-2.5 text-[14px] font-bold text-tm-sub">하위 문서 {children.length}</h3>
                           <ul className="space-y-1">
@@ -1258,7 +1469,7 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
 
       {creatingUnder !== undefined && (
         <NewDocDialog
-          parentTitle={creatingUnder ? titleOf(byId.get(creatingUnder) ?? { title: '' }) : null}
+          parentTitle={creatingUnder && !isWikiHome(creatingUnder) ? titleOf(byId.get(creatingUnder) ?? { title: '' }) : homeTitle}
           teamTemplates={teamTemplates}
           onCreate={handleCreate}
           onClose={() => setCreatingUnder(undefined)} />
@@ -1267,7 +1478,8 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
         <QuickFind docs={live} recent={recent} starred={starred} onOpen={select} onClose={() => setDialog(null)} />
       )}
       {dialog === 'move' && moveDoc && (
-        <MoveDialog key={moveDoc.id} doc={moveDoc} docs={live} onMove={(p) => moveTo(moveDoc, p)} onClose={() => setDialog(null)} />
+        <MoveDialog key={moveDoc.id} doc={moveDoc} docs={live.filter((d) => !isWikiHome(d.id))} top={{ title: homeTitle, icon: home?.icon ?? '' }}
+          onMove={(p) => moveTo(moveDoc, p)} onClose={() => setDialog(null)} />
       )}
       {dialog === 'trash' && (
         <TrashDialog docs={trashed} onOpen={select} onRestore={restoreDoc} onPurge={purge} onClose={() => setDialog(null)} />
@@ -1275,8 +1487,11 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
       {dialog === 'history' && doc && (
         <HistoryDialog doc={doc} store={store} refs={refs} onRestore={restoreVersion} onClose={() => setDialog(null)} />
       )}
+      {renaming && (
+        <RenameHome title={home?.title ?? WIKI_HOME_TITLE} saved={!!home} onSave={renameHome} onClose={() => setRenaming(false)} />
+      )}
       {cfFile && (
-        <ConfluenceImport file={cfFile} store={store} me={me} remote={isRemote} docs={live}
+        <ConfluenceImport file={cfFile} store={store} me={me} remote={isRemote} docs={live.filter((d) => !isWikiHome(d.id))}
           onOpen={select} onClose={() => setCfFile(null)} onNotice={onNotice} />
       )}
 
@@ -1480,5 +1695,71 @@ function StarGlyph({ on }: { on: boolean }) {
     <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden fill={on ? '#f5b800' : 'none'} stroke={on ? '#c48f00' : 'currentColor'} strokeWidth="1.7" strokeLinejoin="round">
       <path d="M10 2.8l2.2 4.6 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5L2.8 8.1l5-.7z" />
     </svg>
+  );
+}
+
+/**
+ * 맨 위 문서(팀 위키 자체)의 이름 - 지도 가운데(1단) · 문서 경로 맨 앞 · 트리 맨 위에 보인다.
+ * 왼쪽 메뉴 · 쪽 머리의 '팀 위키'는 그대로다. 비울 수 없고, 서버가 받으면 닫힌다
+ */
+function RenameHome({ title, saved, onSave, onClose }: {
+  title: string;
+  /** 맨 위 문서가 서버 목록에 있다 - 없으면 같은 이름으로 눌러도 만들기를 다시 해 본다 */
+  saved: boolean;
+  onSave(title: string): Promise<boolean>;
+  onClose(): void;
+}) {
+  const [value, setValue] = useState(title);
+  const [busy, setBusy] = useState(false);
+  const [missing, setMissing] = useState(false);
+  const input = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    input.current?.focus();
+    input.current?.select();
+  }, []);
+  const save = async () => {
+    // 한글 조합 중 Enter 로 보내면 상태가 한 글자 늦을 수 있어 칸의 값을 읽는다
+    const next = (input.current?.value ?? value).trim();
+    if (!next) {
+      setMissing(true);
+      input.current?.focus();
+      return;
+    }
+    if (saved && next === title.trim()) {
+      onClose();
+      return;
+    }
+    setBusy(true);
+    const ok = await onSave(next);
+    setBusy(false);
+    if (ok) onClose();
+  };
+  return (
+    <Modal title="맨 위 문서 이름 바꾸기" sub="지도 가운데 · 문서 경로 맨 앞에 보이는 이름입니다. 왼쪽 메뉴의 '팀 위키'는 그대로입니다"
+      busy={busy} onClose={onClose}
+      foot={
+        <>
+          <span className="flex-1" />
+          <button type="button" onClick={onClose} disabled={busy} className={tmBtn}>취소</button>
+          <button type="button" onClick={() => void save()} disabled={busy} className={tmBtnPrimary}>
+            {busy ? '바꾸는 중…' : '바꾸기'}
+          </button>
+        </>
+      }>
+      <form onSubmit={(e) => { e.preventDefault(); void save(); }}>
+        <label htmlFor="wiki-home-title" className="mb-1.5 block text-[14px] font-bold text-tm-ink">이름</label>
+        <input id="wiki-home-title" ref={input} value={value} maxLength={60} disabled={busy}
+          onChange={(e) => { setValue(e.target.value); setMissing(false); }}
+          aria-invalid={missing || undefined} aria-describedby={missing ? 'wiki-home-title-err' : 'wiki-home-title-help'}
+          className={tmInput} />
+        {missing ? (
+          <p id="wiki-home-title-err" role="alert" className="mt-1.5 text-[13.5px] font-semibold text-tm-red-deep">이름을 적어 주세요.</p>
+        ) : (
+          <p id="wiki-home-title-help" className="mt-1.5 text-[13px] leading-[1.6] text-tm-sub">
+            맨 위 문서는 지우거나 옮길 수 없습니다. 내용은 문서를 열어 편집에서 고칩니다.
+          </p>
+        )}
+      </form>
+    </Modal>
   );
 }

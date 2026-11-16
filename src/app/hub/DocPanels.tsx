@@ -4,7 +4,7 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { DOC_TEMPLATES, localDay, localToday, type Doc, type DocComment, type DocVersion } from './types';
 import { useMember, useMembers } from './members';
 import { diffBlocks, isDateVar, mdToDoc, plainText, type TemplateVarDef } from './docMarkdown';
-import type { DocStore, SaveResult } from './docStore';
+import { isWikiHome, type DocStore, type SaveResult } from './docStore';
 import DocEditor, { FloatMenu, keepInView, type WikiRefs } from './DocEditor';
 import Markdown from './Markdown';
 import {
@@ -128,7 +128,10 @@ export function pathOf(d: Doc, byId: Map<string, Doc>): string {
 export interface MenuEntry {
   label: string;
   onSelect(): void;
+  /** 단축키 - kbd 로 적는다 */
   hint?: string;
+  /** 짧은 설명(예: 맨 위 문서의 '지울 수 없음') - 단축키가 아니므로 보통 글자로 적는다 */
+  note?: string;
   danger?: boolean;
   checked?: boolean;
   disabled?: boolean;
@@ -168,6 +171,7 @@ export function DropMenu({ label, items, children, className, align = 'right' }:
                   it.onSelect();
                 }}>
                 <span className="min-w-0 flex-1 truncate">{it.label}</span>
+                {it.note && <span className="flex-none text-[12.5px] font-semibold text-tm-sub">{it.note}</span>}
                 {it.hint && <kbd className="text-[11.5px] font-semibold text-tm-sub">{it.hint}</kbd>}
               </button>
             </div>
@@ -228,7 +232,7 @@ export function NewDocDialog({
   parentTitle, initialTemplate, teamTemplates = [], onCreate, onClose,
 }: {
   parentTitle: string | null;
-  /** 처음 골라 둘 양식 - 카테고리(프로젝트 · 개발자) 바로 아래에 만들 때. 없으면 회의록 */
+  /** 처음 골라 둘 양식 - 없으면 회의록 */
   initialTemplate?: string;
   /** 팀 양식 - '양식' 라벨을 단 문서(Confluence 에서 옮긴 양식). id 는 'doc:문서id' */
   teamTemplates?: { id: string; name: string; hint: string; vars?: TemplateVarDef[] }[];
@@ -477,15 +481,17 @@ export function QuickFind({ docs, recent, starred, onOpen, onClose }: {
 /* ── 옮기기 ──────────────────────────────────────────── */
 
 /** 옮길 곳 고르기 → 옮긴 뒤의 전체 경로 확인 → '옮기기'. 서버가 받지 않으면 창과 고른 곳을 그대로 둔다 */
-export function MoveDialog({ doc, docs, onMove, onClose }: {
+export function MoveDialog({ doc, docs, top, onMove, onClose }: {
   doc: Doc;
-  /** 살아 있는 문서 */
+  /** 살아 있는 문서(맨 위 문서는 빼고) */
   docs: Doc[];
+  /** 맨 위 문서(팀 위키 자체) - null 을 고르면 이 문서 바로 아래(카테고리)로 간다 */
+  top?: { title: string; icon: string };
   onMove(parentId: string | null): Promise<SaveResult>;
   onClose(): void;
 }) {
   const [q, setQ] = useState('');
-  /** 고른 곳 - undefined 아직 안 고름 · null 맨 위 */
+  /** 고른 곳 - undefined 아직 안 고름 · null 맨 위 문서 바로 아래 */
   const [dest, setDest] = useState<string | null | undefined>(undefined);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -528,9 +534,12 @@ export function MoveDialog({ doc, docs, onMove, onClose }: {
 
   /** 옮긴 뒤의 경로 - 위 문서들 / 이 문서 */
   const destDoc = dest ? byId.get(dest) : undefined;
+  const topName = top ? titleOf(top) : '맨 위';
+  /** 이미 맨 위 문서 바로 아래(카테고리)에 있다 - 위 문서가 비었거나 맨 위 문서 id 인 것은 같은 자리다 */
+  const atTop = doc.parentId === null || isWikiHome(doc.parentId);
   const destPath = dest === undefined ? null
-    : dest === null || !destDoc ? `맨 위 / ${titleOf(doc)}`
-      : [pathOf(destDoc, byId), titleOf(destDoc), titleOf(doc)].filter(Boolean).join(' / ');
+    : dest === null || !destDoc ? `${topName} / ${titleOf(doc)}`
+      : [top ? topName : '', pathOf(destDoc, byId), titleOf(destDoc), titleOf(doc)].filter(Boolean).join(' / ');
   const pick = (id: string | null) => {
     setDest(id);
     setFailed(false);
@@ -552,7 +561,7 @@ export function MoveDialog({ doc, docs, onMove, onClose }: {
           style={{ paddingLeft: 12 + depth * 18 }}
           className={`flex min-h-[42px] w-full items-center gap-2.5 rounded-tm-sm pr-3 text-left transition-colors disabled:opacity-45 [@media(pointer:coarse)]:min-h-11 ${
             on ? 'bg-tm-blue text-white' : 'hover:bg-tm-tint'}`}>
-          {id === null ? null : <span className={on ? 'text-white' : 'text-tm-sub'}><DocIcon icon={icon} /></span>}
+          {id === null && !icon ? null : <span className={on ? 'text-white' : 'text-tm-sub'}><DocIcon icon={icon} /></span>}
           <span className="min-w-0 flex-1">
             <span className={`block truncate text-[15px] ${id === null ? 'font-bold' : 'font-semibold'} ${on ? '' : id === null ? 'text-tm-deep' : 'text-tm-ink'}`}>{label}</span>
             {sub && <span className={`block truncate text-[12.5px] ${on ? 'text-white/85' : 'text-tm-sub'}`}>{sub}</span>}
@@ -588,9 +597,11 @@ export function MoveDialog({ doc, docs, onMove, onClose }: {
           className={`${tmInput} pl-11`} />
       </div>
       <ul className="max-h-[48vh] space-y-0.5 overflow-y-auto" aria-label="옮길 곳">
-        {!q.trim() && row(null, '맨 위(최상위 문서로)', null, 0, doc.parentId === null)}
-        {/* 찾을 때는 들여쓰기가 없어지므로 줄마다 전체 경로를 보인다 */}
-        {rows.map(({ d, depth }) => row(d.id, titleOf(d), q.trim() ? pathOf(d, byId) || '맨 위' : null, depth, d.id === doc.parentId, d.icon))}
+        {!q.trim() && (top
+          ? row(null, topName, '맨 위 문서 · 바로 아래 카테고리로', 0, atTop, top.icon || '🏠')
+          : row(null, '맨 위(최상위 문서로)', null, 0, atTop))}
+        {/* 찾을 때는 들여쓰기가 없어지므로 줄마다 전체 경로를 보인다. 맨 위 문서가 있으면 모두 그 아래로 한 칸 */}
+        {rows.map(({ d, depth }) => row(d.id, titleOf(d), q.trim() ? pathOf(d, byId) || topName : null, depth + (top && !q.trim() ? 1 : 0), d.id === doc.parentId, d.icon))}
         {rows.length === 0 && <li className="py-8 text-center text-[14px] text-tm-sub">옮길 수 있는 문서가 없습니다.</li>}
         {/* 찾는 이름이 자기 · 자기 아래 문서라 목록에서 빠졌으면 그렇다고 - 없는 문서로 알지 않게 */}
         {hiddenHit && (

@@ -428,6 +428,38 @@ begin
 end;
 $$;
 
+-- 맨 위 문서(팀 위키 자체) 보호 - 고정 id 줄은 지우거나 휴지통에 넣거나 다른 문서 아래로 옮기거나 id 를 바꿀 수 없다.
+-- 처음 만들기 · 이름 · 본문 · 아이콘 · 라벨 고치기 · 휴지통에서 되살리기는 된다. 화면(Docs.tsx)도 같은 동작을 막고 까닭을 알린다.
+-- 운영 반영 2026-11-16(SQL Editor). 되돌리기: drop trigger if exists tm_docs_home_guard on public.tm_docs; drop function if exists public.tm_docs_home_guard();
+create or replace function public.tm_docs_home_guard()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+declare
+  home constant uuid := '00000000-0000-4000-8000-000000000001';
+begin
+  if tg_op = 'DELETE' then
+    if old.id = home then
+      raise exception '팀 위키의 맨 위 문서는 지울 수 없습니다';
+    end if;
+    return old;
+  end if;
+  if new.id = home or (tg_op = 'UPDATE' and old.id = home) then
+    if tg_op = 'UPDATE' and new.id is distinct from old.id then
+      raise exception '맨 위 문서의 id 는 바꿀 수 없습니다';
+    end if;
+    if new.parent_id is not null then
+      raise exception '맨 위 문서는 다른 문서 아래로 옮길 수 없습니다';
+    end if;
+    if new.trashed_at is not null and (tg_op = 'INSERT' or old.trashed_at is null) then
+      raise exception '맨 위 문서는 휴지통에 넣을 수 없습니다';
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
 -- 작업을 자기 자신이나 자기 하위 업무 아래에 넣지 못하게 한다(상위 업무 고리). 화면도 막지만 두 사람이 동시에 고칠 때를 위해
 create or replace function public.tm_tasks_guard()
 returns trigger
@@ -549,6 +581,8 @@ create or replace trigger tm_docs_history before update on public.tm_docs
   for each row execute function public.tm_docs_history();
 create or replace trigger tm_docs_stamp before insert or update on public.tm_docs
   for each row execute function public.tm_docs_stamp();
+create or replace trigger tm_docs_home_guard before insert or update or delete on public.tm_docs
+  for each row execute function public.tm_docs_home_guard();
 create or replace trigger tm_doc_comments_guard before insert or update on public.tm_doc_comments
   for each row execute function public.tm_doc_comments_guard();
 
@@ -680,6 +714,7 @@ revoke execute on function public.tm_tasks_guard() from public, anon, authentica
 revoke execute on function public.tm_docs_history(), public.tm_docs_guard(), public.tm_docs_stamp(), public.tm_doc_comments_guard(),
   public.tm_doc_snapshot(uuid) from public, anon, authenticated;
 grant execute on function public.tm_doc_snapshot(uuid) to authenticated;
+revoke execute on function public.tm_docs_home_guard() from public, anon, authenticated;
 -- 영역 - RLS 가 쓰는 '맡은 사람인가'와 지우기(함수가 맡은 사람인지 본다)
 revoke execute on function public.tm_can_edit_domains(), public.tm_domain_remove(text, text) from public, anon, authenticated;
 grant execute on function public.tm_can_edit_domains(), public.tm_domain_remove(text, text) to authenticated;

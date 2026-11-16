@@ -8,7 +8,7 @@ import type { TreeNode } from './DocTree';
 import { titleOf } from './DocPanels';
 import { docLinkIds, plainText } from './docMarkdown';
 
-/** '전체' - 가운데에 카테고리를 모두 둔다(문서가 아니다) */
+/** '전체' - 가운데(맨 위 문서 = 팀 위키 자체)에 카테고리를 모두 둔다. 맨 위 문서가 아직 없으면 가운데는 문서가 아니다 */
 export const ALL = '__all__';
 /** 본문의 작업 번호 - 편집기(DocEditor)의 작업 링크와 같은 규칙 */
 export const TASK_RE = /(?<![\w-])MATE-\d+(?!\d)/g;
@@ -52,7 +52,7 @@ export interface GDoc {
   excerpt: string;
   /** 아래 문서 수(모든 깊이) */
   descendants: number;
-  /** 가운데 '전체'(문서가 아니어서 열 수 없다) */
+  /** 가운데 '전체'인데 맨 위 문서가 없다(문서가 아니어서 열 수 없다) */
   virtual?: boolean;
 }
 
@@ -69,8 +69,11 @@ export interface WikiGraph {
 
 const countAll = (n: TreeNode): number => n.children.reduce((s, c) => s + 1 + countAll(c), 0);
 
-export function buildGraph({ roots, cat, tasks, members, palette }: {
+export function buildGraph({ roots, home, cat, tasks, members, palette }: {
+  /** 카테고리들(맨 위 문서 바로 아래 문서) */
   roots: TreeNode[];
+  /** 맨 위 문서(팀 위키 자체) - '전체'의 가운데. 없으면 이름만 있는 가운데 */
+  home: Doc | null;
   cat: string;
   tasks: Task[];
   members: Member[];
@@ -124,14 +127,26 @@ export function buildGraph({ roots, cat, tasks, members, palette }: {
     rawLinks.push([catRoot.id, docLinkIds(catRoot.body)]);
     catRoot.children.forEach((c, i) => add(c, 1, catRoot.id, palette[i % palette.length]));
   } else {
-    rootId = ALL;
     const total = roots.reduce((s, r) => s + 1 + countAll(r), 0);
-    push({
-      id: ALL, title: '팀 위키', icon: '', depth: 0, parent: null, children: roots.map((r) => r.id),
-      color: center[0], tint: center[1], tasks: [], person: null, assigned: 0, people: [],
-      excerpt: `카테고리 ${roots.length}개 · 문서 ${total}개`, descendants: total, virtual: true,
-    });
-    roots.forEach((r, i) => add(r, 1, ALL, palette[i % palette.length]));
+    const counts = `카테고리 ${roots.length}개 · 문서 ${total}개`;
+    if (home) {
+      // 맨 위 문서 - 바꾼 이름으로 가운데에 두고, 누르면 그 문서가 열린다
+      rootId = home.id;
+      push({
+        id: home.id, title: titleOf(home), icon: home.icon, depth: 0, parent: null, children: roots.map((r) => r.id),
+        color: center[0], tint: center[1], tasks: tasksOf(home), person: null, assigned: 0, people: peopleOf(home, null),
+        excerpt: excerptOf(home) || counts, descendants: total,
+      });
+      rawLinks.push([home.id, docLinkIds(home.body)]);
+    } else {
+      rootId = ALL;
+      push({
+        id: ALL, title: '팀 위키', icon: '', depth: 0, parent: null, children: roots.map((r) => r.id),
+        color: center[0], tint: center[1], tasks: [], person: null, assigned: 0, people: [],
+        excerpt: counts, descendants: total, virtual: true,
+      });
+    }
+    roots.forEach((r, i) => add(r, 1, rootId, palette[i % palette.length]));
   }
 
   const links: { from: string; to: string }[] = [];

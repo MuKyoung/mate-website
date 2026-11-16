@@ -4,7 +4,9 @@
  * 팀 위키 마인드맵 - 네 가지 보기: 마인드맵(가지) · 3D 그래프 · 그래프(옵시디언 그래프 보기 그대로, WikiObsidian) ·
  * 프레젠테이션(Prezi 꼴, WikiPresent).
  *
- * 카테고리(맨 위 문서) 하나를 고르면 그 아래 문서를 가지로 펼친다. '전체'는 카테고리를 모두 한 장에 둔다.
+ * 위키의 맨 위 문서(팀 위키 자체, WIKI_HOME_ID)가 가운데 1단이고, 그 바로 아래 문서가 카테고리다. 카테고리 하나를
+ * 고르면 그 아래 문서를 가지로 펼치고, '전체'는 맨 위 문서를 가운데에 두고 카테고리를 모두 한 장에 둔다.
+ * 마인드맵은 단계 단추(숫자 키)로 가운데부터 몇 단까지 펼칠지 한 번에 고른다.
  * 고른 카테고리 · 켠 것 · 보기 방식은 세 보기가 함께 쓴다. 3D 는 three.js 를 쓰므로 고를 때만 불러온다.
  * - 문서를 누르면 그 위키 문서가 열리고, 작업 잎을 누르면 작업 창이 열린다.
  * - 본문의 문서 링크([제목](doc:id))는 점선 화살표로 잇는다 - 프로젝트 문서와 개발자 문서를 잇는 자리.
@@ -21,6 +23,7 @@ import type { MindElixirData, NodeObj, Operation, SubLineParams, Theme, Topic } 
 import 'mind-elixir/style.css';
 import './wikimap.css';
 import { TASK_COLORS, statusLabel, type Doc, type Member, type Task } from './types';
+import { WIKI_HOME_ID, WIKI_HOME_TITLE } from './docStore';
 import { buildTree, type TreeNode } from './DocTree';
 import { titleOf } from './DocPanels';
 import { docLinkIds } from './docMarkdown';
@@ -41,8 +44,10 @@ type Meta =
 type Arrow = NonNullable<MindElixirData<Meta>['arrows']>[number];
 /** 한 문서에 잎으로 붙이는 작업 수 - 넘치면 '+N건'으로 줄인다 */
 const TASKS_PER_DOC = 6;
-/** 문서가 이보다 많으면 셋째 줄부터 접어 둔다 */
+/** 문서가 이보다 많으면 단계를 고르지 않았을 때 3단까지만 펼친다(넷째 단부터 접어 둔다) */
 const FOLD_OVER = 60;
+/** 많은 지도의 기본 단계 */
+const BIG_LEVEL = 3;
 /** 처음 열 때 이보다 작게는 줄이지 않는다(글자를 읽을 수 있는 크기) - 넘치면 밀어서 본다. '맞춤'은 다 보이게 끝까지 줄인다 */
 const MIN_FIT = 0.75;
 /** 노드 사이 가로 틈 - 테마의 --node-gap-x 와 같다(잔가지 선이 노드 상자 가장자리에서 시작하게) */
@@ -103,7 +108,10 @@ const countAll = (ns: TreeNode[]): number => ns.reduce((n, d) => n + 1 + countAl
 /* ── 지도 만들기 ─────────────────────────────────────── */
 
 interface BuildInput {
+  /** 카테고리들(맨 위 문서 바로 아래 문서) */
   roots: TreeNode[];
+  /** 맨 위 문서 - '전체'의 가운데. 아직 없으면 이름만 있는 가운데 */
+  home: Doc | null;
   cat: string;
   tasksByKey: Map<string, Task>;
   tasks: Task[];
@@ -112,30 +120,49 @@ interface BuildInput {
   showTasks: boolean;
   showLinks: boolean;
   activeId: string | null;
-  /** 사람이 펼치거나 접은 것(true = 펼침) - 기본 규칙보다 앞선다 */
+  /** 사람이 펼치거나 접은 것(true = 펼침) - 단계 규칙보다 앞선다 */
   toggled: ReadonlyMap<string, boolean>;
+  /**
+   * 고른 단계(가운데 = 1단) - 숫자는 늘 'N단까지', 'all' 은 지금 가장 깊은 단까지(문서가 깊어지면 따라간다).
+   * null 이면 고르지 않은 것 - 문서가 많을 때만 3단까지
+   */
+  level: Level | null;
 }
 
 interface Built {
   data: MindElixirData<Meta>;
   docs: number;
   links: number;
-  taskLeaves: number;
-  /** 맵에 올린 문서 - 아래 문서가 하나도 없으면 안내를 띄운다 */
+  /** 범위(가운데와 그 아래 모든 문서)에 연결된 작업 - 접힌 문서 · 잎으로 다 그리지 않은 작업도 넣고, 같은 작업은 한 번 */
+  taskTotal: number;
+  /** 그릴 가지가 없다(아래 문서도, 가운데에 붙는 작업 잎도 없음) - 큰 안내를 띄운다. 1단으로 감춘 것은 비지 않은 것 */
   empty: boolean;
+  /** 이 지도의 가장 깊은 단(가운데 = 1단, 작업 잎도 센다) - 단계 단추를 이만큼 그린다 */
+  maxLevel: number;
+  /** 단계를 고르지 않았을 때 - 문서가 많으면 3단, 아니면 모두 */
+  auto: Level;
 }
+
+/** 마인드맵 단계 - N단까지 · 모두 */
+type Level = number | 'all';
 
 function buildMap(x: BuildInput): Built {
   const catRoot = x.cat === ALL ? null : x.roots.find((r) => r.id === x.cat) ?? null;
   const top = catRoot ? catRoot.children : x.roots;
   const big = countAll(top) > FOLD_OVER;
+  const auto: Level = big ? BIG_LEVEL : 'all';
+  /** 이 단까지 보인다 - 단 = 가운데 1, 카테고리(또는 고른 카테고리의 아래 문서) 2, … */
+  const chosen = x.level ?? auto;
+  const upTo = chosen === 'all' ? Infinity : chosen;
+  let maxLevel = 1;
+  /** 범위의 연결 작업(작업 id) */
+  const scopeTasks = new Set<string>();
   const byName = new Map(x.members.map((m) => [m.name.trim(), m]));
   const byId = new Map(x.members.map((m) => [m.id, m]));
 
   /** 화면에 그려지는 문서(위가 모두 펼쳐져 있다) - 화살표는 이것끼리만 잇는다 */
   const shown = new Map<string, TreeNode>();
   const parentOf = new Map<string, string>();
-  let taskLeaves = 0;
 
   const avatar = (m: Member) => {
     const p = PAINT[x.paint.member(m.id)];
@@ -148,16 +175,23 @@ function buildMap(x: BuildInput): Built {
       .map((k) => x.tasksByKey.get(k))
       .filter((t): t is Task => !!t);
 
-  /** 문서 노드 안에 그릴 것 - 아이콘(없으면 가지 색 점) · 제목 · 한 줄 요약 · 언급한 사람 */
-  const docHtml = (d: TreeNode, color: string, opts: { folded: boolean; tasks: Task[]; root?: boolean }) => {
+  /**
+   * 문서 노드 안에 그릴 것 - 아이콘(없으면 가지 색 점) · 제목 · 한 줄 요약 · 언급한 사람.
+   * 접힌 문서는 모든 깊이의 아래 문서 수를, 1단만 보일 때의 가운데는 바로 아래 수와 모든 깊이의 수를 함께 적는다
+   */
+  const docHtml = (d: TreeNode, color: string, opts: { folded: boolean; tasks: Task[]; root?: 'home' | 'cat' }) => {
     const meta: string[] = [];
     const person = byName.get(d.title.trim());
     if (person) {
       const open = x.tasks.filter((t) => t.assignee === person.id && t.status !== 'done');
       meta.push(`맡은 작업 ${open.length}건${open.some((t) => t.status === 'doing') ? ` · 진행 ${open.filter((t) => t.status === 'doing').length}` : ''}`);
     }
-    if (opts.folded && d.children.length) meta.push(`하위 ${countAll(d.children)}`);
-    if (!x.showTasks && opts.tasks.length) meta.push(`작업 ${opts.tasks.length}`);
+    if (opts.folded && d.children.length) {
+      meta.push(opts.root
+        ? `${opts.root === 'home' ? '카테고리' : '하위 문서'} ${d.children.length}개 · 전체 하위 문서 ${countAll(d.children)}개`
+        : `전체 하위 문서 ${countAll(d.children)}개`);
+    }
+    if (!x.showTasks && opts.tasks.length) meta.push(`연결 작업 ${opts.tasks.length}개`);
     const people = [...new Set([...d.body.matchAll(MENTION_RE)].map((m) => m[1]))]
       .map((id) => byId.get(id))
       .filter((m): m is Member => !!m && m.id !== person?.id);
@@ -172,7 +206,6 @@ function buildMap(x: BuildInput): Built {
   };
 
   const taskNode = (t: Task, under: string): NodeObj<Meta> => {
-    taskLeaves += 1;
     return {
       id: `t-${t.id}-${under}`,
       topic: `${t.key} ${t.title}`,
@@ -201,9 +234,12 @@ function buildMap(x: BuildInput): Built {
 
   const docNode = (d: TreeNode, depth: number, color: string, visible: boolean): NodeObj<Meta> => {
     const tasks = tasksOf(d);
+    tasks.forEach((t) => scopeTasks.add(t.id));
     const leaves = leavesOf(d, tasks);
+    // 이 문서는 depth + 1 단, 작업 잎은 그 아래 단
+    maxLevel = Math.max(maxLevel, depth + (leaves.length ? 2 : 1));
     const foldable = d.children.length > 0 || leaves.length > 0;
-    const expanded = foldable ? x.toggled.get(d.id) ?? !(big && depth >= 2) : undefined;
+    const expanded = foldable ? x.toggled.get(d.id) ?? depth + 1 < upTo : undefined;
     if (visible) shown.set(d.id, d);
     const kidsVisible = visible && expanded !== false;
     const children = [
@@ -225,29 +261,43 @@ function buildMap(x: BuildInput): Built {
     };
   };
 
+  /** 가운데(1단) - 고른 카테고리. '전체'면 맨 위 문서(팀 위키 자체)이고 그 아래가 카테고리들 */
+  const center: TreeNode | null = catRoot ?? (x.home ? { ...x.home, children: x.roots } : null);
+  /** 1단만 - 엔진은 가운데를 접지 못하므로 가지를 빼고 그린다(가운데에 '하위 N'을 적는다) */
+  const onlyCenter = upTo <= 1;
+
   const mainKids = top.map((d, i) => {
-    parentOf.set(d.id, catRoot?.id ?? ALL);
-    return docNode(d, 1, PALETTE[i % PALETTE.length], true);
+    parentOf.set(d.id, center?.id ?? ALL);
+    return docNode(d, 1, PALETTE[i % PALETTE.length], !onlyCenter);
   });
 
   let nodeData: NodeObj<Meta>;
-  if (catRoot) {
-    shown.set(catRoot.id, catRoot);
-    const tasks = tasksOf(catRoot);
+  /** 가운데에 붙는 작업 잎 - 아래 문서가 없어도 이것이 있으면 빈 지도가 아니다 */
+  let centerLeaves = 0;
+  if (center) {
+    shown.set(center.id, center);
+    const tasks = tasksOf(center);
+    tasks.forEach((t) => scopeTasks.add(t.id));
+    const leaves = leavesOf(center, tasks);
+    centerLeaves = leaves.length;
+    if (leaves.length) maxLevel = Math.max(maxLevel, 2);
     nodeData = {
-      id: catRoot.id,
-      topic: titleOf(catRoot),
-      dangerouslySetInnerHTML: docHtml(catRoot, PALETTE[0], { folded: false, tasks, root: true }),
-      children: [...mainKids, ...leavesOf(catRoot, tasks)],
-      metadata: { kind: 'doc', id: catRoot.id },
-      ...(catRoot.id === x.activeId ? { style: { border: '2px solid #18308f' } } : {}),
+      id: center.id,
+      topic: titleOf(center),
+      dangerouslySetInnerHTML: docHtml(center, PALETTE[0], { folded: onlyCenter, tasks, root: catRoot ? 'cat' : 'home' }),
+      children: onlyCenter ? [] : [...mainKids, ...leaves],
+      metadata: { kind: 'doc', id: center.id },
+      ...(center.id === x.activeId ? { style: { border: '2px solid #18308f' } } : {}),
     };
   } else {
+    // 맨 위 문서를 아직 만들지 못했다(목록을 읽는 중 · 만들기 실패) - 이름만 둔다
+    const more = onlyCenter && top.length
+      ? `<span class="wm-m">카테고리 ${top.length}개 · 전체 하위 문서 ${countAll(top)}개</span>` : '';
     nodeData = {
       id: ALL,
-      topic: '팀 위키',
-      dangerouslySetInnerHTML: '<span class="wm-n wm-root"><span class="wm-t"><span class="wm-tt">팀 위키</span></span></span>',
-      children: mainKids,
+      topic: WIKI_HOME_TITLE,
+      dangerouslySetInnerHTML: `<span class="wm-n wm-root"><span class="wm-t"><span class="wm-tt">${esc(WIKI_HOME_TITLE)}</span></span>${more}</span>`,
+      children: onlyCenter ? [] : mainKids,
       metadata: { kind: 'all' },
     };
   }
@@ -278,23 +328,30 @@ function buildMap(x: BuildInput): Built {
     data: { nodeData, arrows, direction: MindElixir.SIDE },
     docs: shown.size,
     links: arrows.length,
-    taskLeaves,
-    empty: top.length === 0,
+    taskTotal: scopeTasks.size,
+    empty: top.length === 0 && centerLeaves === 0,
+    maxLevel,
+    auto,
   };
 }
 
 /* ── 마인드맵(가지) 칸 - Mind Elixir ──────────────────── */
 
-function ElixirCanvas({ data, cat, label, toggled, onActivate, api, onZoom }: {
+function ElixirCanvas({ data, fitKey, label, onToggle, onActivate, api, onZoom, onLevel }: {
   data: MindElixirData<Meta>;
-  /** 고른 카테고리 - 바뀌면 화면에 다시 맞춘다 */
-  cat: string;
+  /** 고른 카테고리 · 단계 - 바뀌면 화면에 다시 맞춘다 */
+  fitKey: string;
   label: string;
-  /** 사람이 펼치고 접은 것(true = 펼침) - 다음에 지도를 새로 만들 때 쓴다 */
-  toggled: MutableRefObject<Map<string, boolean>>;
+  /**
+   * 사람이 노드를 펼치거나 접었다(펼치기 단추 · 키보드). 엔진이 다시 그리는 것(refresh)은 이 알림을 내지 않는다 -
+   * 부르는 쪽이 다음에 지도를 새로 만들 때 쓰고 '직접 조정'을 표시한다
+   */
+  onToggle(id: string, expanded: boolean): void;
   onActivate(n: NodeObj<Meta> | undefined): void;
   api: MutableRefObject<CanvasApi | null>;
   onZoom(s: number): void;
+  /** 숫자 키 1~9 - 그 단까지 펼친다 */
+  onLevel(n: number): void;
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const mindRef = useRef<MindElixir | null>(null);
@@ -305,6 +362,8 @@ function ElixirCanvas({ data, cat, label, toggled, onActivate, api, onZoom }: {
   zoomRef.current = onZoom;
   const activateRef = useRef(onActivate);
   activateRef.current = onActivate;
+  const toggleRef = useRef(onToggle);
+  toggleRef.current = onToggle;
 
   /** 화면에 맞춘다 - readable 이면 글자를 읽을 수 있는 크기에서 멈추고 가운데를 보여 준다('맞춤' 단추는 끝까지 줄여 다 보이게) */
   const fit = useCallback((readable = true) => {
@@ -335,7 +394,7 @@ function ElixirCanvas({ data, cat, label, toggled, onActivate, api, onZoom }: {
     mind.init(dataRef.current);
     mindRef.current = mind;
     const onOp = (op: Operation) => {
-      if (op.name === 'expandNode' || op.name === 'collapseNode') toggled.current.set(op.target.id, op.name === 'expandNode');
+      if (op.name === 'expandNode' || op.name === 'collapseNode') toggleRef.current(op.target.id, op.name === 'expandNode');
     };
     const onScale = (v: number) => zoomRef.current(v);
     mind.bus.addListener('operation', onOp);
@@ -390,21 +449,21 @@ function ElixirCanvas({ data, cat, label, toggled, onActivate, api, onZoom }: {
       mindRef.current = null;
       el.replaceChildren();
     };
-  }, [fit, api, toggled]);
+  }, [fit, api]);
 
-  /* 내용이 바뀌면 다시 그린다. 카테고리를 바꿨으면 화면에도 다시 맞춘다 */
+  /* 내용이 바뀌면 다시 그린다. 카테고리 · 단계를 바꿨으면 화면에도 다시 맞춘다 */
   const firstRun = useRef(true);
-  const lastCat = useRef(cat);
+  const lastFit = useRef(fitKey);
   useEffect(() => {
     const m = mindRef.current;
     if (!m) return;
-    if (firstRun.current) { firstRun.current = false; lastCat.current = cat; return; }
+    if (firstRun.current) { firstRun.current = false; lastFit.current = fitKey; return; }
     m.refresh(data);
-    if (lastCat.current !== cat) {
-      lastCat.current = cat;
+    if (lastFit.current !== fitKey) {
+      lastFit.current = fitKey;
       requestAnimationFrame(() => fit());
     }
-  }, [data, cat, fit]);
+  }, [data, fitKey, fit]);
 
   /* ── 키보드 - 화살표로 옮기고 Enter 로 연다(엔진의 키 처리는 편집용이라 끄고 여기서 한다) ── */
   const say = (tpc: Topic<Meta>) => {
@@ -475,6 +534,11 @@ function ElixirCanvas({ data, cat, label, toggled, onActivate, api, onZoom }: {
         fit(false);
         return;
       default:
+        // 1~9 - 가운데부터 그 단까지 펼친다
+        if (/^[1-9]$/.test(e.key) && !e.ctrlKey && !e.metaKey && !e.altKey) {
+          e.preventDefault();
+          onLevel(Number(e.key));
+        }
         return;
     }
     e.preventDefault();
@@ -499,7 +563,7 @@ function ElixirCanvas({ data, cat, label, toggled, onActivate, api, onZoom }: {
             if (r) { m.selectNode(r); say(r); }
           }}
           role="application" aria-roledescription="마인드맵"
-          aria-label={`${label} 마인드맵. 화살표로 옮기고 Enter 로 엽니다`}
+          aria-label={`${label} 마인드맵. 화살표로 옮기고 Enter 로 엽니다. 숫자 키로 펼칠 단계를 고릅니다`}
           aria-describedby="wm-live"
           className="wm-host h-full w-full" />
       </div>
@@ -515,7 +579,19 @@ type Prefs = {
   cat: string; tasks: boolean; links: boolean; mode: Mode; rotate: boolean;
   /** 프레젠테이션에서 카테고리마다 마지막으로 보던 문서 id(개요면 가운데 id) */
   present: Record<string, string>;
+  /** 마인드맵에서 카테고리마다 고른 단계(가운데 = 1단, 'all' = 모두) - 없으면 기본(문서가 많을 때만 3단까지) */
+  levels: Record<string, Level>;
 };
+
+/** 저장해 둔 단계 - 1 이상 정수와 'all'(모두). 예전에 저장한 숫자는 숫자 그대로 읽는다 */
+const readLevels = (v: unknown): Record<string, Level> =>
+  v && typeof v === 'object'
+    ? Object.fromEntries(Object.entries(v as Record<string, unknown>)
+      .filter((e): e is [string, Level] => e[1] === 'all' || (Number.isInteger(e[1]) && (e[1] as number) >= 1)))
+    : {};
+
+/** 사람이 펼치고 접은 것이 없을 때 */
+const NO_TOGGLES: ReadonlyMap<string, boolean> = new Map();
 
 const MODES: { id: Mode; label: string; hint: string; aria?: string }[] = [
   { id: 'map', label: '마인드맵', hint: '가운데에서 가지로 펼친 지도' },
@@ -565,9 +641,9 @@ const Graph3D = dynamic(() => import('./WikiGraph3D'), {
 });
 
 export default function WikiMap({
-  docs, tasks, me, activeId, canCreate, onOpenDoc, onOpenTask, onAddChild,
+  docs, tasks, me, activeId, canCreate, onOpenDoc, onOpenTask, onAddChild, onRenameHome,
 }: {
-  /** 살아 있는 문서(휴지통과 그 아래 문서는 뺀 것) */
+  /** 살아 있는 문서(휴지통과 그 아래 문서는 뺀 것) - 맨 위 문서(WIKI_HOME_ID)도 들어 있다 */
   docs: Doc[];
   tasks: Task[];
   me: string;
@@ -577,12 +653,17 @@ export default function WikiMap({
   canCreate: boolean;
   onOpenDoc(id: string): void;
   onOpenTask(key: string): void;
-  /** 이 아래에 새 문서 - null 이면 맨 위(새 카테고리) */
+  /** 이 아래에 새 문서 - null 이면 맨 위 문서 바로 아래(새 카테고리) */
   onAddChild(parentId: string | null): void;
+  /** 맨 위 문서(가운데 1단)의 이름 바꾸기 창을 연다 - 메뉴의 '팀 위키'와는 따로 */
+  onRenameHome?(): void;
 }) {
   const members = useMembers();
   const paint = usePainter();
-  const roots = useMemo(() => buildTree(docs), [docs]);
+  /** 맨 위 문서(팀 위키 자체) - '전체'의 가운데. 카테고리는 그 바로 아래 문서들 */
+  const home = useMemo(() => docs.find((d) => d.id === WIKI_HOME_ID) ?? null, [docs]);
+  const homeTitle = home ? titleOf(home) : WIKI_HOME_TITLE;
+  const roots = useMemo(() => buildTree(docs.filter((d) => d.id !== WIKI_HOME_ID)), [docs]);
   const byId = useMemo(() => new Map(docs.map((d) => [d.id, d])), [docs]);
   const tasksByKey = useMemo(() => new Map(tasks.map((t) => [t.key, t])), [tasks]);
 
@@ -591,20 +672,21 @@ export default function WikiMap({
   const [prefs, setPrefs] = useState<Prefs>(() => {
     let p: Partial<Prefs> = {};
     try { p = JSON.parse(window.localStorage.getItem(prefKey) ?? '{}') as Partial<Prefs>; } catch { /* 저장이 막힌 환경 */ }
-    // 열어 둔 문서가 있으면 그 문서의 카테고리(맨 위 문서)부터 보여 준다
+    // 열어 둔 문서가 있으면 그 문서의 카테고리(맨 위 문서 바로 아래 문서)부터 보여 준다. 맨 위 문서면 전체
     let top: string | null = null;
-    for (let cur = activeId ? byId.get(activeId) : undefined, guard = 0; cur && guard < 60; guard += 1) {
+    for (let cur = activeId ? byId.get(activeId) : undefined, guard = 0; cur && cur.id !== WIKI_HOME_ID && guard < 60; guard += 1) {
       top = cur.id;
       cur = cur.parentId ? byId.get(cur.parentId) : undefined;
     }
     return {
-      // 전체를 보던 사람은 전체 그대로(열어 둔 문서도 그 안에 있다)
-      cat: p.cat === ALL ? ALL : top ?? p.cat ?? ALL,
+      // 전체를 보던 사람은 전체 그대로(열어 둔 문서도 그 안에 있다). 맨 위 문서를 열어 두었으면 전체
+      cat: p.cat === ALL || activeId === WIKI_HOME_ID ? ALL : top ?? p.cat ?? ALL,
       tasks: p.tasks ?? true,
       links: p.links ?? true,
       mode: MODES.some((m) => m.id === p.mode) ? (p.mode as Mode) : 'map',
       rotate: p.rotate ?? false,
       present: p.present && typeof p.present === 'object' ? p.present : {},
+      levels: readLevels(p.levels),
     };
   });
   useEffect(() => {
@@ -615,23 +697,70 @@ export default function WikiMap({
   const cat = prefs.cat === ALL || roots.some((r) => r.id === prefs.cat) ? prefs.cat : ALL;
   const { tasks: showTasks, links: showLinks, mode, rotate } = prefs;
 
-  /** 사람이 펼치고 접은 것(true = 펼침) - 바꿔도 다시 그리지 않으려고 ref 에 둔다(다음에 지도를 새로 만들 때 쓴다) */
-  const toggled = useRef(new Map<string, boolean>());
+  /**
+   * 사람이 펼치고 접은 것(true = 펼침) - 카테고리마다 따로 두고, 카테고리를 바꾸면 모두 지운다(다른 지도에서 펼친 가지가
+   * 저장된 단계보다 깊게 따라오지 않게). 바꿔도 다시 그리지 않으려고 ref 에 둔다(다음에 지도를 새로 만들 때 쓴다)
+   */
+  const manual = useRef(new Map<string, Map<string, boolean>>());
+  /** 단계를 적용한 뒤 사람이 노드를 직접 펼치거나 접었다 - 숫자 단계의 눌림을 풀고 '직접 조정'을 보인다 */
+  const [adjusted, setAdjusted] = useState(false);
+  /* 카테고리가 바뀌면(고른 카테고리가 지워져 전체가 된 것도) 직접 펼친 것 · 직접 조정을 지운다 - 그 카테고리에 저장된 단계부터.
+     지우기만 하는 일이라 그리기가 두 번 돌아도 결과가 같다 */
+  const [shownCat, setShownCat] = useState(cat);
+  if (shownCat !== cat) {
+    manual.current.clear();
+    setShownCat(cat);
+    setAdjusted(false);
+  }
+  const catRef = useRef(cat);
+  catRef.current = cat;
+  /** 단계 단추를 누른 횟수 - 같은 단계를 다시 눌러도(사람이 펼치고 접은 것을 지우고) 새로 그리고 화면에 맞춘다 */
+  const [levelTick, setLevelTick] = useState(0);
+  const level = prefs.levels[cat] ?? null;
 
-  const built = useMemo(() => buildMap({
-    roots, cat, tasksByKey, tasks, members, paint, showTasks, showLinks, activeId, toggled: toggled.current,
-  }), [roots, cat, tasksByKey, tasks, members, paint, showTasks, showLinks, activeId]);
+  const built = useMemo(() => {
+    void levelTick; // 펼침 기록(ref)을 비웠다 - 같은 값으로도 다시 만든다
+    return buildMap({
+      roots, home, cat, tasksByKey, tasks, members, paint, showTasks, showLinks, activeId,
+      toggled: manual.current.get(cat) ?? NO_TOGGLES, level,
+    });
+  }, [roots, home, cat, tasksByKey, tasks, members, paint, showTasks, showLinks, activeId, level, levelTick]);
+  /** 가운데부터 n 단까지(또는 모두) 펼친다 - 사람이 따로 펼치고 접은 것은 지운다. 카테고리마다 이 브라우저에 기억한다 */
+  const applyLevel = useCallback((n: Level) => {
+    manual.current.clear();
+    setAdjusted(false);
+    setPrefs((p) => ({ ...p, levels: { ...p.levels, [cat]: n } }));
+    setLevelTick((t) => t + 1);
+  }, [cat]);
+  /** 엔진이 알린 사람의 펼치기 · 접기 - 지금 카테고리에만 적고, 지도는 다시 그리지 않는다 */
+  const onToggle = useCallback((id: string, expanded: boolean) => {
+    const c = catRef.current;
+    let m = manual.current.get(c);
+    if (!m) {
+      m = new Map();
+      manual.current.set(c, m);
+    }
+    m.set(id, expanded);
+    setAdjusted(true);
+  }, []);
   /** 3D · 프레젠테이션이 쓰는 그래프 */
-  const graph = useMemo(() => buildGraph({ roots, cat, tasks, members, palette: PAIRS }), [roots, cat, tasks, members]);
-  /** 그래프(옵시디언식)에 올릴 문서 - 카테고리를 골랐으면 그 문서와 아래 문서 */
+  const graph = useMemo(() => buildGraph({ roots, home, cat, tasks, members, palette: PAIRS }), [roots, home, cat, tasks, members]);
+  /**
+   * 그래프(옵시디언식)에 올릴 문서 - 카테고리를 골랐으면 그 문서와 아래 문서.
+   * 카테고리(위 문서가 빈 문서)는 맨 위 문서 아래로 잇는다 - '위아래 문서 잇기'와 path: 가 맨 위 문서부터 시작한다
+   */
+  const underHome = useMemo(
+    () => (home ? docs.map((d) => (d.id !== home.id && !d.parentId ? { ...d, parentId: home.id } : d)) : docs),
+    [docs, home],
+  );
   const scopeDocs = useMemo(() => {
-    if (cat === ALL) return docs;
+    if (cat === ALL) return underHome;
     const out: Doc[] = [];
     const walk = (n: TreeNode) => { out.push(n); n.children.forEach(walk); };
     const r = roots.find((x) => x.id === cat);
     if (r) walk(r);
     return out;
-  }, [cat, docs, roots]);
+  }, [cat, underHome, roots]);
   const categoryTitles = useMemo(() => roots.map((r) => titleOf(r)), [roots]);
 
   const handlers = useRef({ onOpenDoc, onOpenTask });
@@ -677,9 +806,10 @@ export default function WikiMap({
   /* ── 막대 ── */
   const setCat = (c: string) => setPrefs((p) => ({ ...p, cat: c }));
   const catDoc = cat === ALL ? null : byId.get(cat) ?? null;
-  const label = catDoc ? titleOf(catDoc) : '팀 위키 전체';
+  const label = catDoc ? titleOf(catDoc) : `${homeTitle} 전체`;
   const links = mode === 'map' ? built.links : graph.links.length;
-  const taskCount = mode === 'map' ? built.taskLeaves : graph.tasks.length;
+  /** 범위의 고유 연결 작업 수 - 접힌 문서 · 잎으로 다 그리지 않은 작업도 넣고 같은 작업은 한 번(3D · 프레젠테이션도 같은 셈) */
+  const taskCount = mode === 'map' ? built.taskTotal : graph.tasks.length;
 
   const toggle = (label2: string, checked: boolean, on: (v: boolean) => void) => (
     <label className="inline-flex min-h-[38px] cursor-pointer items-center gap-2 rounded-tm-sm px-2 text-[14px] font-semibold text-tm-ink [@media(pointer:coarse)]:min-h-11">
@@ -696,6 +826,59 @@ export default function WikiMap({
       {mode === '3d' && toggle('천천히 돌기', rotate, (v) => setPrefs((p) => ({ ...p, rotate: v })))}
     </>
   );
+  /*
+   * 마인드맵 단계 - 가운데(1단)부터 몇 단까지 펼칠지 한 번에 고른다. 숫자는 늘 'N단까지', '모두'는 지금 가장 깊은 단까지
+   * (문서가 깊어지면 따라간다). 8단 이상이면 '1단 · 2단 · 3단 · 단계 선택 · 모두'로 줄인다
+   */
+  const max = built.maxLevel;
+  /** 지금 눌린 단계 - 직접 조정했으면 없음. 고르지 않았으면 기본(문서가 많으면 3단, 아니면 모두) */
+  const chosen: Level = level ?? built.auto;
+  const pressed: Level | null = adjusted ? null : chosen === 'all' ? 'all' : Math.min(chosen, max);
+  /** 휴대폰 '표시' 단추에 붙이는 지금 단계 */
+  const levelShort = adjusted ? '직접' : pressed === 'all' ? '모두' : `${pressed}단`;
+  const compact = max >= 8;
+  const levelBtn = `inline-flex h-[30px] min-w-[42px] flex-none items-center justify-center whitespace-nowrap rounded-full px-2 text-[13.5px] font-bold tabular-nums
+    text-tm-ink transition-colors duration-150 hover:bg-white aria-pressed:bg-tm-blue aria-pressed:text-white
+    [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:min-w-11`;
+  const levelHelp = '가운데가 1단입니다 · 작업 잎도 한 단으로 세므로 작업을 켜고 끄면 가장 깊은 단이 바뀔 수 있습니다';
+  /** 고르면 휴대폰은 '표시' 칸을 닫아 지도를 바로 보게 한다 */
+  const pickLevel = (n: Level) => {
+    applyLevel(n);
+    if (narrow) setShowOpts(false);
+  };
+  const levelGroup = mode === 'map' && max > 1 && (
+    <div role="group" aria-label={`펼칠 단계${adjusted ? ' · 직접 조정함' : ''}`} aria-describedby="wm-level-help"
+      className="flex min-w-0 max-w-full flex-wrap items-center gap-x-1.5 gap-y-1">
+      <span className="flex-none text-[13px] font-bold text-tm-sub" aria-hidden title={levelHelp}>단계</span>
+      <div className="no-scrollbar flex min-w-0 items-center gap-0.5 overflow-x-auto rounded-full border border-tm-line bg-tm-bg p-0.5">
+        {Array.from({ length: compact ? 3 : max }, (_, i) => i + 1).map((n) => (
+          <button key={n} type="button" aria-pressed={pressed === n} onClick={() => pickLevel(n)}
+            title={`${n === 1 ? '가운데만 봅니다' : `가운데부터 ${n}단까지 펼칩니다`}${n <= 9 ? ` (숫자 키 ${n})` : ''}`}
+            className={levelBtn}>
+            {n}단
+          </button>
+        ))}
+        {compact && (
+          <select aria-label="4단부터 고르기" value={typeof pressed === 'number' && pressed > 3 ? String(pressed) : ''}
+            onChange={(e) => { if (e.target.value) pickLevel(Number(e.target.value)); }}
+            className={`h-[30px] flex-none cursor-pointer rounded-full border-0 px-2.5 text-[13.5px] font-bold tabular-nums
+                        [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:text-[16px] ${
+              typeof pressed === 'number' && pressed > 3 ? 'bg-tm-blue text-white' : 'bg-transparent text-tm-ink hover:bg-white'}`}>
+            <option value="" disabled>단계 선택</option>
+            {Array.from({ length: max - 3 }, (_, i) => i + 4).map((n) => <option key={n} value={n}>{n}단</option>)}
+          </select>
+        )}
+        <button type="button" aria-pressed={pressed === 'all'} onClick={() => pickLevel('all')}
+          title="가장 깊은 단까지 모두 펼칩니다 · 문서가 더 깊어져도 따라갑니다" className={levelBtn}>
+          모두
+        </button>
+      </div>
+      {adjusted && <span className="flex-none text-[12.5px] font-bold text-tm-blue">직접 조정</span>}
+      <span id="wm-level-help" className={narrow ? 'basis-full text-[12.5px] font-semibold leading-[1.5] text-tm-sub' : 'sr-only'}>{levelHelp}</span>
+    </div>
+  );
+  /** 숫자 키 - 이 지도에 있는 단까지만 */
+  const levelKey = (n: number) => { if (n <= max) applyLevel(n); };
   /** 휴대폰 막대의 44px 단추 */
   const touchBtn = 'inline-flex h-11 flex-none items-center justify-center gap-1 whitespace-nowrap rounded-tm-sm border px-2.5 text-[14px] font-bold transition-colors duration-150';
   const fitLabel = mode === 'present' ? '개요' : '맞춤';
@@ -733,10 +916,11 @@ export default function WikiMap({
           ))}
         </div>
 
-        {/* 카테고리 고르기 - 맨 위 문서가 카테고리다 */}
+        {/* 카테고리 고르기 - 맨 위 문서(팀 위키 자체) 바로 아래 문서가 카테고리다. '전체'는 맨 위 문서가 가운데 */}
         <div role="group" aria-label="카테고리"
           className="no-scrollbar -my-1 flex min-w-0 flex-[1_1_320px] items-center gap-1.5 overflow-x-auto py-1 max-[720px]:basis-full">
-          <button type="button" aria-pressed={cat === ALL} onClick={() => setCat(ALL)} className={tmTab}>
+          <button type="button" aria-pressed={cat === ALL} onClick={() => setCat(ALL)} className={tmTab}
+            title={`가운데에 '${homeTitle}'(맨 위 문서)를 두고 카테고리를 모두 봅니다`}>
             전체
           </button>
           {roots.map((r) => (
@@ -753,10 +937,17 @@ export default function WikiMap({
         {/* 조작 - PC 는 켜고 끄기를 바로, 휴대폰은 '표시' 로 펼친다. 손가락 기기는 '지도 조작' */}
         <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5 max-[720px]:w-full max-[720px]:flex-nowrap max-[720px]:gap-x-1.5">
           {!narrow && opts}
+          {!narrow && levelGroup && (
+            <>
+              <span className="mx-1 h-6 w-px bg-tm-line" aria-hidden />
+              {levelGroup}
+            </>
+          )}
           {narrow && hasOpts && (
             <button type="button" onClick={() => setShowOpts((v) => !v)} aria-expanded={showOpts} aria-controls={showOpts ? 'wm-opts' : undefined}
               className={`${touchBtn} ${showOpts ? 'border-tm-blue bg-tm-tint text-tm-deep' : 'border-tm-edge bg-white text-tm-ink'}`}>
-              표시
+              {/* 닫혀 있어도 지금 단계가 보이게(마인드맵) - 표시 · 2단 · 표시 · 모두 · 표시 · 직접 */}
+              {mode === 'map' && max > 1 ? `표시 · ${levelShort}` : '표시'}
               <svg viewBox="0 0 20 20" width="12" height="12" aria-hidden fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
                 className={`transition-transform duration-150 ${showOpts ? 'rotate-180' : ''}`}>
                 <path d="M5 8l5 5 5-5" />
@@ -797,8 +988,9 @@ export default function WikiMap({
           </div>
         </div>
         {narrow && hasOpts && showOpts && (
-          <div id="wm-opts" role="group" aria-label="표시" className="-mt-1 flex w-full flex-wrap items-center gap-x-1 gap-y-0.5">
+          <div id="wm-opts" role="group" aria-label="표시" className="-mt-1 flex w-full flex-wrap items-center gap-x-1 gap-y-1.5">
             {opts}
+            {levelGroup && <div className="flex w-full min-w-0 px-2">{levelGroup}</div>}
           </div>
         )}
       </div>
@@ -806,14 +998,16 @@ export default function WikiMap({
       {/* 고른 보기 */}
       <div className={`relative min-h-0 flex-1 ${mode === 'map' ? '' : mode === 'obsidian' ? 'bg-[#1e1e1e]' : 'bg-[#0b1220]'}`}>
         {mode === 'map' && (
-          <ElixirCanvas data={built.data} cat={cat} label={label} toggled={toggled} onActivate={activate} api={apiRef} onZoom={setZoom} />
+          /* 카테고리 · 단계를 바꿨거나 지도가 비었다 · 찼으면(예시 지우기 · 첫 문서) 화면에 다시 맞춘다 - 엔진은 자리를 그대로 두고 다시 그린다 */
+          <ElixirCanvas data={built.data} fitKey={`${cat}|${levelTick}|${built.empty ? 'empty' : ''}`} label={label} onToggle={onToggle} onActivate={activate} api={apiRef}
+            onZoom={setZoom} onLevel={levelKey} />
         )}
         {mode === '3d' && (
           <Graph3D graph={graph} showTasks={showTasks} showLinks={showLinks} rotate={rotate}
             onOpenDoc={openDoc} onOpenTask={openTask} api={apiRef} />
         )}
         {mode === 'obsidian' && (
-          <ObsidianGraph docs={scopeDocs} allDocs={docs} tasks={tasks} categories={categoryTitles} activeId={activeId}
+          <ObsidianGraph docs={scopeDocs} allDocs={underHome} tasks={tasks} categories={categoryTitles} activeId={activeId}
             storageKey={`mate.taskmanager.docs.obsidian.v1:${me}`} onOpenDoc={openDoc} onOpenTask={openTask} api={apiRef} />
         )}
         {mode === 'present' && (
@@ -839,13 +1033,20 @@ export default function WikiMap({
               <p className="text-[14.5px] leading-[1.6] text-tm-ink">
                 {catDoc
                   ? <>아직 <b className="font-bold text-tm-deep">{titleOf(catDoc)}</b> 아래에 문서가 없습니다. 문서를 만들면 가지로 펼쳐집니다.</>
-                  : '아직 문서가 없습니다. 맨 위에 만든 문서가 카테고리가 됩니다.'}
+                  : <>아직 카테고리가 없습니다. 맨 위 문서 <b className="font-bold text-tm-deep">{homeTitle}</b> 바로 아래에 만든 문서가 카테고리가 됩니다.</>}
               </p>
+              {canCreate && !catDoc && onRenameHome && (
+                <button type="button" onClick={onRenameHome} className={tmGhostBtn}
+                  title={`가운데 '${homeTitle}'의 이름을 바꿉니다. 왼쪽 메뉴의 '팀 위키'는 그대로입니다`}>
+                  <PencilGlyph />
+                  이름 바꾸기
+                </button>
+              )}
               {canCreate && (
                 <button type="button" onClick={() => onAddChild(catDoc?.id ?? null)}
                   className="inline-flex h-[38px] items-center gap-1.5 rounded-tm-sm bg-tm-blue px-3.5 text-[14px] font-bold text-white transition-colors hover:bg-tm-blue-hover [@media(pointer:coarse)]:h-11">
                   <IconPlus size={16} />
-                  {catDoc ? '하위 문서 만들기' : '새 문서'}
+                  {catDoc ? '하위 문서 만들기' : '새 카테고리'}
                 </button>
               )}
             </div>
@@ -873,21 +1074,45 @@ export default function WikiMap({
             </span>
           )}
           {mode !== 'obsidian' && showTasks && taskCount > 0 && (
-            <span className="inline-flex items-center gap-1.5">
+            <span className="inline-flex items-center gap-1.5" title="접힌 문서의 연결 작업도 포함하며 같은 작업은 한 번만 셉니다">
               {(['todo', 'doing', 'review', 'done'] as const).map((st) => (
                 <i key={st} className="h-2 w-2 rounded-full" style={{ background: STATUS_DOT[st] }} title={statusLabel(st)} />
               ))}
-              작업 {taskCount}
+              연결 작업 {taskCount}개
+              {/* 화면 읽기 프로그램에는 셈의 범위를 함께 읽어 준다(마우스는 위 title) */}
+              <span className="sr-only"> · 접힌 문서의 연결 작업도 포함하며 같은 작업은 한 번만 셉니다</span>
             </span>
           )}
-          {canCreate && catDoc && (
-            <button type="button" onClick={() => onAddChild(catDoc.id)} className={`ml-auto ${tmGhostBtn}`}>
-              <IconPlus size={16} />
-              <span className="max-[720px]:hidden">{titleOf(catDoc)} 아래에 </span>새 문서
-            </button>
+          {canCreate && (
+            <div className="ml-auto flex flex-none items-center gap-1.5">
+              {/* '전체'의 가운데는 맨 위 문서 - 이름만 따로 바꾼다(지우거나 옮길 수 없다) */}
+              {!catDoc && onRenameHome && (
+                <button type="button" onClick={onRenameHome} className={tmGhostBtn}
+                  title={`가운데 '${homeTitle}'의 이름을 바꿉니다. 왼쪽 메뉴의 '팀 위키'는 그대로입니다`}>
+                  <PencilGlyph />
+                  <span className="max-[720px]:hidden">맨 위 문서 </span>이름 바꾸기
+                </button>
+              )}
+              <button type="button" onClick={() => onAddChild(catDoc?.id ?? null)} className={tmGhostBtn}
+                aria-label={catDoc ? `${titleOf(catDoc)} 아래에 새 문서` : `${homeTitle} 바로 아래에 새 카테고리`}
+                title={catDoc ? undefined : `'${homeTitle}' 바로 아래에 새 카테고리 문서를 만듭니다`}>
+                <IconPlus size={16} />
+                {catDoc ? <><span className="max-[720px]:hidden">{titleOf(catDoc)} 아래에 </span>새 문서</> : '새 카테고리'}
+              </button>
+            </div>
           )}
         </div>
       )}
     </div>
+  );
+}
+
+/** 이름 바꾸기 - 연필 */
+function PencilGlyph() {
+  return (
+    <svg viewBox="0 0 20 20" width="15" height="15" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12.6 4.4l3 3L7.2 15.8H4.2v-3z" />
+      <path d="M11 6l3 3" />
+    </svg>
   );
 }

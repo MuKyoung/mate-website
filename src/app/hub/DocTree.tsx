@@ -53,7 +53,7 @@ interface Props {
   onToggle(id: string): void;
   onSelect(id: string): void;
   onAddChild(id: string): void;
-  /** 끌어 놓았다 - target 이 null 이면 맨 아래(최상위) */
+  /** 끌어 놓았다 - target 이 null 이면 맨 위 문서 바로 아래의 맨 끝 */
   onDrop(id: string, target: string | null, zone: DropZone): void;
   /** 자기 아래 문서(target) 위에서 놓았다 - 받지 않은 까닭을 알릴 곳 */
   onBlockedDrop?(id: string, target: string): void;
@@ -64,9 +64,11 @@ interface Props {
   menuFor?(node: TreeNode): MenuEntry[];
   /** 문서를 연 뒤(서랍을 닫는 등) */
   onAfterSelect?(): void;
+  /** 맨 위 문서(팀 위키 자체)의 이름 - 트리의 맨 위 줄들은 모두 이 문서 바로 아래다 */
+  topTitle?: string;
 }
 
-export default function DocTree({ roots, activeId, openSet, onToggle, onSelect, onAddChild, onDrop, onBlockedDrop, canDrag, watched, menuFor, onAfterSelect }: Props) {
+export default function DocTree({ roots, activeId, openSet, onToggle, onSelect, onAddChild, onDrop, onBlockedDrop, canDrag, watched, menuFor, onAfterSelect, topTitle }: Props) {
   const [drag, setDrag] = useState<string | null>(null);
   const [over, setOver] = useState<{ id: string | null; zone: DropZone } | null>(null);
   /* 끄는 문서와 그 아래 문서 - 그 위로는 놓을 수 없다 */
@@ -318,7 +320,7 @@ export default function DocTree({ roots, activeId, openSet, onToggle, onSelect, 
           ))}
         </FloatMenu>
       )}
-      {/* 끄는 동안만 - 맨 아래(최상위 문서)로 놓는 자리 */}
+      {/* 끄는 동안만 - 맨 위 문서 바로 아래(카테고리 줄의 맨 끝)로 놓는 자리 */}
       {drag && (
         <div
           onDragOver={(e) => {
@@ -332,7 +334,7 @@ export default function DocTree({ roots, activeId, openSet, onToggle, onSelect, 
           }}
           className={`mt-2 grid h-11 place-items-center rounded-tm-sm border-2 border-dashed text-[13px] font-bold transition-colors ${
             over?.id === null ? 'border-tm-blue bg-tm-tint text-tm-blue' : 'border-tm-line text-tm-sub'}`}>
-          여기에 놓으면 맨 위 문서로
+          {topTitle ? `여기에 놓으면 '${topTitle}' 바로 아래로` : '여기에 놓으면 맨 위 문서로'}
         </div>
       )}
     </>
