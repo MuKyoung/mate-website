@@ -2,6 +2,7 @@ import type { JSONContent } from '@tiptap/core';
 import {
   anchorName, hexColor, isIsoDate, linkTo, mdToDoc, statusColor, varKind, varName, varOptions, type CalloutKind, type VarKind,
 } from './docMarkdown';
+import { atlassianTokenImage } from './pasteImages';
 
 /*
  * Confluence 문서 → 위키 문서(편집기 JSON).
@@ -736,7 +737,9 @@ class Conv {
   imageNode(el: Element): Block | null {
     if (hasClass(el, 'emoticon') || el.hasAttribute('data-emoticon-name') || el.hasAttribute('data-emoji-short-name')) return null;
     const src0 = attr(el, 'data-image-src') ?? attr(el, 'src') ?? '';
-    if (!src0 || /\/images\/icons\/|\/s\/[^/]+\/_\/images\/|^data:/.test(src0)) return null;
+    // 붙여 넣은 글 안에 실린 그림(data:)은 편집기가 파일로 올린다. 작은 것은 아이콘 · 빈 자리다
+    const inline = this.mode === 'clipboard' && /^data:image\/(png|jpe?g|gif|webp);base64,/i.test(src0) && src0.length > 400;
+    if (!src0 || /\/images\/icons\/|\/s\/[^/]+\/_\/images\//.test(src0) || (/^data:/.test(src0) && !inline)) return null;
     const id = attr(el, 'data-linked-resource-id') ?? undefined;
     // 웹 주소가 아닌 그림(Word 내보내기의 조각 이름 · 내보낸 첨부 경로)도 첨부로 찾는다
     const isAttachment = attr(el, 'data-linked-resource-type') === 'attachment' || /^attachments\//.test(src0) || hasClass(el, 'confluence-embedded-image')
@@ -753,8 +756,10 @@ class Conv {
       }
     } else {
       src = src0;
-      // Confluence 안의 그림 주소는 로그인해야 보인다 - 옮기지 못한 그림으로 남긴다
-      if (/\/wiki\/download\/|\/download\/(attachments|thumbnails)\/|api\.media\.atlassian\.com|^blob:|\/rest\/|^\/confluence\//.test(src)) {
+      // Confluence 안의 그림 주소는 로그인해야 보인다 - 옮기지 못한 그림으로 남긴다.
+      // 붙여 넣은 Cloud 보기 화면의 그림은 열쇠(token)를 실은 주소라 편집기가 받아 올려 본다(못 받으면 그때 옮기지 못한 그림으로)
+      const tokened = this.mode === 'clipboard' && atlassianTokenImage(src);
+      if (!tokened && /\/wiki\/download\/|\/download\/(attachments|thumbnails)\/|api\.media\.atlassian\.com|^blob:|\/rest\/|^\/confluence\//.test(src)) {
         this.warn('image', filename || src);
         return missingImage(filename || '그림');
       }

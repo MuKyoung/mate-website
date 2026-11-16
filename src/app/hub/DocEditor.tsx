@@ -13,7 +13,7 @@ import { BubbleMenu } from '@tiptap/react/menus';
 import { Extension, getMarkRange, type EditorOptions, type Range } from '@tiptap/core';
 import { NodeSelection, Plugin, PluginKey } from '@tiptap/pm/state';
 import { Decoration, DecorationSet } from '@tiptap/pm/view';
-import type { Node as PMNode } from '@tiptap/pm/model';
+import { DOMParser as PMDOMParser, type Node as PMNode } from '@tiptap/pm/model';
 import Suggestion, { type SuggestionKeyDownProps, type SuggestionProps } from '@tiptap/suggestion';
 import { Placeholder } from '@tiptap/extensions';
 import {
@@ -22,6 +22,10 @@ import {
 } from './docMarkdown';
 import { dateLabel, wikiSchema } from './docSchema';
 import { useMembers } from './members';
+import {
+  carryImages, carryJsonImages, carryNotice, clipboardFiles, compactImage, genericImageName, imageOnlyHtml,
+  jsonImageWork, ownImages, refOnlyText, tidyImages, unwrapVml, type PasteJob,
+} from './pasteImages';
 import { localToday, statusLabel, type Status } from './types';
 import { Avatar } from './ui';
 
@@ -33,7 +37,7 @@ import { Avatar } from './ui';
  *
  *   /            블록 넣기 메뉴           @   사람 언급        [[  문서 · 작업 링크
  *   글 고르기    떠 있는 서식 막대        왼쪽 손잡이  끌어 옮기기 · 블록 메뉴
- *   붙여 넣기    마크다운 글은 꼴로, 그림 · 파일은 올려서 넣는다
+ *   붙여 넣기    마크다운 글은 꼴로, 그림 · 파일은 올려서 넣는다(스크린숏 · '이미지 복사' · 워드 글 속 그림 - pasteImages.ts)
  */
 
 /* ── 편집기 밖의 것들 ─────────────────────────────── */
@@ -102,9 +106,10 @@ function ImageView({ node, selected, editor, getPos }: NodeViewProps) {
   return (
     <NodeViewWrapper className={`tm-figure is-${align}${selected ? ' is-selected' : ''}`} data-drag-handle="">
       {url ? (
-        // 보기 모드에서 누르면 원본 크기로 새 탭에 연다
+        // 보기 모드에서 누르면 원본 크기로 새 탭에 연다.
+        // 다른 사이트에서 붙여 넣은 그림은 어디서 왔는지(Referer)를 보내지 않는다 - 퍼 가기를 막는 곳도 대개 보인다
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={url} alt={alt} className="tm-image" draggable={false} style={width ? { width } : undefined}
+        <img src={url} alt={alt} className="tm-image" draggable={false} referrerPolicy="no-referrer" style={width ? { width } : undefined}
           onClick={() => { if (!editor.isEditable) window.open(url, '_blank', 'noopener,noreferrer'); }} />
       ) : (
         <div className="tm-image-wait">{failed ? '그림을 불러오지 못했습니다' : '그림을 불러오는 중…'}</div>
@@ -944,11 +949,19 @@ interface UploadMark {
   order: number;
   /** 실패한 까닭(없으면 올리는 중) */
   failed: string | null;
+  /** 붙여 넣은 그림 - 아주 크면 줄여 올린다 */
+  pasted?: boolean;
 }
 type UploadMeta = { add?: UploadMark[]; set?: UploadMark; drop?: string };
 export interface UploadActions { retry(id: string): void; cancel(id: string): void }
 
 const UPLOAD_KEY = new PluginKey<UploadMark[]>('tmUploads');
+const uploadId = () => `u${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
+/** 자리 표시가 지금 있는 곳 - 앞에서 글을 넣거나 지웠으면 따라 옮겨져 있다 */
+function markPos(ed: Editor, id: string) {
+  const m = UPLOAD_KEY.getState(ed.state)?.find((x) => x.id === id);
+  return Math.min(m?.pos ?? ed.state.selection.from, ed.state.doc.content.size);
+}
 
 function uploadDom(m: UploadMark, act: () => UploadActions) {
   const box = document.createElement('span');
@@ -1295,10 +1308,12 @@ export default function DocEditor(props: DocEditorProps) {
   /** 파일 하나를 올려 그 파일의 자리 표시가 있는 곳에 넣는다. 실패하면 자리 표시에 까닭 · 다시 시도 · 취소를 둔다 */
   const sendUpload = useCallback(async (ed: Editor, id: string) => {
     const up = live.current.upload;
-    const f = uploads.current.get(id);
-    if (!up || !f) return;
+    const f0 = uploads.current.get(id);
+    if (!up || !f0) return;
     const markOf = () => (ed.isDestroyed ? undefined : UPLOAD_KEY.getState(ed.state)?.find((m) => m.id === id));
     try {
+      // 붙여 넣은 아주 큰 그림(사진을 '이미지 복사' 하면 수십 MB 의 PNG)은 줄여 올린다
+      const f = markOf()?.pasted ? await compactImage(f0) : f0;
       const src = await up(f);
       // 올리는 사이 문서를 떠났다 - 다른 문서에 넣지 않는다(편집기는 문서마다 따로 선다)
       if (ed.isDestroyed) {
@@ -1310,8 +1325,9 @@ export default function DocEditor(props: DocEditorProps) {
       uploads.current.delete(id);
       if (!mark) return; // 취소했다
       const image = /^image\/(png|jpe?g|gif|webp)$/.test(f.type);
+      // 클립보드가 붙인 이름(image.png)은 그림 설명으로 쓰지 않는다
       const node: JSONContent = image
-        ? { type: 'image', attrs: { src, alt: f.name.replace(/\.[^.]+$/, '') || null } }
+        ? { type: 'image', attrs: { src, alt: genericImageName(f0.name) ? null : f0.name.replace(/\.[^.]+$/, '') || null } }
         : { type: 'paragraph', content: [{ type: 'text', text: `📎 ${f.name}`, marks: [{ type: 'link', attrs: { href: src } }] }] };
       // 올리는 사이 편집을 끝냈어도 저장되게 표시를 단다(보기 모드의 고침은 이 표시가 있을 때만 내보낸다)
       ed.chain().setMeta('tmSave', true).setMeta(UPLOAD_KEY, { drop: id } satisfies UploadMeta)
@@ -1325,7 +1341,7 @@ export default function DocEditor(props: DocEditorProps) {
   }, []);
 
   /** 파일을 올려 넣는다 - 그림은 그림 블록, 나머지는 링크. 넣을 자리에 이름 · '올리는 중'을 먼저 보인다 */
-  const insertFiles = useCallback(async (ed: Editor, files: File[], at?: number) => {
+  const insertFiles = useCallback(async (ed: Editor, files: File[], at?: number, pasted = false) => {
     if (!files.length) return;
     if (!live.current.upload) {
       live.current.onNotice?.(UPLOAD_OFF, 'err');
@@ -1333,20 +1349,65 @@ export default function DocEditor(props: DocEditorProps) {
     }
     const pos = Math.min(at ?? ed.state.selection.to, ed.state.doc.content.size);
     const marks: UploadMark[] = files.map((f, order) => {
-      const id = `u${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
+      const id = uploadId();
       uploads.current.set(id, f);
-      return { id, pos, name: f.name, order, failed: null };
+      return { id, pos, name: genericImageName(f.name) ? '붙여 넣은 그림' : f.name, order, failed: null, pasted };
     });
     ed.view.dispatch(ed.state.tr.setMeta(UPLOAD_KEY, { add: marks } satisfies UploadMeta));
     // 놓은 순서대로 하나씩 - 앞 파일이 들어가면 뒤 파일 자리는 그 뒤로 옮겨진다
     for (const m of marks) await sendUpload(ed, m.id);
   }, [sendUpload]);
 
+  /** 붙여 넣을 자리를 잡는다 - 고른 것은 지우고(붙여 넣기처럼) 그 자리에 '… 올리는 중'을 보인다. 넣을 때는 markPos 로 찾는다 */
+  const holdSpot = useCallback((ed: Editor, name: string) => {
+    const id = uploadId();
+    const tr = ed.state.tr.deleteSelection();
+    ed.view.dispatch(tr.setMeta(UPLOAD_KEY, { add: [{ id, pos: tr.selection.from, name, order: 0, failed: null }] } satisfies UploadMeta));
+    return id;
+  }, []);
+
+  /** 그림 · 파일만 복사한 것 - 올려서 넣는다. 위키 그림을 '이미지 복사' 한 것이면 올리지 않고 그 파일을 다시 쓴다 */
+  const pasteFiles = useCallback((ed: Editor, files: File[], html: string) => {
+    if (!ed.state.selection.empty) ed.view.dispatch(ed.state.tr.deleteSelection());
+    const own = html.trim() ? ownImages(new DOMParser().parseFromString(html, 'text/html').body) : [];
+    if (own.length) {
+      ed.chain().insertContent(own.map(({ src, alt }) => ({ type: 'image', attrs: { src, alt } }))).run();
+      return;
+    }
+    void insertFiles(ed, files, undefined, true);
+  }, [insertFiles]);
+
+  /**
+   * 글과 함께 붙여 넣은 HTML 에 그대로는 못 여는 그림(data: · 복사한 곳에서만 열리는 주소)이 있다 - 올린 뒤 넣는다.
+   * 워드는 그 그림을 RTF 에 같은 순서로 실어 두어 거기서 꺼낸다. 올리는 동안 붙여 넣은 자리에 '그림 n개 올리는 중'을 보인다
+   */
+  const pasteWithImages = useCallback(async (ed: Editor, body: HTMLElement, jobs: PasteJob[], rtf: string) => {
+    const spot = holdSpot(ed, `그림 ${jobs.length}개`);
+    try {
+      const r = await carryImages(jobs, rtf, live.current.upload);
+      if (ed.isDestroyed) {
+        live.current.onNotice?.('문서를 떠나 붙여 넣지 못했습니다. 다시 붙여 넣어 주세요', 'err');
+        return;
+      }
+      const pos = markPos(ed, spot);
+      // 붙여 넣기처럼 읽는다 - 앞뒤 문단은 이어 붙고, 표 · 목록 안이면 그 안에 맞춘다.
+      // 올리는 사이 편집을 끝냈어도 저장되게 표시를 단다(보기 모드의 고침은 이 표시가 있을 때만 내보낸다)
+      const slice = PMDOMParser.fromSchema(ed.schema).parseSlice(body, { context: ed.state.doc.resolve(pos) });
+      ed.view.dispatch(ed.state.tr.replaceRange(pos, pos, slice).setMeta(UPLOAD_KEY, { drop: spot } satisfies UploadMeta).setMeta('tmSave', true));
+      const note = carryNotice(r);
+      if (note) live.current.onNotice?.(note, 'err');
+    } catch {
+      if (!ed.isDestroyed) ed.view.dispatch(ed.state.tr.setMeta(UPLOAD_KEY, { drop: spot } satisfies UploadMeta));
+      live.current.onNotice?.('붙여 넣지 못했습니다. 다시 붙여 넣어 주세요', 'err');
+    }
+  }, [holdSpot]);
+
   /**
    * Confluence 에서 복사한 것을 위키 블록으로 바꿔 넣는다. 문서 링크는 같은 제목의 위키 문서로, 사람은 같은 이름의 팀원으로 잇는다.
-   * 그림은 Confluence 안에서만 열리는 주소라 넣지 못하고 자리에 이름만 남긴다(알림으로 알린다)
+   * 그림은 열쇠가 붙은 주소(Cloud 보기 화면)면 받아 올리고, Confluence 안에서만 열리는 주소면 자리에 이름만 남긴다(알림으로 알린다)
    */
   const pasteConfluence = useCallback(async (ed: Editor, src: string, storage: boolean) => {
+    let spot: string | null = null;
     try {
       const cf = await import('./confluence');
       let missing = 0;
@@ -1366,14 +1427,30 @@ export default function DocEditor(props: DocEditorProps) {
       };
       const json = storage ? cf.storageToDoc(src, refs) : cf.htmlToDoc(new DOMParser().parseFromString(src, 'text/html').body, refs, 'clipboard');
       if (ed.isDestroyed) return;
-      ed.chain().focus().insertContent(json.content ?? []).run();
+      const content = json.content ?? [];
+      // 글 안에 실린 그림(data:) · 열쇠 붙은 그림 주소 - 받아 올린 뒤 넣는다(못 받으면 옮기지 못한 그림으로)
+      const work = jsonImageWork(content);
+      if (!work) ed.chain().focus().insertContent(content).run();
+      else {
+        spot = holdSpot(ed, `그림 ${work}개`);
+        const r = await carryJsonImages(content, live.current.upload);
+        missing += r.missed + r.failed;
+        if (ed.isDestroyed) {
+          live.current.onNotice?.('문서를 떠나 붙여 넣지 못했습니다. 다시 붙여 넣어 주세요', 'err');
+          return;
+        }
+        const at = markPos(ed, spot);
+        ed.chain().setMeta('tmSave', true).setMeta(UPLOAD_KEY, { drop: spot } satisfies UploadMeta).insertContentAt(at, content).run();
+        spot = null;
+      }
       if (missing) {
-        live.current.onNotice?.(`Confluence 에서 붙여 넣었습니다. 그림 · 첨부 ${missing}개는 Confluence 안에서만 열리는 주소라 넣지 못했습니다. 파일을 따로 끌어다 넣어 주세요`, 'err');
+        live.current.onNotice?.(`Confluence 에서 붙여 넣었습니다. 그림 · 첨부 ${missing}개는 Confluence 안에서만 열리는 주소라 넣지 못했습니다. 그림은 Confluence 에서 그림을 오른쪽 눌러 '이미지 복사' 한 뒤 🖼 자리에 붙여 넣고, 첨부 파일은 끌어다 넣어 주세요`, 'err');
       }
     } catch {
+      if (spot && !ed.isDestroyed) ed.view.dispatch(ed.state.tr.setMeta(UPLOAD_KEY, { drop: spot } satisfies UploadMeta));
       live.current.onNotice?.('Confluence 에서 복사한 내용을 넣지 못했습니다. 다시 붙여 넣어 주세요', 'err');
     }
-  }, []);
+  }, [holdSpot]);
 
   /* 자리 표시의 단추 - 다시 시도 · 취소 */
   uploadActions.current = {
@@ -1411,17 +1488,27 @@ export default function DocEditor(props: DocEditorProps) {
         return c.textBetween(0, c.size, '\n\n');
       }
     },
+    // 붙여 넣는 HTML 의 그림 - 늦게 받는 그림은 진짜 주소로, 위키 그림의 서명 주소는 본문 주소로, 오피스의 자동 설명 · 빈 자리 그림은 뺀다
+    transformPastedHTML: (html) => {
+      if (!/<img\b/i.test(html) || html.includes('data-pm-slice')) return html;
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      tidyImages(doc.body);
+      return doc.body.innerHTML;
+    },
     handlePaste: (view, event) => {
       const ed = live.current.editable ? editorBox.current : null;
       if (!ed) return false;
       const cb = event.clipboardData;
       const html = cb?.getData('text/html') ?? '';
       const text = cb?.getData('text/plain') ?? '';
-      const files = [...(cb?.files ?? [])];
-      // 엑셀 · 한글 · 워드는 표 글과 함께 고른 곳의 그림도 싣는다 - 글이 있으면 글(표)을 넣는다
-      if (files.length && !html.trim() && !text.trim()) {
-        // 올릴 수 없는 곳이면 insertFiles 가 끌어 놓기 · 파일 고르기와 같은 말로 알린다
-        void insertFiles(ed, files);
+      const files = clipboardFiles(cb);
+      // 그림 · 파일만 복사한 것(스크린숏 · '이미지 복사' · 카카오톡 · 탐색기) - 함께 오는 HTML 은 그 그림의 주소뿐이라
+      // (로그인해야 보이거나 곧 사라지거나 복사한 컴퓨터 안의 주소) 그림 파일을 올린다.
+      // 엑셀 · 한글 · 워드는 표 글과 함께 고른 곳을 그린 그림도 싣는다 - 글이 있으면 글(표)을 넣는다
+      if (files.length && refOnlyText(text) && imageOnlyHtml(html)) {
+        // 올릴 수 없는 위키면 웹 주소 그림은 그 주소로라도 넣는다. 그 밖은 insertFiles 가 끌어 놓기와 같은 말로 알린다
+        if (!live.current.upload && /<img\b[^>]*\bsrc\s*=\s*["']?https?:/i.test(html)) return false;
+        pasteFiles(ed, files, html);
         return true;
       }
       if (view.state.selection.$from.parent.type.spec.code) return false;
@@ -1430,6 +1517,16 @@ export default function DocEditor(props: DocEditorProps) {
       if (storage || (html.trim() && CONFLUENCE_HTML.test(html))) {
         void pasteConfluence(ed, storage ? text : html, storage);
         return true;
+      }
+      // 글과 함께 복사한 그림 중 그대로는 못 여는 것(data: · 복사한 곳에서만 열리는 주소 - 워드 · 메일) - 올린 뒤 넣는다.
+      // 워드는 그림 정보를 조건부 주석 안의 VML 에도 싣는다(img 없이 VML 에만 있는 그림도 있다)
+      if (/<img\b|<v:imagedata\b/i.test(html) && !html.includes('data-pm-slice')) {
+        const doc = new DOMParser().parseFromString(unwrapVml(html), 'text/html');
+        const jobs = tidyImages(doc.body);
+        if (jobs.length) {
+          void pasteWithImages(ed, doc.body, jobs, cb?.getData('text/rtf') ?? '');
+          return true;
+        }
       }
       // 코드 편집기(VS Code 등)에서 복사한 글은 HTML 이 글자색만 입힌 코드다 - 마크다운 글로 읽는다
       const fromCodeEditor = /font-family:[^;"]*(consolas|monospace|menlo|courier)|white-space:\s*pre/i.test(html);
@@ -1475,7 +1572,7 @@ export default function DocEditor(props: DocEditorProps) {
       },
       // 두 번 누르기는 글자 고르기 그대로 둔다 - 편집은 '편집' 단추 · E 로만 들어간다
     },
-  }), [className, insertFiles, pasteConfluence]);
+  }), [className, insertFiles, pasteConfluence, pasteFiles, pasteWithImages]);
 
   const editor = useEditor({
     immediatelyRender: false,
