@@ -20,7 +20,7 @@ import MindElixir from 'mind-elixir';
 import type { MindElixirData, NodeObj, Operation, SubLineParams, Theme, Topic } from 'mind-elixir';
 import 'mind-elixir/style.css';
 import './wikimap.css';
-import { TASK_COLORS, WIKI_CATEGORIES, statusLabel, type Doc, type Member, type Task, type WikiCategoryId } from './types';
+import { TASK_COLORS, statusLabel, type Doc, type Member, type Task } from './types';
 import { buildTree, type TreeNode } from './DocTree';
 import { titleOf } from './DocPanels';
 import { docLinkIds } from './docMarkdown';
@@ -565,7 +565,7 @@ const Graph3D = dynamic(() => import('./WikiGraph3D'), {
 });
 
 export default function WikiMap({
-  docs, tasks, me, activeId, canCreate, onOpenDoc, onOpenTask, onAddChild, onCreateCategory,
+  docs, tasks, me, activeId, canCreate, onOpenDoc, onOpenTask, onAddChild,
 }: {
   /** 살아 있는 문서(휴지통과 그 아래 문서는 뺀 것) */
   docs: Doc[];
@@ -579,8 +579,6 @@ export default function WikiMap({
   onOpenTask(key: string): void;
   /** 이 아래에 새 문서 - null 이면 맨 위(새 카테고리) */
   onAddChild(parentId: string | null): void;
-  /** 권하는 카테고리(프로젝트 · 개발자)를 만들고 그 문서 id 를 돌려준다 */
-  onCreateCategory(id: WikiCategoryId): string | null;
 }) {
   const members = useMembers();
   const paint = usePainter();
@@ -678,16 +676,11 @@ export default function WikiMap({
 
   /* ── 막대 ── */
   const setCat = (c: string) => setPrefs((p) => ({ ...p, cat: c }));
-  const missing = WIKI_CATEGORIES.filter((c) => !roots.some((r) => r.title.trim() === c.title));
   const catDoc = cat === ALL ? null : byId.get(cat) ?? null;
   const label = catDoc ? titleOf(catDoc) : '팀 위키 전체';
   const links = mode === 'map' ? built.links : graph.links.length;
   const taskCount = mode === 'map' ? built.taskLeaves : graph.tasks.length;
 
-  const createCategory = (id: WikiCategoryId) => {
-    const made = onCreateCategory(id);
-    if (made) setCat(made);
-  };
   const toggle = (label2: string, checked: boolean, on: (v: boolean) => void) => (
     <label className="inline-flex min-h-[38px] cursor-pointer items-center gap-2 rounded-tm-sm px-2 text-[14px] font-semibold text-tm-ink [@media(pointer:coarse)]:min-h-11">
       <input type="checkbox" checked={checked} onChange={(e) => on(e.target.checked)} className="h-[18px] w-[18px] accent-tm-blue" />
@@ -753,15 +746,6 @@ export default function WikiMap({
               <span className={`${tmCount} group-aria-pressed:bg-white/20 group-aria-pressed:text-white`} aria-label={`문서 ${countAll(r.children)}개`}>
                 {countAll(r.children)}
               </span>
-            </button>
-          ))}
-          {canCreate && missing.map((c) => (
-            <button key={c.id} type="button" onClick={() => createCategory(c.id)}
-              title={`카테고리는 맨 위 문서입니다. 필요한 분류만 추가하세요. 누르면 '${c.title}' 문서를 만들고 쓰는 법을 넣습니다`}
-              className="inline-flex h-[42px] flex-none items-center gap-1.5 whitespace-nowrap rounded-full border border-dashed border-tm-edge bg-white px-4
-                         text-[14.5px] font-bold text-tm-blue transition-colors duration-150 hover:border-tm-blue hover:bg-tm-tint [@media(pointer:coarse)]:h-11">
-              <IconPlus size={16} />
-              {c.title} 카테고리
             </button>
           ))}
         </div>
@@ -855,7 +839,7 @@ export default function WikiMap({
               <p className="text-[14.5px] leading-[1.6] text-tm-ink">
                 {catDoc
                   ? <>아직 <b className="font-bold text-tm-deep">{titleOf(catDoc)}</b> 아래에 문서가 없습니다. 문서를 만들면 가지로 펼쳐집니다.</>
-                  : '아직 문서가 없습니다. 카테고리부터 만들어 보세요.'}
+                  : '아직 문서가 없습니다. 맨 위에 만든 문서가 카테고리가 됩니다.'}
               </p>
               {canCreate && (
                 <button type="button" onClick={() => onAddChild(catDoc?.id ?? null)}

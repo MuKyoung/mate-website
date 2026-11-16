@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import type { Editor } from '@tiptap/react';
-import { DOC_TEMPLATES, WIKI_CATEGORIES, localDay, type Doc, type DocVersion, type Task, type WikiCategoryId } from './types';
+import { DOC_TEMPLATES, localDay, type Doc, type DocVersion, type Task } from './types';
 import { useMember, useMembers } from './members';
 import { isUntouchedSampleDoc, type DocStore, type SaveResult } from './docStore';
 import { docLinkIds } from './docMarkdown';
@@ -503,25 +503,6 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
     setView('doc');
   };
 
-  /** 마인드맵이 권하는 카테고리(프로젝트 · 개발자)를 맨 위 문서로 만든다 - 쓰는 법을 본문에 넣는다 */
-  const createCategory = (id: WikiCategoryId): string | null => {
-    const c = WIKI_CATEGORIES.find((x) => x.id === id);
-    if (!c) return null;
-    const last = siblingsOf(null).at(-1);
-    const created = store.create({
-      title: c.title, icon: c.icon, body: c.body, parentId: null, author: me, order: between(last?.order, undefined),
-    });
-    onNotice?.(`'${c.title}' 카테고리를 만들었습니다. 그 아래에 문서를 만들면 가지로 펼쳐집니다`);
-    return created.id;
-  };
-
-  /** 카테고리(맨 위 문서) 바로 아래에 만들면 그 카테고리의 양식(프로젝트 정보 · 개발자 정보)을 먼저 골라 둔다 */
-  const templateFor = (parentId: string | null | undefined) => {
-    const p = parentId ? byId.get(parentId) : undefined;
-    if (!p || p.parentId) return undefined;
-    return WIKI_CATEGORIES.find((c) => c.title === p.title.trim())?.template;
-  };
-
   /** [[ 목록의 '새 문서' - 지금 문서 아래에 빈 문서를 만든다 */
   const createSub = (title: string) => {
     if (!doc) return null;
@@ -970,8 +951,7 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
           <WikiMap docs={live} tasks={tasks} me={me} activeId={activeId} canCreate={store.ready && !store.loadError}
             onOpenDoc={(id) => { select(id); setView('doc'); }}
             onOpenTask={(key) => onTaskClick?.(key)}
-            onAddChild={(id) => setCreatingUnder(id)}
-            onCreateCategory={createCategory} />
+            onAddChild={(id) => setCreatingUnder(id)} />
         ) : (
         <>
 
@@ -1253,7 +1233,6 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
       {creatingUnder !== undefined && (
         <NewDocDialog
           parentTitle={creatingUnder ? titleOf(byId.get(creatingUnder) ?? { title: '' }) : null}
-          initialTemplate={templateFor(creatingUnder)}
           onCreate={handleCreate}
           onClose={() => setCreatingUnder(undefined)} />
       )}
