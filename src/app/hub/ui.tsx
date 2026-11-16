@@ -254,7 +254,7 @@ export function useMediaQuery(query: string): boolean {
 }
 
 /** 메뉴 아이콘 */
-export type NavIcon = 'board' | 'mine' | 'wiki' | 'memo' | 'home' | 'menu' | 'phone' | 'sidebar' | 'filter' | 'mindmap' | 'daily' | 'weekly';
+export type NavIcon = 'board' | 'mine' | 'wiki' | 'memo' | 'home' | 'menu' | 'phone' | 'monitor' | 'sidebar' | 'filter' | 'mindmap' | 'daily' | 'weekly';
 export function IconNav({ name, size = 20 }: { name: NavIcon; size?: number }) {
   const paths: Record<NavIcon, React.ReactNode> = {
     /* 모든 작업 - 보드의 칸 */
@@ -306,6 +306,13 @@ export function IconNav({ name, size = 20 }: { name: NavIcon; size?: number }) {
       <>
         <rect x="5.5" y="2.5" width="9" height="15" rx="1.8" />
         <path d="M8.5 14.5h3" />
+      </>
+    ),
+    /* Windows 위젯 - 모니터 */
+    monitor: (
+      <>
+        <rect x="2.5" y="3.5" width="15" height="10.5" rx="1.8" />
+        <path d="M7.5 17h5M10 14v3" />
       </>
     ),
     /* 메뉴 접기 · 펼치기 - 왼쪽 칸이 있는 창 */

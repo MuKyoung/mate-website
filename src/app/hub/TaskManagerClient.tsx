@@ -205,6 +205,33 @@ function WidgetAppDialog({ onClose }: { onClose: () => void }) {
   );
 }
 
+/* 바탕화면 위젯(windows-widget/)을 다시 빌드하면 windows-widget/tools/release.ps1 이 이 파일과 mate-calendar.json 을 바꾼다 */
+const WIN_WIDGET = '/downloads/MATE-Calendar-Setup.exe';
+
+/** Windows 바탕화면 캘린더 위젯 받기 - 설치 순서를 보여 주고 설치 파일을 내려받는다 */
+function WindowsWidgetDialog({ onClose }: { onClose: () => void }) {
+  return (
+    <Modal title="Windows 위젯 'MATE 캘린더'" sub="내 작업을 바탕화면 캘린더 위젯으로 봅니다. Windows 10 · 11 용입니다."
+      size="sm" onClose={onClose}
+      foot={
+        <>
+          <span className="flex-1" />
+          <button type="button" onClick={onClose} className={tmBtn}>닫기</button>
+          <a href={WIN_WIDGET} download className={`${tmBtnPrimary} hover:border-tm-blue-hover hover:bg-tm-blue-hover`}>
+            설치 파일 받기
+          </a>
+        </>
+      }>
+      <ol className="flex list-decimal flex-col gap-2 pl-5 text-[14.5px] leading-[1.65] text-tm-ink marker:font-bold marker:text-tm-blue">
+        <li>PC 에서 받습니다. 브라우저가 &lsquo;흔히 받는 파일이 아님&rsquo;이라고 하면 <b>유지</b>를 누릅니다.</li>
+        <li>받은 파일을 엽니다. &lsquo;Windows의 PC 보호&rsquo; 창이 나오면 <b>추가 정보</b>를 눌러 <b>실행</b>합니다. 코드 서명을 하지 않은 사내 프로그램이라 나오는 안내입니다.</li>
+        <li><b>설치</b>를 누릅니다. 내 Windows 계정에만 깔려 관리자 권한이 필요 없습니다.</li>
+        <li>Hub 와 같은 메일 · 비밀번호로 로그인하면 바탕화면 오른쪽 위에 캘린더가 뜹니다. 달 이름을 끌어 옮기고, &hellip; 메뉴에서 크기 · 모양 · 팀 전체 보기를 바꿉니다.</li>
+      </ol>
+    </Modal>
+  );
+}
+
 export default function TaskManagerClient() {
   return isRemote ? <RemoteApp /> : <Workspace />;
 }
@@ -318,6 +345,8 @@ function Workspace({ account }: { account?: Account }) {
   /** Supabase 모드 - 팀원 창 */
   const [teamOpen, setTeamOpen] = useState(false);
   const [appOpen, setAppOpen] = useState(false);
+  /** Windows 바탕화면 위젯 받기 창 */
+  const [winOpen, setWinOpen] = useState(false);
   /** 영역 관리 창 */
   const [domainsOpen, setDomainsOpen] = useState(false);
   const [leaving, setLeaving] = useState(false);
@@ -990,6 +1019,10 @@ function Workspace({ account }: { account?: Account }) {
               <IconNav name="phone" />
               <span aria-hidden>위젯 앱</span>
             </button>
+            <button type="button" onClick={() => setWinOpen(true)} title="Windows 위젯" aria-label="Windows 위젯" className={railItem}>
+              <IconNav name="monitor" />
+              <span aria-hidden>PC 위젯</span>
+            </button>
             <Link href="/" onClick={leaveHub} title="홈페이지로" aria-label="홈페이지로" className={railItem}>
               <IconNav name="home" />
               <span aria-hidden>홈페이지</span>
@@ -1012,6 +1045,11 @@ function Workspace({ account }: { account?: Account }) {
             className="flex min-h-[42px] items-center gap-3 rounded-tm-sm px-3 text-left text-[15px] font-semibold text-tm-ink transition-colors duration-150 hover:bg-tm-tint">
             <IconNav name="phone" />
             <span>갤럭시 위젯 앱</span>
+          </button>
+          <button type="button" onClick={() => setWinOpen(true)}
+            className="flex min-h-[42px] items-center gap-3 rounded-tm-sm px-3 text-left text-[15px] font-semibold text-tm-ink transition-colors duration-150 hover:bg-tm-tint">
+            <IconNav name="monitor" />
+            <span>Windows 위젯</span>
           </button>
           <Link href="/" onClick={leaveHub}
             className="flex min-h-[42px] items-center gap-3 rounded-tm-sm px-3 text-[15px] font-semibold text-tm-ink transition-colors duration-150 hover:bg-tm-tint">
@@ -1519,6 +1557,7 @@ function Workspace({ account }: { account?: Account }) {
       )}
 
       {appOpen && <WidgetAppDialog onClose={() => setAppOpen(false)} />}
+      {winOpen && <WindowsWidgetDialog onClose={() => setWinOpen(false)} />}
 
       {colorsOpen && colorStore.editable && (
         <ColorDialog members={members.filter((m) => m.active !== false)} labels={knownLabels} picks={colorStore.picks}
