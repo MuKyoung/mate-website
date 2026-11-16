@@ -166,16 +166,34 @@ export function ancestorsOf(n: DriveNode): DriveNode[] {
 
 const SAFE_HOST = /(^|\.)google\.com$/;
 
+/** 드라이브 계정을 짚은 주소 - 구글 계정이 여럿 로그인된 브라우저에서도 그 계정으로 열고, 없으면 그 계정 로그인을 묻는다 */
+function withAccount(href: string): string {
+  const u = new URL(href);
+  u.searchParams.set('authuser', DRIVE_ACCOUNT);
+  return u.href;
+}
+
 /** 여는 주소 - 구글 주소(https)만 그대로 쓰고, 아니면 id 로 드라이브 주소를 만든다 */
 export function driveUrl(it: DriveItem): string {
   try {
     const u = new URL(it.url);
-    if (u.protocol === 'https:' && SAFE_HOST.test(u.hostname)) return u.href;
+    if (u.protocol === 'https:' && SAFE_HOST.test(u.hostname)) return withAccount(u.href);
   } catch {
     /* 아래 주소로 */
   }
   const id = encodeURIComponent(it.id);
-  return it.mime === DRIVE_FOLDER ? `https://drive.google.com/drive/folders/${id}` : `https://drive.google.com/open?id=${id}`;
+  return withAccount(it.mime === DRIVE_FOLDER ? `https://drive.google.com/drive/folders/${id}` : `https://drive.google.com/open?id=${id}`);
+}
+
+/** 옆 칸에 끼워 넣는 드라이브 미리보기 주소 - 폴더 · 설문지 · 바로가기 같은 구글 형식은 없다(null) */
+export function previewUrl(it: DriveItem): string | null {
+  const id = encodeURIComponent(it.id);
+  const g = 'application/vnd.google-apps.';
+  if (it.mime === `${g}document`) return withAccount(`https://docs.google.com/document/d/${id}/preview`);
+  if (it.mime === `${g}spreadsheet`) return withAccount(`https://docs.google.com/spreadsheets/d/${id}/preview`);
+  if (it.mime === `${g}presentation`) return withAccount(`https://docs.google.com/presentation/d/${id}/preview`);
+  if (it.mime.startsWith(g)) return null;
+  return withAccount(`https://drive.google.com/file/d/${id}/preview`);
 }
 
 /* ── 파일 종류 ─────────────────────────────────────── */

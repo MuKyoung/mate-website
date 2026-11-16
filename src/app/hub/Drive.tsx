@@ -1,16 +1,18 @@
 'use client';
 
-import { useCallback, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useCallback, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   DRIVE_ACCOUNT, DRIVE_FOLDER, DRIVE_SYNC_MINUTES, KIND_LABEL,
-  ancestorsOf, buildDriveTree, driveUrl, kindOf, loadDrive,
+  ancestorsOf, buildDriveTree, driveUrl, kindOf, loadDrive, previewUrl,
   type DriveKind, type DriveLoad, type DriveNode, type DriveSnapshot, type DriveTree,
 } from './driveTree';
 import { IconClose, IconPlus, IconSearch, PageHead, tmFieldBase, tmGhostBtn, tmIconBtn, tmIconBtnSm, useMediaQuery } from './ui';
 
 /*
  * 구글 드라이브 - 팀 구글 드라이브의 폴더 · 파일을 왼쪽에서 오른쪽으로 뻗는 트리로 그린다.
- * 이름(노드)을 누르면 드라이브에서 새 탭으로 열리고, 노드 끝의 동그라미로 접고 펼친다.
+ * 이름(노드)을 누르면 옆 칸(좁은 화면은 아래에서 올라오는 칸)에 안의 내용이 보인다 - 폴더는 안의 폴더 · 파일 목록,
+ * 파일은 드라이브 미리보기. 드라이브로 가는 것은 그 칸의 '드라이브에서 열기'나 노드를 두 번 누를 때다.
+ * 노드 끝의 동그라미로 접고 펼친다.
  * 목록은 드라이브 쪽 Apps Script 가 30분마다 Hub 표로 보낸다(driveTree.ts). 이 화면은 읽기만 한다.
  * 그림은 스크롤 칸 안의 큰 판이다 - 손가락 · 휠은 그대로 스크롤, 마우스는 빈 곳을 끌어 옮기고 Ctrl+휠로 키운다.
  */
@@ -25,7 +27,7 @@ const LEVELS: { id: Level; label: string; hint: string }[] = [
 ];
 /** 기본 보기에서 접어 두는 폴더 - 이 아래 폴더가 이보다 많으면 */
 const BIG = 40;
-/** 파일을 볼 때 한 폴더에서 그리는 파일 수 - 나머지는 '더 보기' 한 칸(드라이브에서 연다) */
+/** 파일을 볼 때 한 폴더에서 그리는 파일 수 - 나머지는 '더 보기' 한 칸(누르면 옆 칸에 그 폴더의 파일이 모두 보인다) */
 const FILE_CAP = 20;
 const ZOOM_MIN = 0.5;
 const ZOOM_MAX = 1.6;
@@ -178,10 +180,11 @@ function syncBadge(s: DriveSnapshot, now: number): { tone: 'ok' | 'busy' | 'warn
   return { tone: 'ok', text: `${ago} 갱신` };
 }
 
-function dayText(iso: string | null): string {
+function dayText(iso: string | null, short = false): string {
   if (!iso) return '';
   const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString('ko-KR');
+  if (Number.isNaN(d.getTime())) return '';
+  return short ? d.toLocaleDateString('ko-KR', { year: '2-digit', month: 'numeric', day: 'numeric' }) : d.toLocaleDateString('ko-KR');
 }
 
 /** 노드에 마우스를 올리면 보이는 설명 */
@@ -191,7 +194,7 @@ function tipOf(n: DriveNode): string {
   if (kind === 'folder') parts.push(`폴더 ${num(n.folderTotal)}`, `파일 ${num(n.fileTotal)}`);
   const day = dayText(n.item.modified);
   if (day) parts.push(`수정 ${day}`);
-  return `${n.item.name}\n${parts.join(' · ')}\n누르면 드라이브에서 엽니다`;
+  return `${n.item.name}\n${parts.join(' · ')}\n누르면 옆에 안의 내용, 두 번 누르면 드라이브에서 엽니다`;
 }
 
 /** 찾기 결과의 둘째 줄 - 위 폴더들 */
@@ -241,6 +244,134 @@ const seg =
 const messageCard =
   'tm-fill flex min-h-0 flex-1 flex-col items-center justify-center gap-3 rounded-tm border border-tm-line bg-white px-6 py-16 text-center shadow-tm';
 
+/* ── 옆 칸 - 고른 노드의 안 ─────────────────────────── */
+
+/** 폴더 안 목록의 한 줄 - 누르면 그 항목을 옆 칸에(트리에서도 짚는다), 오른쪽 그림은 드라이브에서 열기 */
+function PanelRow({ n, onPick }: { n: DriveNode; onPick(n: DriveNode): void }) {
+  const kind = kindOf(n.item.mime, n.item.name);
+  const folder = kind === 'folder';
+  return (
+    <li className="flex items-center gap-1">
+      <button type="button" onClick={() => onPick(n)} title={n.item.name}
+        className="flex min-w-0 flex-1 items-center gap-2.5 rounded-md px-2 py-[7px] text-left transition-colors duration-150 hover:bg-tm-tint
+                   focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-tm-blue
+                   [@media(pointer:coarse)]:min-h-11">
+        <span className={folder ? 'text-tm-blue' : 'text-tm-sub'}><KindIcon kind={kind} /></span>
+        <span className={`min-w-0 flex-1 truncate text-[14px] text-tm-ink ${folder ? 'font-semibold' : ''}`}>{n.item.name}</span>
+        <span className="flex-none text-[12px] tabular-nums text-tm-sub">
+          {folder ? (n.fileTotal > 0 ? `파일 ${num(n.fileTotal)}` : '') : dayText(n.item.modified, true)}
+        </span>
+      </button>
+      <a href={driveUrl(n.item)} target="_blank" rel="noopener noreferrer" className={tmIconBtnSm}
+        aria-label={`${n.item.name} 드라이브에서 열기`} title="드라이브에서 열기">
+        <IconOpen size={15} />
+      </a>
+    </li>
+  );
+}
+
+/** 파일 - 드라이브 미리보기를 끼워 넣는다. 그 브라우저가 드라이브 계정으로 로그인돼 있어야 보인다 */
+function FilePreview({ node }: { node: DriveNode }) {
+  const url = previewUrl(node.item);
+  const [loaded, setLoaded] = useState(false);
+  if (!url) {
+    return (
+      <p className="px-5 py-6 text-[14px] leading-[1.7] text-tm-sub max-[720px]:px-4">
+        이 종류는 여기서 미리 볼 수 없습니다. 드라이브에서 열어 보세요.
+      </p>
+    );
+  }
+  return (
+    <div className="flex min-h-0 flex-1 flex-col gap-2 p-3">
+      <div className="relative min-h-[240px] flex-1 overflow-hidden rounded-tm-sm border border-tm-line bg-white">
+        <iframe src={url} title={`${node.item.name} 미리보기`} onLoad={() => setLoaded(true)} allow="autoplay; fullscreen" allowFullScreen
+          className="absolute inset-0 h-full w-full border-0" />
+        {!loaded && (
+          <p className="absolute inset-0 grid place-items-center bg-tm-bg px-4 text-center text-[13.5px] font-semibold text-tm-sub">
+            미리보기를 불러오는 중…
+          </p>
+        )}
+      </div>
+      <p className="px-1 text-[12.5px] leading-[1.6] text-tm-sub">
+        미리보기가 비거나 로그인 · 권한 안내가 뜨면 이 브라우저에서 {DRIVE_ACCOUNT} 로 구글에 로그인해 주세요.
+      </p>
+    </div>
+  );
+}
+
+/** 고른 노드 - 위 폴더 길, 이름 · 수, 드라이브에서 열기, 그리고 폴더면 안의 목록 · 파일이면 미리보기 */
+function DrivePanel({ tree, node, onPick, onClose }: {
+  tree: DriveTree;
+  node: DriveNode;
+  onPick(n: DriveNode): void;
+  /** 좁은 화면의 아래 칸만 - 닫기 단추 */
+  onClose?: () => void;
+}) {
+  const kind = kindOf(node.item.mime, node.item.name);
+  const folder = kind === 'folder';
+  const ups = node === tree.root ? [] : [tree.root, ...ancestorsOf(node)];
+  const day = dayText(node.item.modified);
+  const meta = folder
+    ? [`폴더 ${num(node.folders.length)}`, `파일 ${num(node.files.length)}`,
+      ...(node.fileTotal > node.files.length ? [`아래 전체 파일 ${num(node.fileTotal)}`] : []),
+      ...(day ? [`수정 ${day}`] : [])]
+    : [KIND_LABEL[kind], ...(day ? [`수정 ${day}`] : [])];
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="flex-none border-b border-tm-line px-5 pb-4 pt-4 max-[720px]:px-4">
+        {ups.length > 0 && (
+          <nav aria-label="위 폴더" className="mb-1.5 flex flex-wrap items-center gap-x-1 gap-y-0.5 text-[12.5px] leading-[1.5] text-tm-sub">
+            {ups.map((a, i) => (
+              <Fragment key={a.item.id}>
+                {i > 0 && <span aria-hidden>›</span>}
+                <button type="button" onClick={() => onPick(a)}
+                  className="max-w-[18ch] truncate rounded-sm transition-colors duration-150 hover:text-tm-blue hover:underline">
+                  {a.item.name}
+                </button>
+              </Fragment>
+            ))}
+          </nav>
+        )}
+        <div className="flex items-start gap-2.5">
+          <span className={`mt-[3px] ${folder ? 'text-tm-blue' : 'text-tm-sub'}`}><KindIcon kind={kind} size={22} /></span>
+          <h2 className="min-w-0 flex-1 break-words text-[18px] font-extrabold leading-[1.4] text-tm-deep">{node.item.name}</h2>
+          {onClose && (
+            <button type="button" onClick={onClose} aria-label="미리보기 닫기" title="닫기" className={`${tmIconBtnSm} -mr-1.5 -mt-1`}>
+              <IconClose />
+            </button>
+          )}
+        </div>
+        <p className="mt-1 text-[13px] leading-[1.6] text-tm-sub">{meta.join(' · ')}</p>
+        <a href={driveUrl(node.item)} target="_blank" rel="noopener noreferrer"
+          className={`${tmGhostBtn} mt-3 hover:border-tm-blue hover:bg-tm-tint`}>
+          드라이브에서 열기 <IconOpen />
+        </a>
+      </div>
+      {folder ? (
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-2.5">
+          {node.folders.length + node.files.length === 0 && (
+            <p className="px-2 py-8 text-center text-[14px] text-tm-sub">비어 있는 폴더입니다</p>
+          )}
+          {node.folders.length > 0 && (
+            <section>
+              <h3 className="px-2 pb-1 pt-1.5 text-[12.5px] font-bold text-tm-sub">폴더 {num(node.folders.length)}</h3>
+              <ul>{node.folders.map((c) => <PanelRow key={c.item.id} n={c} onPick={onPick} />)}</ul>
+            </section>
+          )}
+          {node.files.length > 0 && (
+            <section className={node.folders.length ? 'mt-2' : ''}>
+              <h3 className="px-2 pb-1 pt-1.5 text-[12.5px] font-bold text-tm-sub">파일 {num(node.files.length)}</h3>
+              <ul>{node.files.map((c) => <PanelRow key={c.item.id} n={c} onPick={onPick} />)}</ul>
+            </section>
+          )}
+        </div>
+      ) : (
+        <FilePreview key={node.item.id} node={node} />
+      )}
+    </div>
+  );
+}
+
 function useNow(every: number) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -287,7 +418,7 @@ export default function Drive({ me }: { me: string }) {
     <>
       <PageHead
         title="구글 드라이브"
-        lead={`팀 구글 드라이브의 폴더 구조입니다. 이름을 누르면 드라이브에서 열리고, 이름 끝의 동그라미로 접고 펼칩니다. 목록은 ${DRIVE_SYNC_MINUTES}분마다 새로 받습니다.`}
+        lead={`팀 구글 드라이브의 폴더 구조입니다. 이름을 누르면 옆에 안의 내용이 보이고, 두 번 누르면 드라이브에서 열립니다. 이름 끝의 동그라미로 접고 펼칩니다. 목록은 ${DRIVE_SYNC_MINUTES}분마다 새로 받습니다.`}
         saved={snap ? syncBadge(snap, now) : undefined}
       >
         <button type="button" onClick={() => void reload()} disabled={busy} className={tmGhostBtn}>
@@ -343,6 +474,8 @@ function DriveMap({ tree, me }: { tree: DriveTree; me: string }) {
   const narrow = useMediaQuery('(max-width: 720px)');
   const coarse = useMediaQuery('(pointer: coarse)');
   const reduced = useMediaQuery('(prefers-reduced-motion: reduce)');
+  /** 넓으면 오른쪽에 늘 있는 칸, 좁으면 노드를 누를 때 아래에서 올라오는 칸 */
+  const wide = useMediaQuery('(min-width: 1180px)');
   const d = useMemo(() => dimsOf(narrow, coarse), [narrow, coarse]);
 
   const [prefs, setPrefs] = useState<Prefs>(() => readPrefs(me));
@@ -352,8 +485,16 @@ function DriveMap({ tree, me }: { tree: DriveTree; me: string }) {
   const files = prefs.files;
   const zoom = prefs.zoom;
   const [pin, setPin] = useState<DriveNode | null>(null);
-  /** 찾기로 고른 노드 - 테두리로 짚어 둔다 */
-  const [marked, setMarked] = useState<string | null>(null);
+  /** 옆 칸에 보이는 노드 - 처음에는 맨 위(팀 드라이브). 트리에서는 테두리로 짚는다 */
+  const [selectedId, setSelectedId] = useState(tree.root.item.id);
+  /** 좁은 화면의 아래 칸이 올라와 있나 */
+  const [sheet, setSheet] = useState(false);
+  const sheetUp = !wide && sheet;
+  /* 아래 칸이 올라와 있으면 그 높이만큼 판 아래에 여백을 둔다 - 트리 아래쪽 노드도 칸 위로 올릴 수 있게 */
+  const [viewH, setViewH] = useState(0);
+  /** 아래 칸 높이(트리 칸에 대한 몫) - 휴대폰은 칸 머리가 자리를 많이 써서 더 높게 */
+  const sheetFrac = narrow ? 0.78 : 0.58;
+  const spare = sheetUp ? Math.round(viewH * sheetFrac) : 0;
 
   const savePrefs = useCallback((patch: Partial<Prefs>) => {
     setPrefs((p) => {
@@ -374,6 +515,7 @@ function DriveMap({ tree, me }: { tree: DriveTree; me: string }) {
   const layout = useMemo(() => layoutOf(tree.root, open, files, pin, d), [tree, open, files, pin, d]);
 
   /* ── 스크롤 · 크기 ── */
+  const cardRef = useRef<HTMLDivElement>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const zoomRef = useRef(zoom);
   zoomRef.current = zoom;
@@ -409,10 +551,11 @@ function DriveMap({ tree, me }: { tree: DriveTree; me: string }) {
       return;
     }
     const left = a.key === tree.root.item.id ? 0 : Math.max(0, (p.x + d.nodeW / 2) * zoom - el.clientWidth / 2);
-    const top = Math.max(0, (p.y + d.nodeH / 2) * zoom - el.clientHeight / 2);
+    // 아래 칸이 올라와 있으면 그 위에 남은 자리의 가운데로
+    const top = Math.max(0, (p.y + d.nodeH / 2) * zoom - el.clientHeight * (sheetUp ? (1 - sheetFrac) / 2 : 0.5));
     el.scrollTo({ left, top, behavior: a.focus && !reduced ? 'smooth' : 'auto' });
-    if (a.focus) el.querySelector<HTMLElement>(`[data-key="${CSS.escape(a.key)}"] a`)?.focus({ preventScroll: true });
-  }, [layout, zoom, d, reduced, tree, afterTick]);
+    if (a.focus) el.querySelector<HTMLElement>(`[data-key="${CSS.escape(a.key)}"] button`)?.focus({ preventScroll: true });
+  }, [layout, zoom, d, reduced, tree, afterTick, sheetUp, sheetFrac]);
 
   const zoomTo = useCallback((z: number, at?: { x: number; y: number }) => {
     const el = scroller.current;
@@ -426,6 +569,14 @@ function DriveMap({ tree, me }: { tree: DriveTree; me: string }) {
     setAfterTick((t) => t + 1);
     savePrefs({ zoom: next });
   }, [savePrefs]);
+
+  useEffect(() => {
+    const el = scroller.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setViewH(el.clientHeight));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   /* Ctrl(⌘)+휠 - 크기. 그냥 휠은 스크롤 */
   useEffect(() => {
@@ -485,7 +636,6 @@ function DriveMap({ tree, me }: { tree: DriveTree; me: string }) {
     setOpen(presetOpen(tree, l));
     setLevel(l);
     setPin(null);
-    setMarked(null);
     savePrefs({ level: l });
     request({ kind: 'center', key: tree.root.item.id, focus: false });
   };
@@ -495,9 +645,29 @@ function DriveMap({ tree, me }: { tree: DriveTree; me: string }) {
     if (el && p) request({ kind: 'keep', key: p.key, top: p.y * zoom - el.scrollTop, left: p.x * zoom - el.scrollLeft });
     savePrefs({ files: !files });
   };
-  const goRoot = () => {
-    setMarked(null);
-    request({ kind: 'center', key: tree.root.item.id, focus: true });
+  const goRoot = () => request({ kind: 'center', key: tree.root.item.id, focus: true });
+
+  /* ── 고르기 - 트리에서 누르면 옆 칸에, 두 번 누르면 드라이브에서 ── */
+  const select = (n: DriveNode) => {
+    setSelectedId(n.item.id);
+    if (!wide) openSheet(n);
+  };
+  /**
+   * 좁은 화면 - 아래 칸을 올리고, 누른 노드는 칸에 가리지 않게 위쪽으로 옮긴다.
+   * 휴대폰은 쪽 머리째 스크롤하는 화면이라(globals.css 의 tm-page) 카드를 화면 위로 올려 칸이 잘리지 않게 한다
+   */
+  const openSheet = (n: DriveNode) => {
+    setSheet(true);
+    request({ kind: 'center', key: n.item.id, focus: false });
+    const card = cardRef.current;
+    const page = card?.closest<HTMLElement>('.tm-page');
+    if (card && page && page.scrollHeight > page.clientHeight + 1) {
+      const gap = card.getBoundingClientRect().top - page.getBoundingClientRect().top;
+      if (gap > 8) page.scrollBy({ top: gap, behavior: reduced ? 'auto' : 'smooth' });
+    }
+  };
+  const openInDrive = (n: DriveNode) => {
+    window.open(driveUrl(n.item), '_blank', 'noopener,noreferrer');
   };
 
   /* ── 찾기 ── */
@@ -531,7 +701,8 @@ function DriveMap({ tree, me }: { tree: DriveTree; me: string }) {
     return () => document.removeEventListener('pointerdown', away);
   }, [panel]);
 
-  const reveal = (n: DriveNode) => {
+  /** 트리에 없던 것(찾기 · 옆 칸 목록)을 고른다 - 위 폴더를 펼치고 그 노드를 화면에 둔다 */
+  const reveal = (n: DriveNode, focus = true) => {
     const ups = ancestorsOf(n);
     if (ups.some((a) => !open.has(a.item.id))) {
       setOpen((prev) => {
@@ -542,10 +713,13 @@ function DriveMap({ tree, me }: { tree: DriveTree; me: string }) {
       setLevel(null);
     }
     setPin(n.item.mime === DRIVE_FOLDER ? null : n);
-    setMarked(n.item.id);
+    setSelectedId(n.item.id);
     setPanel(false);
-    request({ kind: 'center', key: n.item.id, focus: true });
+    if (!wide) openSheet(n);
+    request({ kind: 'center', key: n.item.id, focus });
   };
+  /** 옆 칸의 목록 · 위 폴더 길에서 고름 - 초점은 옆 칸에 둔다 */
+  const pick = (n: DriveNode) => reveal(n, false);
 
   const resultButtons = () => searchBox.current?.querySelectorAll<HTMLButtonElement>('button[data-result]') ?? [];
   const onSearchKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -579,9 +753,10 @@ function DriveMap({ tree, me }: { tree: DriveTree; me: string }) {
   };
 
   const shown = results.slice(0, 50);
+  const selected = tree.byId.get(selectedId) ?? tree.root;
 
   return (
-    <div className="tm-fill flex min-h-0 flex-1 flex-col overflow-hidden rounded-tm border border-tm-line bg-white shadow-tm">
+    <div ref={cardRef} className="tm-fill flex min-h-0 flex-1 flex-col overflow-hidden rounded-tm border border-tm-line bg-white shadow-tm">
       {/* ── 막대: 찾기 · 단계 · 파일 · 크기 ── */}
       <div className="flex flex-none flex-wrap items-center gap-2 border-b border-tm-line px-4 py-3 max-[720px]:px-3">
         <div ref={searchBox} className="relative min-w-0 flex-[1_1_220px] max-w-[340px] max-[720px]:max-w-none">
@@ -601,7 +776,7 @@ function DriveMap({ tree, me }: { tree: DriveTree; me: string }) {
             className={`${tmFieldBase} h-[38px] w-full pl-9 pr-9 text-[15px] [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:text-[16px]`}
           />
           {query && (
-            <button type="button" aria-label="검색어 지우기" onClick={() => { setQuery(''); setMarked(null); searchInput.current?.focus(); }}
+            <button type="button" aria-label="검색어 지우기" onClick={() => { setQuery(''); searchInput.current?.focus(); }}
               className="absolute right-1 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-md text-tm-sub transition-colors duration-150
                          hover:bg-tm-tint hover:text-tm-blue [@media(pointer:coarse)]:h-10 [@media(pointer:coarse)]:w-10">
               <IconClose size={16} />
@@ -673,17 +848,18 @@ function DriveMap({ tree, me }: { tree: DriveTree; me: string }) {
         </div>
       </div>
 
-      {/* ── 트리 ── */}
+      {/* ── 트리 + 옆 칸(넓으면 오른쪽, 좁으면 아래에서 올라온다) ── */}
+      <div className="relative flex min-h-0 flex-1">
       <div
         ref={scroller}
         role="region"
         aria-label="구글 드라이브 트리"
         tabIndex={0}
         onPointerDown={onPointerDown}
-        className={`relative min-h-0 flex-1 overflow-auto overscroll-contain bg-tm-bg outline-none
+        className={`relative min-h-0 min-w-0 flex-1 overflow-auto overscroll-contain bg-tm-bg outline-none
                     focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-tm-blue ${dragging ? 'cursor-grabbing select-none' : 'cursor-grab'}`}
       >
-        <div className="relative" style={{ width: layout.width * zoom, height: layout.height * zoom }}>
+        <div className="relative" style={{ width: layout.width * zoom, height: layout.height * zoom + spare }}>
           <div className="absolute left-0 top-0 origin-top-left" style={{ width: layout.width, height: layout.height, transform: `scale(${zoom})` }}>
             <svg className="pointer-events-none absolute left-0 top-0" width={layout.width} height={layout.height} aria-hidden>
               <g fill="none" stroke="#7f8b9e" strokeOpacity={0.55} strokeWidth={1.5}>
@@ -704,14 +880,13 @@ function DriveMap({ tree, me }: { tree: DriveTree; me: string }) {
               if (p.more > 0) {
                 return (
                   <div key={p.key} data-key={p.key} className="absolute" style={style}>
-                    <a href={driveUrl(n.item)} target="_blank" rel="noopener noreferrer"
-                      title={`${n.item.name} 의 나머지 파일 ${num(p.more)}개는 드라이브에서 봅니다`}
-                      className="flex h-full w-full items-center gap-2 rounded-tm-sm border border-dashed border-tm-edge px-2.5 text-[13.5px] font-semibold text-tm-sub
-                                 transition-colors duration-150 hover:border-tm-blue hover:bg-white hover:text-tm-blue
+                    <button type="button" onClick={() => select(n)}
+                      title={`${n.item.name} 의 파일 ${num(n.files.length)}개를 옆 칸에서 모두 봅니다`}
+                      className="flex h-full w-full items-center gap-2 rounded-tm-sm border border-dashed border-tm-edge px-2.5 text-left text-[13.5px] font-semibold
+                                 text-tm-sub transition-colors duration-150 hover:border-tm-blue hover:bg-white hover:text-tm-blue
                                  focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-tm-blue">
-                      <span className="min-w-0 flex-1 truncate">파일 {num(p.more)}개 더 · 드라이브에서 보기</span>
-                      <IconOpen size={14} />
-                    </a>
+                      <span className="min-w-0 flex-1 truncate">파일 {num(p.more)}개 더 보기</span>
+                    </button>
                   </div>
                 );
               }
@@ -731,12 +906,14 @@ function DriveMap({ tree, me }: { tree: DriveTree; me: string }) {
               const weight = isRoot || n.depth === 1 ? '' : folder || hit ? 'font-semibold' : 'font-normal';
               return (
                 <div key={p.key} data-key={p.key} className="absolute" style={style}>
-                  <a href={driveUrl(n.item)} target="_blank" rel="noopener noreferrer" title={tipOf(n)}
-                    aria-label={`${n.item.name}, ${KIND_LABEL[kind]}${folder && n.fileTotal ? `, 파일 ${num(n.fileTotal)}개` : ''}, 드라이브에서 열기`}
-                    className={`flex h-full w-full items-center gap-2 rounded-tm-sm border px-2.5 text-[14px] transition-colors duration-150
+                  <button type="button" title={tipOf(n)} onClick={() => select(n)} onDoubleClick={() => openInDrive(n)}
+                    onAuxClick={(e) => { if (e.button === 1) { e.preventDefault(); openInDrive(n); } }}
+                    aria-current={selected === n ? 'true' : undefined}
+                    aria-label={`${n.item.name}, ${KIND_LABEL[kind]}${folder && n.fileTotal ? `, 파일 ${num(n.fileTotal)}개` : ''}, 누르면 옆에 안의 내용`}
+                    className={`flex h-full w-full items-center gap-2 rounded-tm-sm border px-2.5 text-left text-[14px] transition-colors duration-150
                                 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-tm-blue
                                 max-[720px]:text-[13.5px] ${box} ${weight} ${
-                                  marked === n.item.id ? 'ring-2 ring-tm-blue ring-offset-2 ring-offset-tm-bg' : ''}`}>
+                                  selected === n ? 'ring-2 ring-tm-blue ring-offset-2 ring-offset-tm-bg' : ''}`}>
                     <span className={isRoot ? 'text-white' : folder ? 'text-tm-blue' : 'text-tm-sub'}>
                       <KindIcon kind={kind} />
                     </span>
@@ -747,7 +924,7 @@ function DriveMap({ tree, me }: { tree: DriveTree; me: string }) {
                         {num(n.fileTotal)}
                       </span>
                     )}
-                  </a>
+                  </button>
                   {hidden > 0 && (
                     <button type="button" onClick={() => toggle(n)} aria-expanded={isOpen}
                       aria-label={isOpen ? `${n.item.name} 접기` : `${n.item.name} 펼치기, 아래 ${hidden}개`}
@@ -764,6 +941,18 @@ function DriveMap({ tree, me }: { tree: DriveTree; me: string }) {
             })}
           </div>
         </div>
+      </div>
+      {wide ? (
+        <aside aria-label="미리보기" className="flex w-[380px] flex-none flex-col border-l border-tm-line bg-white min-[1600px]:w-[440px]">
+          <DrivePanel tree={tree} node={selected} onPick={pick} />
+        </aside>
+      ) : sheet && (
+        <aside aria-label="미리보기" onKeyDown={(e) => { if (e.key === 'Escape') setSheet(false); }}
+          className="absolute inset-x-0 bottom-0 z-20 flex h-[58%] flex-col overflow-hidden rounded-t-[18px] border-t border-tm-line bg-white
+                     shadow-tm-pop animate-tm-rise max-[720px]:h-[78%]">
+          <DrivePanel tree={tree} node={selected} onPick={pick} onClose={() => setSheet(false)} />
+        </aside>
+      )}
       </div>
 
       {/* ── 아래 줄: 수 · 여는 계정 ── */}
