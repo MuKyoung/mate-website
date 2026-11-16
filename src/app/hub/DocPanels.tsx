@@ -5,6 +5,7 @@ import { DOC_TEMPLATES, localDay, localToday, type Doc, type DocComment, type Do
 import { useMember, useMembers } from './members';
 import { diffBlocks, isDateVar, mdToDoc, plainText, type TemplateVarDef } from './docMarkdown';
 import { isWikiHome, type DocStore, type SaveResult } from './docStore';
+import { SHARE_MISSING, shareUrl, type DocShare, type ShareState } from './docShare';
 import DocEditor, { FloatMenu, keepInView, type WikiRefs } from './DocEditor';
 import Markdown from './Markdown';
 import {
@@ -1237,4 +1238,130 @@ export function useDeleteConfirm() {
     tone: 'danger',
   });
   return [ask, node] as const;
+}
+
+/* ── 링크로 공유 ─────────────────────────────────────── */
+
+/**
+ * 문서 하나를 로그인 없이 읽게 하는 링크를 만들고 · 복사하고 · 끊는다(docShare.ts).
+ * 링크를 받은 사람은 그 문서의 제목 · 본문 · 그림 · 첨부만 읽는다. 끊으면 그 링크는 다시 살아나지 않는다
+ */
+export function ShareDialog({ doc, share, state, blocked, onCreate, onRevoke, onReload, onNotice, onClose }: {
+  doc: Doc;
+  share: DocShare | null;
+  state: ShareState;
+  /** 문서나 그 위 문서가 휴지통에 있다 - 링크가 열리지 않는다 */
+  blocked: boolean;
+  onCreate(): Promise<DocShare | string>;
+  onRevoke(): Promise<true | string>;
+  onReload(): void;
+  onNotice?(text: string, tone?: 'ok' | 'err'): void;
+  onClose(): void;
+}) {
+  const [busy, setBusy] = useState<null | 'create' | 'revoke'>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const [confirm, confirmNode] = useConfirm();
+  const input = useRef<HTMLInputElement>(null);
+  const copyBtn = useRef<HTMLButtonElement>(null);
+  const by = useMember(share?.createdBy ?? null);
+  const url = share ? shareUrl(share.token) : '';
+
+  const create = async () => {
+    setBusy('create');
+    setErr(null);
+    const r = await onCreate();
+    setBusy(null);
+    if (typeof r === 'string') setErr(r);
+    else {
+      onNotice?.('공유 링크를 만들었습니다. 복사해서 보내 주세요', 'ok');
+      requestAnimationFrame(() => copyBtn.current?.focus());
+    }
+  };
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(url);
+      onNotice?.('공유 링크를 복사했습니다', 'ok');
+    } catch {
+      setErr('링크를 복사하지 못했습니다. 칸의 주소를 골라 직접 복사해 주세요');
+      input.current?.select();
+    }
+  };
+  const revoke = async () => {
+    const ok = await confirm({
+      title: '공유 링크를 끊을까요?',
+      body: <>지금 링크로는 더 이상 <b>{titleOf(doc)}</b> 문서를 열 수 없습니다. 다시 공유하면 새 링크가 만들어집니다.</>,
+      ok: '링크 끊기',
+      tone: 'danger',
+    });
+    if (!ok) return;
+    setBusy('revoke');
+    setErr(null);
+    const r = await onRevoke();
+    setBusy(null);
+    if (r === true) onNotice?.('공유 링크를 끊었습니다', 'ok');
+    else setErr(r);
+  };
+
+  return (
+    <Modal title="링크로 공유" sub="링크를 받은 사람은 로그인하지 않고 이 문서 하나만 읽을 수 있습니다" busy={!!busy} onClose={onClose}
+      foot={
+        <>
+          <span className="flex-1" />
+          <button type="button" onClick={onClose} disabled={!!busy} className={tmBtn}>닫기</button>
+        </>
+      }>
+      {state === 'loading' && !share && (
+        <p className="py-2 text-[15px] font-semibold text-tm-sub" aria-busy>공유 상태를 읽는 중…</p>
+      )}
+      {state === 'missing' && (
+        <p role="alert" className="text-[14.5px] font-semibold leading-[1.65] text-tm-red-deep">{SHARE_MISSING}</p>
+      )}
+      {state === 'error' && !share && (
+        <div className="flex flex-wrap items-center gap-3">
+          <p role="alert" className="text-[14.5px] font-semibold text-tm-red-deep">공유 상태를 읽지 못했습니다.</p>
+          <button type="button" onClick={onReload} className={tmGhostBtn}>다시 읽기</button>
+        </div>
+      )}
+
+      {share ? (
+        <>
+          <label htmlFor="doc-share-url" className={tmLabel}>공유 링크</label>
+          <div className="flex gap-2 max-[520px]:flex-col">
+            <input id="doc-share-url" ref={input} readOnly value={url} onFocus={(e) => e.currentTarget.select()}
+              aria-describedby="doc-share-by" className={`${tmInput} tm-mono min-w-0 flex-1 text-[14px]`} />
+            <button ref={copyBtn} type="button" onClick={() => void copy()} className={tmBtnPrimary}>복사</button>
+          </div>
+          <p id="doc-share-by" className="mt-2 text-[13px] text-tm-sub">
+            {by?.name ?? '팀원'} · {localDay(share.createdAt)} 만듦
+          </p>
+          <div className="mt-5 flex flex-wrap gap-2">
+            <a href={url} target="_blank" rel="noopener noreferrer" className={tmGhostBtn}>새 탭에서 열어 보기</a>
+            <button type="button" onClick={() => void revoke()} disabled={!!busy} className={tmGhostDanger}>
+              {busy === 'revoke' ? '끊는 중…' : '링크 끊기'}
+            </button>
+          </div>
+        </>
+      ) : state === 'ready' && (
+        <>
+          <p className="text-[15px] leading-[1.7] text-tm-ink">
+            읽기만 됩니다. 고치기 · 댓글 · 다른 문서 · 작업은 열리지 않습니다.
+            문서를 고치면 링크로 보는 화면에도 바로 반영되고, 링크는 언제든 끊을 수 있습니다.
+          </p>
+          {!blocked && (
+            <button type="button" onClick={() => void create()} disabled={!!busy} className={`${tmBtnPrimary} mt-5`}>
+              {busy === 'create' ? '만드는 중…' : '링크 만들기'}
+            </button>
+          )}
+        </>
+      )}
+
+      {blocked && (
+        <p className="mt-4 rounded-tm-sm border border-tm-line border-l-4 border-l-tm-warn bg-tm-warn-tint px-4 py-3 text-[14px] leading-[1.65] text-tm-warn-deep">
+          이 문서{doc.trashedAt ? '는' : '의 위 문서가'} 휴지통에 있어 링크로 열리지 않습니다.{share ? ' 되살리면 이 링크로 다시 열립니다.' : ' 되살린 뒤 공유해 주세요.'}
+        </p>
+      )}
+      {err && <p role="alert" className="mt-3 text-[13.5px] font-semibold text-tm-red-deep">{err}</p>}
+      {confirmNode}
+    </Modal>
+  );
 }

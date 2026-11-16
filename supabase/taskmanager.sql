@@ -1249,6 +1249,117 @@ grant select on public.tm_drive_snapshot to authenticated;
 revoke execute on function public.tm_drive_sync(text, text, jsonb, text) from public;
 grant execute on function public.tm_drive_sync(text, text, jsonb, text) to anon, authenticated;
 
+-- ── 위키 문서 링크 공유 (2026-11-16) ──────────────────────────
+-- 문서마다 공유 링크 하나(/hub/share/<열쇠>/). 링크를 아는 사람은 로그인 없이 그 문서 하나의 제목 · 아이콘 · 본문과
+-- 본문에 든 그림 · 첨부만 본다. 고치기 · 댓글 · 다른 문서 · 작업은 열리지 않는다.
+-- 링크는 팀원만 만들고 끊는다(끊기 = 줄 지우기, 다시 만들면 새 열쇠). 열쇠 · 만든 사람 · 때는 DB 가 정한다.
+-- 문서나 그 위 문서가 휴지통에 있으면 링크가 열리지 않고, 문서를 영구 삭제하면 링크도 함께 지워진다
+create table if not exists public.tm_doc_shares (
+  doc_id uuid primary key references public.tm_docs (id) on delete cascade,
+  token text not null unique,
+  created_by uuid references public.tm_members (id) on delete set null,
+  created_at timestamptz not null default now()
+);
+
+create or replace function public.tm_doc_shares_stamp()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  -- 추측할 수 없는 열쇠(gen_random_uuid 는 암호용 난수 122비트, 글자 32개). 화면이 보낸 값은 쓰지 않는다
+  new.token := replace(gen_random_uuid()::text, '-', '');
+  new.created_by := auth.uid();
+  new.created_at := now();
+  return new;
+end;
+$$;
+create or replace trigger tm_doc_shares_stamp
+  before insert on public.tm_doc_shares
+  for each row execute function public.tm_doc_shares_stamp();
+
+-- 문서와 그 위 문서들 가운데 휴지통에 든 것이 없는가(위키 화면에 보이는 문서인가). 맨 위 문서(팀 위키 자체)의 휴지통 칸은 보지 않는다
+create or replace function public.tm_doc_visible(p_doc uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  with recursive up (id, parent_id, trashed_at, depth) as (
+    select d.id, d.parent_id, d.trashed_at, 0 from public.tm_docs d where d.id = p_doc
+    union all
+    select p.id, p.parent_id, p.trashed_at, up.depth + 1
+    from public.tm_docs p join up on p.id = up.parent_id
+    where up.depth < 64
+  )
+  select exists (select 1 from up)
+    and not exists (
+      select 1 from up
+      where up.trashed_at is not null and up.id <> '00000000-0000-4000-8000-000000000001'::uuid
+    )
+$$;
+
+-- 공유 링크로 문서 하나를 읽는다(로그인 없이 부른다). 열쇠가 맞고 문서가 보이는 상태일 때만 한 줄
+create or replace function public.tm_shared_doc(p_token text)
+returns table (title text, icon text, body text, updated_at timestamptz)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select d.title, d.icon, d.body, d.updated_at
+  from public.tm_doc_shares s
+  join public.tm_docs d on d.id = s.doc_id
+  where s.token = p_token
+    and public.tm_doc_visible(d.id)
+$$;
+
+-- 공유 중인(그리고 보이는) 문서의 본문에 든 파일인가 - 링크로 보는 사람이 그 문서의 그림 · 첨부만 받게 한다(아래 저장소 정책)
+create or replace function public.tm_shared_file(p_name text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select coalesce(p_name, '') <> '' and exists (
+    select 1
+    from public.tm_doc_shares s
+    join public.tm_docs d on d.id = s.doc_id
+    where strpos(d.body, 'tmfile:' || p_name) > 0
+      and public.tm_doc_visible(d.id)
+  )
+$$;
+
+alter table public.tm_doc_shares enable row level security;
+-- 팀원은 링크를 보고 만들고 끊는다. 고치기(update)는 두지 않는다 - 열쇠를 바꾸려면 끊고 새로 만든다
+drop policy if exists tm_doc_shares_read on public.tm_doc_shares;
+create policy tm_doc_shares_read on public.tm_doc_shares
+  for select to authenticated
+  using ((select public.tm_is_member()));
+drop policy if exists tm_doc_shares_add on public.tm_doc_shares;
+create policy tm_doc_shares_add on public.tm_doc_shares
+  for insert to authenticated
+  with check ((select public.tm_is_member()));
+drop policy if exists tm_doc_shares_remove on public.tm_doc_shares;
+create policy tm_doc_shares_remove on public.tm_doc_shares
+  for delete to authenticated
+  using ((select public.tm_is_member()));
+revoke all on public.tm_doc_shares from anon, authenticated;
+grant select, insert (doc_id), delete on public.tm_doc_shares to authenticated;
+
+-- 링크로 보는 사람(anon)은 공유 중인 문서 본문에 든 파일만 받는다(받을 때는 한 시간짜리 주소). 다른 파일은 보이지도 않는다
+drop policy if exists tm_files_shared_read on storage.objects;
+create policy tm_files_shared_read on storage.objects
+  for select to anon
+  using (bucket_id = 'tm-files' and public.tm_shared_file(name));
+
+-- 트리거 · 안쪽 검사용은 아무도 부르지 못하게. 링크 읽기 · 파일 확인은 로그인하지 않은 사람도 부른다(함수가 열쇠 · 본문을 본다)
+revoke execute on function public.tm_doc_shares_stamp(), public.tm_doc_visible(uuid),
+  public.tm_shared_doc(text), public.tm_shared_file(text) from public, anon, authenticated;
+grant execute on function public.tm_shared_doc(text), public.tm_shared_file(text) to anon, authenticated;
+
 -- ── 첫 관리자 정하기 ─────────────────────────────────────────
 -- 위를 실행하고 첫 계정을 만든 뒤, 아래 줄의 메일을 바꾸고 맨 앞의 -- 를 지워 그 줄만 따로 실행한다.
 -- 관리자 칸이 생기기 전부터 쓰던 프로젝트도 한 번 실행한다(그 전에는 아무도 승인할 수 없다).

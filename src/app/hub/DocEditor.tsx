@@ -52,7 +52,12 @@ export interface WikiRefs {
   fileUrl(src: string): Promise<string>;
   /** 링크를 눌렀는데 열 수 없을 때 까닭을 알린다(없는 문서 · 없는 제목 · 열지 못한 파일) */
   notice?(text: string): void;
+  /** 공유 링크로 읽는 화면(로그인 없음) - 다른 문서 · 작업 · Hub 로 가는 링크는 열지 않고 까닭만 알린다 */
+  shared?: boolean;
 }
+
+/** 공유 링크 화면에서 다른 문서 · 작업 · Hub 로 가려 할 때 */
+export const SHARED_ONLY = '공유 링크로는 이 문서만 볼 수 있습니다';
 
 const WikiContext = createContext<WikiRefs | null>(null);
 const useWiki = () => useContext(WikiContext);
@@ -176,6 +181,16 @@ function DocLinkView({ node, editor }: NodeViewProps) {
   const wiki = useWiki();
   const d = wiki?.docs.find((x) => x.id === node.attrs.id);
   const title = d?.title || String(node.attrs.title || '문서');
+  // 공유 링크 화면 - 이름만 보이고 열리지 않는다(눌러 까닭을 알린다)
+  if (wiki?.shared) {
+    return (
+      <NodeViewWrapper as="span" className="tm-doclink" title={SHARED_ONLY} style={{ cursor: 'default', color: 'inherit', textDecoration: 'none' }}
+        onClick={(e: React.MouseEvent) => { e.preventDefault(); wiki.notice?.(`${SHARED_ONLY}. '${title}' 문서는 열 수 없습니다`); }}>
+        <DocGlyph />
+        {title}
+      </NodeViewWrapper>
+    );
+  }
   return (
     <NodeViewWrapper as="span" className={`tm-doclink${!d || d.gone ? ' is-gone' : ''}`}
       title={!d ? '찾을 수 없는 문서' : d.gone ? '휴지통에 있는 문서' : `${title} 열기`}
@@ -434,7 +449,8 @@ function ChildPagesView({ node, selected, editor, getPos }: NodeViewProps) {
   return (
     <NodeViewWrapper className={`tm-children${selected ? ' is-selected' : ''}`} contentEditable={false} data-drag-handle="">
       <div ref={setEl} className="tm-toc-head">하위 문서</div>
-      {tree.length ? list(tree) : <p className="tm-toc-empty">아직 이 문서 아래에 문서가 없습니다</p>}
+      {tree.length ? list(tree)
+        : <p className="tm-toc-empty">{wiki?.shared ? '하위 문서 목록은 공유 링크에서 보이지 않습니다' : '아직 이 문서 아래에 문서가 없습니다'}</p>}
       {selected && editor.isEditable && (
         <NodePopover anchor={el} label="하위 문서 목록 설정" onClose={() => editor.commands.focus()} width={240}>
           <label className="tm-pop-label" htmlFor="tm-children-depth">보일 깊이</label>
@@ -833,6 +849,8 @@ const TASK_RE = /(?<![\w-])MATE-\d+(?!\d)/g;
 /** 본문의 MATE-### 를 작업 칩으로 보여 준다. 글자는 그대로 두고 꾸밈만 얹는다 */
 function taskRefs(get: () => WikiRefs | null) {
   const build = (doc: PMNode) => {
+    // 공유 링크 화면은 작업을 열 수 없으니 작업 번호를 그냥 글로 둔다
+    if (get()?.shared) return DecorationSet.empty;
     const tasks = new Map((get()?.tasks ?? []).map((t) => [t.key, t]));
     const decos: Decoration[] = [];
     doc.descendants((node, pos) => {
@@ -1714,6 +1732,17 @@ export default function DocEditor(props: DocEditorProps) {
   );
 }
 
+/** 이 사이트의 Hub 로 가는 주소인가(공유 링크 화면이 막는다) - 다른 공유 링크(/hub/share/…)는 빼고 */
+function intoHub(href: string): boolean {
+  try {
+    const u = new URL(href, window.location.origin);
+    return u.origin === window.location.origin
+      && /^\/(?:hub|taskmanager)(?:\/|$)/.test(u.pathname) && !/^\/hub\/share\//.test(u.pathname);
+  } catch {
+    return false;
+  }
+}
+
 /**
  * 링크 열기 - 밖으로 나가는 주소는 새 탭, 사이트 안 경로는 이 탭, 팀 저장소 파일은 받을 주소로 바꿔서,
  * #제목은 본문(root) 안에서 그 제목으로 가고 주소 조각만 바꾼다
@@ -1735,6 +1764,11 @@ function openHref(href: string, refs: WikiRefs, root?: HTMLElement | null) {
   const to = linkTo(href);
   if (!to) {
     refs.notice?.('열 수 없는 주소입니다. 링크를 고쳐 주세요');
+    return;
+  }
+  // 공유 링크 화면 - 이 사이트의 Hub(다른 문서 · 작업 · 로그인)로는 보내지 않는다. 다른 공유 링크는 연다
+  if (refs.shared && intoHub(to.href)) {
+    refs.notice?.(SHARED_ONLY);
     return;
   }
   if (to.external) window.open(to.href, '_blank', 'noopener,noreferrer');

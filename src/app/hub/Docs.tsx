@@ -11,8 +11,9 @@ import { isRemote } from './supabase';
 import { useNoPresence, useRemotePresence, type Presence } from './remote';
 import DocEditor, { focusEditor, scrollToAnchor, scrollToPos, type WikiHeading, type WikiRefs } from './DocEditor';
 import DocTree, { FlatRow, buildTree, type DropZone } from './DocTree';
+import { useDocShares } from './docShare';
 import {
-  Comments, DocIcon, DropMenu, EmojiPicker, HistoryDialog, LabelEditor, MoveDialog, NewDocDialog, QuickFind, Snippet,
+  Comments, DocIcon, DropMenu, EmojiPicker, HistoryDialog, LabelEditor, MoveDialog, NewDocDialog, QuickFind, ShareDialog, Snippet,
   TitleField, TrashDialog, ago, pathOf, plainOf, readingLabel, titleOf, useDeleteConfirm, useStoredList,
   type MenuEntry,
 } from './DocPanels';
@@ -86,7 +87,9 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [creatingUnder, setCreatingUnder] = useState<string | null | undefined>(undefined);
   const [query, setQuery] = useState('');
-  const [dialog, setDialog] = useState<null | 'find' | 'move' | 'trash' | 'history'>(null);
+  const [dialog, setDialog] = useState<null | 'find' | 'move' | 'trash' | 'history' | 'share'>(null);
+  /** 링크로 공유(로그인 없이 읽는 링크) - 팀 저장소 모드에서만 */
+  const shares = useDocShares();
   /** 옮길 문서 - 트리 줄 메뉴에서 고르면 연 문서가 아닐 수 있다 */
   const [moveId, setMoveId] = useState<string | null>(null);
   /** 맨 위 문서(팀 위키 자체)의 이름 바꾸기 창 - 문서 메뉴와 지도에서 연다 */
@@ -1038,9 +1041,17 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
   const isHome = !!doc && isWikiHome(doc.id);
   /** 본문이 빈 맨 위 문서를 읽는 중 - 카테고리 목록을 제목 바로 아래에 둔다 */
   const homeCats = isHome && !editing && !doc.body.trim();
+  /** 이 문서를 로그인 없이 읽는 링크가 살아 있다 */
+  const docShared = !!doc && shares.byDoc.has(doc.id);
+  const openShare = () => {
+    setDialog('share');
+    // 다른 팀원이 그사이 만들거나 끊었을 수 있다
+    void shares.reload();
+  };
   const menu: MenuEntry[] = doc ? [
     { label: starred.includes(doc.id) ? '즐겨찾기에서 빼기' : '즐겨찾기에 넣기', onSelect: () => toggleStar(doc.id), disabled: !canEdit },
     { label: '링크 복사', onSelect: () => void copyLink(doc) },
+    ...(isRemote ? [{ label: docShared ? '링크로 공유 중' : '링크로 공유', onSelect: openShare }] : []),
     { label: '지도로 보기', onSelect: () => setView('map') },
     ...(isHome && canEdit ? [{ label: '이름 바꾸기', onSelect: () => setRenaming(true), sep: true }] : []),
     { label: isHome ? '새 카테고리' : '아래에 새 문서', onSelect: () => setCreatingUnder(doc.id), disabled: !canEdit, sep: !isHome },
@@ -1217,6 +1228,15 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
                       </span>
                     ))}
                   </span>
+                )}
+                {isRemote && (
+                  <button type="button" onClick={openShare} aria-haspopup="dialog"
+                    title={docShared ? '링크로 공유 중 · 눌러서 링크 보기 · 끊기' : '링크로 공유 · 로그인 없이 이 문서만 읽게 하기'}
+                    className={`inline-flex h-[38px] items-center gap-1.5 rounded-tm-sm border px-2.5 text-[13.5px] font-bold transition-colors [@media(pointer:coarse)]:h-11 ${
+                      docShared ? 'border-tm-ok bg-tm-ok-tint text-tm-ok-deep hover:bg-white' : 'border-tm-edge bg-white text-tm-ink hover:border-tm-blue hover:bg-tm-tint'}`}>
+                    <LinkGlyph />
+                    <span className="max-[720px]:sr-only">{docShared ? '공유 중' : '공유'}</span>
+                  </button>
                 )}
                 {wikiOn && (
                   <button ref={commentBtn} type="button" title={commentsOpen ? '댓글 닫기' : '댓글 보기'} aria-label={`댓글 ${commentCount}개 ${commentsOpen ? '닫기' : '보기'}`}
@@ -1490,6 +1510,11 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
       {renaming && (
         <RenameHome title={home?.title ?? WIKI_HOME_TITLE} saved={!!home} onSave={renameHome} onClose={() => setRenaming(false)} />
       )}
+      {dialog === 'share' && doc && (
+        <ShareDialog key={doc.id} doc={doc} share={shares.byDoc.get(doc.id) ?? null} state={shares.state} blocked={!canEdit}
+          onCreate={() => shares.create(doc.id)} onRevoke={() => shares.revoke(doc.id)} onReload={() => void shares.reload()}
+          onNotice={onNotice} onClose={() => setDialog(null)} />
+      )}
       {cfFile && (
         <ConfluenceImport file={cfFile} store={store} me={me} remote={isRemote} docs={live.filter((d) => !isWikiHome(d.id))}
           onOpen={select} onClose={() => setCfFile(null)} onNotice={onNotice} />
@@ -1686,6 +1711,15 @@ function CommentGlyph() {
   return (
     <svg viewBox="0 0 20 20" width="17" height="17" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M4 4h12v9H9l-4 3v-3H4z" />
+    </svg>
+  );
+}
+
+function LinkGlyph() {
+  return (
+    <svg viewBox="0 0 20 20" width="17" height="17" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M8.6 11.4a3.3 3.3 0 0 0 4.7 0l2.6-2.6a3.3 3.3 0 0 0-4.7-4.7l-1 1" />
+      <path d="M11.4 8.6a3.3 3.3 0 0 0-4.7 0l-2.6 2.6a3.3 3.3 0 0 0 4.7 4.7l1-1" />
     </svg>
   );
 }
