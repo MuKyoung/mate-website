@@ -33,6 +33,9 @@ const lines = (...xs: string[]) => xs.join(NL);
  */
 export const isUntouchedSampleDoc = (d: Doc) => /^d\d+$/.test(d.id) && d.createdAt === d.updatedAt;
 
+/** 팀 양식 라벨 - 이 라벨을 단 문서는 새 문서 창에서 양식으로 고를 수 있다(Confluence 에서 옮긴 양식도 이 라벨을 단다) */
+export const TEMPLATE_LABEL = '양식';
+
 /** 휴지통에 들지 않은 문서 수 - 휴지통에 든 문서의 아래 문서도 뺀다(메뉴의 숫자) */
 export function liveDocCount(docs: Doc[]): number {
   const byId = new Map(docs.map((d) => [d.id, d]));
@@ -270,8 +273,12 @@ export interface DocStore {
   /** 휴지통에 든 문서도 들어 있다(trashedAt) - 화면이 가려 쓴다 */
   docs: Doc[];
   ready: boolean;
+  /**
+   * 새 문서. id 를 주면 그 id 로 만든다(맨 위 문서) - 이미 있으면(다른 곳에서 먼저 만듦) 새로 넣지 않고
+   * 있는 것을 쓴다
+   */
   create(input: {
-    title: string; body: string; parentId: string | null; author: string;
+    id?: string; title: string; body: string; parentId: string | null; author: string;
     icon?: string; labels?: string[]; order?: number;
   }): Doc;
   /** 고친다 - 화면을 바로 바꾸고 저장은 모아서 한다(글 쓰기 · 체크박스) */
@@ -309,6 +316,11 @@ export interface DocStore {
   flush?(): Promise<void>;
   /** Supabase 모드 - 서버 목록을 다시 읽는다 */
   reload?(): Promise<void>;
+  /**
+   * Supabase 모드 - 이 문서의 만들기 · 고치기가 서버에 닿을 때까지 기다린다. 가져오기처럼 위 문서가 먼저 들어가야
+   * 아래 문서를 넣을 수 있을 때 쓴다(없으면 바로 끝난 것으로 본다)
+   */
+  settled?(id: string): Promise<SaveResult>;
 }
 
 /* ── 그림 줄이기 - 브라우저 저장 모드는 그림을 본문에 data: 로 넣는다 ── */
@@ -419,10 +431,12 @@ export function useDocStore(opts?: StoreOptions): DocStore {
   }, []);
 
   const create = useCallback<DocStore['create']>((input) => {
+    const had = input.id ? docsRef.current.find((d) => d.id === input.id) : undefined;
+    if (had) return had;
     seq.current += 1;
     const now = new Date().toISOString();
     const doc = normalize({
-      id: `d${now}-${seq.current}`,
+      id: input.id ?? `d${now}-${seq.current}`,
       title: input.title,
       parentId: input.parentId,
       body: input.body,

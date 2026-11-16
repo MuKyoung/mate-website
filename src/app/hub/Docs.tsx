@@ -5,8 +5,8 @@ import dynamic from 'next/dynamic';
 import type { Editor } from '@tiptap/react';
 import { DOC_TEMPLATES, localDay, type Doc, type DocVersion, type Task } from './types';
 import { useMember, useMembers } from './members';
-import { isUntouchedSampleDoc, type DocStore, type SaveResult } from './docStore';
-import { docLinkIds } from './docMarkdown';
+import { TEMPLATE_LABEL, isUntouchedSampleDoc, type DocStore, type SaveResult } from './docStore';
+import { docLinkIds, fillTemplate, plainText, templateVars } from './docMarkdown';
 import { isRemote } from './supabase';
 import { useNoPresence, useRemotePresence, type Presence } from './remote';
 import DocEditor, { focusEditor, scrollToAnchor, scrollToPos, type WikiHeading, type WikiRefs } from './DocEditor';
@@ -30,6 +30,9 @@ const WikiMap = dynamic(() => import('./WikiMap'), {
     </div>
   ),
 });
+
+/* Confluence 가져오기(변환기 · ZIP 읽기)는 가져오기를 할 때만 불러온다 */
+const ConfluenceImport = dynamic(() => import('./ConfluenceImport'), { ssr: false });
 
 /*
  * 팀 위키 - 노션 · Confluence 처럼 쓰는 문서 화면.
@@ -92,6 +95,8 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
   const editorRef = useRef<Editor | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const importRef = useRef<HTMLInputElement>(null);
+  /** Confluence 에서 가져올 파일(스페이스 내보내기 ZIP · 문서 HTML · Word · 저장 형식) */
+  const [cfFile, setCfFile] = useState<File | null>(null);
   /** 들어온 주소의 ?doc= - 위키를 떠날 때 주소에서 지우므로 처음 그릴 때 읽어 둔다 */
   const [urlDoc] = useState(() => (typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('doc')));
   /** 주소의 문서가 있는지 한 번 따져 보았다 */
@@ -451,10 +456,18 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
   const taskClick = useRef(onTaskClick);
   taskClick.current = onTaskClick;
   const docRefs = useMemo(
-    () => store.docs.map((d) => ({ id: d.id, title: titleOf(d), icon: d.icon, gone: hidden.has(d.id) })),
+    () => store.docs.map((d) => ({ id: d.id, title: titleOf(d), icon: d.icon, gone: hidden.has(d.id), parentId: d.parentId, order: d.order })),
     [store.docs, hidden],
   );
   const taskRefs = useMemo(() => tasks.map((t) => ({ key: t.key, title: t.title, status: t.status })), [tasks]);
+  /** 팀 양식 - '양식' 라벨을 단 문서(새 문서 창에서 고른다) */
+  const teamTemplates = useMemo(
+    () => live.filter((d) => d.labels.includes(TEMPLATE_LABEL))
+      .sort((a, b) => titleOf(a).localeCompare(titleOf(b), 'ko'))
+      .slice(0, 60)
+      .map((d) => ({ id: `doc:${d.id}`, name: titleOf(d), hint: plainText(d.body).slice(0, 80), vars: templateVars(d.body) })),
+    [live],
+  );
   const fileUrl = store.fileUrl;
   const refs = useMemo<WikiRefs>(() => ({
     docs: docRefs,
@@ -489,11 +502,17 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
   const siblingsOf = useCallback((parentId: string | null, except?: string) =>
     live.filter((d) => (d.parentId ?? null) === parentId && d.id !== except).sort((a, b) => a.order - b.order), [live]);
 
-  const handleCreate = (templateId: string, title: string) => {
+  const handleCreate = (templateId: string, title: string, values?: Record<string, string>) => {
     const tpl = DOC_TEMPLATES.find((t) => t.id === templateId);
+    // 팀 양식('양식' 라벨을 단 문서) - 본문 · 아이콘 · 라벨(양식 라벨은 빼고)을 옮겨 쓴다
+    const team = templateId.startsWith('doc:') ? byId.get(templateId.slice(4)) : undefined;
     const parentId = creatingUnder ?? null;
     const last = siblingsOf(parentId).at(-1);
-    const created = store.create({ title, body: tpl?.body ?? '', parentId, author: me, order: between(last?.order, undefined) });
+    const created = store.create({
+      // 팀 양식의 칸은 새 문서 창에서 받은 값으로 바꾼다(Confluence 양식의 변수)
+      title, body: team ? fillTemplate(team.body, values ?? {}) : tpl?.body ?? '', parentId, author: me, order: between(last?.order, undefined),
+      ...(team ? { icon: team.icon, labels: team.labels.filter((l) => l !== TEMPLATE_LABEL) } : {}),
+    });
     if (parentId) setOpenList((prev) => [...new Set([...prev, parentId])]);
     setCreatingUnder(undefined);
     setActiveId(created.id);
@@ -820,15 +839,22 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
               {trashed.length > 0 && <span className="ml-auto rounded-full bg-tm-bg px-2 text-[12.5px] font-bold tabular-nums text-tm-sub">{trashed.length}</span>}
             </button>
           )}
-          <button type="button" onClick={() => importRef.current?.click()} title="마크다운(.md) 파일을 문서로 가져옵니다"
+          <button type="button" onClick={() => importRef.current?.click()}
+            title="Confluence 스페이스 내보내기(ZIP) · 문서(HTML · Word .doc) · 마크다운(.md) 파일을 문서로 가져옵니다"
             className="flex min-h-[38px] items-center gap-2 rounded-tm-sm px-2.5 text-[14px] font-semibold text-tm-ink transition-colors hover:bg-tm-tint [@media(pointer:coarse)]:min-h-11">
             가져오기
           </button>
-          <input ref={importRef} type="file" accept=".md,.markdown,.txt,text/markdown,text/plain" multiple hidden
+          <input ref={importRef} type="file" multiple hidden
+            accept=".md,.markdown,.txt,text/markdown,text/plain,.zip,application/zip,.html,.htm,text/html,.doc,.mht,.mhtml,.xml"
             onChange={(e) => {
               const files = [...(e.target.files ?? [])];
               e.target.value = '';
-              void importFiles(files);
+              if (inDrawer) closeDrawer(false);
+              // Confluence 파일은 하나씩 - 미리 보고 넣을 자리 · 사람을 고른 뒤 옮긴다
+              const cf = files.find((f) => /\.(zip|html?|doc|mht|mhtml|xml)$/i.test(f.name));
+              if (cf) setCfFile(cf);
+              const md = files.filter((f) => /\.(md|markdown|txt)$/i.test(f.name));
+              if (md.length) void importFiles(md);
             }} />
         </div>
       </>
@@ -1233,6 +1259,7 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
       {creatingUnder !== undefined && (
         <NewDocDialog
           parentTitle={creatingUnder ? titleOf(byId.get(creatingUnder) ?? { title: '' }) : null}
+          teamTemplates={teamTemplates}
           onCreate={handleCreate}
           onClose={() => setCreatingUnder(undefined)} />
       )}
@@ -1247,6 +1274,10 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
       )}
       {dialog === 'history' && doc && (
         <HistoryDialog doc={doc} store={store} refs={refs} onRestore={restoreVersion} onClose={() => setDialog(null)} />
+      )}
+      {cfFile && (
+        <ConfluenceImport file={cfFile} store={store} me={me} remote={isRemote} docs={live}
+          onOpen={select} onClose={() => setCfFile(null)} onNotice={onNotice} />
       )}
 
       {/* 휴대폰 문서 목록 서랍 - 고르면 닫히고 '목록' 단추로 초점이 돌아온다 */}

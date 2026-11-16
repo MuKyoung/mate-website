@@ -1,15 +1,15 @@
 'use client';
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
-import { DOC_TEMPLATES, localDay, type Doc, type DocComment, type DocVersion } from './types';
+import { DOC_TEMPLATES, localDay, localToday, type Doc, type DocComment, type DocVersion } from './types';
 import { useMember, useMembers } from './members';
-import { diffBlocks, mdToDoc, plainText } from './docMarkdown';
+import { diffBlocks, isDateVar, mdToDoc, plainText, type TemplateVarDef } from './docMarkdown';
 import type { DocStore, SaveResult } from './docStore';
 import DocEditor, { FloatMenu, keepInView, type WikiRefs } from './DocEditor';
 import Markdown from './Markdown';
 import {
   Avatar, IconSearch, Modal,
-  tmBtn, tmBtnPrimary, tmFieldBase, tmGhostBtn, tmGhostDanger, tmInput, tmLabel, tmTextarea, tmTextBtn,
+  tmBtn, tmBtnPrimary, tmFieldBase, tmGhostBtn, tmGhostDanger, tmInput, tmLabel, tmSelect, tmTextarea, tmTextBtn,
   useConfirm,
 } from './ui';
 
@@ -225,12 +225,15 @@ export function EmojiPicker({ value, onPick, onClose }: { value: string; onPick(
 /* ── 새 문서 ─────────────────────────────────────────── */
 
 export function NewDocDialog({
-  parentTitle, initialTemplate, onCreate, onClose,
+  parentTitle, initialTemplate, teamTemplates = [], onCreate, onClose,
 }: {
   parentTitle: string | null;
   /** 처음 골라 둘 양식 - 카테고리(프로젝트 · 개발자) 바로 아래에 만들 때. 없으면 회의록 */
   initialTemplate?: string;
-  onCreate(templateId: string, title: string): void;
+  /** 팀 양식 - '양식' 라벨을 단 문서(Confluence 에서 옮긴 양식). id 는 'doc:문서id' */
+  teamTemplates?: { id: string; name: string; hint: string; vars?: TemplateVarDef[] }[];
+  /** values - 팀 양식의 칸에 넣을 값(칸 이름 → 값) */
+  onCreate(templateId: string, title: string, values?: Record<string, string>): void;
   onClose(): void;
 }) {
   const [picked, setPicked] = useState(() => (DOC_TEMPLATES.some((x) => x.id === initialTemplate) ? initialTemplate as string : 'meeting'));
@@ -250,8 +253,14 @@ export function NewDocDialog({
 
   /** 제목 없이 Enter 를 눌렀다 - 만들기 단추는 막혀 있어 Enter 로만 생긴다 */
   const [missing, setMissing] = useState(false);
+  /* 팀 양식의 칸(Confluence 양식의 변수) - 고른 양식이 바뀌면 처음 값으로. 날짜 칸은 오늘, 고르기 칸은 첫 보기 */
+  const vars = useMemo(() => teamTemplates.find((t) => t.id === picked)?.vars ?? [], [teamTemplates, picked]);
+  const [values, setValues] = useState<Record<string, string>>({});
+  useEffect(() => {
+    setValues(Object.fromEntries(vars.map((v) => [v.name, isDateVar(v.name) ? localToday() : v.kind === 'list' ? v.options?.[0] ?? '' : ''])));
+  }, [vars]);
   const create = () => {
-    if (title.trim()) onCreate(picked, title.trim());
+    if (title.trim()) onCreate(picked, title.trim(), vars.length ? values : undefined);
     else setMissing(true);
   };
 
@@ -294,6 +303,63 @@ export function NewDocDialog({
           );
         })}
       </div>
+
+      {teamTemplates.length > 0 && (
+        <>
+          <p className={tmLabel} id="doc-team-template-label">팀 양식 <small className="font-semibold text-tm-sub">· &apos;양식&apos; 라벨을 단 문서</small></p>
+          <div role="radiogroup" aria-labelledby="doc-team-template-label" className="mb-[22px] grid max-h-[240px] gap-2.5 overflow-y-auto sm:grid-cols-2"
+            onPointerDown={() => { byPointer.current = true; }}
+            onKeyDown={() => { byPointer.current = false; }}>
+            {teamTemplates.map((t) => {
+              const on = picked === t.id;
+              return (
+                <label key={t.id}
+                  className={`flex cursor-pointer items-start gap-2.5 rounded-tm-sm border p-3.5 transition-[border-color,box-shadow,background-color] duration-150 ${
+                    on ? 'border-tm-blue bg-tm-tint shadow-[inset_0_0_0_1px_#2644cb]' : 'border-tm-edge bg-white hover:border-tm-blue'}`}>
+                  <input type="radio" name="doc-template" value={t.id} checked={on}
+                    onChange={() => { setPicked(t.id); setTitle(t.name); }}
+                    className="mt-[3px] h-[18px] w-[18px] flex-none accent-tm-blue" />
+                  <span className="min-w-0">
+                    <b className="block truncate text-[15px] font-bold text-tm-ink">{t.name}</b>
+                    <small className="mt-0.5 line-clamp-2 block text-[13px] leading-[1.5] text-tm-sub">{t.hint || '팀이 만든 양식'}</small>
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+        </>
+      )}
+
+      {vars.length > 0 && (
+        <fieldset className="mb-[22px] min-w-0">
+          <legend className={tmLabel}>양식 칸 채우기 <small className="font-semibold text-tm-sub">· 비워 두면 그 칸은 지웁니다</small></legend>
+          <div className="grid max-h-[300px] gap-3 overflow-y-auto">
+            {vars.map((v, i) => {
+              const id = `doc-var-${i}`;
+              const val = values[v.name] ?? '';
+              const set = (x: string) => setValues((prev) => ({ ...prev, [v.name]: x }));
+              return (
+                <div key={v.name} className="min-w-0">
+                  <label htmlFor={id} className="mb-1 block truncate text-[13px] font-bold text-tm-sub">{v.name}</label>
+                  {isDateVar(v.name) ? (
+                    <input id={id} type="date" value={val} onChange={(e) => set(e.target.value)} className={tmInput} />
+                  ) : v.kind === 'list' && v.options?.length ? (
+                    <select id={id} value={val} onChange={(e) => set(e.target.value)} className={`${tmSelect} w-full`}>
+                      <option value="">비워 두기</option>
+                      {v.options.map((o) => <option key={o} value={o}>{o}</option>)}
+                    </select>
+                  ) : v.kind === 'textarea' ? (
+                    <textarea id={id} rows={3} value={val} onChange={(e) => set(e.target.value)} className={tmTextarea} />
+                  ) : (
+                    <input id={id} value={val} onChange={(e) => set(e.target.value)} className={tmInput}
+                      onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) { e.preventDefault(); create(); } }} />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </fieldset>
+      )}
 
       <label className={tmLabel} htmlFor="doc-title">
         제목 <b className="text-[12.5px] font-bold text-tm-red">필수</b>

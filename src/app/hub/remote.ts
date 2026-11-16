@@ -807,9 +807,12 @@ export function useRemoteDocStore(opts: StoreOptions = {}): DocStore {
   });
 
   const create = useCallback<DocStore['create']>((input) => {
+    // id 를 정해 만드는 문서(맨 위 문서)는 이미 있으면 그대로 쓴다
+    const had = input.id ? eng.items.find((d) => d.id === input.id) : undefined;
+    if (had) return had;
     const now = new Date().toISOString();
     const doc: Doc = {
-      id: crypto.randomUUID(),
+      id: input.id ?? crypto.randomUUID(),
       title: input.title,
       parentId: input.parentId,
       body: input.body,
@@ -828,7 +831,8 @@ export function useRemoteDocStore(opts: StoreOptions = {}): DocStore {
     if (!doc.icon) delete row.icon;
     delete row.trashed_at;
     delete row.trashed_by;
-    eng.create(doc, { id: doc.id, ...row });
+    // 정한 id 면 두 팀원이 동시에 만들어도 하나만 - 겹치면(중복 키) 먼저 들어간 줄을 읽어 온다
+    eng.create(doc, { id: doc.id, ...row }, false, !!input.id);
     return doc;
   }, [eng]);
 
@@ -924,6 +928,7 @@ export function useRemoteDocStore(opts: StoreOptions = {}): DocStore {
   const reload = useCallback(async () => {
     await Promise.all([eng.reload(), wiki ? notes.eng.reload() : null]);
   }, [eng, notes.eng, wiki]);
+  const settled = useCallback((id: string) => eng.whenSettled(id), [eng]);
 
   // 댓글을 보내는 중 · 못 보낸 것도 저장 상태에 함께 센다
   const allSync: SyncState = sync === 'error' || notes.sync === 'error' ? 'error'
@@ -931,7 +936,7 @@ export function useRemoteDocStore(opts: StoreOptions = {}): DocStore {
 
   return {
     docs: items, ready, sync: allSync, loadError, deletedElsewhere: deleted,
-    create, update, save, remove, flush, reload, clearSamples: noop,
+    create, update, save, remove, flush, reload, settled, clearSamples: noop,
     features: { wiki: wiki === true, files: wiki === true },
     versions, snapshot, comments: notes.items, addComment, updateComment, upload, fileUrl,
   };
