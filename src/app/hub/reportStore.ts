@@ -375,6 +375,17 @@ export function previousDaily(daily: DailyEntry[], person: string, day: string):
   return best;
 }
 
+/** 그 사람이 그날 전에 마지막으로 적은 보고(무엇이라도 적은 것) - 회의 모드의 전일 보고. 2주 안에서만 찾는다 */
+export function lastDailyBefore(daily: DailyEntry[], person: string, day: string): DailyEntry | null {
+  const from = addDays(day, -14);
+  let best: DailyEntry | null = null;
+  for (const e of daily) {
+    if (e.person !== person || e.day >= day || e.day < from || !isDailyFilled(e)) continue;
+    if (!best || e.day > best.day) best = e;
+  }
+  return best;
+}
+
 /* ── 주간 초안 - 그 주의 스크럼을 프로젝트별로 모은다 ────────────
    Confluence 작성법 그대로: 완료는 프로젝트별로 모으고 같은 일이 여러 날 나오면 한 줄로 합쳐 소요기간을 더한다.
    진행 중은 그 주 마지막 스크럼의 예정 가운데 끝나지 않은 것, 다음 주 계획은 예정이었지만 완료 기록이 없던 나머지 */

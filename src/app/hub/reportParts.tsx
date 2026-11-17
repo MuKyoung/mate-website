@@ -493,14 +493,19 @@ export interface MeetingItem {
   /** 이름 옆 작은 글(작성 시각 등) */
   meta?: string;
   body: React.ReactNode;
+  /** 옆에 함께 볼 것(일간: 그 사람의 전일 보고) */
+  side?: { title: string; body: React.ReactNode };
 }
+
+/** 옆 칸 켜고 끄기 - 쓰는 쪽이 이 브라우저에 기억한다 */
+export interface MeetingSide { on: boolean; label: string; onToggle(): void }
 
 function clock(ms: number) {
   const s = Math.max(0, Math.floor(ms / 1000));
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 }
 
-export function MeetingView({ title, items, onClose }: { title: string; items: MeetingItem[]; onClose(): void }) {
+export function MeetingView({ title, items, onClose, side }: { title: string; items: MeetingItem[]; onClose(): void; side?: MeetingSide }) {
   const [idx, setIdx] = useState(() => Math.max(0, items.findIndex((x) => x.filled)));
   const [since, setSince] = useState(() => Date.now());
   const [now, setNow] = useState(() => Date.now());
@@ -544,14 +549,18 @@ export function MeetingView({ title, items, onClose }: { title: string; items: M
       } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
         e.preventDefault();
         go(idx - 1);
+      } else if ((e.key === 'p' || e.key === 'P' || e.code === 'KeyP') && side && !e.isComposing && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        side.onToggle();
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [go, idx, onClose]);
+  }, [go, idx, onClose, side]);
 
   if (!cur) return null;
   const done = items.filter((x) => x.filled).length;
+  const showSide = !!side?.on && items.some((x) => x.side);
 
   return (
     <div ref={box} role="dialog" aria-modal="true" aria-label={`${title} 회의 모드`} tabIndex={-1}
@@ -561,6 +570,15 @@ export function MeetingView({ title, items, onClose }: { title: string; items: M
         <p className="text-[13.5px] font-semibold text-tm-sub">작성 {done}/{items.length}명 · 회의 {clock(now - total)}</p>
         <span className="flex-1" />
         <p className="text-[13.5px] font-semibold tabular-nums text-tm-sub" aria-live="off">이 사람 {clock(now - since)}</p>
+        {side && (
+          <button type="button" aria-pressed={side.on} onClick={side.onToggle} title={`${side.label} (P)`}
+            className="inline-flex min-h-[38px] items-center gap-1.5 rounded-full px-2 text-[13px] font-semibold text-tm-sub hover:text-tm-blue [@media(pointer:coarse)]:min-h-11">
+            <span aria-hidden className={`inline-block h-4 w-7 rounded-full p-0.5 transition-colors ${side.on ? 'bg-tm-blue' : 'bg-tm-edge'}`}>
+              <span className={`block h-3 w-3 rounded-full bg-white transition-transform ${side.on ? 'translate-x-3' : ''}`} />
+            </span>
+            {side.label}
+          </button>
+        )}
         <button type="button" onClick={() => go(idx - 1)} disabled={idx === 0} aria-label="앞 사람" title="앞 사람 (←)" className={tmIconBtn}>
           <IconArrow dir="left" />
         </button>
@@ -583,16 +601,26 @@ export function MeetingView({ title, items, onClose }: { title: string; items: M
         ))}
       </nav>
       <div ref={body} className="min-h-0 flex-1 overflow-y-auto px-6 py-6 max-[720px]:px-4">
-        <article className="mx-auto max-w-[1280px] rounded-tm border border-tm-line bg-white px-8 py-7 text-[18px] shadow-tm max-[720px]:px-4 max-[720px]:py-5 max-[720px]:text-[16px]">
-          <div className="mb-5 flex items-center gap-3.5">
-            <PersonMark name={cur.name} member={cur.member} size={48} />
-            <div className="min-w-0">
-              <h2 className="text-[28px] font-extrabold leading-tight text-tm-deep max-[720px]:text-[22px]">{cur.name}</h2>
-              {cur.meta && <p className="text-[14px] font-semibold text-tm-sub">{cur.meta}</p>}
+        {/* 전일 보고를 켜면 넓은 화면은 오른쪽에 나란히, 좁은 화면은 아래에 */}
+        <div className={`mx-auto grid items-start gap-5 ${showSide ? 'max-w-[1680px] min-[1180px]:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]' : 'max-w-[1280px]'}`}>
+          <article className="min-w-0 rounded-tm border border-tm-line bg-white px-8 py-7 text-[18px] shadow-tm max-[720px]:px-4 max-[720px]:py-5 max-[720px]:text-[16px]">
+            <div className="mb-5 flex items-center gap-3.5">
+              <PersonMark name={cur.name} member={cur.member} size={48} />
+              <div className="min-w-0">
+                <h2 className="text-[28px] font-extrabold leading-tight text-tm-deep max-[720px]:text-[22px]">{cur.name}</h2>
+                {cur.meta && <p className="text-[14px] font-semibold text-tm-sub">{cur.meta}</p>}
+              </div>
             </div>
-          </div>
-          {cur.body}
-        </article>
+            {cur.body}
+          </article>
+          {showSide && cur.side && (
+            <aside aria-label={cur.side.title}
+              className="min-w-0 rounded-tm border border-dashed border-tm-edge bg-white/70 px-6 py-5 text-[16px] max-[720px]:px-4 max-[720px]:text-[15px]">
+              <p className="mb-3 text-[15px] font-extrabold text-tm-sub">{cur.side.title}</p>
+              {cur.side.body}
+            </aside>
+          )}
+        </div>
       </div>
     </div>
   );

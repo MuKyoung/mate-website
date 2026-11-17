@@ -5,7 +5,7 @@ import { isRemote } from './supabase';
 import { useRemoteReportStore } from './reportRemote';
 import {
   LIMITS, addBlocksTo, addDays, blankDaily, blankWeekly, blocksOf, dailyProjects, dailyText, dayLabel, isDailyFilled, isDay,
-  isWeeklyFilled, jiraBaseOf, memberOfPerson, mergeWeekly, previousDaily, projectKey, projectLabel, projectNames, reorderPeople,
+  isWeeklyFilled, jiraBaseOf, lastDailyBefore, memberOfPerson, mergeWeekly, previousDaily, projectKey, projectLabel, projectNames, reorderPeople,
   stepWorkday, useReportStore, weekLabel, weekOf, weeklyDraft, weeklyText, whenOf, workdaysOf,
   type Block, type ReportStore, type ReportStoreOptions,
 } from './reportStore';
@@ -43,7 +43,17 @@ const useReports: (opts: ReportStoreOptions) => ReportStore = isRemote ? useRemo
 export const REPORT_KEYS_KEY = 'mate.taskmanager.reportKeys.v1';
 /** 명단과 계정이 이어지지 않았을 때 이 브라우저에서 고른 '나' */
 const MINE_KEY = 'mate.taskmanager.reports.mine.v1';
+/** 회의 모드에서 전일 보고를 함께 보는가 */
+const MEETING_SIDE_KEY = 'mate.taskmanager.reports.meetingSide.v1';
 const ON_OFF = ['on', 'off'] as const;
+
+/**
+ * 날짜 · 작성 현황 줄 아래의 스크롤 칸. 넓은 화면의 Hub 셸은 본문을 화면 높이에 가두므로 화면마다 제 스크롤 칸이 있어야 한다.
+ * 좁은 화면 · 낮은 화면은 셸(.tm-page)이 통째로 스크롤하므로 풀어 둔다(globals.css). 카드 테두리 · 초점 고리가 잘리지 않게 좌우 4px 여유
+ */
+const scrollBox =
+  '-mx-1 min-h-0 flex-1 overflow-y-auto px-1 pt-0.5 max-[900px]:flex-none max-[900px]:overflow-visible '
+  + '[@media(max-height:500px)]:flex-none [@media(max-height:500px)]:overflow-visible';
 
 const DAILY_COLS: Col<DailyProject>[] = [
   { key: 'done', label: '완료', hint: '끝낸 일 · 어디까지 했는지 (줄 끝에 · 1일)' },
@@ -698,6 +708,8 @@ function DailyView({
   const [editing, setEditing] = useState<string | null>(null);
   const [carry, setCarry] = useState(false);
   const [meeting, setMeeting] = useState(false);
+  /** 회의 모드에서 전일 보고를 옆에 함께 보는가 - 이 브라우저에 기억 */
+  const [sideOn, setSideOn] = useStoredChoice(MEETING_SIDE_KEY, 'on', ON_OFF);
   const [removeAsk, removeNode] = useRemoveAsk();
   const memberOf = (p: ReportPerson) => (p.order === Number.MAX_SAFE_INTEGER ? null : memberOfPerson(p, members));
 
@@ -718,20 +730,24 @@ function DailyView({
 
   const meetingItems: MeetingItem[] = rows.filter((r) => !r.gone || isDailyFilled(r.entry)).map((r) => {
     const filled = isDailyFilled(r.entry);
+    const before = lastDailyBefore(store.daily, r.person.id, day);
     return {
       id: r.person.id, name: r.person.name, member: memberOf(r.person), filled,
       meta: metaOf(r.entry, filled, today, memberOf(r.person), nameOf),
       body: filled && r.entry
         ? <DailyRead entry={r.entry} wide={width >= 700} />
         : <p className="text-tm-sub">아직 적지 않았습니다.</p>,
+      side: before
+        ? { title: `전일 보고 · ${dayLabel(before.day)}`, body: <DailyRead entry={before} wide={false} /> }
+        : { title: '전일 보고', body: <p className="text-tm-sub">2주 안에 적은 보고가 없습니다.</p> },
     };
   });
 
   const isToday = day === today;
 
   return (
-    <div ref={boxRef} className="min-w-0">
-      <div className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-2.5">
+    <div ref={boxRef} className="flex min-h-0 min-w-0 flex-1 flex-col">
+      <div className="mb-4 flex flex-none flex-wrap items-center gap-x-2 gap-y-2.5">
         <button type="button" onClick={() => onDay(stepWorkday(day, -1))} aria-label="이전 평일" title="이전 평일" className={tmIconBtn}>
           <IconArrow dir="left" />
         </button>
@@ -751,6 +767,7 @@ function DailyView({
         {canAdmin && <button type="button" onClick={onRoster} className={tmGhostBtn}>명단 관리</button>}
       </div>
 
+      <div className={scrollBox}>
       {/* 내 스크럼 */}
       <section aria-label="내 스크럼" className="mb-6 rounded-tm border border-tm-line bg-white shadow-tm">
         <ComposerHead title={mine ? `내 스크럼 · ${mine.name}` : '내 스크럼'} mine={mine} members={members}
@@ -815,6 +832,8 @@ function DailyView({
         })}
       </div>
 
+      </div>
+
       {carry && mine && prev && (
         <CarryDialog prev={prev} entry={myEntry} onClose={() => setCarry(false)}
           onApply={(items, field) => {
@@ -835,7 +854,8 @@ function DailyView({
           }} />
       )}
       {meeting && (
-        <MeetingView title={`${dayLabel(day)} 스크럼`} items={meetingItems} onClose={() => setMeeting(false)} />
+        <MeetingView title={`${dayLabel(day)} 스크럼`} items={meetingItems} onClose={() => setMeeting(false)}
+          side={{ on: sideOn === 'on', label: '전일 보고 함께 보기', onToggle: () => setSideOn(sideOn === 'on' ? 'off' : 'on') }} />
       )}
       {removeNode}
     </div>
@@ -1064,8 +1084,8 @@ function WeeklyView({
   }
 
   return (
-    <div ref={boxRef} className="min-w-0">
-      <div className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-2.5">
+    <div ref={boxRef} className="flex min-h-0 min-w-0 flex-1 flex-col">
+      <div className="mb-4 flex flex-none flex-wrap items-center gap-x-2 gap-y-2.5">
         <button type="button" onClick={() => onWeek(addDays(week, -7))} aria-label="지난주" title="지난주" className={tmIconBtn}>
           <IconArrow dir="left" />
         </button>
@@ -1086,6 +1106,7 @@ function WeeklyView({
         {canAdmin && <button type="button" onClick={onRoster} className={tmGhostBtn}>명단 관리</button>}
       </div>
 
+      <div className={scrollBox}>
       {/* 팀 요약 - PM */}
       <section aria-labelledby={`${uid}-team`} className="mb-6 rounded-tm border border-tm-line bg-white shadow-tm">
         <header className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-b border-tm-line px-5 py-3.5 max-[720px]:px-4">
@@ -1242,6 +1263,8 @@ function WeeklyView({
             </PersonCard>
           );
         })}
+      </div>
+
       </div>
 
       {draftOpen && draft && (
