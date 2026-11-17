@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import {
   DRIVE_ACCOUNT, DRIVE_FOLDER, ancestorsOf, buildDriveTree, driveUrl, loadDrive,
   type DriveItem, type DriveLoad, type DriveNode, type DriveTree,
@@ -13,8 +14,10 @@ import {
 import { isRemote } from './supabase';
 import { useMembers } from './members';
 import type { Member, Task } from './types';
+import type { CanvasApi } from './wikiGraph';
+import type { MindDetails } from './OrgMind';
 import {
-  Avatar, IconClose, IconPlus, IconSearch, Modal, PageHead,
+  Avatar, IconClose, IconNav, IconPlus, IconSearch, Modal, PageHead,
   tmBtn, tmBtnPrimary, tmFieldBase, tmGhostBtn, tmIconBtn, tmIconBtnSm, tmInput, tmLabel, tmSelect, tmTextarea, useMediaQuery,
 } from './ui';
 
@@ -32,18 +35,36 @@ const ZOOM_MAX = 1.6;
 const clampZoom = (z: number) => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Math.round(z * 100) / 100));
 const PREFS_KEY = 'mate.taskmanager.org.v1';
 
-interface Prefs { view: OrgView; zoom: number | null }
+/* 마인드맵 모양은 위키와 같은 엔진(Mind Elixir)을 쓴다 - 고를 때만 불러온다 */
+const OrgMind = dynamic(() => import('./OrgMind'), {
+  ssr: false,
+  loading: () => <div className="absolute inset-0 grid place-items-center bg-tm-bg text-[15px] font-semibold text-tm-sub">마인드맵을 불러오는 중…</div>,
+});
+
+/** 모양 - 위에서 아래로 뻗는 트리 · 가운데에서 가지로 펼치는 마인드맵 */
+type Shape = 'tree' | 'mind';
+const ALL_DETAILS: MindDetails = { duties: true, tools: true, folders: true };
+const DETAIL_TOGGLES: { id: keyof MindDetails; label: string; hint: string }[] = [
+  { id: 'duties', label: '맡은 일', hint: '사람마다 맡은 역할과 책임 가지' },
+  { id: 'tools', label: '도구', hint: '사람마다 MATE Studio 도구 가지(쓰는 것 · 추천)' },
+  { id: 'folders', label: '폴더', hint: '사람마다 담당 구글 폴더 가지' },
+];
+
+interface Prefs { view: OrgView; zoom: number | null; shape: Shape; details: MindDetails }
 
 function readPrefs(me: string): Prefs {
   try {
     const raw = window.localStorage.getItem(`${PREFS_KEY}:${me}`);
-    const p = (raw ? JSON.parse(raw) : {}) as { view?: unknown; zoom?: unknown };
+    const p = (raw ? JSON.parse(raw) : {}) as { view?: unknown; zoom?: unknown; shape?: unknown; details?: Partial<Record<keyof MindDetails, unknown>> };
+    const d = p.details && typeof p.details === 'object' ? p.details : {};
     return {
       view: p.view === 'report' ? 'report' : 'team',
       zoom: typeof p.zoom === 'number' && Number.isFinite(p.zoom) ? clampZoom(p.zoom) : null,
+      shape: p.shape === 'mind' ? 'mind' : 'tree',
+      details: { duties: d.duties !== false, tools: d.tools !== false, folders: d.folders !== false },
     };
   } catch {
-    return { view: 'team', zoom: null };
+    return { view: 'team', zoom: null, shape: 'tree', details: ALL_DETAILS };
   }
 }
 
@@ -914,6 +935,12 @@ function OrgMap({ tree, me, view, prefs, savePrefs, dtree, openTasks, missing, c
   const d = useMemo(() => dimsOf(narrow), [narrow]);
 
   const [closed, setClosed] = useState<Set<string>>(() => new Set());
+  /* 마인드맵 모양 - 엔진의 크기 단추 · 지금 크기, 사람마다 붙일 가지 */
+  const shape = prefs.shape;
+  const mind = shape === 'mind';
+  const details = prefs.details;
+  const mindApi = useRef<CanvasApi | null>(null);
+  const [mindZoom, setMindZoom] = useState(1);
   const layout = useMemo(() => layoutOf(tree.root, closed, d), [tree, closed, d]);
 
   const [selected, setSelected] = useState('root');
@@ -986,7 +1013,7 @@ function OrgMap({ tree, me, view, prefs, savePrefs, dtree, openTasks, missing, c
     const left = Math.max(0, (box.x + box.w / 2) * zoom - el.clientWidth / 2);
     const top = b.key === 'root' ? 0 : Math.max(0, (box.y + box.h / 2) * zoom - el.clientHeight * (sheet && !wide ? 0.2 : 0.4));
     el.scrollTo({ left, top, behavior: b.smooth && !reduced ? 'smooth' : 'auto' });
-  }, [layout, zoom, tick, fitZoom, reduced, sheet, wide]);
+  }, [layout, zoom, tick, fitZoom, reduced, sheet, wide, shape]);
 
   const zoomTo = useCallback((z: number, at?: { x: number; y: number }) => {
     const el = scroller.current;
@@ -1019,7 +1046,7 @@ function OrgMap({ tree, me, view, prefs, savePrefs, dtree, openTasks, missing, c
     };
     el.addEventListener('wheel', onWheel, { passive: false });
     return () => el.removeEventListener('wheel', onWheel);
-  }, [zoomTo]);
+  }, [zoomTo, shape]);
 
   const [dragging, setDragging] = useState(false);
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -1081,6 +1108,12 @@ function OrgMap({ tree, me, view, prefs, savePrefs, dtree, openTasks, missing, c
     savePrefs({ view: v });
     request({ kind: 'center', key: 'root', smooth: false });
   };
+  /** 트리 ↔ 마인드맵 - 트리로 돌아오면 맨 위를 화면에 둔다 */
+  const setShape = (next: Shape) => {
+    if (next === shape) return;
+    savePrefs({ shape: next });
+    if (next === 'tree') request({ kind: 'center', key: 'root', smooth: false });
+  };
   const pickTool = (id: string) => {
     setTool(id);
     if (!wide) setSheet(false);
@@ -1138,6 +1171,13 @@ function OrgMap({ tree, me, view, prefs, savePrefs, dtree, openTasks, missing, c
           </p>
         )}
 
+        <div role="group" aria-label="모양" className="flex items-center gap-1">
+          <button type="button" aria-pressed={shape === 'tree'} onClick={() => setShape('tree')} className={`${seg} gap-1.5 pl-3`}
+            title="위에서 아래로 뻗는 조직도 - 카드에 도구 · 폴더 · 작업 수까지"><IconNav name="org" size={16} />트리</button>
+          <button type="button" aria-pressed={shape === 'mind'} onClick={() => setShape('mind')} className={`${seg} gap-1.5 pl-3`}
+            title="팀 위키 마인드맵처럼 가운데에서 가지로 - 사람마다 맡은 일 · 도구 · 폴더 가지"><IconNav name="mindmap" size={16} />마인드맵</button>
+        </div>
+
         <div role="group" aria-label="보기" className="flex items-center gap-1">
           <button type="button" aria-pressed={view === 'team'} onClick={() => setView('team')} className={seg}
             title="회사 → 팀 → 사람. 같은 팀 안에서는 상위 아래에 둡니다">팀별</button>
@@ -1145,19 +1185,33 @@ function OrgMap({ tree, me, view, prefs, savePrefs, dtree, openTasks, missing, c
             title="회사 → 상위 → 아래 사람. 팀이 달라도 보고 대상 아래에 둡니다">보고 체계</button>
         </div>
 
+        {mind && (
+          <div role="group" aria-label="사람 가지" className="flex items-center gap-1">
+            {DETAIL_TOGGLES.map((t) => (
+              <button key={t.id} type="button" aria-pressed={details[t.id]} title={t.hint} className={seg}
+                onClick={() => savePrefs({ details: { ...details, [t.id]: !details[t.id] } })}>
+                {t.label}
+              </button>
+            ))}
+          </div>
+        )}
+
         <div role="group" aria-label="크기" className="ml-auto flex items-center gap-1">
-          <button type="button" onClick={() => zoomTo(zoom - 0.1)} disabled={zoom <= ZOOM_MIN} aria-label="작게 보기" title="작게 (Ctrl+휠)" className={tmIconBtn}>
+          <button type="button" onClick={() => (mind ? mindApi.current?.zoomOut() : zoomTo(zoom - 0.1))} disabled={!mind && zoom <= ZOOM_MIN}
+            aria-label="작게 보기" title={mind ? '작게 (-)' : '작게 (Ctrl+휠)'} className={tmIconBtn}>
             <IconMinus />
           </button>
-          <button type="button" onClick={() => zoomTo(1)} title="원래 크기로"
+          <button type="button" onClick={() => (mind ? mindApi.current?.fit() : zoomTo(1))} title={mind ? '화면에 맞추기' : '원래 크기로'}
             className="h-[38px] min-w-[54px] rounded-tm-sm px-1 text-[13.5px] font-bold tabular-nums text-tm-ink transition-colors duration-150 hover:bg-tm-tint
                        [@media(pointer:coarse)]:h-11">
-            {Math.round(zoom * 100)}%
+            {Math.round((mind ? mindZoom : zoom) * 100)}%
           </button>
-          <button type="button" onClick={() => zoomTo(zoom + 0.1)} disabled={zoom >= ZOOM_MAX} aria-label="크게 보기" title="크게 (Ctrl+휠)" className={tmIconBtn}>
+          <button type="button" onClick={() => (mind ? mindApi.current?.zoomIn() : zoomTo(zoom + 0.1))} disabled={!mind && zoom >= ZOOM_MAX}
+            aria-label="크게 보기" title={mind ? '크게 (+)' : '크게 (Ctrl+휠)'} className={tmIconBtn}>
             <IconPlus />
           </button>
-          <button type="button" onClick={fit} aria-label="화면 너비에 맞추기" title="조직도 전체를 화면 너비에 맞춥니다" className={tmIconBtn}>
+          <button type="button" onClick={() => (mind ? mindApi.current?.fit() : fit())} aria-label="화면에 맞추기"
+            title={mind ? '마인드맵 전체가 보이게 맞춥니다' : '조직도 전체를 화면 너비에 맞춥니다'} className={tmIconBtn}>
             <IconFit />
           </button>
         </div>
@@ -1165,6 +1219,12 @@ function OrgMap({ tree, me, view, prefs, savePrefs, dtree, openTasks, missing, c
 
       {/* ── 판 + 옆 칸 ── */}
       <div className="relative flex min-h-0 flex-1">
+        {mind ? (
+          <div className="relative min-h-0 min-w-0 flex-1 bg-tm-bg">
+            <OrgMind tree={tree} view={view} me={me} dtree={dtree} openTasks={openTasks} hits={hits} selected={selected}
+              details={details} narrow={narrow} onPick={(k) => pick(k)} api={mindApi} onZoom={setMindZoom} />
+          </div>
+        ) : (
         <div ref={scroller} role="region" aria-label="조직도" tabIndex={0} onPointerDown={onPointerDown}
           className={`relative min-h-0 min-w-0 flex-1 overflow-auto overscroll-contain bg-tm-bg outline-none
                       focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-tm-blue ${dragging ? 'cursor-grabbing select-none' : 'cursor-grab'}`}>
@@ -1184,6 +1244,7 @@ function OrgMap({ tree, me, view, prefs, savePrefs, dtree, openTasks, missing, c
             </div>
           </div>
         </div>
+        )}
         {wide ? (
           <aside aria-label="자세히" className="flex w-[400px] flex-none flex-col border-l border-tm-line bg-white min-[1600px]:w-[440px]">
             {panel()}
@@ -1207,7 +1268,10 @@ function OrgMap({ tree, me, view, prefs, savePrefs, dtree, openTasks, missing, c
         {brokenNames.length > 0 ? (
           <span className="font-semibold text-tm-red-deep">상위가 서로 이어져 돌고 돌아 맨 위에 둔 사람: {brokenNames.join(', ')}</span>
         ) : (
-          <span className="max-[720px]:hidden">카드를 누르면 자세히 · 빈 곳을 끌어 옮기고 Ctrl+휠로 크기를 바꿉니다</span>
+          <span className="max-[720px]:hidden">
+            {mind ? '노드를 누르면 자세히 · 빈 곳을 끌어 옮기고, 가지 끝 동그라미로 접고 펼칩니다'
+              : '카드를 누르면 자세히 · 빈 곳을 끌어 옮기고 Ctrl+휠로 크기를 바꿉니다'}
+          </span>
         )}
       </div>
     </div>
