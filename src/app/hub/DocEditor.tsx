@@ -12,6 +12,7 @@ import {
 import { BubbleMenu } from '@tiptap/react/menus';
 import { Extension, getMarkRange, type EditorOptions, type Range } from '@tiptap/core';
 import { NodeSelection, Plugin, PluginKey } from '@tiptap/pm/state';
+import { CellSelection } from '@tiptap/pm/tables';
 import { Decoration, DecorationSet } from '@tiptap/pm/view';
 import { DOMParser as PMDOMParser, type Node as PMNode } from '@tiptap/pm/model';
 import Suggestion, { type SuggestionKeyDownProps, type SuggestionProps } from '@tiptap/suggestion';
@@ -26,6 +27,8 @@ import {
   carryImages, carryJsonImages, carryNotice, clipboardFiles, compactImage, genericImageName, imageOnlyHtml,
   jsonImageWork, ownImages, refOnlyText, tidyImages, unwrapVml, type PasteJob,
 } from './pasteImages';
+import TableTools from './TableTools';
+import { TableKeys } from './tableOps';
 import { localToday, statusLabel, type Status } from './types';
 import { Avatar } from './ui';
 
@@ -749,7 +752,7 @@ function blockCommands(pick: (kind: 'image' | 'file') => void): BlockCmd[] {
     })),
     { id: 'toggle', group: '정보 · 코드', label: '접기', hint: '필요할 때 펼쳐 보는 긴 내용', keys: 'toggle details 접기 토글 펼치기', icon: <Ico n="toggle" />, run: (e, r) => at(e, r).setDetails().run() },
     { id: 'code', group: '정보 · 코드', label: '코드 블록', hint: '명령어 · 코드를 글자 그대로', md: '```', keys: 'code block 코드', icon: <Ico n="codeblock" />, run: (e, r) => at(e, r).toggleCodeBlock().run() },
-    { id: 'table', group: '정보 · 코드', label: '표', hint: '항목을 줄과 칸으로 비교 · 3 × 3', keys: 'table 표 테이블', icon: <Ico n="table" />, run: (e, r) => at(e, r).insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run() },
+    { id: 'table', group: '정보 · 코드', label: '표', hint: '행과 열로 정리 · 3 × 3', keys: 'table 표 테이블', icon: <Ico n="table" />, run: (e, r) => at(e, r).insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run() },
     { id: 'hr', group: '정보 · 코드', label: '구분선', hint: '흐름을 나누는 줄', md: '---', keys: 'divider hr line 구분선 줄', icon: <Ico n="hr" />, run: (e, r) => at(e, r).setHorizontalRule().run() },
     { id: 'layout-2', group: '단 · 목차', label: '2단', hint: '나란히 두 칸으로 나누기', keys: 'layout columns two 단 2단 칸 나누기 레이아웃', icon: <Ico n="cols2" />, run: layout([50, 50]) },
     { id: 'layout-3', group: '단 · 목차', label: '3단', hint: '나란히 세 칸으로 나누기', keys: 'layout columns three 단 3단 칸 나누기 레이아웃', icon: <Ico n="cols3" />, run: layout([33.33, 33.33, 33.34]) },
@@ -1292,6 +1295,7 @@ export default function DocEditor(props: DocEditorProps) {
       mention,
       docLinks,
       extras,
+      TableKeys,
     ];
     // 편집기는 처음 한 번만 세운다 - 바뀌는 값은 live 로 읽는다
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1715,6 +1719,7 @@ export default function DocEditor(props: DocEditorProps) {
         <div className="tm-editor-frame relative">
           {editable && <BlockHandle editor={editor} />}
           <EditorContent editor={editor} />
+          {editable && <TableTools editor={editor} Menu={FloatMenu} colors={BG_COLORS} notice={(t) => live.current.onNotice?.(t, 'err')} />}
           {editable && <Bubble editor={editor} linkOpen={linkOpen} setLinkOpen={setLinkOpen} />}
         </div>
         <input ref={fileInput} type="file" multiple hidden
@@ -1991,7 +1996,7 @@ function Toolbar({ editor, pick, canUpload, onLink }: {
         <Ico n="plus" />
       </ToolBtn>
       {s.table && (
-        <ToolBtn label="표 고치기 (줄 · 칸 · 합치기 · 칸 색)" text="표" expanded={open === 'table'} btnRef={tableBtn} onClick={() => toggle('table')}>
+        <ToolBtn label="표 고치기 (행 · 열 · 셀 합치기 · 셀 색)" text="표" expanded={open === 'table'} btnRef={tableBtn} onClick={() => toggle('table')}>
           <Ico n="table" />
         </ToolBtn>
       )}
@@ -2057,30 +2062,30 @@ function Toolbar({ editor, pick, canUpload, onLink }: {
       )}
       {open === 'table' && (
         <FloatMenu anchor={tableBtn.current} label="표 고치기" width={248} onClose={close}>
-          <button type="button" role="menuitem" tabIndex={-1} className="tm-menu-item" onClick={() => { close(); run((c) => c.addRowBefore()); }}>위에 줄 넣기</button>
-          <button type="button" role="menuitem" tabIndex={-1} className="tm-menu-item" onClick={() => { close(); run((c) => c.addRowAfter()); }}>아래에 줄 넣기</button>
-          <button type="button" role="menuitem" tabIndex={-1} className="tm-menu-item" onClick={() => { close(); run((c) => c.addColumnBefore()); }}>왼쪽에 칸 넣기</button>
-          <button type="button" role="menuitem" tabIndex={-1} className="tm-menu-item" onClick={() => { close(); run((c) => c.addColumnAfter()); }}>오른쪽에 칸 넣기</button>
-          <button type="button" role="menuitem" tabIndex={-1} className="tm-menu-item" onClick={() => { close(); run((c) => c.deleteRow()); }}>줄 지우기</button>
-          <button type="button" role="menuitem" tabIndex={-1} className="tm-menu-item" onClick={() => { close(); run((c) => c.deleteColumn()); }}>칸 지우기</button>
+          <button type="button" role="menuitem" tabIndex={-1} className="tm-menu-item" onClick={() => { close(); run((c) => c.addRowBefore()); }}>위에 행 넣기</button>
+          <button type="button" role="menuitem" tabIndex={-1} className="tm-menu-item" onClick={() => { close(); run((c) => c.addRowAfter()); }}>아래에 행 넣기</button>
+          <button type="button" role="menuitem" tabIndex={-1} className="tm-menu-item" onClick={() => { close(); run((c) => c.addColumnBefore()); }}>왼쪽에 열 넣기</button>
+          <button type="button" role="menuitem" tabIndex={-1} className="tm-menu-item" onClick={() => { close(); run((c) => c.addColumnAfter()); }}>오른쪽에 열 넣기</button>
+          <button type="button" role="menuitem" tabIndex={-1} className="tm-menu-item" onClick={() => { close(); run((c) => c.deleteRow()); }}>행 지우기</button>
+          <button type="button" role="menuitem" tabIndex={-1} className="tm-menu-item" onClick={() => { close(); run((c) => c.deleteColumn()); }}>열 지우기</button>
           <div className="tm-menu-sep" role="separator" />
-          <button type="button" role="menuitem" tabIndex={-1} className="tm-menu-item" onClick={() => { close(); run((c) => c.toggleHeaderRow()); }}>머리 줄 켜고 끄기</button>
-          <button type="button" role="menuitem" tabIndex={-1} className="tm-menu-item" onClick={() => { close(); run((c) => c.toggleHeaderColumn()); }}>첫 칸을 머리 칸으로 켜고 끄기</button>
+          <button type="button" role="menuitem" tabIndex={-1} className="tm-menu-item" onClick={() => { close(); run((c) => c.toggleHeaderRow()); }}>머리글 행 켜고 끄기</button>
+          <button type="button" role="menuitem" tabIndex={-1} className="tm-menu-item" onClick={() => { close(); run((c) => c.toggleHeaderColumn()); }}>머리글 열 켜고 끄기</button>
           <button type="button" role="menuitem" tabIndex={-1} className="tm-menu-item" disabled={!s.canMerge}
-            title={s.canMerge ? undefined : '칸 여러 개를 끌어 고른 뒤 합칠 수 있습니다'} onClick={() => { close(); run((c) => c.mergeCells()); }}>칸 합치기</button>
+            title={s.canMerge ? undefined : '셀 여러 개를 끌어 고른 뒤 합칠 수 있습니다'} onClick={() => { close(); run((c) => c.mergeCells()); }}>셀 합치기</button>
           <button type="button" role="menuitem" tabIndex={-1} className="tm-menu-item" disabled={!s.canSplit}
-            title={s.canSplit ? undefined : '합친 칸에서만 나눌 수 있습니다'} onClick={() => { close(); run((c) => c.splitCell()); }}>합친 칸 나누기</button>
+            title={s.canSplit ? undefined : '합친 셀에서만 나눌 수 있습니다'} onClick={() => { close(); run((c) => c.splitCell()); }}>셀 나누기</button>
           <div className="tm-menu-sep" role="separator" />
-          <p className="tm-menu-label" aria-hidden>칸 색</p>
-          <div className="tm-swatches" role="group" aria-label="칸 색">
-            <button type="button" role="menuitem" tabIndex={-1} className="tm-swatch is-none" title="색 없음" aria-label="칸 색 없음"
+          <p className="tm-menu-label" aria-hidden>셀 색</p>
+          <div className="tm-swatches" role="group" aria-label="셀 색">
+            <button type="button" role="menuitem" tabIndex={-1} className="tm-swatch is-none" title="색 없음" aria-label="셀 색 없음"
               onClick={() => { close(); run((c) => c.setCellAttribute('background', null)); }} />
             {BG_COLORS.map(([hex, name]) => (
-              <button key={hex} type="button" role="menuitem" tabIndex={-1} className="tm-swatch" style={{ background: hex }} title={name} aria-label={`칸 색 ${name}`}
+              <button key={hex} type="button" role="menuitem" tabIndex={-1} className="tm-swatch" style={{ background: hex }} title={name} aria-label={`셀 색 ${name}`}
                 onClick={() => { close(); run((c) => c.setCellAttribute('background', hex)); }} />
             ))}
           </div>
-          <button type="button" role="menuitem" tabIndex={-1} className="tm-menu-item" onClick={() => { close(); resetColumnWidths(editor); }}>칸 너비 되돌리기</button>
+          <button type="button" role="menuitem" tabIndex={-1} className="tm-menu-item" onClick={() => { close(); resetColumnWidths(editor); }}>열 너비 되돌리기</button>
           <div className="tm-menu-sep" role="separator" />
           <button type="button" role="menuitem" tabIndex={-1} className="tm-menu-item is-danger" onClick={() => { close(); run((c) => c.deleteTable()); }}>표 지우기</button>
         </FloatMenu>
@@ -2387,7 +2392,8 @@ function Bubble({ editor, linkOpen, setLinkOpen }: { editor: Editor; linkOpen: b
   linkOpenNow.current = linkOpen;
   const shouldShow = useCallback(({ editor: e, state, from, to }: { editor: Editor; state: Editor['state']; from: number; to: number }) => {
     if (!e.isEditable) return false;
-    if (state.selection instanceof NodeSelection) return false;
+    // 표의 셀 여러 개를 골랐을 때는 표 도구(행 · 열 · 셀 메뉴)가 뜬다 - 서식 막대가 그 위를 가리지 않게
+    if (state.selection instanceof NodeSelection || state.selection instanceof CellSelection) return false;
     if (state.doc.resolve(from).parent.type.spec.code) return false;
     // 글을 골랐거나, 링크 위에 커서가 있거나, 링크를 고치는 중
     return linkOpenNow.current || from !== to || e.isActive('link');
@@ -2732,7 +2738,8 @@ function BlockHandle({ editor }: { editor: Editor }) {
 
   return (
     <div className="tm-handle" style={{ top: hover.top }} onMouseDown={(e) => { if (e.target === e.currentTarget) e.preventDefault(); }}>
-      {!hover.item && (
+      {/* 표는 왼쪽에 행 손잡이가 붙는다(표 도구) - 겹치지 않게 + 는 빼고 옮기기 손잡이만 */}
+      {!hover.item && node.type.name !== 'table' && (
         <button type="button" className="tm-handle-btn" title="아래에 블록 넣기" aria-label="아래에 블록 넣기" onClick={addBelow}>
           <Ico n="plus" size={16} />
         </button>

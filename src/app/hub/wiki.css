@@ -505,6 +505,48 @@
 }
 .tm-prose.resize-cursor { cursor: col-resize; }
 .tm-prose th[data-bg] { color: #1b2430; }
+/* 표 도구(TableTools) - Confluence 처럼 표 둘레의 손잡이 · 넣기 단추 · 셀 메뉴 · 아래 막대. 편집기 틀 위에 겹쳐 그린다 */
+.tm-tt { position: absolute; inset: 0; z-index: 14; pointer-events: none; }
+/* 커서가 든 표 - 아래에 도구 막대 자리 */
+.tm-prose[contenteditable='true'] .tm-table-active { margin-bottom: 60px; }
+.tm-tt > * { position: absolute; pointer-events: auto; }
+.tm-tt-grip, .tm-tt-corner {
+  border-radius: 4px; background: #e3e7ee; touch-action: none; cursor: pointer; transition: background-color 120ms;
+}
+.tm-tt-grip:hover, .tm-tt-corner:hover { background: #c3cdf3; }
+.tm-tt-grip.is-on, .tm-tt-corner.is-on { background: #2644cb; }
+.tm-tt-grip:focus-visible, .tm-tt-corner:focus-visible { outline: 2px solid #2644cb; outline-offset: 1px; }
+.tm-tt[data-dragging] .tm-tt-grip { cursor: grabbing; }
+.tm-tt-add { display: grid; place-items: center; width: 18px; height: 18px; border-radius: 999px; z-index: 1; }
+.tm-tt-add > span {
+  display: grid; place-items: center; width: 5px; height: 5px; border-radius: 999px; background: #9aa5b5; color: #fff; overflow: hidden;
+  transition: width 120ms, height 120ms, background-color 120ms;
+}
+.tm-tt-add svg { opacity: 0; flex: none; }
+.tm-tt-add:hover > span, .tm-tt-add:focus-visible > span { width: 18px; height: 18px; background: #2644cb; }
+.tm-tt-add:hover svg, .tm-tt-add:focus-visible svg { opacity: 1; }
+.tm-tt-add:focus-visible { outline: none; }
+.tm-tt-line, .tm-tt-drop, .tm-tt-danger { pointer-events: none !important; }
+.tm-tt-line { background: #2644cb; border-radius: 2px; }
+.tm-tt-drop { background: #2644cb; border-radius: 2px; box-shadow: 0 0 0 2px rgba(38, 68, 203, 0.18); }
+.tm-tt-danger { background: rgba(211, 45, 39, 0.12); outline: 2px solid #d32d27; outline-offset: -1px; border-radius: 2px; }
+.tm-tt-cellbtn {
+  display: grid; place-items: center; width: 20px; height: 20px; border: 1px solid #d7dce4; border-radius: 6px;
+  background: #fff; color: #5b6676; box-shadow: 0 1px 3px rgba(22, 39, 60, 0.12);
+}
+.tm-tt-cellbtn:hover, .tm-tt-cellbtn[aria-expanded='true'] { border-color: #2644cb; color: #2644cb; }
+.tm-tt-bar {
+  display: flex; align-items: center; gap: 2px; padding: 4px; border: 1px solid #d7dce4; border-radius: 10px; background: #fff;
+  box-shadow: 0 8px 22px rgba(22, 39, 60, 0.14); white-space: nowrap;
+}
+.tm-tt-bar button { height: 30px; padding: 0 10px; border-radius: 7px; font-size: 13px; font-weight: 600; color: #3b4555; }
+.tm-tt-bar button:hover { background: #eef2ff; color: #2644cb; }
+.tm-tt-bar button[aria-pressed='true'] { background: #eef2ff; color: #2644cb; }
+.tm-tt-bar button[aria-pressed='true']::before { content: '✓ '; font-weight: 800; }
+.tm-tt-bar button.is-danger { color: #a81f1b; }
+.tm-tt-bar button.is-danger:hover { background: #fdeeec; color: #a81f1b; }
+.tm-tt-sep { width: 1px; height: 18px; margin: 0 3px; background: #d7dce4; }
+@media (max-width: 767px) { .tm-tt-bar { max-width: calc(100vw - 32px); overflow-x: auto; } }
 
 /* 그림 자리 · 크기 */
 .tm-prose .tm-figure.is-center { align-items: center; }
