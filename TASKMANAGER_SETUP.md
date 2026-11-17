@@ -146,7 +146,8 @@ update public.tm_members set domain_editor = true where lower(email) = lower('�
 
 메뉴 '구글 드라이브'는 팀 구글 드라이브(contact@devteammate.co.kr 의 내 드라이브)의 폴더 · 파일을 트리로 보여 줍니다.
 노드를 누르면 옆 칸(좁은 화면은 아래 칸)에 안의 내용이 보이고(폴더는 목록, 파일은 드라이브 미리보기), 두 번 누르거나 칸의 '드라이브에서 열기'로 드라이브를 엽니다.
-목록은 그 계정에 붙인 Apps Script 가 30분마다 Hub 의 `tm_drive_snapshot` 표로 보냅니다(`supabase/taskmanager.sql` 의 '구글 드라이브 지도' 블록, 스크립트는 `supabase/drive-sync.gs`).
+목록은 그 계정에 붙인 Apps Script 가 Hub 의 `tm_drive_snapshot` 표로 보냅니다(`supabase/taskmanager.sql` 의 '구글 드라이브 지도' 블록, 스크립트는 `supabase/drive-sync.gs`).
+스크립트는 1분마다 드라이브에 바뀐 것이 있는지만 묻고, 바뀌었으면 목록을 보냅니다(이어서 바뀌면 3분에 한 번으로 묶고, 바뀐 것이 없어도 30분마다 한 번). 화면은 열려 있는 동안 새 목록이 오면 저절로 바꿔 끼웁니다.
 
 - **처음 한 번 / 다시 설치**: `supabase/drive-sync.gs` 맨 위의 순서대로 contact@ 계정의 Apps Script 에 붙여 넣고 `install` 을 실행합니다.
   공개 키(`NEXT_PUBLIC_SUPABASE_ANON_KEY`)와 갱신 열쇠를 채운 사본을 붙여 넣습니다.

@@ -2,14 +2,16 @@ import { isMissingTable, isRemote, sb } from './supabase';
 
 /*
  * 구글 드라이브 지도의 데이터 - 팀 구글 드라이브(contact@devteammate.co.kr 의 내 드라이브)의 폴더 · 파일 목록.
- * 드라이브 계정의 Apps Script(supabase/drive-sync.gs)가 30분마다 tm_drive_snapshot 한 줄을 통째로 바꾸고,
- * Hub 는 그 줄을 읽어 트리로 만든다(Drive.tsx). 승인된 팀원만 읽는다(RLS). 브라우저 저장 모드에는 목록이 없다.
+ * 드라이브 계정의 Apps Script(supabase/drive-sync.gs)가 1분마다 드라이브에 바뀐 것이 있는지 보고, 바뀌었으면
+ * (아니어도 30분마다) tm_drive_snapshot 한 줄을 통째로 바꾼다. Hub 는 그 줄을 읽어 트리로 만들고(Drive.tsx),
+ * 화면이 열려 있는 동안 1분마다 갱신 시각만 보고 바뀌었으면 다시 읽는다.
+ * 승인된 팀원만 읽는다(RLS). 브라우저 저장 모드에는 목록이 없다.
  */
 
 export const DRIVE_FOLDER = 'application/vnd.google-apps.folder';
 /** 드라이브 계정 - 링크는 이 계정으로 로그인한 브라우저에서 열린다 */
 export const DRIVE_ACCOUNT = 'contact@devteammate.co.kr';
-/** 자동 갱신 간격(분) - drive-sync.gs 의 EVERY_MINUTES 와 같다 */
+/** 바뀐 것이 없어도 통째로 다시 보내는 간격(분) - drive-sync.gs 의 FULL_MINUTES 와 같다. 이 세 배를 넘기면 '멈췄다' */
 export const DRIVE_SYNC_MINUTES = 30;
 
 /** 표에 담긴 한 줄 - drive-sync.gs 가 만든다 */
@@ -65,6 +67,17 @@ function cleanItems(raw: unknown): DriveItem[] {
     });
   }
   return out;
+}
+
+/** 갱신 시각만 - 화면이 열려 있는 동안 새 목록이 왔는지 가볍게 본다(못 읽으면 null) */
+export async function loadDriveStamp(): Promise<string | null> {
+  if (!isRemote) return null;
+  const { data, error } = await sb()
+    .from('tm_drive_snapshot')
+    .select('synced_at')
+    .eq('id', 1)
+    .maybeSingle<{ synced_at: string }>();
+  return error || !data ? null : data.synced_at;
 }
 
 export async function loadDrive(): Promise<DriveLoad> {

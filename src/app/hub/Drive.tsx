@@ -3,7 +3,7 @@
 import { Fragment, useCallback, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   DRIVE_ACCOUNT, DRIVE_FOLDER, DRIVE_SYNC_MINUTES, KIND_LABEL,
-  ancestorsOf, buildDriveTree, driveUrl, kindOf, loadDrive, previewUrl,
+  ancestorsOf, buildDriveTree, driveUrl, kindOf, loadDrive, loadDriveStamp, previewUrl,
   type DriveKind, type DriveLoad, type DriveNode, type DriveSnapshot, type DriveTree,
 } from './driveTree';
 import { IconClose, IconPlus, IconSearch, PageHead, tmFieldBase, tmGhostBtn, tmIconBtn, tmIconBtnSm, useMediaQuery } from './ui';
@@ -13,7 +13,8 @@ import { IconClose, IconPlus, IconSearch, PageHead, tmFieldBase, tmGhostBtn, tmI
  * 이름(노드)을 누르면 옆 칸(좁은 화면은 아래에서 올라오는 칸)에 안의 내용이 보인다 - 폴더는 안의 폴더 · 파일 목록,
  * 파일은 드라이브 미리보기. 드라이브로 가는 것은 그 칸의 '드라이브에서 열기'나 노드를 두 번 누를 때다.
  * 노드 끝의 동그라미로 접고 펼친다.
- * 목록은 드라이브 쪽 Apps Script 가 30분마다 Hub 표로 보낸다(driveTree.ts). 이 화면은 읽기만 한다.
+ * 목록은 드라이브 쪽 Apps Script 가 드라이브가 바뀌면 1분쯤 뒤에(아니어도 30분마다) Hub 표로 보낸다(driveTree.ts).
+ * 이 화면은 읽기만 하고, 열려 있는 동안 새 목록이 오면 바꿔 끼운다.
  * 그림은 스크롤 칸 안의 큰 판이다 - 손가락 · 휠은 그대로 스크롤, 마우스는 빈 곳을 끌어 옮기고 Ctrl+휠로 키운다.
  */
 
@@ -387,27 +388,40 @@ export default function Drive({ me }: { me: string }) {
   /** null - 처음 읽는 중 */
   const [load, setLoad] = useState<DriveLoad | null>(null);
   const [busy, setBusy] = useState(false);
-  const loadedAt = useRef(0);
 
-  const reload = useCallback(async () => {
-    setBusy(true);
+  /** 지금 보이는 목록의 갱신 시각 - 새 목록이 왔는지 견준다 */
+  const shownStamp = useRef<string | null>(null);
+  /** quiet - 화면이 알아서 다시 읽는 것. 못 읽어도 보던 목록을 그대로 두고, 단추 글자도 바꾸지 않는다 */
+  const reload = useCallback(async (quiet = false) => {
+    if (!quiet) setBusy(true);
     try {
-      setLoad(await loadDrive());
+      const next = await loadDrive();
+      if (!quiet || next.kind === 'ok') {
+        shownStamp.current = next.kind === 'ok' ? next.snapshot.syncedAt : null;
+        setLoad(next);
+      }
     } catch (e) {
-      setLoad({ kind: 'error', message: e instanceof Error ? e.message : String(e) });
+      if (!quiet) setLoad({ kind: 'error', message: e instanceof Error ? e.message : String(e) });
     } finally {
-      loadedAt.current = Date.now();
-      setBusy(false);
+      if (!quiet) setBusy(false);
     }
   }, []);
   useEffect(() => { void reload(); }, [reload]);
-  /* 다른 탭에 있다 돌아왔을 때 5분이 넘었으면 다시 읽는다 - 목록은 30분마다 바뀐다 */
+  /* 드라이브가 바뀌면 1~2분 안에 새 목록이 온다 - 화면이 보이는 동안 1분마다(다른 탭에서 돌아오면 바로) 갱신 시각만 보고
+     바뀌었으면 다시 읽는다. 펼친 것 · 고른 것은 그대로 남는다 */
   useEffect(() => {
-    const on = () => {
-      if (document.visibilityState === 'visible' && Date.now() - loadedAt.current > 5 * 60_000) void reload();
+    const check = async () => {
+      if (document.visibilityState !== 'visible') return;
+      const stamp = await loadDriveStamp().catch(() => null);
+      if (stamp && stamp !== shownStamp.current) void reload(true);
     };
-    document.addEventListener('visibilitychange', on);
-    return () => document.removeEventListener('visibilitychange', on);
+    const timer = window.setInterval(() => void check(), 60_000);
+    const onVisible = () => { if (document.visibilityState === 'visible') void check(); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
   }, [reload]);
 
   const snap = load?.kind === 'ok' ? load.snapshot : null;
@@ -418,7 +432,7 @@ export default function Drive({ me }: { me: string }) {
     <>
       <PageHead
         title="구글 드라이브"
-        lead={`팀 구글 드라이브의 폴더 구조입니다. 이름을 누르면 옆에 안의 내용이 보이고, 두 번 누르면 드라이브에서 열립니다. 이름 끝의 동그라미로 접고 펼칩니다. 목록은 ${DRIVE_SYNC_MINUTES}분마다 새로 받습니다.`}
+        lead={`팀 구글 드라이브의 폴더 구조입니다. 이름을 누르면 옆에 안의 내용이 보이고, 두 번 누르면 드라이브에서 열립니다. 이름 끝의 동그라미로 접고 펼칩니다. 드라이브가 바뀌면 1~2분 안에 새 목록이 들어옵니다.`}
         saved={snap ? syncBadge(snap, now) : undefined}
       >
         <button type="button" onClick={() => void reload()} disabled={busy} className={tmGhostBtn}>
@@ -504,7 +518,7 @@ function DriveMap({ tree, me }: { tree: DriveTree; me: string }) {
     });
   }, [me]);
 
-  /* 목록이 새로 오면(다시 읽기 · 30분 갱신) 같은 id 의 노드로 바꿔 끼운다. 펼친 것은 id 라 그대로 둔다 */
+  /* 목록이 새로 오면(다시 읽기 · 자동 갱신) 같은 id 의 노드로 바꿔 끼운다. 펼친 것 · 고른 것은 id 라 그대로 둔다 */
   const [shownTree, setShownTree] = useState(tree);
   if (shownTree !== tree) {
     setShownTree(tree);

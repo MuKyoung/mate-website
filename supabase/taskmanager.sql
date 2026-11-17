@@ -1210,7 +1210,7 @@ $$;
 
 -- ── 구글 드라이브 지도 (2026-11-16) ─────────────────────────────
 -- 팀 구글 드라이브(contact@devteammate.co.kr 의 내 드라이브)의 폴더 · 파일 목록 한 벌. Hub 의 '구글 드라이브' 화면이 읽는다.
--- 그 계정에 붙인 Apps Script(supabase/drive-sync.gs)가 30분마다 tm_drive_sync 로 통째로 바꾼다.
+-- 그 계정에 붙인 Apps Script(supabase/drive-sync.gs)가 드라이브가 바뀌면(아니어도 30분마다) tm_drive_sync 로 통째로 바꾼다.
 -- 승인된 팀원은 읽기만 하고, 바꾸기는 갱신 열쇠를 가진 쪽(tm_drive_sync)만 한다.
 -- 이 블록만 따로 실행해도 된다(위의 tm_is_member 가 이미 있으면). 여러 번 실행해도 된다.
 create table if not exists public.tm_drive_snapshot (
