@@ -114,7 +114,7 @@ export function LoginScreen() {
   if (mode === 'signup') {
     return (
       <GateCard title="가입 요청">
-        <p className="mt-1.5 text-[15px] text-tm-sub">관리자가 승인하면 Hub 와 MATE Studio · 설치형 MATE Hub 를 같은 계정으로 쓸 수 있습니다.</p>
+        <p className="mt-1.5 text-[15px] text-tm-sub">관리자가 승인하면 MATE HUB 와 MATE STUDIO(웹 · 앱)를 같은 계정으로 쓸 수 있습니다.</p>
         <form onSubmit={request} className="mt-6 flex flex-col gap-4">
           <div>
             <label className={tmLabel} htmlFor="tm-join-name">이름</label>
@@ -151,8 +151,8 @@ export function LoginScreen() {
   }
 
   return (
-    <GateCard title="Hub 로그인">
-      <p className="mt-1.5 text-[15px] text-tm-sub">MATE 팀원 계정으로 들어갑니다. 같은 계정으로 MATE Studio · 설치형 MATE Hub 에도 들어갑니다.</p>
+    <GateCard title="MATE HUB 로그인">
+      <p className="mt-1.5 text-[15px] text-tm-sub">MATE 팀원 계정으로 들어갑니다. 같은 계정으로 MATE STUDIO(웹 · 앱)에도 들어갑니다.</p>
       <form onSubmit={submit} className="mt-6 flex flex-col gap-4">
         <div>
           <label className={tmLabel} htmlFor="tm-login-email">이메일</label>

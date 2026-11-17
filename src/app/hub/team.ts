@@ -92,7 +92,7 @@ export async function signUp(name: string, email: string, password: string): Pro
 
 export async function signOut(): Promise<void> {
   try {
-    // 이 브라우저의 로그인만 끝낸다 — 같은 계정으로 들어가 있는 MATE Studio · MATE Hub · 갤럭시 위젯은 그대로
+    // 이 브라우저의 로그인만 끝낸다 — 같은 계정으로 들어가 있는 MATE STUDIO(웹 · 앱) · 갤럭시 위젯은 그대로
     await sb().auth.signOut({ scope: 'local' });
   } catch {
     /* 연결이 끊겨도 이 브라우저의 로그인은 지운다 */
