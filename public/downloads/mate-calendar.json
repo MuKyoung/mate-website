@@ -1,8 +1,8 @@
 {
-  "version": "1.0.0",
+  "version": "1.0.1",
   "url": "/downloads/MATE-Calendar-Setup.exe",
-  "sha256": "c1ae934d0e5cca01e2fcf3b3ecdc8f811a4d9df1b92ded6495a9f5976f1d12d9",
-  "size": 4954112,
-  "notes": "첫 판 - Calendr 디자인의 바탕화면 캘린더 위젯",
-  "date": "2026-11-16"
+  "sha256": "c8981991ec3cf283ba0e4069a1aaa9971a6a21630eec027548e261fd5898dc95",
+  "size": 4961280,
+  "notes": "레이아웃 보완: 카드 폭 고정 · 긴 제목 두 줄 · 화면 높이에 맞춤 · 기한 지난 작업 접기",
+  "date": "2026-11-17"
 }

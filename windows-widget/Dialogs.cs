@@ -241,7 +241,7 @@ namespace MateCalendar
             Body.Children.Add(Head($"MATE 캘린더 {verb}", $"Hub 의 내 작업을 바탕화면 캘린더 위젯으로 띄웁니다. 판 {Program.Version}" +
                 (installed != null ? $" (지금 {installed.ToString(3)})" : "")));
 
-            var info = Text("내 Windows 계정에만 설치합니다 - 관리자 권한이 필요 없습니다. 지울 때는 설정 → 앱 → 설치된 앱에서 'MATE 캘린더'를 지웁니다.",
+            var info = Text("내 Windows 계정에만 설치하므로 관리자 권한이 필요 없습니다. 지울 때는 설정 → 앱 → 설치된 앱에서 'MATE 캘린더'를 지웁니다.",
                 12.5, T.Label, null, true);
             Body.Children.Add(info);
 

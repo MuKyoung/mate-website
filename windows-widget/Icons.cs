@@ -11,7 +11,7 @@ namespace MateCalendar
     /// </summary>
     internal static class Icons
     {
-        public const string ChevronLeft = "chevron.backward", ChevronRight = "chevron.forward", Reset = "circle",
+        public const string ChevronLeft = "chevron.backward", ChevronRight = "chevron.forward", ChevronDown = "chevron.down", Reset = "circle",
             Pin = "pin", PinFill = "pin.fill", List = "list.bullet", Calendar = "calendar", More = "ellipsis.circle",
             ReminderOpen = "reminder.open", ReminderDone = "reminder.done", Warning = "exclamationmark.triangle",
             Refresh = "arrow.clockwise";
@@ -42,6 +42,7 @@ namespace MateCalendar
             {
                 case ChevronLeft: Stroke("M12.2,4.2 L6.6,10 L12.2,15.8", 1.9); break;
                 case ChevronRight: Stroke("M7.8,4.2 L13.4,10 L7.8,15.8", 1.9); break;
+                case ChevronDown: Stroke("M4.2,7.4 L10,13 L15.8,7.4", 1.9); break;
                 case Reset: Ring(4.4, 1.6); break;
                 case Pin:
                     Stroke("M6.6,3.2 L13.4,3.2", 1.5);

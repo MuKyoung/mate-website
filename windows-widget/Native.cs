@@ -22,7 +22,7 @@ namespace MateCalendar
         public const int WM_WINDOWPOSCHANGING = 0x0046, WM_MOUSEACTIVATE = 0x0021, WM_SETTINGCHANGE = 0x001A,
             WM_DISPLAYCHANGE = 0x007E, WM_DPICHANGED = 0x02E0;
         public const int MA_NOACTIVATE = 3;
-        public const int SPI_SETDESKWALLPAPER = 0x0014, SPI_GETDESKWALLPAPER = 0x0073;
+        public const int SPI_SETDESKWALLPAPER = 0x0014, SPI_GETDESKWALLPAPER = 0x0073, SPI_SETWORKAREA = 0x002F;
 
         public const uint GW_HWNDNEXT = 2, GW_HWNDPREV = 3;
         public const uint EVENT_SYSTEM_FOREGROUND = 0x0003, WINEVENT_OUTOFCONTEXT = 0;
@@ -107,6 +107,20 @@ namespace MateCalendar
             var info = new MONITORINFOEX { cbSize = Marshal.SizeOf(typeof(MONITORINFOEX)) };
             GetMonitorInfo(MonitorFromPoint(new POINT { X = x, Y = y }, MONITOR_DEFAULTTONEAREST), ref info);
             return info;
+        }
+
+        [DllImport("shcore.dll")] private static extern int GetDpiForMonitor(IntPtr mon, int type, out uint dpiX, out uint dpiY);
+
+        /// <summary>그 점이 있는 모니터의 배율(96 = 100%)</summary>
+        public static uint DpiAt(int x, int y)
+        {
+            try
+            {
+                var mon = MonitorFromPoint(new POINT { X = x, Y = y }, MONITOR_DEFAULTTONEAREST);
+                if (GetDpiForMonitor(mon, 0, out var dx, out _) == 0 && dx > 0) return dx;
+            }
+            catch { /* Windows 8.1 전 */ }
+            return 96;
         }
     }
 }

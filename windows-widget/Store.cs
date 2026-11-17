@@ -138,6 +138,7 @@ namespace MateCalendar
         public int UpcomingDays = 7;       // 오늘을 고르면 목록에 함께 보일 앞날 수
         public bool Locked;
         public string? SkippedVersion;
+        public bool Scratch;               // 점검(--demo)용 - 파일에서 읽지도 남기지도 않는다
 
         public static string Dir => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MATE Calendar");
         private static string File_ => Path.Combine(Dir, "settings.json");
@@ -172,6 +173,7 @@ namespace MateCalendar
 
         public void Save()
         {
+            if (Scratch) return;
             try
             {
                 Directory.CreateDirectory(Dir);

@@ -31,8 +31,13 @@ namespace MateCalendar
         private const double WeekRatio = 0.85; // weekNumberCellRatio
         private const double Radius = 10;      // 팝오버 모서리
         private const double Pad = 14;         // 그림자 자리
-        private const double ListHeight = 196; // 목록 칸 높이(위젯이라 고정)
+        private const double ListHeight = 196; // 목록 칸 높이(위젯이라 고정, 화면이 작으면 줄인다)
+        private const double MinList = 112;    // 화면이 작아도 목록은 이만큼(작업 서너 개)
         private const double Gap = 4;          // mainStackSpacing
+        private const double Edge = 16;        // 작업 영역 가장자리와 카드 사이(DIP)
+
+        /// <summary>점검용(--work) - 작업 영역 높이(DIP)를 흉내 내 작은 화면에서 맞춰지는지 본다</summary>
+        internal static double? WorkOverride;
 
         private static readonly string[] WeekDays = { "일", "월", "화", "수", "목", "금", "토" };
         private static readonly string[] Palette = { "blue", "violet", "teal", "pink", "sky", "plum", "brown", "gray" };
@@ -66,6 +71,11 @@ namespace MateCalendar
         private Native.RECT _dragRect;
         private string _backdropKey = "";
         private readonly DispatcherTimer _clock = new DispatcherTimer();
+        private bool _placed;
+        private double _listH = ListHeight;  // 이번에 그린 목록 높이(pt)
+        private double _fixedPt;             // 목록을 뺀 카드 높이(pt)
+        private bool _overdueOpen;           // 기한 지난 작업을 펼쳤는지(다른 날을 고르면 다시 접는다)
+        private bool _fadeUp, _fadeDown;
 
         public IntPtr Handle { get; private set; }
 
@@ -115,7 +125,13 @@ namespace MateCalendar
             };
             // Loaded 는 창 핸들보다 먼저 올 수 있다(이 PC 에서 확인) - 처음 그린 뒤 크기가 정해졌을 때 자리를 잡는다
             ContentRendered += (s, e) => PlaceFirst();
-            SizeChanged += (s, e) => { if (IsLoaded) QueueBackdrop(); };
+            SizeChanged += (s, e) =>
+            {
+                if (!IsLoaded) return;
+                // 크기가 바뀌면(배수 · 요약 줄 · 화면 맞춤) 카드가 작업 영역 밖으로 나가지 않게
+                Dispatcher.BeginInvoke(new Action(KeepOnScreen), DispatcherPriority.Loaded);
+                QueueBackdrop();
+            };
 
             // 자정이 지나면 오늘을 옮긴다
             _clock.Interval = TimeSpan.FromSeconds(30);
@@ -156,16 +172,86 @@ namespace MateCalendar
             }
             else
             {
-                // 주 모니터 작업 영역의 오른쪽 위 - 바탕화면 아이콘은 보통 왼쪽 위에 있다
+                // 주 모니터 작업 영역의 오른쪽 위 - 바탕화면 아이콘은 보통 왼쪽 위에 있다.
+                // 창 둘레의 그림자 자리(Pad)는 투명하니 카드 자체가 가장자리에서 Edge 만큼 떨어지게 둔다
                 var mon = Native.MonitorAt(0, 0);
-                double k = Native.GetDpiForWindow(Handle) / 96.0;
-                x = mon.rcWork.Right - w - (int)Math.Round(16 * k);
-                y = mon.rcWork.Top + (int)Math.Round(16 * k);
+                double k = Native.DpiAt(0, 0) / 96.0;
+                int pad = PadPx();
+                x = mon.rcWork.Right - w + pad - (int)Math.Round(Edge * k);
+                y = mon.rcWork.Top - pad + (int)Math.Round(Edge * k);
             }
+            ClampToWork(ref x, ref y, w, h);
             if (!Native.SetWindowPos(Handle, IntPtr.Zero, x, y, 0, 0, Native.SWP_NOSIZE | Native.SWP_NOZORDER | Native.SWP_NOACTIVATE))
                 Program.Log($"place failed {x},{y}");
+            _placed = true;
             _pin.ToBottom();
             QueueBackdrop();
+        }
+
+        /// <summary>창 둘레 그림자 자리(Pad)의 화면 픽셀</summary>
+        private int PadPx()
+        {
+            double dpi = Handle != IntPtr.Zero ? Native.GetDpiForWindow(Handle) / 96.0 : 1;
+            return (int)Math.Round(Pad * _scale.ScaleX * dpi);
+        }
+
+        /// <summary>카드(그림자 자리를 뺀 창)가 그 모니터 작업 영역 안에 다 들어오게 자리를 옮긴다</summary>
+        private void ClampToWork(ref int x, ref int y, int w, int h)
+        {
+            int pad = PadPx();
+            var work = Native.MonitorAt(x + w / 2, y + pad + Math.Min(h / 2, 60)).rcWork;
+            if (x + w - pad > work.Right) x = work.Right - w + pad;
+            if (x + pad < work.Left) x = work.Left - pad;
+            if (y + h - pad > work.Bottom) y = work.Bottom - h + pad;
+            if (y + pad < work.Top) y = work.Top - pad;
+        }
+
+        /// <summary>크기가 바뀐 뒤 - 기본 자리면 오른쪽 위에 다시 맞추고, 옮겨 둔 자리면 화면 안으로만 당긴다(저장한 자리는 그대로)</summary>
+        private void KeepOnScreen()
+        {
+            if (!_placed || _dragging || Handle == IntPtr.Zero) return;
+            if (!_c.Settings.X.HasValue || !_c.Settings.Y.HasValue) { PlaceFirst(); return; }
+            Native.GetWindowRect(Handle, out var r);
+            int x = r.Left, y = r.Top;
+            ClampToWork(ref x, ref y, r.Width, r.Height);
+            if (x != r.Left || y != r.Top)
+                Native.SetWindowPos(Handle, IntPtr.Zero, x, y, 0, 0, Native.SWP_NOSIZE | Native.SWP_NOZORDER | Native.SWP_NOACTIVATE);
+        }
+
+        /// <summary>
+        /// 카드가 지금 모니터의 작업 영역 높이에 들어가게 한다 - 먼저 목록을 줄이고(MinList 까지), 그래도 넘치면 배수를 줄인다.
+        /// 1080p 노트북의 150% 배율처럼 작업 영역이 700 DIP 안팎이면 1.5 배 위젯이 화면 아래로 잘렸다.
+        /// </summary>
+        private (double list, double scale) Fit(double fixedPt)
+        {
+            double scale = _c.Settings.Scale;
+            double room = WorkHeightDip() - 2 * Edge;
+            double avail = room / scale - fixedPt;
+            if (avail >= ListHeight) return (ListHeight, scale);
+            if (avail >= MinList) return (Math.Floor(avail), scale);
+            return (MinList, Math.Max(0.75, room / (fixedPt + MinList)));
+        }
+
+        /// <summary>위젯이 있는(아직 안 놓였으면 놓일) 모니터의 작업 영역 높이(DIP)</summary>
+        private double WorkHeightDip()
+        {
+            if (WorkOverride.HasValue) return WorkOverride.Value;
+            Native.MONITORINFOEX mon;
+            if (_placed && Handle != IntPtr.Zero) mon = Native.MonitorOf(Handle);
+            else if (_c.Settings.X.HasValue && _c.Settings.Y.HasValue) mon = Native.MonitorAt(_c.Settings.X.Value, _c.Settings.Y.Value);
+            else mon = Native.MonitorAt(0, 0);
+            var m = mon.rcMonitor;
+            double dpi = Native.DpiAt(m.Left + m.Width / 2, m.Top + m.Height / 2) / 96.0;
+            return mon.rcWork.Height / dpi;
+        }
+
+        /// <summary>모니터 · 배율 · 작업 표시줄이 바뀌었거나 다른 모니터로 옮겼을 때 - 맞춤이 달라졌으면 다시 그린다</summary>
+        private void Refit()
+        {
+            if (_fixedPt <= 0) return;
+            var (list, scale) = Fit(_fixedPt);
+            if (Math.Abs(list - _listH) > 0.5 || Math.Abs(scale - _scale.ScaleX) > 0.001) Render();
+            else KeepOnScreen();
         }
 
         private static bool OnScreen(int x, int y, int w, int h)
@@ -194,6 +280,8 @@ namespace MateCalendar
             if (msg == Native.WM_SETTINGCHANGE)
             {
                 if (wParam.ToInt32() == Native.SPI_SETDESKWALLPAPER) QueueBackdrop(force: true);
+                // 작업 표시줄 크기 · 자리가 바뀌었다
+                else if (wParam.ToInt32() == Native.SPI_SETWORKAREA) Dispatcher.BeginInvoke(new Action(Refit), DispatcherPriority.Background);
                 // Windows 의 밝게/어둡게가 바뀌었을 때만 다시 칠한다(설정 변경 알림은 자주 온다)
                 else if (_c.Settings.Appearance == "system" && Theme.SystemIsDark() != _t.Dark)
                     Dispatcher.BeginInvoke(new Action(ApplyTheme), DispatcherPriority.Background);
@@ -201,6 +289,7 @@ namespace MateCalendar
             else if (msg == Native.WM_DISPLAYCHANGE || msg == Native.WM_DPICHANGED)
             {
                 QueueBackdrop(force: true);
+                Dispatcher.BeginInvoke(new Action(Refit), DispatcherPriority.Background);
             }
             return IntPtr.Zero;
         }
@@ -250,7 +339,6 @@ namespace MateCalendar
             // 새로 읽어 다시 그릴 때 보던 목록 자리를 지킨다(고른 날이 그대로일 때)
             double? keep = _scroll != null && _listFor == _selected ? _scroll.VerticalOffset : (double?)null;
             _t = Theme.Create(_c.Settings.Appearance, _c.Settings.Transparency);
-            _scale.ScaleX = _scale.ScaleY = _c.Settings.Scale;
             _glass.Effect = new DropShadowEffect
             {
                 BlurRadius = 16, ShadowDepth = 3, Direction = 270, Color = Colors.Black, Opacity = _t.Dark ? 0.42 : 0.2,
@@ -262,6 +350,8 @@ namespace MateCalendar
             Index();
 
             _stack.Children.Clear();
+            // 폭은 달력(7칸 + 주 번호)으로 정한다 - 긴 작업 제목 · 안내 글이 카드를 넓히지 않고 그 안에서 줄을 바꾼다
+            _stack.Width = 2 * M + (_c.Settings.WeekNumbers ? Cell * WeekRatio : 0) + 7 * Cell;
             _stack.Children.Add(Spaced(Header(), 0));
             _calendarSlot = new Border { Margin = new Thickness(M, Gap, M, 0) };
             _calendarSlot.Child = _calendarHost = BuildCalendar();
@@ -269,7 +359,15 @@ namespace MateCalendar
             _stack.Children.Add(Spaced(Toolbar(), Gap));
             var summary = Summary();
             if (summary != null) _stack.Children.Add(Spaced(summary, Gap));
-            _stack.Children.Add(ListArea(summary != null ? Gap + 2 : Gap));
+
+            // 목록을 뺀 높이를 재고, 화면에 맞는 목록 높이와 배수를 정한다
+            double listTop = summary != null ? Gap + 2 : Gap;
+            _stack.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            _fixedPt = _stack.DesiredSize.Height + listTop + M / 2;
+            var fit = Fit(_fixedPt);
+            _listH = fit.list;
+            _scale.ScaleX = _scale.ScaleY = fit.scale;
+            _stack.Children.Add(ListArea(listTop));
             if (keep.HasValue && keep.Value > 0)
             {
                 var sv = _scroll;
@@ -405,6 +503,14 @@ namespace MateCalendar
             Render();
         }
 
+        /// <summary>점검 그림(--snapshot --select)용 - 그날을 고른 화면</summary>
+        internal void SelectForSnapshot(DateTime d)
+        {
+            _selected = d.Date;
+            _month = new DateTime(d.Year, d.Month, 1);
+            Render();
+        }
+
         private void GoToday()
         {
             _today = DateTime.Today;
@@ -438,12 +544,19 @@ namespace MateCalendar
             if (!_dragging) return;
             _dragging = false;
             handle.ReleaseMouseCapture();
+            // 카드가 화면 밖으로 반쯤 나가게 놓았으면 안으로 당겨 놓는다
             Native.GetWindowRect(Handle, out var r);
-            _c.Settings.X = r.Left;
-            _c.Settings.Y = r.Top;
+            int x = r.Left, y = r.Top;
+            ClampToWork(ref x, ref y, r.Width, r.Height);
+            if (x != r.Left || y != r.Top)
+                Native.SetWindowPos(Handle, IntPtr.Zero, x, y, 0, 0, Native.SWP_NOSIZE | Native.SWP_NOZORDER | Native.SWP_NOACTIVATE);
+            _c.Settings.X = x;
+            _c.Settings.Y = y;
             _c.Settings.Save();
             _pin.ToBottom();
             QueueBackdrop();
+            // 다른 크기 · 배율의 모니터로 옮겼으면 그 화면에 맞춘다
+            Refit();
         }
 
         /* ── 달력 ─────────────────────────────────────── */
@@ -686,7 +799,7 @@ namespace MateCalendar
         {
             var dock = new DockPanel { Height = 22, LastChildFill = true };
             var pinBtn = IconButton(_c.Settings.Locked ? Icons.PinFill : Icons.Pin,
-                _c.Settings.Locked ? "자리 고정됨 - 누르면 다시 옮길 수 있습니다" : "자리 고정", () =>
+                _c.Settings.Locked ? "자리 고정됨. 누르면 다시 옮길 수 있습니다" : "자리 고정", () =>
                 {
                     _c.Settings.Locked = !_c.Settings.Locked;
                     _c.Settings.Save();
@@ -698,7 +811,7 @@ namespace MateCalendar
             var right = new StackPanel { Orientation = Orientation.Horizontal };
             if (_c.Error != null && !_c.NeedLogin)
             {
-                right.Children.Add(IconButton(Icons.Warning, _c.Error + " - 누르면 다시 읽습니다", () => _ = _c.Refresh(true), 16, _t.Secondary));
+                right.Children.Add(IconButton(Icons.Warning, _c.Error + "\n누르면 다시 읽습니다", () => _ = _c.Refresh(true), 16, _t.Secondary));
             }
             right.Children.Add(IconButton(Icons.List, "Hub 작업 목록 열기", () => _c.OpenHub("list"), 17));
             right.Children.Add(IconButton(Icons.Calendar, "Hub 캘린더 열기", () => _c.OpenHub("calendar"), 17));
@@ -768,22 +881,46 @@ namespace MateCalendar
 
         private FrameworkElement ListArea(double top)
         {
-            _list = new StackPanel();
+            // 오른쪽은 얇은 스크롤 막대 자리 - 막대가 글자 · 단추를 덮지 않게
+            _list = new StackPanel { Margin = new Thickness(0, 0, 5, 0) };
             _scroll = new ScrollViewer
             {
-                Height = ListHeight, VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                Height = _listH, VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
                 HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled, Content = _list, Focusable = false,
                 Margin = new Thickness(M / 2, top, M / 2, M / 2), Padding = new Thickness(0),
             };
             Styles.ApplyScroll(_scroll, _t);
+            _fadeUp = _fadeDown = false;
+            _scroll.ScrollChanged += (s, e) => UpdateFade();
             RebuildList();
             return _scroll;
+        }
+
+        /// <summary>목록이 칸 끝에서 뚝 잘려 보이지 않게, 더 있는 쪽 가장자리만 흐리게 사라지게 한다</summary>
+        private void UpdateFade()
+        {
+            if (_scroll == null) return;
+            bool up = _scroll.VerticalOffset > 0.5;
+            bool down = _scroll.ScrollableHeight - _scroll.VerticalOffset > 0.5;
+            if (up == _fadeUp && down == _fadeDown && (_scroll.OpacityMask != null) == (up || down)) return;
+            _fadeUp = up;
+            _fadeDown = down;
+            if (!up && !down) { _scroll.OpacityMask = null; return; }
+            double f = Math.Min(0.2, 14 / Math.Max(1, _listH));
+            var mask = new LinearGradientBrush { StartPoint = new Point(0, 0), EndPoint = new Point(0, 1) };
+            mask.GradientStops.Add(new GradientStop(up ? Colors.Transparent : Colors.Black, 0));
+            mask.GradientStops.Add(new GradientStop(Colors.Black, f));
+            mask.GradientStops.Add(new GradientStop(Colors.Black, 1 - f));
+            mask.GradientStops.Add(new GradientStop(down ? Colors.Transparent : Colors.Black, 1));
+            mask.Freeze();
+            _scroll.OpacityMask = mask;
         }
 
         private void RebuildList()
         {
             if (_list == null || _scroll == null) return;
             _list.Children.Clear();
+            if (_listFor != _selected) _overdueOpen = false;
             _listFor = _selected;
 
             if (_c.NeedLogin)
@@ -799,27 +936,32 @@ namespace MateCalendar
 
             bool isToday = _selected == _today;
             int sections = 0;
+            bool overdue = false;
 
             if (isToday)
             {
-                // 기한 지남 - 끝나지 않은 지난 작업을 날마다 묶어 '어제' · '그저께' · 'N일 전'
-                foreach (var g in _c.Data.Tasks.Where(t => !t.Done && t.Due < _today).GroupBy(t => t.Due).OrderBy(g => g.Key))
+                // 기한 지남 - 한 줄로 접어 두고(오늘 할 일이 먼저 보이게), 펼치면 날마다 묶어 '어제' · '그저께' · 'N일 전'
+                var late = _c.Data.Tasks.Where(t => !t.Done && t.Due < _today).ToList();
+                if (late.Count > 0)
                 {
-                    int ago = (int)(_today - g.Key).TotalDays;
-                    _list.Children.Add(Section(ago == 1 ? "어제" : ago == 2 ? "그저께" : $"{ago}일 전"));
-                    foreach (var t in Order(g)) _list.Children.Add(Row(t));
-                    sections++;
+                    overdue = true;
+                    _list.Children.Add(OverdueToggle(late));
+                    if (_overdueOpen)
+                    {
+                        foreach (var g in late.GroupBy(t => t.Due).OrderBy(g => g.Key))
+                        {
+                            int ago = (int)(_today - g.Key).TotalDays;
+                            _list.Children.Add(Section(ago == 1 ? "어제" : ago == 2 ? "그저께" : $"{ago}일 전"));
+                            foreach (var t in Order(g)) _list.Children.Add(Row(t));
+                        }
+                    }
                 }
             }
 
             for (int i = 0; i <= _c.Settings.UpcomingDays; i++)
             {
                 var d = _selected.AddDays(i);
-                if (!_byDate.TryGetValue(d, out var tasks) || tasks.Count == 0)
-                {
-                    if (i == 0 && isToday && sections > 0) { /* 오늘 없음 - 지난 것만 */ }
-                    continue;
-                }
+                if (!_byDate.TryGetValue(d, out var tasks) || tasks.Count == 0) continue;
                 _list.Children.Add(Section(d == _today ? "오늘" : DateLabel(d)));
                 foreach (var t in Order(tasks)) _list.Children.Add(Row(t));
                 sections++;
@@ -830,9 +972,60 @@ namespace MateCalendar
                 string msg = _c.Settings.UpcomingDays > 0
                     ? (isToday ? $"오늘부터 {_c.Settings.UpcomingDays}일 동안 마감인 작업이 없습니다." : $"이날부터 {_c.Settings.UpcomingDays}일 동안 마감인 작업이 없습니다.")
                     : "이날 마감인 작업이 없습니다.";
-                _list.Children.Add(Message(msg, null, null));
+                // 기한 지난 줄이 있으면 그 아래에 작게, 아니면 목록 칸 가운데에
+                _list.Children.Add(Message(msg, null, null, fill: !overdue));
+            }
+            else
+            {
+                _list.Children.Add(new Border { Height = 10 }); // 끝이 흐려지는 자리
             }
             _scroll.ScrollToTop();
+        }
+
+        /// <summary>기한 지난 작업 한 줄 - 누르면 펼치고 접는다</summary>
+        private FrameworkElement OverdueToggle(List<TaskItem> late)
+        {
+            var dock = new DockPanel { LastChildFill = true };
+            var chevron = Icons.Make(_overdueOpen ? Icons.ChevronDown : Icons.ChevronRight, 10, Theme.Brush(_t.Secondary));
+            chevron.VerticalAlignment = VerticalAlignment.Center;
+            chevron.Margin = new Thickness(0, 0, 6, 0);
+            DockPanel.SetDock(chevron, Dock.Left);
+            dock.Children.Add(chevron);
+
+            // 요약 줄처럼 색 막대(서로 다른 색만)
+            var bars = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 2, 5, 2) };
+            foreach (var c in late.Select(PaintName).Distinct().OrderBy(n => Array.IndexOf(Palette, n)))
+                bars.Children.Add(new Border { Width = 2, CornerRadius = new CornerRadius(1), Background = Theme.Brush(_t.Paint(c)), Margin = new Thickness(0, 0, 2, 0) });
+            DockPanel.SetDock(bars, Dock.Left);
+            dock.Children.Add(bars);
+
+            var hint = Text(_overdueOpen ? "접기" : "펼치기", 10, _t.Secondary);
+            hint.VerticalAlignment = VerticalAlignment.Center;
+            hint.Margin = new Thickness(6, 0, 0, 0);
+            DockPanel.SetDock(hint, Dock.Right);
+            dock.Children.Add(hint);
+
+            var label = Text($"기한 지난 작업 {late.Count}개", 11, _t.Header, Theme.Medium);
+            label.VerticalAlignment = VerticalAlignment.Center;
+            label.TextTrimming = TextTrimming.CharacterEllipsis;
+            dock.Children.Add(label);
+
+            var row = new Border
+            {
+                CornerRadius = new CornerRadius(8), Background = Theme.Brush(_t.Quaternary), Child = dock, Cursor = Cursors.Hand,
+                Padding = new Thickness(8, 5, 8, 5), Margin = new Thickness(0, 4, 0, 2),
+            };
+            var normal = row.Background;
+            var hover = Theme.Brush(_t.Hover);
+            row.MouseEnter += (s, e) => row.Background = hover;
+            row.MouseLeave += (s, e) => row.Background = normal;
+            row.MouseLeftButtonUp += (s, e) =>
+            {
+                e.Handled = true;
+                _overdueOpen = !_overdueOpen;
+                RebuildList();
+            };
+            return row;
         }
 
         /// <summary>끝나지 않은 것을 위로 - 진행 중 · 리뷰 · 할 일 · 백로그 순, 같으면 급한 순, 같으면 번호 순. 완료는 맨 아래</summary>
@@ -900,8 +1093,13 @@ namespace MateCalendar
                 DockPanel.SetDock(pr, Dock.Left);
                 titleRow.Children.Add(pr);
             }
+            // 제목은 두 줄까지, 넘치면 … (전체는 툴팁)
             var title = Text(t.Title.Length > 0 ? t.Title : "(제목 없음)", 12, _t.Header);
             title.TextWrapping = TextWrapping.Wrap;
+            title.TextTrimming = TextTrimming.CharacterEllipsis;
+            title.LineStackingStrategy = LineStackingStrategy.BlockLineHeight;
+            title.LineHeight = 15;
+            title.MaxHeight = 30;
             if (t.Done) title.TextDecorations = TextDecorations.Strikethrough;
             titleRow.Children.Add(title);
             body.Children.Add(titleRow);
@@ -911,25 +1109,31 @@ namespace MateCalendar
             if (_c.Settings.Scope == "all" && t.Assignee != null && _memberName.TryGetValue(t.Assignee, out var who) && who != "")
                 sub += " · " + who;
             var subtitle = Text(sub, 10, _t.Secondary);
-            subtitle.Margin = new Thickness(0, 3, 0, 0);
+            subtitle.TextTrimming = TextTrimming.CharacterEllipsis;
+            subtitle.Margin = new Thickness(0, 2, 0, 0);
             body.Children.Add(subtitle);
 
             // 여러 날에 걸친 작업이면 기간(Calendr 의 여러 날 종일 일정 표기)
+            // 범위는 물결표(대시를 쓰지 않는다)
             if (t.Start.HasValue && t.Start.Value < t.Due)
             {
-                var range = t.Start.Value.Month == t.Due.Month
-                    ? $"{t.Start.Value.Month}월 {t.Start.Value.Day}일 – {t.Due.Day}일"
-                    : $"{t.Start.Value.Month}월 {t.Start.Value.Day}일 – {t.Due.Month}월 {t.Due.Day}일";
-                var dur = Text(range, 11, _t.Secondary);
-                dur.Margin = new Thickness(0, 3, 0, 0);
+                var s = t.Start.Value;
+                var range = s.Year != t.Due.Year
+                    ? $"{s.Year}년 {s.Month}월 {s.Day}일~{t.Due.Year}년 {t.Due.Month}월 {t.Due.Day}일"
+                    : s.Month == t.Due.Month
+                        ? $"{s.Month}월 {s.Day}일~{t.Due.Day}일"
+                        : $"{s.Month}월 {s.Day}일~{t.Due.Month}월 {t.Due.Day}일";
+                var dur = Text(range, 10, _t.Secondary);
+                dur.TextTrimming = TextTrimming.CharacterEllipsis;
+                dur.Margin = new Thickness(0, 2, 0, 0);
                 body.Children.Add(dur);
             }
 
             if (t.Labels.Length > 0)
             {
                 var tags = Text(string.Join(" ", t.Labels.Select(l => "#" + l)), 10, color);
-                tags.TextWrapping = TextWrapping.Wrap;
-                tags.Margin = new Thickness(0, 3, 0, 0);
+                tags.TextTrimming = TextTrimming.CharacterEllipsis;
+                tags.Margin = new Thickness(0, 2, 0, 0);
                 body.Children.Add(tags);
             }
 
@@ -946,9 +1150,14 @@ namespace MateCalendar
             return row;
         }
 
-        private FrameworkElement Message(string text, string? action, Action? onAction)
+        /// <summary>안내 글(+ 단추). fill 이면 목록 칸 한가운데, 아니면 위 줄 아래에 작게</summary>
+        private FrameworkElement Message(string text, string? action, Action? onAction, bool fill = true)
         {
-            var panel = new StackPanel { Margin = new Thickness(8, 20, 8, 8), HorizontalAlignment = HorizontalAlignment.Center };
+            var panel = new StackPanel
+            {
+                Margin = fill ? new Thickness(12, 0, 12, 14) : new Thickness(12, 12, 12, 4),
+                HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center,
+            };
             var tb = Text(text, 11, _t.Secondary);
             tb.TextWrapping = TextWrapping.Wrap;
             tb.TextAlignment = TextAlignment.Center;
@@ -965,7 +1174,10 @@ namespace MateCalendar
                 btn.MouseLeftButtonUp += (s, e) => onAction();
                 panel.Children.Add(btn);
             }
-            return panel;
+            if (!fill) return panel;
+            var box = new Grid { Height = _listH };
+            box.Children.Add(panel);
+            return box;
         }
     }
 }

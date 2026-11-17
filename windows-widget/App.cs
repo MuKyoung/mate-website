@@ -82,9 +82,10 @@ namespace MateCalendar
                 return 0;
             }
 
-            // 하나만 돈다 - 이미 돌고 있으면 그 위젯을 잠깐 앞으로 꺼내 보여 주고 끝낸다
-            using var mutex = new Mutex(true, Installer.MutexName, out bool first);
-            if (!first)
+            // 하나만 돈다 - 이미 돌고 있으면 그 위젯을 잠깐 앞으로 꺼내 보여 주고 끝낸다(보기 자료 점검은 따로 뜬다)
+            bool demo = a.Contains("--demo");
+            using var mutex = new Mutex(!demo, demo ? Installer.MutexName + ".Demo" : Installer.MutexName, out bool first);
+            if (!first && !demo)
             {
                 try
                 {
@@ -94,7 +95,12 @@ namespace MateCalendar
                 return 0;
             }
 
-            var controller = new Controller(a.Contains("--demo"));
+            // --demo --work <DIP> : 작업 영역 높이를 흉내 내 작은 화면에서 맞춰지는지 본다(점검용)
+            int work = Array.FindIndex(args, x => x.Equals("--work", StringComparison.OrdinalIgnoreCase));
+            if (a.Contains("--demo") && work >= 0 && work + 1 < args.Length)
+                WidgetWindow.WorkOverride = double.Parse(args[work + 1], CultureInfo.InvariantCulture);
+
+            var controller = new Controller(demo);
             app.Startup += (s, e) => controller.Start();
             app.Run();
             GC.KeepAlive(mutex);
@@ -117,12 +123,22 @@ namespace MateCalendar
     /// <summary>위젯 · 로그인 · 메뉴 · 작업 표시줄 아이콘 · 새로 읽기 · 업데이트를 묶는다</summary>
     internal sealed class Controller
     {
-        public Settings Settings { get; } = Settings.Load();
+        public Settings Settings { get; }
         public Snapshot Data { get; private set; } = new Snapshot();
         public bool Loaded { get; private set; }
         public string? Error { get; private set; }
         public string? LoginMessage { get; private set; }
-        public bool NeedLogin => !_demo && !Api.SignedIn;
+        public bool NeedLogin => _demo ? DemoSignedOut : !Api.SignedIn;
+
+        /// <summary>점검 그림(--snapshot --state …)용 - 보기 자료에서 로그인 전 · 읽는 중 · 오류 화면을 흉내 낸다</summary>
+        internal bool DemoSignedOut;
+
+        internal void DemoState(bool loaded, string? error)
+        {
+            Loaded = loaded;
+            Error = error;
+            if (!loaded) Data = new Snapshot();
+        }
         public bool UpdateReady => _update != null;
 
         private readonly bool _demo;
@@ -139,6 +155,8 @@ namespace MateCalendar
         public Controller(bool demo)
         {
             _demo = demo;
+            // 보기 자료로 띄울 때는 깔린 위젯의 설정(자리 · 크기)을 읽지도 바꾸지도 않는다
+            Settings = demo ? new Settings { Scratch = true } : Settings.Load();
             if (demo)
             {
                 Data = Demo.Make();
@@ -159,7 +177,7 @@ namespace MateCalendar
             };
             _tray = new Tray(this);
 
-            ListenSignals();
+            if (!_demo) ListenSignals();
             SystemEvents.PowerModeChanged += (s, e) =>
             {
                 if (e.Mode == PowerModes.Resume) Ui(async () => { await Task.Delay(6000); await Refresh(false); });
@@ -210,6 +228,9 @@ namespace MateCalendar
         }
 
         /* ── 데이터 ───────────────────────────────────── */
+
+        /// <summary>점검 그림(--snapshot --cache)용 - 이 PC 에 저장된 내 작업 사본으로 그린다(네트워크 없이)</summary>
+        internal void LoadCacheForSnapshot() => LoadCache();
 
         private void LoadCache()
         {
@@ -476,7 +497,7 @@ namespace MateCalendar
                 if (NeedLogin) m.Items.Add(Item("로그인…", ShowLogin));
                 else m.Items.Add(Item("로그아웃", SignOut));
             }
-            m.Items.Add(Item($"정보 - MATE 캘린더 {Program.Version}", () => MessageBox.Show(
+            m.Items.Add(Item($"정보 · MATE 캘린더 {Program.Version}", () => MessageBox.Show(
                 $"MATE 캘린더 {Program.Version}\n\nHub 의 작업을 바탕화면 캘린더 위젯으로 보여 줍니다.\n" +
                 "화면 디자인: Calendr (github.com/pakerwreah/Calendr, MIT 라이선스)\n글꼴: Pretendard (SIL Open Font License 1.1)",
                 "MATE 캘린더", MessageBoxButton.OK, MessageBoxImage.Information)));
@@ -539,7 +560,7 @@ namespace MateCalendar
         public void Update()
         {
             var who = Api.Who;
-            var text = "MATE 캘린더" + (who != "" ? " - " + who : "");
+            var text = "MATE 캘린더" + (who != "" ? " · " + who : "");
             _icon.Text = text.Length > 63 ? text.Substring(0, 63) : text;
         }
 
@@ -568,35 +589,43 @@ namespace MateCalendar
                     new DomainItem { Id = "ops", Label = "내부 · 운영", Color = "gray", Sort = 4 },
                 },
             };
+            // 점검용 사람 - 팀 전체 보기에서 담당자 이름 · 사람 색을 보이려고
+            s.Members = new List<MemberItem>
+            {
+                new MemberItem { Id = "m1", Name = "가팀원", Active = true },
+                new MemberItem { Id = "m2", Name = "나팀원", Active = true },
+                new MemberItem { Id = "m3", Name = "다팀원", Active = true },
+            };
             int n = 140;
-            TaskItem T(int day, string title, string domain, string status = "todo", string pr = "normal", int? startOffset = null, params string[] labels) =>
+            TaskItem T(int day, string title, string domain, string status = "todo", string pr = "normal", int? startOffset = null, string who = "m1", params string[] labels) =>
                 new TaskItem
                 {
                     Id = Guid.NewGuid().ToString(), Num = n++, Title = title, Domain = domain, Status = status, Priority = pr,
                     Due = today.AddDays(day), Start = startOffset.HasValue ? today.AddDays(day + startOffset.Value) : (DateTime?)null,
-                    Labels = labels,
+                    Labels = labels, Assignee = who,
                 };
             s.Tasks = new List<TaskItem>
             {
-                T(-3, "세종 관리자 캡처 정리", "web", "doing", "high"),
-                T(-1, "견적서 회신", "ops", "todo", "urgent"),
-                T(0, "Hub 일간보고 화면 다듬기", "web", "doing", "high", -4, "Hub"),
-                T(0, "XR 시연 영상 컷 편집", "game", "review"),
-                T(0, "주간 회의 자료", "ops", "done"),
-                T(1, "강의 3회차 실습 파일", "edu", "todo", "normal", null, "강의"),
-                T(2, "갤럭시 위젯 실기기 시험", "web", "todo", "high"),
-                T(2, "게임 BGM 루프 다듬기", "game", "backlog"),
-                T(4, "세금계산서 발행", "ops", "todo", "urgent"),
-                T(6, "포트폴리오 사진 교체", "web", "todo"),
-                T(9, "교육 과정 안내문", "edu", "todo"),
-                T(12, "레벨 디자인 검토", "game", "todo", "high", -5),
-                T(15, "서버 비용 점검", "ops", "todo"),
-                T(-8, "지난달 정산", "ops", "done"),
-                T(-6, "랜딩 문구 고침", "web", "done"),
-                T(18, "모션 그래픽 시안", "game", "todo"),
-                T(18, "강의 피드백 정리", "edu", "todo"),
-                T(18, "홈페이지 점검", "web", "todo"),
-                T(18, "장비 반납", "ops", "todo"),
+                T(-3, "관리자 화면 캡처 정리", "web", "doing", "high", null, "m1", "관리자"),
+                T(-1, "견적서 회신", "ops", "todo", "urgent", null, "m2", "영업"),
+                T(0, "Hub 일간보고 화면 다듬기", "web", "doing", "high", -4, "m1", "Hub"),
+                T(0, "XR 시연 영상 컷 편집", "game", "review", "normal", null, "m3", "영상"),
+                T(0, "주간 회의 자료", "ops", "done", "normal", null, "m2"),
+                T(1, "강의 3회차 실습 파일", "edu", "todo", "normal", null, "m3", "강의"),
+                T(1, "관리자 페이지 2차 개선 요청 반영과 휴대폰 화면 점검, 배포 전에 운영 자료로 마지막 확인", "web", "doing", "high", -6, "m1", "관리자", "배포", "휴대폰 점검"),
+                T(2, "갤럭시 위젯 실기기 시험", "web", "todo", "high", null, "m1", "Hub"),
+                T(2, "게임 BGM 루프 다듬기", "game", "backlog", "normal", null, "m2", "사운드"),
+                T(4, "세금계산서 발행", "ops", "todo", "urgent", null, "m2", "영업"),
+                T(6, "포트폴리오 사진 교체", "web", "todo", "normal", null, "m1"),
+                T(9, "교육 과정 안내문", "edu", "todo", "normal", null, "m3", "강의"),
+                T(12, "레벨 디자인 검토", "game", "todo", "high", -5, "m3"),
+                T(15, "서버 비용 점검", "ops", "todo", "normal", null, "m1"),
+                T(-8, "지난달 정산", "ops", "done", "normal", null, "m2"),
+                T(-6, "랜딩 문구 고침", "web", "done", "normal", null, "m1"),
+                T(18, "모션 그래픽 시안", "game", "todo", "normal", null, "m3", "영상"),
+                T(18, "강의 피드백 정리", "edu", "todo", "normal", null, "m3", "강의"),
+                T(18, "홈페이지 점검", "web", "todo", "normal", null, "m1"),
+                T(18, "장비 반납", "ops", "todo", "normal", null, "m2"),
             };
             return s;
         }
@@ -612,12 +641,43 @@ namespace MateCalendar
                 int i = Array.FindIndex(args, x => x.Equals(name, StringComparison.OrdinalIgnoreCase));
                 return i >= 0 && i + 1 < args.Length ? args[i + 1] : def;
             }
-            var c = new Controller(true);
+            // --cache : 보기 자료 대신 이 PC 에 저장된 실제 작업 사본(로그인한 경우)
+            bool real = args.Contains("--cache");
+            var c = new Controller(!real);
             c.Settings.Appearance = Arg("--theme", "dark");
             c.Settings.Scale = double.Parse(Arg("--scale", "1.5"), CultureInfo.InvariantCulture);
             c.Settings.WeekNumbers = args.Contains("--weeks");
+            // 점검용 설정: --scope all · --color domain|label|member · --transparency 0~2 · --upcoming N · --no-outline · --no-summary
+            c.Settings.Scope = Arg("--scope", "mine");
+            c.Settings.ColorBy = Arg("--color", "domain");
+            c.Settings.Transparency = int.Parse(Arg("--transparency", "1"), CultureInfo.InvariantCulture);
+            c.Settings.UpcomingDays = int.Parse(Arg("--upcoming", "7"), CultureInfo.InvariantCulture);
+            c.Settings.MonthOutline = !args.Contains("--no-outline");
+            c.Settings.Summary = !args.Contains("--no-summary");
+            c.Settings.Locked = args.Contains("--locked");
+            // --work <DIP> : 작업 영역 높이(작은 노트북 화면 흉내)
+            var workArg = Arg("--work", "");
+            if (workArg != "") WidgetWindow.WorkOverride = double.Parse(workArg, CultureInfo.InvariantCulture);
+            // --state login|loading|error : 로그인 전 · 읽는 중 · 서버 오류 화면
+            switch (Arg("--state", ""))
+            {
+                case "login": c.DemoSignedOut = true; break;
+                case "loading": c.DemoState(false, null); break;
+                case "error": c.DemoState(true, "서버에 닿지 않습니다. 인터넷 연결을 확인해 주세요. (14:02 기준)"); break;
+            }
+
+            if (real) c.LoadCacheForSnapshot();
 
             var w = new WidgetWindow(c);
+            // --select +N(오늘부터 며칠 뒤) 또는 yyyy-MM-dd : 고른 날
+            var sel = Arg("--select", "");
+            if (sel != "")
+            {
+                var d = sel.StartsWith("+") || sel.StartsWith("-")
+                    ? DateTime.Today.AddDays(int.Parse(sel, CultureInfo.InvariantCulture))
+                    : DateTime.ParseExact(sel, "yyyy-MM-dd", CultureInfo.InvariantCulture);
+                w.SelectForSnapshot(d);
+            }
             var root = (FrameworkElement)w.Content;
             w.Content = null;
 
