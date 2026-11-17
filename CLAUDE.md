@@ -34,7 +34,8 @@ Trust this map. Do not scan the file tree to rediscover structure.
   only when the report screen opens) · Google Drive tree (`Drive.tsx`,
   `driveTree.ts`; table `tm_drive_snapshot` filled by the Apps Script
   `supabase/drive-sync.gs` in contact@devteammate.co.kr, which checks Drive
-  changes every minute and resends on change or every 30 min). Sejong admin design, `tm-*`
+  changes every minute and resends on change or every 30 min; deployed as a
+  web app it also serves the Hub's "드라이브 확인" button via doPost). Sejong admin design, `tm-*`
   tokens). With `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY`
   at build time it uses Supabase (login, `remote.ts`, `team.ts`; schema/RLS in
   `supabase/taskmanager.sql`); without them it falls back to localStorage.

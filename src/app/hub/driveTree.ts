@@ -30,6 +30,8 @@ export interface DriveSnapshot {
   /** 넣은 쪽 - 'apps-script'(자동) · 'claude'(손으로) */
   source: string;
   syncedAt: string;
+  /** 바로 확인 주소(드라이브 쪽 웹 앱) - 스크립트가 설정 줄 '#refresh' 로 보낸다. 없으면 '드라이브 확인' 단추 대신 '다시 읽기' */
+  refreshUrl: string | null;
 }
 
 export type DriveLoad =
@@ -39,7 +41,7 @@ export type DriveLoad =
   | { kind: 'error'; message: string }
   | { kind: 'ok'; snapshot: DriveSnapshot };
 
-interface SnapshotRow {
+export interface SnapshotRow {
   root_id: string;
   items: unknown;
   source: string | null;
@@ -56,7 +58,8 @@ function cleanItems(raw: unknown): DriveItem[] {
     if (!r || typeof r !== 'object') continue;
     const o = r as Record<string, unknown>;
     const id = str(o.id);
-    if (!id) continue;
+    // # 로 시작하는 줄은 드라이브 항목이 아니라 스크립트의 설정 줄이다(refreshUrlOf)
+    if (!id || id.startsWith('#')) continue;
     out.push({
       id,
       parent: str(o.parent) || null,
@@ -89,10 +92,78 @@ export async function loadDrive(): Promise<DriveLoad> {
     .maybeSingle<SnapshotRow>();
   if (error) return isMissingTable(error) ? { kind: 'missing' } : { kind: 'error', message: error.message };
   if (!data) return { kind: 'empty' };
+  return { kind: 'ok', snapshot: snapshotFrom(data) };
+}
+
+/** 드라이브 쪽 웹 앱 주소만 받는다 - Hub 가 그대로 부르므로 모양을 엄격히 본다 */
+const WEBAPP_RE = /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/;
+
+function refreshUrlOf(raw: unknown): string | null {
+  if (!Array.isArray(raw)) return null;
+  const meta = raw.find((r): r is Record<string, unknown> => !!r && typeof r === 'object' && (r as Record<string, unknown>).id === '#refresh');
+  const url = meta ? str(meta.url) : '';
+  return WEBAPP_RE.test(url) ? url : null;
+}
+
+export function snapshotFrom(row: SnapshotRow): DriveSnapshot {
   return {
-    kind: 'ok',
-    snapshot: { rootId: data.root_id, items: cleanItems(data.items), source: data.source ?? '', syncedAt: data.synced_at },
+    rootId: row.root_id,
+    items: cleanItems(row.items),
+    source: row.source ?? '',
+    syncedAt: row.synced_at,
+    refreshUrl: refreshUrlOf(row.items),
   };
+}
+
+/* ── 바로 확인 ─────────────────────────────────────── */
+
+export type DriveCheck =
+  | { ok: true; skipped: boolean }
+  | { ok: false; reason: 'not-member' | 'busy' | 'unreachable' | 'failed'; message?: string };
+
+/**
+ * 드라이브 쪽 웹 앱을 깨워 지금 목록을 받게 한다(10초 남짓). 누른 사람의 Hub 로그인 토큰을 실어 보내고,
+ * 웹 앱은 승인된 팀원인지 본 뒤 30초 안에 받은 것이 있으면 새로 받지 않는다(skipped).
+ * text/plain 으로 보내 미리 묻기(CORS preflight) 없이 간다 - 답은 구글이 넘겨 준 주소에서 온다
+ */
+export async function requestDriveCheck(url: string): Promise<DriveCheck> {
+  if (!isRemote || !WEBAPP_RE.test(url)) return { ok: false, reason: 'failed' };
+  const { data } = await sb().auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) return { ok: false, reason: 'not-member' };
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ token }),
+      signal: AbortSignal.timeout(60_000),
+    });
+  } catch {
+    return { ok: false, reason: 'unreachable' };
+  }
+  try {
+    const j = (await res.json()) as { ok?: unknown; skipped?: unknown; error?: unknown };
+    if (j.ok === true) return { ok: true, skipped: j.skipped === true };
+    if (j.error === 'not-member' || j.error === 'busy') return { ok: false, reason: j.error };
+    return { ok: false, reason: 'failed', message: typeof j.error === 'string' ? j.error : undefined };
+  } catch {
+    return { ok: false, reason: 'unreachable' };
+  }
+}
+
+/** 두 목록 사이에 늘어난 것 · 빠진 것 · 바뀐 것(이름 · 위치 · 수정 시각) - 바로 확인 뒤 알림에 쓴다 */
+export function diffSnapshots(a: DriveSnapshot, b: DriveSnapshot): { added: number; removed: number; changed: number } {
+  const before = new Map(a.items.map((i) => [i.id, i]));
+  let added = 0;
+  let changed = 0;
+  for (const i of b.items) {
+    const o = before.get(i.id);
+    if (!o) added++;
+    else if (o.name !== i.name || o.parent !== i.parent || o.modified !== i.modified) changed++;
+    before.delete(i.id);
+  }
+  return { added, removed: before.size, changed };
 }
 
 /* ── 트리 ─────────────────────────────────────────── */

@@ -3,7 +3,7 @@
 import { Fragment, useCallback, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   DRIVE_ACCOUNT, DRIVE_FOLDER, DRIVE_SYNC_MINUTES, KIND_LABEL,
-  ancestorsOf, buildDriveTree, driveUrl, kindOf, loadDrive, loadDriveStamp, previewUrl,
+  ancestorsOf, buildDriveTree, diffSnapshots, driveUrl, kindOf, loadDrive, loadDriveStamp, previewUrl, requestDriveCheck,
   type DriveKind, type DriveLoad, type DriveNode, type DriveSnapshot, type DriveTree,
 } from './driveTree';
 import { IconClose, IconPlus, IconSearch, PageHead, tmFieldBase, tmGhostBtn, tmIconBtn, tmIconBtnSm, useMediaQuery } from './ui';
@@ -382,6 +382,75 @@ function useNow(every: number) {
   return now;
 }
 
+/* ── 드라이브 확인(바로) - 너무 잦게 누르지 않게 ──────────
+   · 확인하는 동안(10초 남짓)은 다시 누를 수 없다.
+   · 끝나면 1분을 쉰다. 남은 시간은 단추 그림의 원이 줄어드는 것과 '45초 뒤 다시'로 보여 준다.
+   · 누구든(1분 갱신 포함) 방금 새 목록을 받았으면 그 시각부터 1분을 쉰다 - 팀이 같은 목록을 함께 본다.
+   · 쉬는 동안 누르면 까닭을 알린다. 실패하면 15초만 쉰다.
+   · 쉬는 시각은 이 브라우저에 기억해 새로 고침으로 건너뛰지 못하게 하고, 드라이브 쪽도 30초 안의 요청은 새로 받지 않는다 */
+const CHECK_GAP_MS = 60_000;
+const FAIL_GAP_MS = 15_000;
+const CHECK_KEY = 'mate.taskmanager.drive.check.v1';
+
+function readBlock(me: string): number {
+  try {
+    const v = Number(window.localStorage.getItem(`${CHECK_KEY}:${me}`));
+    // 시계를 바꾼 브라우저에서 오래 막히지 않게 1분 넘게 남은 값은 1분으로
+    return Number.isFinite(v) ? Math.min(v, Date.now() + CHECK_GAP_MS) : 0;
+  } catch {
+    return 0;
+  }
+}
+function writeBlock(me: string, at: number) {
+  try {
+    window.localStorage.setItem(`${CHECK_KEY}:${me}`, String(at));
+  } catch {
+    /* 이번 화면에서만 쉰다 */
+  }
+}
+
+/** 쉬는 동안만 1초마다 다시 그린다 */
+function useSecondTick(active: boolean) {
+  const [, setT] = useState(0);
+  useEffect(() => {
+    if (!active) return;
+    const id = window.setInterval(() => setT((t) => t + 1), 1000);
+    return () => window.clearInterval(id);
+  }, [active]);
+}
+
+/** 확인 단추 그림 - 확인 중이면 도는 화살표, 쉬는 중이면 남은 몫만큼 칠한 원 */
+function CheckIcon({ spin, frac }: { spin: boolean; frac: number }) {
+  if (frac > 0) {
+    const c = 2 * Math.PI * 7.5;
+    return (
+      <svg viewBox="0 0 20 20" width={17} height={17} aria-hidden className="flex-none">
+        <circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" strokeOpacity={0.25} strokeWidth={2} />
+        <circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round"
+          strokeDasharray={c} strokeDashoffset={c * (1 - frac)} transform="rotate(-90 10 10)"
+          className="transition-[stroke-dashoffset] duration-1000 ease-linear" />
+      </svg>
+    );
+  }
+  return (
+    <svg viewBox="0 0 20 20" width={17} height={17} aria-hidden className={`flex-none ${spin ? 'motion-safe:animate-spin' : ''}`} {...line}>
+      <path d="M16.2 10a6.2 6.2 0 1 1-1.9-4.5" />
+      <path d="M16.4 3.6v3.3h-3.3" />
+    </svg>
+  );
+}
+
+/** 쉬는 중 · 확인 중인 단추 - 마우스를 올려도 파랗게 바뀌지 않는다. 폭은 글자가 바뀌어도 그대로 */
+const checkBlocked =
+  'inline-flex h-[38px] min-w-[132px] items-center justify-center gap-1.5 whitespace-nowrap rounded-tm-sm border border-tm-line bg-tm-bg px-3.5 ' +
+  'text-[13.5px] font-semibold text-tm-sub cursor-default [@media(pointer:coarse)]:h-11';
+
+const NOTICE_TONE = {
+  ok: 'border-tm-ok/40 bg-tm-ok-tint text-tm-ok-deep',
+  info: 'border-tm-line bg-white text-tm-sub',
+  err: 'border-tm-red-line bg-tm-red-tint text-tm-red-deep',
+} as const;
+
 /* ── 화면 ───────────────────────────────────────── */
 
 export default function Drive({ me }: { me: string }) {
@@ -392,16 +461,19 @@ export default function Drive({ me }: { me: string }) {
   /** 지금 보이는 목록의 갱신 시각 - 새 목록이 왔는지 견준다 */
   const shownStamp = useRef<string | null>(null);
   /** quiet - 화면이 알아서 다시 읽는 것. 못 읽어도 보던 목록을 그대로 두고, 단추 글자도 바꾸지 않는다 */
-  const reload = useCallback(async (quiet = false) => {
+  const reload = useCallback(async (quiet = false): Promise<DriveLoad | null> => {
     if (!quiet) setBusy(true);
     try {
       const next = await loadDrive();
       if (!quiet || next.kind === 'ok') {
         shownStamp.current = next.kind === 'ok' ? next.snapshot.syncedAt : null;
         setLoad(next);
+        return next;
       }
+      return null;
     } catch (e) {
       if (!quiet) setLoad({ kind: 'error', message: e instanceof Error ? e.message : String(e) });
+      return null;
     } finally {
       if (!quiet) setBusy(false);
     }
@@ -428,6 +500,65 @@ export default function Drive({ me }: { me: string }) {
   const tree = useMemo(() => (snap ? buildDriveTree(snap) : null), [snap]);
   const now = useNow(60_000);
 
+  /* ── 드라이브 확인(바로) ── */
+  const [checking, setChecking] = useState(false);
+  const [blockUntil, setBlockUntil] = useState(() => readBlock(me));
+  const [notice, setNotice] = useState<{ tone: keyof typeof NOTICE_TONE; text: string } | null>(null);
+  const syncedMs = snap ? Date.parse(snap.syncedAt) || 0 : 0;
+  /** 이 시각까지 쉰다 - 내가 누른 것과 팀이 방금 받은 것 중 늦은 쪽. 갱신 시각이 미래(시계가 어긋난 브라우저)면 그것은 보지 않는다 */
+  const blockedTill = (t: number) => {
+    const since = t - syncedMs;
+    return Math.max(blockUntil, since >= 0 && since < CHECK_GAP_MS ? syncedMs + CHECK_GAP_MS : 0);
+  };
+  useSecondTick(checking || blockedTill(Date.now()) > Date.now());
+  const nowMs = Date.now();
+  const left = checking ? 0 : Math.max(0, Math.ceil((blockedTill(nowMs) - nowMs) / 1000));
+  useEffect(() => {
+    if (!notice) return;
+    const id = window.setTimeout(() => setNotice(null), notice.tone === 'err' ? 9000 : 6000);
+    return () => window.clearTimeout(id);
+  }, [notice]);
+
+  const rest = (ms: number) => {
+    const until = Date.now() + ms;
+    setBlockUntil(until);
+    writeBlock(me, until);
+  };
+  const checkNow = async () => {
+    if (!snap?.refreshUrl || checking) return;
+    if (left > 0) {
+      setNotice({ tone: 'info', text: `새 목록을 방금 받았습니다. 1분에 한 번 확인할 수 있어 ${left}초 뒤에 다시 됩니다` });
+      return;
+    }
+    setChecking(true);
+    setNotice(null);
+    const before = snap;
+    const r = await requestDriveCheck(snap.refreshUrl);
+    if (r.ok) {
+      const next = await reload(true);
+      rest(CHECK_GAP_MS);
+      if (r.skipped) {
+        setNotice({ tone: 'info', text: '방금 받은 목록이라 그대로입니다' });
+      } else if (next?.kind === 'ok') {
+        const d = diffSnapshots(before, next.snapshot);
+        const parts = [d.added && `늘어남 ${num(d.added)}`, d.removed && `빠짐 ${num(d.removed)}`, d.changed && `바뀜 ${num(d.changed)}`].filter(Boolean);
+        setNotice({ tone: 'ok', text: parts.length ? `새 목록을 받았습니다 · ${parts.join(' · ')}` : '확인했습니다 · 바뀐 것이 없습니다' });
+      } else {
+        setNotice({ tone: 'ok', text: '확인했습니다' });
+      }
+    } else {
+      rest(FAIL_GAP_MS);
+      setNotice({
+        tone: 'err',
+        text: r.reason === 'not-member' ? '승인된 팀원만 확인할 수 있습니다. 다시 로그인해 보세요'
+          : r.reason === 'busy' ? '다른 확인이 돌고 있습니다. 잠시 뒤 다시 해 주세요'
+            : '구글 드라이브에 닿지 못했습니다. 잠시 뒤 다시 해 주세요',
+      });
+    }
+    setChecking(false);
+  };
+  const blocked = checking || left > 0;
+
   return (
     <>
       <PageHead
@@ -435,9 +566,27 @@ export default function Drive({ me }: { me: string }) {
         lead={`팀 구글 드라이브의 폴더 구조입니다. 이름을 누르면 옆에 안의 내용이 보이고, 두 번 누르면 드라이브에서 열립니다. 이름 끝의 동그라미로 접고 펼칩니다. 드라이브가 바뀌면 1~2분 안에 새 목록이 들어옵니다.`}
         saved={snap ? syncBadge(snap, now) : undefined}
       >
-        <button type="button" onClick={() => void reload()} disabled={busy} className={tmGhostBtn}>
-          {busy ? '읽는 중…' : '다시 읽기'}
-        </button>
+        {/* 확인 결과 · 쉬는 까닭 - 몇 초 뒤 사라진다. 화면 읽기 프로그램에도 알린다 */}
+        <p role="status" aria-live="polite"
+          className={notice ? `max-w-[42ch] rounded-tm-sm border px-3 py-[6px] text-[13px] font-semibold leading-[1.5] ${NOTICE_TONE[notice.tone]}` : 'sr-only'}>
+          {notice?.text ?? ''}
+        </p>
+        {snap?.refreshUrl ? (
+          <button type="button" onClick={() => void checkNow()} aria-disabled={blocked} aria-busy={checking}
+            aria-label={checking ? '구글 드라이브를 확인하는 중' : left > 0 ? `드라이브 확인, ${left}초 뒤에 다시 할 수 있습니다` : '구글 드라이브를 지금 확인'}
+            title={checking ? '구글 드라이브를 확인하는 중입니다(10초 남짓)'
+              : left > 0 ? `새 목록을 방금 받았습니다. 1분에 한 번 확인할 수 있습니다(${left}초 뒤)`
+                : '구글 드라이브를 지금 확인해 새 목록을 받습니다. 1분에 한 번 할 수 있습니다'}
+            className={blocked ? checkBlocked : `${tmGhostBtn} min-w-[132px]`}>
+            <CheckIcon spin={checking} frac={checking ? 0 : Math.min(1, left / (CHECK_GAP_MS / 1000))} />
+            <span className="tabular-nums">{checking ? '확인 중…' : left > 0 ? `${left}초 뒤 다시` : '드라이브 확인'}</span>
+          </button>
+        ) : (
+          <button type="button" onClick={() => void reload()} disabled={busy} className={tmGhostBtn}
+            title="Hub 에 저장된 목록을 다시 읽습니다. 드라이브 쪽 웹 앱을 설정하면 '드라이브 확인'으로 바뀝니다">
+            {busy ? '읽는 중…' : '다시 읽기'}
+          </button>
+        )}
         {tree && (
           <a href={driveUrl(tree.root.item)} target="_blank" rel="noopener noreferrer"
             className={`${tmGhostBtn} hover:border-tm-blue hover:bg-tm-tint`}>

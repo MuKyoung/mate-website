@@ -1216,7 +1216,7 @@ $$;
 create table if not exists public.tm_drive_snapshot (
   id smallint primary key default 1 check (id = 1),   -- 한 줄만 둔다
   root_id text not null,                              -- 내 드라이브(맨 위)의 id
-  items jsonb not null default '[]'::jsonb,           -- [{ id, parent, name, mime, url, modified }]
+  items jsonb not null default '[]'::jsonb,           -- [{ id, parent, name, mime, url, modified }] · id '#refresh' 줄은 바로 확인 주소(웹 앱)
   item_count integer not null default 0,
   source text not null default '',                    -- 넣은 쪽 - apps-script(자동) · claude(손으로)
   synced_at timestamptz not null default now()
