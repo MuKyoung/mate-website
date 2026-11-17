@@ -1284,6 +1284,71 @@ begin
 end;
 $$;
 
+-- ── 보고 명단 = 승인된 팀원 (2026-11-17) ──────────────────────
+-- 일간 · 주간보고에 뜨는 사람을 이름으로 적어 둔 명단이 아니라 가입해 승인된 팀원으로 한다. 관리자가 사람마다 빼기 · 다시 넣기 · 순서를 고른다.
+--   · 승인된 팀원마다 명단 줄이 하나씩 있다 - 승인되는 순간 맨 아래에 저절로 들어온다(tm_members 트리거).
+--   · 계정 연결을 비워 둔 줄은 이름이 같은 승인된 계정(양쪽 모두 하나뿐일 때)과 이어 주고 다시 보이게 한다.
+--   · 처음 한 번만: 계정이 없는 이름만의 줄은 보고에서 뺀다(hidden). 지우지 않으므로 관리자가 화면에서 다시 넣을 수 있다.
+-- 위 두 보고 조각 뒤에 실행한다. 여러 번 실행해도 된다(관리자가 다시 넣은 줄을 다시 빼지 않는다).
+
+alter table public.tm_report_people add column if not exists hidden boolean not null default false;   -- 참이면 보고에 뜨지 않는다
+alter table public.tm_report_setup add column if not exists members_synced boolean not null default false;
+
+create or replace function public.tm_report_people_sync()
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  update public.tm_report_people p
+     set member = m.id, hidden = false
+    from public.tm_members m
+   where p.member is null and m.active and btrim(m.name) <> '' and btrim(m.name) = btrim(p.name)
+     and (select count(*) from public.tm_members x where x.active and btrim(x.name) = btrim(m.name)) = 1
+     and (select count(*) from public.tm_report_people q where q.member is null and btrim(q.name) = btrim(p.name)) = 1
+     and not exists (select 1 from public.tm_report_people q where q.member = m.id);
+  insert into public.tm_report_people (name, member, sort)
+  select left(coalesce(nullif(btrim(m.name), ''), nullif(split_part(m.email, '@', 1), ''), '이름 없음'), 20), m.id,
+         coalesce((select max(p.sort) from public.tm_report_people p), 0) + 1000 * row_number() over (order by m.created_at, m.id)
+    from public.tm_members m
+   where m.active and not exists (select 1 from public.tm_report_people p where p.member = m.id);
+end;
+$$;
+
+-- 승인되는 순간(처음부터 승인된 줄 포함) 명단에 넣는다
+create or replace function public.tm_members_report_people()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if new.active and (tg_op = 'INSERT' or old.active is distinct from true) then
+    perform public.tm_report_people_sync();
+  end if;
+  return null;
+end;
+$$;
+
+create or replace trigger tm_members_report_people after insert or update of active on public.tm_members
+  for each row execute function public.tm_members_report_people();
+
+-- 지금 승인된 팀원을 넣고, 처음 한 번만 계정 없는 이름 줄을 뺀다
+do $$
+begin
+  perform public.tm_report_people_sync();
+  if exists (select 1 from public.tm_report_setup where id and not members_synced) then
+    update public.tm_report_people set hidden = true where member is null;
+    update public.tm_report_setup set members_synced = true where id;
+  end if;
+end;
+$$;
+
+-- 보이기 칸은 관리자만 고친다(명단 표의 RLS 가 관리자 것만 받는다). 위 보고 블록을 다시 실행하면 이 권한도 거두므로 이 조각도 다시 실행한다
+grant insert (hidden), update (hidden) on public.tm_report_people to authenticated;
+revoke execute on function public.tm_report_people_sync(), public.tm_members_report_people() from public, anon, authenticated;
+
 -- 일간보고 명단을 처음 9명으로 되돌리기 - 다시 실행으로는 채우지 않으므로, 꼭 필요할 때 관리자가 이 줄만 따로 실행한다.
 -- 명단이 비어 있을 때만 넣는다. 맨 앞의 -- 를 지우고 그 줄만 실행한다.
 -- insert into public.tm_report_people (name, sort) select v.name, v.sort from (values ('박무경', 1000::double precision), ('정성권', 2000), ('전승원', 3000), ('박예형', 4000), ('강민정', 5000), ('김학동', 6000), ('조현민', 7000), ('이지영', 8000), ('박수현', 9000)) as v (name, sort) where not exists (select 1 from public.tm_report_people);

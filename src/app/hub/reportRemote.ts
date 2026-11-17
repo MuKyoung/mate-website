@@ -29,6 +29,7 @@ interface ReportPersonRow {
   name: string;
   member: string | null;
   sort: number;
+  hidden: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -73,7 +74,10 @@ interface TeamRow {
 /** 빠진 칸(실시간 알림)은 undefined 로 둔다 - 화면에 있던 값이 남는다 */
 const keep = <T,>(v: T | undefined, map: (x: T) => unknown) => (v === undefined ? undefined : map(v));
 
-const personFromRow = (r: ReportPersonRow): ReportPerson => ({ id: r.id, name: r.name, member: r.member ?? null, order: r.sort });
+const personFromRow = (r: ReportPersonRow): ReportPerson => ({
+  id: r.id, name: r.name, member: r.member ?? null, order: r.sort,
+  hidden: keep(r.hidden, (h) => h === true) as ReportPerson['hidden'],
+});
 
 /** 바뀐 칸만 옮긴다. id 는 만들 때 한 번만 보낸다 */
 function personToRow(p: Partial<ReportPerson>): Partial<ReportPersonRow> {
@@ -81,6 +85,7 @@ function personToRow(p: Partial<ReportPerson>): Partial<ReportPersonRow> {
   if (p.name !== undefined) r.name = p.name;
   if (p.member !== undefined) r.member = p.member;
   if (p.order !== undefined) r.sort = p.order;
+  if (p.hidden !== undefined) r.hidden = p.hidden;
   return r;
 }
 
@@ -137,7 +142,7 @@ type Probe = 'checking' | 'ok' | 'missing' | 'error';
 type DbError = { message?: string; code?: string } | null;
 
 const reportProbe = () => [
-  sb().from('tm_report_people').select('id').limit(1),
+  sb().from('tm_report_people').select('id,hidden').limit(1),
   sb().from('tm_daily_reports').select('id,projects').limit(1),
   sb().from('tm_weekly_entries').select('id,projects,feedback').limit(1),
   sb().from('tm_weekly_reports').select('id,status').limit(1),
@@ -223,8 +228,8 @@ export function useRemoteReportStore(opts: ReportStoreOptions): ReportStore {
     return false;
   }, []);
 
-  const addPerson = useCallback<ReportStore['addPerson']>((name) => {
-    const p: ReportPerson = { id: crypto.randomUUID(), name, member: null, order: nextPersonOrder(pe.items) };
+  const addPerson = useCallback<ReportStore['addPerson']>((name, member = null) => {
+    const p: ReportPerson = { id: crypto.randomUUID(), name, member, order: nextPersonOrder(pe.items), hidden: false };
     pe.create(p, { id: p.id, ...personToRow(p) });
     return p;
   }, [pe]);

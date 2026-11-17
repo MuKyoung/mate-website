@@ -5,7 +5,7 @@ import { isRemote } from './supabase';
 import { useRemoteReportStore } from './reportRemote';
 import {
   LIMITS, addBlocksTo, addDays, blankDaily, blankWeekly, blocksOf, dailyProjects, dailyText, dayLabel, isDailyFilled, isDay,
-  isWeeklyFilled, jiraBaseOf, lastDailyBefore, memberOfPerson, mergeWeekly, previousDaily, projectKey, projectLabel, projectNames, reorderPeople,
+  isWeeklyFilled, jiraBaseOf, lastDailyBefore, memberOfPerson, mergeWeekly, nextPersonOrder, previousDaily, projectKey, projectLabel, projectNames, reorderPeople,
   stepWorkday, useReportStore, weekLabel, weekOf, weeklyDraft, weeklyText, whenOf, workdaysOf,
   type Block, type ReportStore, type ReportStoreOptions,
 } from './reportStore';
@@ -268,7 +268,7 @@ function rowsOf<E extends { person: string; name: string }>(
     ...entries
       .filter((e) => !ids.has(e.person) && filled(e))
       .sort((a, b) => a.name.localeCompare(b.name, 'ko'))
-      .map((e) => ({ person: { id: e.person, name: e.name || '이름 없음', member: null, order: Number.MAX_SAFE_INTEGER }, entry: e, gone: true })),
+      .map((e) => ({ person: { id: e.person, name: e.name || '이름 없음', member: null, order: Number.MAX_SAFE_INTEGER, hidden: false }, entry: e, gone: true })),
   ];
 }
 
@@ -318,8 +318,16 @@ export default function Reports({
   const usable = store.ready && !store.missing && !store.loadError;
 
   /* 나 - 계정이 이어진 명단 사람, 없으면 이 브라우저에서 고른 사람 */
-  const linked = useMemo(() => store.people.find((p) => memberOfPerson(p, members)?.id === me) ?? null, [store.people, members, me]);
-  const mine = linked ?? store.people.find((p) => p.id === mineChoice) ?? null;
+  /**
+   * 보고에 뜨는 사람 - 관리자가 뺀 사람(hidden)은 빼고, 계정이 이어진 사람은 계정의 지금 이름으로.
+   * 뺀 사람이 그날 적은 보고는 맨 아래 '명단에서 빠짐'으로 남는다
+   */
+  const people = useMemo(() => store.people.filter((p) => !p.hidden).map((p) => {
+    const n = memberOfPerson(p, members)?.name.trim();
+    return n && n !== p.name ? { ...p, name: n } : p;
+  }), [store.people, members]);
+  const linked = useMemo(() => people.find((p) => memberOfPerson(p, members)?.id === me) ?? null, [people, members, me]);
+  const mine = linked ?? people.find((p) => p.id === mineChoice) ?? null;
 
   const names = useMemo(() => projectNames(store.daily, store.weekly, today), [store.daily, store.weekly, today]);
   const env = useMemo<RenderEnv>(() => {
@@ -400,13 +408,13 @@ export default function Reports({
   };
 
   const dailyCopy = () => {
-    const rows = rowsOf(store.people, store.daily.filter((e) => e.day === day), isDailyFilled)
+    const rows = rowsOf(people, store.daily.filter((e) => e.day === day), isDailyFilled)
       .filter((r) => !r.gone || isDailyFilled(r.entry));
     return dailyText(day, rows.map((r) => ({ name: r.gone ? `${r.person.name} (명단에서 빠짐)` : r.person.name, entry: r.entry })));
   };
 
   const weeklyCopy = () => {
-    const rows = rowsOf(store.people, store.weekly.filter((e) => e.week === week), isWeeklyFilled)
+    const rows = rowsOf(people, store.weekly.filter((e) => e.week === week), isWeeklyFilled)
       .filter((r) => !r.gone || isWeeklyFilled(r.entry));
     return weeklyText(week, store.teams.find((t) => t.id === week),
       rows.map((r) => ({ name: r.gone ? `${r.person.name} (명단에서 빠짐)` : r.person.name, entry: r.entry })));
@@ -529,7 +537,7 @@ export default function Reports({
     );
   } else {
     const common = {
-      store, today, members, canAdmin: canEditPeople, mine, mineAuto: !!linked, onMine: setMineChoice, names, nameOf, onNotice,
+      store, people, today, members, canAdmin: canEditPeople, mine, mineAuto: !!linked, onMine: setMineChoice, names, nameOf, onNotice,
       onRoster: () => setRosterOpen(true),
     };
     body = kind === 'daily' ? (
@@ -605,6 +613,8 @@ export default function Reports({
 
 interface ViewProps {
   store: ReportStore;
+  /** 보고에 뜨는 사람(스크럼 순서, 계정 이름) */
+  people: ReportPerson[];
   today: string;
   members: Member[];
   canAdmin: boolean;
@@ -700,7 +710,7 @@ function DailyEditor({ idBase, store, day, person, entry, names, wide, onRemoveA
 }
 
 function DailyView({
-  store, today, members, canAdmin, mine, mineAuto, onMine, names, nameOf, onNotice, onRoster, onCopyLink, day, onDay,
+  store, people, today, members, canAdmin, mine, mineAuto, onMine, names, nameOf, onNotice, onRoster, onCopyLink, day, onDay,
 }: ViewProps & { day: string; onDay(d: string): void }) {
   const uid = useId();
   const [boxRef, width] = useWidth();
@@ -714,7 +724,7 @@ function DailyView({
   const memberOf = (p: ReportPerson) => (p.order === Number.MAX_SAFE_INTEGER ? null : memberOfPerson(p, members));
 
   const ofDay = useMemo(() => store.daily.filter((e) => e.day === day), [store.daily, day]);
-  const rows = useMemo(() => rowsOf(store.people, ofDay, isDailyFilled), [store.people, ofDay]);
+  const rows = useMemo(() => rowsOf(people, ofDay, isDailyFilled), [people, ofDay]);
   const roster = rows.filter((r) => !r.gone);
   const written = roster.filter((r) => isDailyFilled(r.entry)).length;
   const myEntry = mine ? ofDay.find((e) => e.person === mine.id) : undefined;
@@ -772,7 +782,7 @@ function DailyView({
       <section aria-label="내 스크럼" className="mb-6 rounded-tm border border-tm-line bg-white shadow-tm">
         <ComposerHead title={mine ? `내 스크럼 · ${mine.name}` : '내 스크럼'} mine={mine} members={members}
           sub={mine ? `${dayLabel(day)} · ${myEntry && isDailyFilled(myEntry) ? `${whenOf(myEntry.updatedAt, today)} 저장` : '적는 대로 저장됩니다'}` : '명단에서 나를 고르면 내 칸을 바로 씁니다'}
-          picker={!mineAuto && <MinePicker id={`${uid}-mine`} people={store.people} mine={mine} onMine={onMine} />}>
+          picker={!mineAuto && <MinePicker id={`${uid}-mine`} people={people} mine={mine} onMine={onMine} />}>
           {mine && (
             <button type="button" onClick={() => setCarry(true)} disabled={!prev} className={tmEditBtn}
               title={prev ? `${dayLabel(prev.day)} 예정을 골라 완료 · 오늘 예정으로 옮깁니다` : '2주 안에 적은 예정이 없습니다'}>
@@ -789,7 +799,7 @@ function DailyView({
             </>
           ) : (
             <p className="text-[15px] leading-[1.7] text-tm-ink">
-              {store.people.length
+              {people.length
                 ? '위의 고르기 칸에서 명단의 내 이름을 골라 주세요. 이 브라우저에 기억합니다. 관리자가 명단에서 계정을 이어 주면 고르지 않아도 됩니다.'
                 : '명단이 비어 있습니다. 관리자가 명단 관리에서 사람을 넣어야 합니다.'}
             </p>
@@ -1001,7 +1011,7 @@ function WeeklyEditor({ idBase, store, week, person, entry, names, wide, onRemov
 }
 
 function WeeklyView({
-  store, today, members, canAdmin, mine, mineAuto, onMine, names, nameOf, onNotice, onRoster, onCopyLink, week, onWeek, onOpenDay,
+  store, people, today, members, canAdmin, mine, mineAuto, onMine, names, nameOf, onNotice, onRoster, onCopyLink, week, onWeek, onOpenDay,
 }: ViewProps & { week: string; onWeek(w: string): void; onOpenDay(d: string): void }) {
   const uid = useId();
   const [boxRef, width] = useWidth();
@@ -1019,7 +1029,7 @@ function WeeklyView({
   const w = weekLabel(week);
   const thisWeek = weekOf(today);
   const ofWeek = useMemo(() => store.weekly.filter((e) => e.week === week), [store.weekly, week]);
-  const rows = useMemo(() => rowsOf(store.people, ofWeek, isWeeklyFilled), [store.people, ofWeek]);
+  const rows = useMemo(() => rowsOf(people, ofWeek, isWeeklyFilled), [people, ofWeek]);
   const roster = rows.filter((r) => !r.gone);
   const written = roster.filter((r) => isWeeklyFilled(r.entry)).length;
   const team = store.teams.find((t) => t.id === week);
@@ -1157,7 +1167,7 @@ function WeeklyView({
       <section aria-label="내 주간보고" className="mb-6 rounded-tm border border-tm-line bg-white shadow-tm">
         <ComposerHead title={mine ? `내 주간보고 · ${mine.name}` : '내 주간보고'} mine={mine} members={members}
           sub={mine ? `${w.text} (${w.range}) · ${myEntry && isWeeklyFilled(myEntry) ? `${whenOf(myEntry.updatedAt, today)} 저장` : '적는 대로 저장됩니다'}` : '명단에서 나를 고르면 내 칸을 바로 씁니다'}
-          picker={!mineAuto && <MinePicker id={`${uid}-mine`} people={store.people} mine={mine} onMine={onMine} />}>
+          picker={!mineAuto && <MinePicker id={`${uid}-mine`} people={people} mine={mine} onMine={onMine} />}>
           {mine && (
             <>
               <button type="button" onClick={() => setScrumOpen((v) => !v)} aria-expanded={scrumOpen} className={tmGhostBtn}>
@@ -1204,7 +1214,7 @@ function WeeklyView({
             </>
           ) : (
             <p className="text-[15px] leading-[1.7] text-tm-ink">
-              {store.people.length
+              {people.length
                 ? '위의 고르기 칸에서 명단의 내 이름을 골라 주세요. 이 브라우저에 기억합니다.'
                 : '명단이 비어 있습니다. 관리자가 명단 관리에서 사람을 넣어야 합니다.'}
             </p>
@@ -1297,82 +1307,170 @@ function WeeklyView({
 
 /* ── 명단 ─────────────────────────────────────────────────── */
 
+/**
+ * 보고에 뜨는 사람 고르기(관리자). 가입해 승인된 팀원은 저절로 들어오고(Supabase 모드는 서버 트리거 tm_members_report_people),
+ * 여기서 빼거나 다시 넣고 발표 순서를 바꾼다. 계정이 없는 사람도 이름으로 넣을 수 있다. 빼도 적은 보고는 지우지 않는다
+ */
 function RosterDialog({ store, members, local, onClose }: { store: ReportStore; members: Member[]; local: boolean; onClose(): void }) {
   const uid = useId();
   const [confirm, confirmNode] = useConfirm();
   const [fresh, setFresh] = useState<string | null>(null);
-  const people = store.people;
+  const all = store.people;
+  const shown = all.filter((p) => !p.hidden);
+  const hidden = all.filter((p) => p.hidden);
   const small = 'mb-1 block text-[12.5px] font-bold text-tm-sub';
+  const accountOf = (p: ReportPerson) => memberOfPerson(p, members);
+  const label = (p: ReportPerson) => accountOf(p)?.name.trim() || p.name;
+  /** 다른 줄에 이어진 계정 - 계정 연결 고르기에서 뺀다 */
+  const taken = new Set(all.flatMap((p) => { const a = accountOf(p); return a ? [a.id] : []; }));
+  /** 승인됐는데 명단에 줄이 없는 팀원 - Supabase 모드는 서버가 넣으므로 보통 없다(SQL 실행 전 · 브라우저 저장 모드) */
+  const missing = members.filter((m) => m.active !== false && !taken.has(m.id));
 
   const add = () => {
     let name = '새 사람';
-    for (let k = 2; people.some((p) => p.name === name); k += 1) name = `새 사람 ${k}`;
+    for (let k = 2; all.some((p) => p.name === name); k += 1) name = `새 사람 ${k}`;
     setFresh(store.addPerson(name).id);
   };
-  const move = (id: string, dir: -1 | 1) => reorderPeople(people, id, dir).forEach((p) => store.updatePerson(p.id, { order: p.order }));
+  const move = (id: string, dir: -1 | 1) => reorderPeople(shown, id, dir).forEach((p) => store.updatePerson(p.id, { order: p.order }));
+  const show = (p: ReportPerson, k = 0) => store.updatePerson(p.id, { hidden: false, order: nextPersonOrder(all) + k * 1000 });
   const remove = async (p: ReportPerson) => {
     const yes = await confirm({
-      title: `'${p.name}' 을(를) 명단에서 뺄까요?`,
-      body: <>이미 적은 보고는 지우지 않습니다. 그날 · 그 주 보고 맨 아래에 <b>명단에서 빠진 사람</b>으로 남습니다.</>,
-      ok: '빼기',
+      title: `'${p.name}' 을(를) 명단에서 지울까요?`,
+      body: <>계정이 없는 사람의 줄만 지울 수 있습니다. 이미 적은 보고는 지우지 않고, 그날 · 그 주 보고 맨 아래에 <b>명단에서 빠진 사람</b>으로 남습니다.</>,
+      ok: '지우기',
       tone: 'danger',
     });
     if (yes) store.removePerson(p.id);
   };
 
+  const who = (p: ReportPerson) => {
+    const a = accountOf(p);
+    return a
+      ? <span className="text-[12.5px] font-semibold text-tm-sub">{a.role || '팀원'}{p.member ? '' : ' · 이름이 같은 계정'}</span>
+      : <span className="rounded-full bg-white px-2 py-px text-[12px] font-bold text-tm-sub">계정 없음</span>;
+  };
+
   return (
     <>
-      <Modal title="보고 명단" sub={local ? '이 브라우저에만 저장됩니다' : '관리자만 고칠 수 있습니다. 고친 것은 팀 모두에게 바로 보입니다.'}
+      <Modal title="보고에 뜨는 사람"
+        sub={local ? '이 브라우저에만 저장됩니다' : '관리자만 고칠 수 있습니다. 고친 것은 팀 모두에게 바로 보입니다.'}
         onClose={onClose}
-        foot={<><span className="flex-1" /><button type="button" onClick={onClose} className={tmBtn}>닫기</button></>}>
-        {people.length === 0 && <p className="rounded-tm-sm bg-tm-bg px-3.5 py-3 text-[14.5px] text-tm-sub">명단이 비어 있습니다. 아래에서 사람을 넣어 주세요.</p>}
+        foot={
+          <>
+            <button type="button" onClick={add} className={tmGhostBtn}>
+              <IconPlus size={16} />
+              계정 없는 사람 추가
+            </button>
+            <span className="flex-1" />
+            <button type="button" onClick={onClose} className={tmBtn}>닫기</button>
+          </>
+        }>
+        <div className={`${tmCallout} mb-4`}>
+          <p className="min-w-0">
+            {local
+              ? '이 모드의 팀원이 처음부터 모두 들어 있습니다.'
+              : '가입해 승인된 팀원은 저절로 맨 아래에 들어옵니다.'}
+            {' '}빼면 일간 · 주간보고 · 회의 모드 · 글 복사에서 빠지고, 이미 적은 보고는 남습니다. 위 · 아래는 발표 순서입니다.
+          </p>
+        </div>
+
+        <p className="mb-2 text-[13.5px] font-bold text-tm-sub">보고에 뜨는 사람 {shown.length}명</p>
+        {shown.length === 0 && <p className="rounded-tm-sm bg-tm-bg px-3.5 py-3 text-[14.5px] text-tm-sub">아무도 뜨지 않습니다. 아래에서 다시 넣어 주세요.</p>}
         <ol className="flex flex-col gap-2">
-          {people.map((p, i) => {
-            const others = people.filter((o) => o.id !== p.id).map((o) => o.name);
-            const auto = p.member ? null : memberOfPerson(p, members);
-            const choices = members.filter((m) => m.active !== false || m.id === p.member);
+          {shown.map((p, i) => {
+            const a = accountOf(p);
+            const others = all.filter((o) => o.id !== p.id).map((o) => o.name);
+            const choices = members.filter((m) => m.active !== false && !taken.has(m.id));
             return (
-              <li key={p.id} className="rounded-tm-sm bg-tm-bg px-3.5 py-3">
-                <div className="flex flex-wrap items-end gap-x-3 gap-y-2.5">
-                  <span className="w-6 flex-none pb-2.5 text-center text-[14px] font-bold tabular-nums text-tm-sub" aria-hidden>{i + 1}</span>
-                  <div className="min-w-0 flex-[1_1_150px]">
-                    <label className={small} htmlFor={`${uid}-${p.id}-name`}>이름</label>
-                    <CommitInput id={`${uid}-${p.id}-name`} value={p.name} max={20} autoFocus={fresh === p.id}
-                      check={(v) => (!v ? '이름을 적어 주세요' : others.includes(v) ? '같은 이름이 명단에 있습니다' : null)}
-                      onSave={(v) => store.updatePerson(p.id, { name: v })} />
-                  </div>
-                  <div className="min-w-0 flex-[1_1_190px]">
-                    <label className={small} htmlFor={`${uid}-${p.id}-member`}>계정 연결</label>
-                    <select id={`${uid}-${p.id}-member`} value={p.member ?? ''} className={`${tmSelect} h-11 w-full text-[15px]`}
-                      onChange={(e) => store.updatePerson(p.id, { member: e.target.value || null })}>
-                      <option value="">{auto ? `자동 · ${auto.name}` : '연결 안 함'}</option>
-                      {choices.map((m) => <option key={m.id} value={m.id}>{m.name}{m.role ? ` · ${m.role}` : ''}</option>)}
-                    </select>
-                  </div>
+              <li key={p.id} className="rounded-tm-sm bg-tm-bg px-3.5 py-2.5">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                  <span className="w-5 flex-none text-center text-[14px] font-bold tabular-nums text-tm-sub" aria-hidden>{i + 1}</span>
+                  <PersonMark name={label(p)} member={a} size={32} />
+                  {a ? (
+                    <div className="min-w-0 flex-[1_1_160px]">
+                      <p className="truncate text-[15px] font-bold text-tm-ink">{label(p)}</p>
+                      {who(p)}
+                    </div>
+                  ) : (
+                    <div className="flex min-w-0 flex-[1_1_320px] flex-wrap items-end gap-x-3 gap-y-2">
+                      <div className="min-w-0 flex-[1_1_140px]">
+                        <label className={small} htmlFor={`${uid}-${p.id}-name`}>이름 · 계정 없음</label>
+                        <CommitInput id={`${uid}-${p.id}-name`} value={p.name} max={20} autoFocus={fresh === p.id}
+                          check={(v) => (!v ? '이름을 적어 주세요' : others.includes(v) ? '같은 이름이 명단에 있습니다' : null)}
+                          onSave={(v) => store.updatePerson(p.id, { name: v })} />
+                      </div>
+                      <div className="min-w-0 flex-[1_1_160px]">
+                        <label className={small} htmlFor={`${uid}-${p.id}-member`}>계정 잇기</label>
+                        <select id={`${uid}-${p.id}-member`} value="" className={`${tmSelect} h-11 w-full text-[15px]`}
+                          onChange={(e) => { if (e.target.value) store.updatePerson(p.id, { member: e.target.value }); }}>
+                          <option value="">{choices.length ? '이을 계정 고르기' : '이을 계정이 없습니다'}</option>
+                          {choices.map((m) => <option key={m.id} value={m.id}>{m.name}{m.role ? ` · ${m.role}` : ''}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                  )}
                   <span className="ml-auto flex flex-none items-center gap-1.5">
-                    <button type="button" onClick={() => move(p.id, -1)} disabled={i === 0} aria-label={`${p.name} 위로`} title="위로" className={tmIconBtn}>
+                    <button type="button" onClick={() => move(p.id, -1)} disabled={i === 0} aria-label={`${label(p)} 위로`} title="위로" className={tmIconBtn}>
                       <IconArrow dir="up" />
                     </button>
-                    <button type="button" onClick={() => move(p.id, 1)} disabled={i === people.length - 1} aria-label={`${p.name} 아래로`} title="아래로" className={tmIconBtn}>
+                    <button type="button" onClick={() => move(p.id, 1)} disabled={i === shown.length - 1} aria-label={`${label(p)} 아래로`} title="아래로" className={tmIconBtn}>
                       <IconArrow dir="down" />
                     </button>
-                    <button type="button" onClick={() => void remove(p)} aria-label={`${p.name} 빼기`} className={tmGhostDanger}>빼기</button>
+                    <button type="button" onClick={() => store.updatePerson(p.id, { hidden: true })} aria-label={`${label(p)} 보고에서 빼기`} className={tmGhostBtn}>
+                      빼기
+                    </button>
                   </span>
                 </div>
               </li>
             );
           })}
         </ol>
-        <button type="button" onClick={add} className={`${tmGhostBtn} mt-3`}>
-          <IconPlus size={16} />
-          사람 추가
-        </button>
-        <div className={`${tmCallout} mt-5`}>
-          <p className="min-w-0">
-            스크럼 · 발표 순서대로 줄을 세웁니다. 이름은 칸을 떠나거나 Enter 를 누르면 저장됩니다.
-            계정을 연결하면 그 사람이 들어왔을 때 &lsquo;내 스크럼&rsquo; · &lsquo;내 주간보고&rsquo;가 바로 그 사람 칸이 됩니다. 자동이면 이름이 같은 계정을 씁니다.
-          </p>
-        </div>
+
+        {(hidden.length > 0 || missing.length > 0) && (
+          <section aria-labelledby={`${uid}-out`} className="mt-6">
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+              <h3 id={`${uid}-out`} className="text-[13.5px] font-bold text-tm-sub">보고에서 뺀 사람 {hidden.length + missing.length}명</h3>
+              <button type="button" className={`${tmTextBtn} ml-auto`}
+                onClick={() => {
+                  hidden.forEach((p, k) => show(p, k));
+                  missing.forEach((m) => store.addPerson(m.name.trim() || '이름 없음', m.id));
+                }}>
+                모두 다시 넣기
+              </button>
+            </div>
+            <ul className="flex flex-col gap-1.5">
+              {hidden.map((p) => {
+                const a = accountOf(p);
+                return (
+                  <li key={p.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-tm-sm border border-dashed border-tm-line px-3.5 py-2">
+                    <PersonMark name={label(p)} member={a} size={28} />
+                    <div className="min-w-0 flex-[1_1_160px]">
+                      <p className="truncate text-[14.5px] font-bold text-tm-ink">{label(p)}</p>
+                      {who(p)}
+                    </div>
+                    <span className="ml-auto flex flex-none items-center gap-1.5">
+                      <button type="button" onClick={() => show(p)} aria-label={`${label(p)} 다시 넣기`} className={tmEditBtn}>다시 넣기</button>
+                      {!a && <button type="button" onClick={() => void remove(p)} aria-label={`${p.name} 지우기`} className={tmGhostDanger}>지우기</button>}
+                    </span>
+                  </li>
+                );
+              })}
+              {missing.map((m) => (
+                <li key={m.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-tm-sm border border-dashed border-tm-line px-3.5 py-2">
+                  <PersonMark name={m.name} member={m} size={28} />
+                  <div className="min-w-0 flex-[1_1_160px]">
+                    <p className="truncate text-[14.5px] font-bold text-tm-ink">{m.name}</p>
+                    <span className="text-[12.5px] font-semibold text-tm-sub">{m.role || '팀원'} · 명단에 아직 없음</span>
+                  </div>
+                  <button type="button" onClick={() => store.addPerson(m.name.trim() || '이름 없음', m.id)} aria-label={`${m.name} 넣기`}
+                    className={`${tmEditBtn} ml-auto`}>
+                    넣기
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
       </Modal>
       {confirmNode}
     </>

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  DEFAULT_REPORT_PEOPLE, localISO,
+  MEMBERS, localISO,
   type DailyEntry, type DailyProject, type Member, type ReportPerson, type WeeklyEntry, type WeeklyProject, type WeeklyTeam,
 } from './types';
 import type { StoreOptions, SyncState } from './store';
@@ -25,7 +25,7 @@ import type { StoreOptions, SyncState } from './store';
  *   · 맨 위 단계 줄 하나와 그 밑의 하위 줄이 한 덩이(Block) - 지난 예정 가져오기 · 주간 초안은 덩이로 옮긴다.
  */
 
-export type PersonPatch = Partial<Pick<ReportPerson, 'name' | 'member' | 'order'>>;
+export type PersonPatch = Partial<Pick<ReportPerson, 'name' | 'member' | 'order' | 'hidden'>>;
 export type DailyPatch = Partial<Pick<DailyEntry, 'projects' | 'blocker'>>;
 export type WeeklyPatch = Partial<Pick<WeeklyEntry, 'summary' | 'projects' | 'issues' | 'feedback'>>;
 export type SaveOutcome = { ok: true } | { ok: false; error: string };
@@ -50,7 +50,8 @@ export interface ReportStore {
   loadError: string | null;
   /** 브라우저 저장 모드 - 이 브라우저에 쓰지 못했다(저장 차단 · 공간 부족). 화면의 글은 그대로다 */
   saveError: boolean;
-  addPerson(name: string): ReportPerson;
+  /** 계정 없는 사람(member 없음) 또는 계정을 이은 사람을 맨 아래에 넣는다 */
+  addPerson(name: string, member?: string | null): ReportPerson;
   updatePerson(id: string, patch: PersonPatch): void;
   removePerson(id: string): void;
   /** 그날 그 사람의 보고 - 없으면 만든다. 한도를 넘으면 저장하지 않고 거짓 */
@@ -601,8 +602,9 @@ const has = (o: unknown): o is Record<string, unknown> => rec(o) && typeof o.id 
 /** 마지막으로 고친 사람 · 시각 */
 const stampOf = (me: string) => ({ updatedBy: me, updatedAt: new Date().toISOString() });
 
+/** 처음 명단 - 이 모드의 팀원(자리표시 계정) 모두. Supabase 모드는 서버가 승인된 팀원으로 채운다 */
 function defaultPeople(): ReportPerson[] {
-  return DEFAULT_REPORT_PEOPLE.map((name, i) => ({ id: `rp-${i + 1}`, name, member: null, order: (i + 1) * 1000 }));
+  return MEMBERS.map((m, i) => ({ id: `rp-${m.id}`, name: m.name, member: m.id, order: (i + 1) * 1000, hidden: false }));
 }
 
 /**
@@ -619,7 +621,7 @@ function parse(raw: string | null): Saved {
   return {
     people: people
       ? people.flatMap((p) => (str(p.name).trim()
-        ? [{ id: p.id as string, name: str(p.name), member: typeof p.member === 'string' ? p.member : null, order: num(p.order, 0) }]
+        ? [{ id: p.id as string, name: str(p.name), member: typeof p.member === 'string' ? p.member : null, order: num(p.order, 0), hidden: p.hidden === true }]
         : []))
       : defaultPeople(),
     daily: (arr('daily') ?? []).flatMap((e) => (isDay(str(e.day)) && str(e.person)
@@ -717,8 +719,8 @@ export function useReportStore(opts: ReportStoreOptions): ReportStore {
     return false;
   }, []);
 
-  const addPerson = useCallback<ReportStore['addPerson']>((name) => {
-    const p: ReportPerson = { id: crypto.randomUUID(), name, member: null, order: nextPersonOrder(live.current.people) };
+  const addPerson = useCallback<ReportStore['addPerson']>((name, member = null) => {
+    const p: ReportPerson = { id: crypto.randomUUID(), name, member, order: nextPersonOrder(live.current.people), hidden: false };
     commit((cur) => ({ ...cur, people: [...cur.people, p] }));
     return p;
   }, [commit]);
