@@ -1204,6 +1204,86 @@ begin
 end;
 $$;
 
+-- ── 일간 · 주간보고 2판 (2026-11-17) ─────────────────────────
+-- 팀이 Confluence 에서 쓰던 양식을 따른다. 위 블록 바로 뒤에 실행한다(위 블록을 다시 실행했으면 이 조각도 다시 - 위에서 거둔 권한을 다시 준다).
+-- 일간: 사람마다 프로젝트 줄(완료 · 예정)을 tm_daily_reports.projects(jsonb 배열 [{id, project, done, plan}])에 둔다.
+--   1판의 done · plan 글은 그대로 두고, 화면은 projects 가 비었을 때만 이름 없는 프로젝트 한 줄로 보인다(그 보고를 고치면 옮기며 비운다).
+-- 주간: 사람마다 한 장(tm_weekly_entries) - 요약 · 프로젝트 표([{id, project, done, doing, next}]) · 이슈 / 요청 사항 · PM 피드백.
+--   팀 요약은 tm_weekly_reports.summary 를 그대로 쓴다. tm_weekly_items · 확정 함수는 2판 화면이 쓰지 않는다(지우지 않는다).
+
+alter table public.tm_daily_reports add column if not exists projects jsonb not null default '[]'::jsonb;
+alter table public.tm_daily_reports drop constraint if exists tm_daily_reports_projects;
+alter table public.tm_daily_reports add constraint tm_daily_reports_projects
+  check (jsonb_typeof(projects) = 'array' and jsonb_array_length(projects) <= 30 and char_length(projects::text) <= 20000);
+
+create table if not exists public.tm_weekly_entries (
+  id text primary key check (id ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}:.+$'),
+  week date not null,
+  person uuid not null,
+  name text not null default '' check (char_length(name) <= 40),
+  summary text not null default '' check (char_length(summary) <= 2000),
+  projects jsonb not null default '[]'::jsonb,
+  issues text not null default '' check (char_length(issues) <= 4000),
+  feedback text not null default '' check (char_length(feedback) <= 4000),   -- PM 피드백
+  updated_by uuid default auth.uid(),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (week, person)
+);
+alter table public.tm_weekly_entries drop constraint if exists tm_weekly_entries_projects;
+alter table public.tm_weekly_entries add constraint tm_weekly_entries_projects
+  check (jsonb_typeof(projects) = 'array' and jsonb_array_length(projects) <= 30 and char_length(projects::text) <= 20000);
+alter table public.tm_weekly_entries drop constraint if exists tm_weekly_entries_monday;
+alter table public.tm_weekly_entries add constraint tm_weekly_entries_monday check (extract(isodow from week) = 1);
+
+-- 주간 장 규칙 - id 는 '<월요일>:<사람>' 과 같아야 하고, 주 · 사람은 바꿀 수 없다
+create or replace function public.tm_weekly_entries_guard()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if new.id is distinct from to_char(new.week, 'YYYY-MM-DD') || ':' || new.person::text then
+    raise exception '주간보고 id 는 월요일:사람이어야 합니다';
+  end if;
+  if tg_op = 'UPDATE' and (new.week, new.person) is distinct from (old.week, old.person) then
+    raise exception '주간보고의 주 · 사람은 바꿀 수 없습니다';
+  end if;
+  return new;
+end;
+$$;
+
+create or replace trigger tm_weekly_entries_guard before insert or update on public.tm_weekly_entries
+  for each row execute function public.tm_weekly_entries_guard();
+create or replace trigger tm_weekly_entries_stamp before insert or update on public.tm_weekly_entries
+  for each row execute function public.tm_stamp_editor();
+create or replace trigger tm_weekly_entries_touch before update on public.tm_weekly_entries
+  for each row execute function public.tm_touch();
+
+alter table public.tm_weekly_entries enable row level security;
+drop policy if exists tm_weekly_entries_members on public.tm_weekly_entries;
+create policy tm_weekly_entries_members on public.tm_weekly_entries
+  for all to authenticated
+  using ((select public.tm_is_member()))
+  with check ((select public.tm_is_member()));
+
+-- 주간 장은 upsert 로 넣고 지우지 않는다(글을 지우면 빈 칸). 고친 사람 · 시각은 트리거가 적는다
+revoke all on public.tm_weekly_entries from anon, authenticated;
+grant select, insert (id, week, person, name, summary, projects, issues, feedback),
+  update (id, week, person, name, summary, projects, issues, feedback)
+  on public.tm_weekly_entries to authenticated;
+grant insert (projects), update (projects) on public.tm_daily_reports to authenticated;
+revoke execute on function public.tm_weekly_entries_guard() from public, anon, authenticated;
+
+do $$
+begin
+  begin
+    alter publication supabase_realtime add table public.tm_weekly_entries;
+  exception when duplicate_object then null;
+  end;
+end;
+$$;
+
 -- 일간보고 명단을 처음 9명으로 되돌리기 - 다시 실행으로는 채우지 않으므로, 꼭 필요할 때 관리자가 이 줄만 따로 실행한다.
 -- 명단이 비어 있을 때만 넣는다. 맨 앞의 -- 를 지우고 그 줄만 실행한다.
 -- insert into public.tm_report_people (name, sort) select v.name, v.sort from (values ('박무경', 1000::double precision), ('정성권', 2000), ('전승원', 3000), ('박예형', 4000), ('강민정', 5000), ('김학동', 6000), ('조현민', 7000), ('이지영', 8000), ('박수현', 9000)) as v (name, sort) where not exists (select 1 from public.tm_report_people);

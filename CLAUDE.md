@@ -30,8 +30,9 @@ Trust this map. Do not scan the file tree to rediscover structure.
 - `public/`          — static assets, images, robots.txt, sitemap.xml
 - `src/app/hub/` — internal Hub, route `/hub` (renamed from `/taskmanager` on
   2026-11-16; next.config.js redirects the old path). Tasks · wiki · memos ·
-  daily/weekly reports (`Reports.tsx`, `reportStore.ts`, `reportRemote.ts`, loaded
-  only when the report screen opens) · Google Drive tree (`Drive.tsx`,
+  daily/weekly reports (`Reports.tsx`, `reportParts.tsx`, `reportStore.ts`,
+  `reportRemote.ts`, loaded only when the report screen opens; format follows the
+  team's Confluence scrum / weekly pages) · Google Drive tree (`Drive.tsx`,
   `driveTree.ts`; table `tm_drive_snapshot` filled by the Apps Script
   `supabase/drive-sync.gs` in contact@devteammate.co.kr, which checks Drive
   changes every minute and resends on change or every 30 min; deployed as a

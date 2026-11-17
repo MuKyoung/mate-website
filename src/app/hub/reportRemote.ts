@@ -4,26 +4,25 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRowSync } from './remote';
 import { isMissingTable, sb } from './supabase';
 import {
-  DAILY_MAX, ITEM_MAX, ITEM_NAME_MAX, NOTHING_TO_FINALIZE, WEEKLY_MAX,
-  byPersonOrder, dailyId, hasWeeklyContent, limitText, nextPersonOrder, overLimit, parseSnapshot,
+  LIMITS, TEAM_LOCKED, byPersonOrder, checkDaily, checkWeekly, dailyId, legacyClear, limitText, nextPersonOrder,
+  parseDailyProjects, parseWeeklyProjects, weeklyId,
   type ReportStore, type ReportStoreOptions,
 } from './reportStore';
-import { isProjectState, type DailyEntry, type ReportPerson, type WeeklyItem, type WeeklyReport } from './types';
+import type { DailyEntry, ReportPerson, WeeklyEntry, WeeklyTeam } from './types';
 
 /*
- * 일간 · 주간보고의 Supabase 저장소 - 보고 화면(Reports.tsx)과 함께 따로 받는다.
+ * 일간 · 주간보고의 Supabase 저장소(2026-11-17 2판) - 보고 화면(Reports.tsx)과 함께 따로 받는다.
  * 작업 화면의 첫 로딩(remote.ts · supabase.ts)에는 보고 코드가 실리지 않는다.
  *
- * 명단은 팀원 모두 읽고 관리자만 고친다(RLS). 일간 · 주간보고는 팀원 누구나 읽고 쓴다.
- * 일간 줄과 주간 장은 id 가 정해져 있어(날짜:사람 · 그 주 월요일) 처음 적을 때 upsert 로 넣는다 - 두 사람이 같은 칸을
- * 동시에 처음 적어도 한 줄로 모이고, 보낸 칸만 덮는다.
- * 확정 · 다시 열기는 RPC(tm_weekly_finalize · tm_weekly_reopen)로만 한다 - 서버가 확정자 · 시각 · 저장본을 남기고,
- * 확정 중에는 본문 · 프로젝트 줄 고침을 거절한다. 표 · 권한은 supabase/taskmanager.sql 의 '일간 · 주간보고' 블록.
+ * 명단은 팀원 모두 읽고 관리자만 고친다(RLS). 일간 · 주간보고 · 팀 요약은 팀원 누구나 읽고 쓴다.
+ * 일간(날짜:사람) · 주간(월요일:사람) · 팀 요약(월요일)은 id 가 정해져 있어 처음 적을 때 upsert 로 넣는다 -
+ * 두 사람이 같은 칸을 동시에 처음 적어도 한 줄로 모이고, 보낸 칸만 덮는다.
+ * 표 · 권한은 supabase/taskmanager.sql 의 '일간 · 주간보고' 블록과 그 끝의 '2판' 조각.
  */
 
 /* ── 표의 한 줄 ↔ 화면의 모양 ─────────────────────────────────
    고친 사람(updated_by) · 고친 시각은 DB 가 적는다 - 화면은 보내지 않는다.
-   실시간 알림에서 빠진 칸(긴 글은 바뀌지 않았으면 Postgres 가 싣지 않는다)은 undefined 로 두어 화면 값이 남게 한다 */
+   실시간 알림에서 빠진 칸(긴 글 · jsonb 는 바뀌지 않았으면 Postgres 가 싣지 않는다)은 undefined 로 두어 화면 값이 남게 한다 */
 
 interface ReportPersonRow {
   id: string;
@@ -39,6 +38,7 @@ interface DailyRow {
   day: string;
   person: string;
   name: string;
+  projects: unknown;
   done: string;
   plan: string;
   blocker: string;
@@ -49,32 +49,29 @@ interface DailyRow {
 
 interface WeeklyRow {
   id: string;
+  week: string;
+  person: string;
+  name: string;
   summary: string;
+  projects: unknown;
   issues: string;
-  next_plan: string;
-  notes: string;
-  status: string;
-  finalized_by: string | null;
-  finalized_at: string | null;
-  snapshot: unknown;
+  feedback: string;
   updated_by: string | null;
   created_at: string;
   updated_at: string;
 }
 
-interface WeeklyItemRow {
+interface TeamRow {
   id: string;
-  week: string;
-  name: string;
-  state: string;
-  done: string;
-  next_plan: string;
-  issue: string;
-  sort: number;
+  summary: string;
+  status: string;
   updated_by: string | null;
   created_at: string;
   updated_at: string;
 }
+
+/** 빠진 칸(실시간 알림)은 undefined 로 둔다 - 화면에 있던 값이 남는다 */
+const keep = <T,>(v: T | undefined, map: (x: T) => unknown) => (v === undefined ? undefined : map(v));
 
 const personFromRow = (r: ReportPersonRow): ReportPerson => ({ id: r.id, name: r.name, member: r.member ?? null, order: r.sort });
 
@@ -89,6 +86,7 @@ function personToRow(p: Partial<ReportPerson>): Partial<ReportPersonRow> {
 
 const dailyFromRow = (r: DailyRow): DailyEntry => ({
   id: r.id, day: r.day, person: r.person, name: r.name,
+  projects: keep(r.projects, parseDailyProjects) as DailyEntry['projects'],
   done: r.done, plan: r.plan, blocker: r.blocker,
   updatedBy: r.updated_by ?? null, updatedAt: r.updated_at,
 });
@@ -96,64 +94,53 @@ const dailyFromRow = (r: DailyRow): DailyEntry => ({
 /** 글 칸만 고친다 - 날짜 · 사람 · 이름은 만들 때 정한다 */
 function dailyToRow(p: Partial<DailyEntry>): Partial<DailyRow> {
   const r: Partial<DailyRow> = {};
+  if (p.projects !== undefined) r.projects = p.projects;
   if (p.done !== undefined) r.done = p.done;
   if (p.plan !== undefined) r.plan = p.plan;
   if (p.blocker !== undefined) r.blocker = p.blocker;
   return r;
 }
 
-/** 빠진 칸(실시간 알림)은 undefined 로 둔다 - 화면에 있던 값이 남는다 */
-const keep = <T,>(v: T | undefined, map: (x: T) => unknown) => (v === undefined ? undefined : map(v));
-
-const weeklyFromRow = (r: WeeklyRow): WeeklyReport => ({
-  id: r.id, summary: r.summary, issues: r.issues, nextPlan: r.next_plan, notes: r.notes,
-  status: keep(r.status, (s) => (s === 'final' ? 'final' : 'draft')) as WeeklyReport['status'],
-  finalizedBy: keep(r.finalized_by, (x) => x ?? null) as WeeklyReport['finalizedBy'],
-  finalizedAt: keep(r.finalized_at, (x) => x ?? null) as WeeklyReport['finalizedAt'],
-  snapshot: keep(r.snapshot, (x) => parseSnapshot(x)) as WeeklyReport['snapshot'],
+const weeklyFromRow = (r: WeeklyRow): WeeklyEntry => ({
+  id: r.id, week: r.week, person: r.person, name: r.name,
+  summary: r.summary, projects: keep(r.projects, parseWeeklyProjects) as WeeklyEntry['projects'],
+  issues: r.issues, feedback: r.feedback,
   updatedBy: r.updated_by ?? null, updatedAt: r.updated_at,
 });
 
-/** 본문 칸만 - 상태 · 확정 칸은 RPC 만 바꾼다(SQL 도 그 칸의 권한을 주지 않는다) */
-function weeklyToRow(p: Partial<WeeklyReport>): Partial<WeeklyRow> {
+function weeklyToRow(p: Partial<WeeklyEntry>): Partial<WeeklyRow> {
   const r: Partial<WeeklyRow> = {};
   if (p.summary !== undefined) r.summary = p.summary;
+  if (p.projects !== undefined) r.projects = p.projects;
   if (p.issues !== undefined) r.issues = p.issues;
-  if (p.nextPlan !== undefined) r.next_plan = p.nextPlan;
-  if (p.notes !== undefined) r.notes = p.notes;
+  if (p.feedback !== undefined) r.feedback = p.feedback;
   return r;
 }
 
-const itemFromRow = (r: WeeklyItemRow): WeeklyItem => ({
-  id: r.id, week: r.week, name: r.name,
-  state: keep(r.state, (s) => (isProjectState(s) ? s : 'good')) as WeeklyItem['state'],
-  done: r.done, next: r.next_plan, issue: r.issue, order: r.sort,
+const teamFromRow = (r: TeamRow): WeeklyTeam => ({
+  id: r.id, summary: r.summary,
+  status: keep(r.status, (s) => (s === 'final' ? 'final' : 'draft')) as WeeklyTeam['status'],
   updatedBy: r.updated_by ?? null, updatedAt: r.updated_at,
 });
 
-/** 주는 만들 때 정한다 */
-function itemToRow(p: Partial<WeeklyItem>): Partial<WeeklyItemRow> {
-  const r: Partial<WeeklyItemRow> = {};
-  if (p.name !== undefined) r.name = p.name;
-  if (p.state !== undefined) r.state = p.state;
-  if (p.done !== undefined) r.done = p.done;
-  if (p.next !== undefined) r.next_plan = p.next;
-  if (p.issue !== undefined) r.issue = p.issue;
-  if (p.order !== undefined) r.sort = p.order;
+/** 요약 칸만 - 상태는 RPC 만 바꾼다(SQL 도 그 칸의 권한을 주지 않는다) */
+function teamToRow(p: Partial<WeeklyTeam>): Partial<TeamRow> {
+  const r: Partial<TeamRow> = {};
+  if (p.summary !== undefined) r.summary = p.summary;
   return r;
 }
 
 /* ── 보고 표가 있는가 ─────────────────────────────────────────
-   표가 없다는 답(42P01 · PGRST2xx)과 연결 실패를 가른다. 연결 실패는 '표 없음'으로 굳히지 않고 다시 확인할 수 있게 둔다 */
+   표 · 칸이 없다는 답(42P01 · 42703 · PGRST2xx)과 연결 실패를 가른다. 연결 실패는 '표 없음'으로 굳히지 않고 다시 확인할 수 있게 둔다 */
 
 type Probe = 'checking' | 'ok' | 'missing' | 'error';
 type DbError = { message?: string; code?: string } | null;
 
 const reportProbe = () => [
   sb().from('tm_report_people').select('id').limit(1),
-  sb().from('tm_daily_reports').select('id').limit(1),
-  sb().from('tm_weekly_reports').select('id,finalized_at,snapshot').limit(1),
-  sb().from('tm_weekly_items').select('id').limit(1),
+  sb().from('tm_daily_reports').select('id,projects').limit(1),
+  sb().from('tm_weekly_entries').select('id,projects,feedback').limit(1),
+  sb().from('tm_weekly_reports').select('id,status').limit(1),
 ];
 
 /**
@@ -184,7 +171,6 @@ function useReportTables(): [Probe, () => void] {
   return [state, useCallback(() => setNonce((n) => n + 1), [])];
 }
 
-const LOCKED = '확정된 주간보고입니다. 고치려면 다시 고치기를 먼저 눌러 주세요.';
 const PROBE_FAIL = '보고 표를 확인하지 못했습니다. 인터넷 연결을 확인한 뒤 다시 시도해 주세요.';
 /** 떠나기 전에 저장이 끝나기를 기다리는 시간 - 넘으면 아직 보내지 못한 것으로 본다(연결 끊김 · 다시 보내는 중) */
 const SETTLE_MS = 5000;
@@ -213,26 +199,25 @@ export function useRemoteReportStore(opts: ReportStoreOptions): ReportStore {
       createFail: ({ name }) => `${name} 님의 일간보고를 저장하지 못했습니다. 서버가 받아 주지 않아 화면에서 뺐습니다.`,
     },
   });
-  const weekly = useRowSync<WeeklyReport, WeeklyRow>({
-    table: 'tm_weekly_reports', fromRow: weeklyFromRow, toRow: weeklyToRow, onError, disabled: off,
+  const weekly = useRowSync<WeeklyEntry, WeeklyRow>({
+    table: 'tm_weekly_entries', fromRow: weeklyFromRow, toRow: weeklyToRow, onError, disabled: off,
     texts: {
       gone: '그사이 지워진 주간보고라 고치던 내용을 저장하지 못했습니다.',
-      createFail: () => '주간보고를 저장하지 못했습니다. 확정된 주이거나 서버가 받아 주지 않아 화면을 저장된 내용으로 되돌렸습니다.',
+      createFail: ({ name }) => `${name} 님의 주간보고를 저장하지 못했습니다. 서버가 받아 주지 않아 화면에서 뺐습니다.`,
     },
   });
-  const items = useRowSync<WeeklyItem, WeeklyItemRow>({
-    table: 'tm_weekly_items', fromRow: itemFromRow, toRow: itemToRow, onError, disabled: off,
+  const teams = useRowSync<WeeklyTeam, TeamRow>({
+    table: 'tm_weekly_reports', fromRow: teamFromRow, toRow: teamToRow, onError, disabled: off,
     texts: {
-      gone: '다른 팀원이 지운 프로젝트 줄이라 고치던 내용을 저장하지 못했습니다.',
-      createFail: () => '프로젝트 줄을 더하지 못했습니다. 확정된 주이거나 서버가 받아 주지 않아 화면에서 뺐습니다.',
+      gone: '그사이 지워진 팀 요약이라 고치던 내용을 저장하지 못했습니다.',
+      createFail: () => '팀 요약을 저장하지 못했습니다. 서버가 받아 주지 않아 화면을 저장된 내용으로 되돌렸습니다.',
     },
   });
   const pe = people.eng;
   const de = daily.eng;
   const we = weekly.eng;
-  const ie = items.eng;
-  const engs = useMemo(() => [pe, de, we, ie] as const, [pe, de, we, ie]);
-  const weekFinal = useCallback((week: string) => we.items.find((w) => w.id === week)?.status === 'final', [we]);
+  const te = teams.eng;
+  const engs = useMemo(() => [pe, de, we, te] as const, [pe, de, we, te]);
   const fail = useCallback((text: string) => {
     onErrorRef.current?.(text);
     return false;
@@ -250,70 +235,55 @@ export function useRemoteReportStore(opts: ReportStoreOptions): ReportStore {
   }, [pe]);
 
   const setDaily = useCallback<ReportStore['setDaily']>((day, person, patch) => {
-    const over = overLimit(patch, ['done', 'plan', 'blocker'], DAILY_MAX);
-    if (over !== null) return fail(limitText(over, DAILY_MAX));
+    const err = checkDaily(patch);
+    if (err) return fail(err);
     const id = dailyId(day, person.id);
     const at = { updatedBy: me.current, updatedAt: new Date().toISOString() };
-    if (de.items.some((e) => e.id === id)) {
-      de.patch(id, { ...patch, ...at });
+    const cur = de.items.find((e) => e.id === id);
+    if (cur) {
+      de.patch(id, { ...patch, ...legacyClear(cur, patch), ...at });
       return true;
     }
-    const entry: DailyEntry = { id, day, person: person.id, name: person.name, done: '', plan: '', blocker: '', ...patch, ...at };
+    const entry: DailyEntry = { id, day, person: person.id, name: person.name, projects: [], done: '', plan: '', blocker: '', ...patch, ...at };
     de.create(entry, { id, day, person: person.id, name: person.name, ...dailyToRow(patch) }, true);
     return true;
   }, [de, fail]);
 
-  const setWeekly = useCallback<ReportStore['setWeekly']>((week, patch) => {
-    if (weekFinal(week)) return fail(LOCKED);
-    const over = overLimit(patch, ['summary', 'issues', 'nextPlan', 'notes'], WEEKLY_MAX);
-    if (over !== null) return fail(limitText(over, WEEKLY_MAX));
+  const setWeekly = useCallback<ReportStore['setWeekly']>((week, person, patch) => {
+    const err = checkWeekly(patch);
+    if (err) return fail(err);
+    const id = weeklyId(week, person.id);
     const at = { updatedBy: me.current, updatedAt: new Date().toISOString() };
-    if (we.items.some((w) => w.id === week)) {
-      we.patch(week, { ...patch, ...at });
+    if (we.items.some((e) => e.id === id)) {
+      we.patch(id, { ...patch, ...at });
       return true;
     }
-    const report: WeeklyReport = {
-      id: week, summary: '', issues: '', nextPlan: '', notes: '', status: 'draft',
-      finalizedBy: null, finalizedAt: null, snapshot: null, ...patch, ...at,
+    const entry: WeeklyEntry = {
+      id, week, person: person.id, name: person.name, summary: '', projects: [], issues: '', feedback: '', ...patch, ...at,
     };
-    we.create(report, { id: week, ...weeklyToRow(patch) }, true);
+    we.create(entry, { id, week, person: person.id, name: person.name, ...weeklyToRow(patch) }, true);
     return true;
-  }, [we, weekFinal, fail]);
+  }, [we, fail]);
 
-  const addItem = useCallback<ReportStore['addItem']>((week, input = {}) => {
-    if (weekFinal(week)) {
-      fail(LOCKED);
-      return null;
+  const setTeam = useCallback<ReportStore['setTeam']>((week, summary) => {
+    const cur = te.items.find((t) => t.id === week);
+    if (cur?.status === 'final') return fail(TEAM_LOCKED);
+    if (summary.length > LIMITS.team) return fail(limitText(summary.length, LIMITS.team));
+    const at = { updatedBy: me.current, updatedAt: new Date().toISOString() };
+    if (cur) {
+      te.patch(week, { summary, ...at });
+      return true;
     }
-    const it: WeeklyItem = {
-      id: crypto.randomUUID(), week, name: '', state: 'good', done: '', next: '', issue: '', ...input,
-      order: nextPersonOrder(ie.items.filter((x) => x.week === week)),
-      updatedBy: me.current, updatedAt: new Date().toISOString(),
-    };
-    ie.create(it, { id: it.id, week, ...itemToRow(it) });
-    return it;
-  }, [ie, weekFinal, fail]);
-
-  const updateItem = useCallback<ReportStore['updateItem']>((id, patch) => {
-    const cur = ie.items.find((x) => x.id === id);
-    if (cur && weekFinal(cur.week)) return fail(LOCKED);
-    const over = overLimit(patch, ['done', 'next', 'issue'], ITEM_MAX);
-    if (over !== null) return fail(limitText(over, ITEM_MAX));
-    const overName = overLimit(patch, ['name'], ITEM_NAME_MAX);
-    if (overName !== null) return fail(limitText(overName, ITEM_NAME_MAX));
-    ie.patch(id, { ...patch, updatedBy: me.current, updatedAt: new Date().toISOString() });
+    te.create({ id: week, summary, status: 'draft', ...at }, { id: week, summary }, true);
     return true;
-  }, [ie, weekFinal, fail]);
+  }, [te, fail]);
 
-  const removeItem = useCallback<ReportStore['removeItem']>((id) => {
-    const cur = ie.items.find((x) => x.id === id);
-    if (cur && weekFinal(cur.week)) {
-      fail(LOCKED);
-      return;
-    }
-    removed.current.add(id);
-    ie.remove([id], id);
-  }, [ie, weekFinal, fail]);
+  const reopenTeam = useCallback<ReportStore['reopenTeam']>(async (week) => {
+    const { error } = await sb().rpc('tm_weekly_reopen', { target: week });
+    await te.reload(true);
+    if (error) return { ok: false, error: error.code === 'P0001' && error.message ? error.message : '다시 열지 못했습니다. 인터넷 연결을 확인해 주세요.' };
+    return { ok: true };
+  }, [te]);
 
   /**
    * 기다리는 저장을 보내고, 줄마다 서버에서 끝났는지 본다. 연결이 끊겨 다시 보내는 중이면 SETTLE_MS 안에 끝나지 않는다 → 거짓.
@@ -345,41 +315,16 @@ export function useRemoteReportStore(opts: ReportStoreOptions): ReportStore {
     await Promise.all(engs.map((e) => e.reload()));
   }, [probe, reprobe, engs]);
 
-  const finalize = useCallback<ReportStore['finalize']>(async (week) => {
-    if (weekFinal(week)) return { ok: false, error: '이미 확정된 주간보고입니다.' };
-    if (!hasWeeklyContent(we.items.find((w) => w.id === week), ie.items.filter((x) => x.week === week))) {
-      return { ok: false, error: NOTHING_TO_FINALIZE };
-    }
-    // 고치던 것이 서버에 다 들어간 뒤에 확정한다 - 확정된 뒤에 늦게 닿은 고침은 서버가 거절한다
-    if (!(await settle())) return { ok: false, error: '아직 저장하지 못한 변경이 있어 확정하지 않았습니다. 연결을 확인한 뒤 다시 눌러 주세요.' };
-    const { error } = await sb().rpc('tm_weekly_finalize', { target: week });
-    if (error) {
-      await we.reload(true);
-      return { ok: false, error: error.code === 'P0001' && error.message ? error.message : '확정하지 못했습니다. 인터넷 연결을 확인해 주세요.' };
-    }
-    // 서버가 적은 확정자 · 시각 · 저장본을 다시 읽는다(실시간 알림을 기다리지 않는다)
-    await we.reload(true);
-    return { ok: true };
-  }, [we, ie, weekFinal, settle]);
-
-  const reopen = useCallback<ReportStore['reopen']>(async (week) => {
-    const { error } = await sb().rpc('tm_weekly_reopen', { target: week });
-    await we.reload(true);
-    if (error) return { ok: false, error: error.code === 'P0001' && error.message ? error.message : '다시 열지 못했습니다. 인터넷 연결을 확인해 주세요.' };
-    return { ok: true };
-  }, [we]);
-
   const list = useMemo(() => people.items.slice().sort(byPersonOrder), [people.items]);
-  const syncs = [people.sync, daily.sync, weekly.sync, items.sync];
-  const engineError = people.loadError ?? daily.loadError ?? weekly.loadError ?? items.loadError;
+  const syncs = [people.sync, daily.sync, weekly.sync, teams.sync];
+  const engineError = people.loadError ?? daily.loadError ?? weekly.loadError ?? teams.loadError;
   return {
-    ready: probe === 'missing' || probe === 'error' || (probe === 'ok' && people.ready && daily.ready && weekly.ready && items.ready),
+    ready: probe === 'missing' || probe === 'error' || (probe === 'ok' && people.ready && daily.ready && weekly.ready && teams.ready),
     missing: probe === 'missing',
-    people: list, daily: daily.items, weekly: weekly.items, items: items.items,
+    people: list, daily: daily.items, weekly: weekly.items, teams: teams.items,
     sync: syncs.includes('error') ? 'error' : syncs.includes('saving') ? 'saving' : 'idle',
     loadError: probe === 'error' ? PROBE_FAIL : probe === 'ok' ? engineError : null,
     saveError: false,
-    addPerson, updatePerson, removePerson, setDaily, setWeekly, addItem, updateItem, removeItem,
-    finalize, reopen, settle, flush, retry,
+    addPerson, updatePerson, removePerson, setDaily, setWeekly, setTeam, reopenTeam, settle, flush, retry,
   };
 }

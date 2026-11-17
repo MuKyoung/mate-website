@@ -401,16 +401,32 @@ export interface ReportPerson {
 /** 처음 명단 - 2026-11-16 에 정한 스크럼 순서. 그 뒤로는 관리자가 화면에서 고친다 */
 export const DEFAULT_REPORT_PEOPLE = ['박무경', '정성권', '전승원', '박예형', '강민정', '김학동', '조현민', '이지영', '박수현'];
 
-export type DailyField = 'done' | 'plan' | 'blocker';
+/*
+ * 2026-11-17 2판 - 팀이 Confluence 에서 쓰던 양식을 따른다.
+ *   일간(스크럼): 사람마다 프로젝트 줄(완료 · 예정)과 블로커 · 공유사항.
+ *   주간: 사람마다 요약 · 프로젝트 표(완료 · 진행 중 · 다음 주 계획) · 이슈 / 요청 사항 · PM 피드백, 맨 위에 PM 의 팀 요약.
+ * 칸 글은 한 줄에 한 가지 - 앞 공백(두 칸 · Tab)은 하위 줄, 끝의 '· 1일'은 소요기간, URL · Jira 번호는 링크로 보인다.
+ */
 
-/** 일간보고 칸 - 이 순서로 보인다(이름 다음) */
-export const DAILY_FIELDS: { id: DailyField; label: string; hint: string }[] = [
-  { id: 'done', label: '완료', hint: '지난 보고 뒤에 끝낸 일' },
-  { id: 'plan', label: '예정', hint: '오늘 할 일' },
-  { id: 'blocker', label: '블로커 & 공유사항', hint: '막힌 것 · 도움 요청 · 알릴 것' },
-];
+/** 일간보고의 프로젝트 한 줄 - 이름을 비우면 '기타'로 묶는다 */
+export interface DailyProject {
+  /** 줄 구분용(한 사람의 보고 안에서만 겹치지 않으면 된다) */
+  id: string;
+  project: string;
+  done: string;
+  plan: string;
+}
 
-/** 일간보고 한 줄 - 하루 · 한 사람에 하나. 칸마다 한 줄에 한 가지씩 적는다 */
+/** 주간보고의 프로젝트 한 줄 */
+export interface WeeklyProject {
+  id: string;
+  project: string;
+  done: string;
+  doing: string;
+  next: string;
+}
+
+/** 일간보고(스크럼) - 하루 · 한 사람에 하나 */
 export interface DailyEntry {
   /** `${day}:${person}` - 두 사람이 같은 칸을 처음 적어도 한 줄로 모인다 */
   id: string;
@@ -420,6 +436,11 @@ export interface DailyEntry {
   person: string;
   /** 적을 때의 이름 - 명단에서 빠져도 그날 보고에 남는다 */
   name: string;
+  projects: DailyProject[];
+  /**
+   * 2026-11-16 판의 완료 · 예정 글. projects 가 비어 있을 때만 이름 없는 프로젝트 한 줄로 보이고,
+   * 그 보고를 새로 고치면 projects 로 옮기며 비운다
+   */
   done: string;
   plan: string;
   blocker: string;
@@ -428,69 +449,33 @@ export interface DailyEntry {
   updatedAt: string;
 }
 
-export type WeeklyStatus = 'draft' | 'final';
-export type WeeklyText = 'summary' | 'issues' | 'nextPlan' | 'notes';
-
-/**
- * 확정 시점 저장본 - 확정할 때의 숫자 · 명단 · 일간 근거를 그대로 남긴다(Supabase 모드는 서버가 만든다).
- * 확정한 보고의 화면과 글 복사는 이것을 쓰고, 그 뒤의 작업 보드 값은 '현재 참고'로 따로 본다
- */
-export interface WeeklySnapshot {
-  v: 1;
-  /** 확정한 시각 */
-  at: string;
-  /** 확정한 날(한국 시간) YYYY-MM-DD - 작성 현황의 '지난 평일'을 이 날까지로 센다 */
-  today: string;
-  numbers: { dueThisWeek: number; dueThisWeekDone: number; created: number; doing: number; overdue: number };
-  nextWeek: { id: string; key: string; title: string; due: string; assignee: string | null }[];
-  /** 확정 때 명단(순서대로) */
-  people: { id: string; name: string }[];
-  /** 무엇이라도 적은 날 - 명단에서 빠진 사람도 들어간다 */
-  written: { person: string; name: string; day: string }[];
-  blockers: { person: string; name: string; day: string; text: string }[];
-  done: { person: string; name: string; day: string; text: string }[];
-}
-
-/** 주간보고 한 장 - 직접 쓰는 칸. 숫자 · 사람별 실적 · 블로커 모음은 화면이 작업 보드와 일간보고에서 모은다 */
-export interface WeeklyReport {
-  /** 그 주 월요일 YYYY-MM-DD */
+/** 주간보고 - 한 주 · 한 사람에 하나 */
+export interface WeeklyEntry {
+  /** `${week}:${person}` */
   id: string;
+  /** 그 주 월요일 YYYY-MM-DD */
+  week: string;
+  person: string;
+  name: string;
+  /** 이번 주 핵심 한두 줄 */
   summary: string;
+  projects: WeeklyProject[];
+  /** 아직 풀리지 않은 블로커 · 결정이나 도움이 필요한 것 */
   issues: string;
-  nextPlan: string;
-  notes: string;
-  /** 확정하면 칸이 잠긴다(Supabase 모드는 서버도 막는다). 승인된 팀원 누구나 '다시 고치기'로 연다 */
-  status: WeeklyStatus;
-  /** 마지막으로 확정한 사람 · 시각 · 저장본 - 다시 고쳐도 '직전 확정'으로 남는다. 예전 확정본에는 없다 */
-  finalizedBy: string | null;
-  finalizedAt: string | null;
-  snapshot: WeeklySnapshot | null;
+  /** PM 이 남기는 작성 피드백 */
+  feedback: string;
   updatedBy: string | null;
   updatedAt: string;
 }
 
-/** 프로젝트 상태 - 초록 · 호박색 · 빨강은 작업 관리에서 끝남 · 임박 · 급함의 뜻이라 그대로 쓴다 */
-export type ProjectState = 'good' | 'watch' | 'risk';
-export const PROJECT_STATES: { id: ProjectState; label: string }[] = [
-  { id: 'good', label: '순조' },
-  { id: 'watch', label: '주의' },
-  { id: 'risk', label: '위험' },
-];
-export const isProjectState = (v: unknown): v is ProjectState => PROJECT_STATES.some((s) => s.id === v);
-
-/** 주간보고의 프로젝트별 현황 한 줄 - 줄마다 따로 저장해 두 사람이 다른 줄을 함께 고쳐도 덮지 않는다 */
-export interface WeeklyItem {
+/**
+ * 한 주의 팀 요약 - 한 주에 하나(id = 그 주 월요일). PM 이 팀원 요약을 읽고 적는다.
+ * status 는 2026-11-16 판의 확정 표시 - final 이면 서버가 요약 고침을 거절하므로 먼저 다시 연다
+ */
+export interface WeeklyTeam {
   id: string;
-  /** 그 주 월요일 */
-  week: string;
-  name: string;
-  state: ProjectState;
-  /** 이번 주 한 일 */
-  done: string;
-  /** 다음 주 할 일 */
-  next: string;
-  issue: string;
-  order: number;
+  summary: string;
+  status: 'draft' | 'final';
   updatedBy: string | null;
   updatedAt: string;
 }
