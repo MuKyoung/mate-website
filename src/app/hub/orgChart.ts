@@ -143,13 +143,15 @@ export const shortName = (a: StudioApp) => a.short ?? a.name.replace(/^MATE /, '
  * 직무 · 소속 · 맡은 일 글에 든 낱말로 도구를 고른다. 영문 줄임말(UI · PM · QA …)은 낱말 경계로, 한글은 들어 있기만 하면 맞는다.
  * 점수를 더해 높은 순서로 넷 - 같으면 STUDIO_APPS 순서.
  */
-interface Rule { words: string[]; label: string; apps: [string, number][] }
+/** unless - 이 낱말이 있으면 이 규칙은 건너뛴다('사운드 디자이너'는 그림 도구가 아니다) */
+interface Rule { words: string[]; label: string; apps: [string, number][]; unless?: string[] }
 const RULES: Rule[] = [
-  { words: ['UI', 'UX', '화면 설계', '프로덕트 디자인', '피그마', 'Figma', '웹디자인', '웹 디자인', '앱디자인', '앱 디자인'], label: 'UI · UX',
+  { words: ['UI', 'UX', '화면 설계', '프로덕트 디자인', '피그마', 'Figma', '웹디자인', '웹 디자인', '앱디자인', '앱 디자인',
+      '웹 디자이너', '웹디자이너', '앱 디자이너', '앱디자이너', 'UI 디자이너', '프로덕트 디자이너'], label: 'UI · UX',
     apps: [['design', 4], ['vector', 2], ['photo', 1]] },
   { words: ['그래픽', '일러스트', '원화', '드로잉', '웹툰', '만화', '컨셉', '콘셉트', '2D'], label: '그래픽 · 원화',
     apps: [['paint', 4], ['photo', 3], ['vector', 2], ['pipeline', 1]] },
-  { words: ['디자인', '디자이너', '아트', 'Art'], label: '디자인',
+  { words: ['디자인', '디자이너', '아트', 'Art'], label: '디자인', unless: ['사운드', '레벨', '게임 디자', '게임디자', '시스템 디자'],
     apps: [['photo', 2], ['design', 2], ['vector', 2]] },
   { words: ['3D', '모델링', '모델러'], label: '3D',
     apps: [['model', 4], ['texture', 3], ['sculpt', 2], ['material', 2], ['gen3d', 2]] },
@@ -169,9 +171,10 @@ const RULES: Rule[] = [
     apps: [['compose', 4], ['music', 4], ['wave', 1]] },
   { words: ['레벨', '맵 디자인', '월드'], label: '레벨 디자인',
     apps: [['level', 5], ['sheet', 1]] },
-  { words: ['게임 기획', '게임기획', '시스템 기획', '콘텐츠 기획', '밸런스'], label: '게임 기획',
-    apps: [['level', 3], ['sheet', 3], ['doc', 2], ['slides', 1], ['md', 1]] },
-  { words: ['클라이언트', '유니티', 'Unity', '언리얼', 'Unreal', 'Godot', '게임 개발', '게임개발'], label: '게임 클라이언트',
+  { words: ['게임 기획', '게임기획', '시스템 기획', '콘텐츠 기획', '밸런스', 'GD', 'Game Designer', '게임 디자인', '게임디자인'], label: '게임 기획',
+    apps: [['level', 5], ['sheet', 3], ['doc', 2], ['slides', 1], ['md', 1]] },
+  { words: ['클라이언트', 'Client', 'CE', 'TD', 'Technical Director', '유니티', 'Unity', '언리얼', 'Unreal', 'Godot', '게임 개발', '게임개발',
+      '퍼즐', '플레이어', '게임플레이', '인게임'], label: '게임 클라이언트',
     apps: [['pipeline', 4], ['level', 3], ['audio', 2], ['md', 2]] },
   { words: ['XR', 'VR', 'AR', 'MR', '메타버스'], label: 'XR',
     apps: [['model', 3], ['gen3d', 3], ['texture', 2], ['level', 2]] },
@@ -191,7 +194,7 @@ const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const RULE_TESTS = RULES.map((r) => ({
   rule: r,
   test: (text: string, lower: string, lines: string[]) =>
-    r.words.some((w) =>
+    !r.unless?.some((w) => lower.includes(w.toLowerCase())) && r.words.some((w) =>
       w.startsWith('=') ? lines.includes(w.slice(1).toLowerCase()) : LATIN.test(w)
         ? new RegExp(`(^|[^A-Za-z])${escapeRe(w)}([^A-Za-z]|$)`, 'i').test(text)
         : lower.includes(w.toLowerCase())),
