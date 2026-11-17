@@ -14,7 +14,7 @@ namespace MateCalendar
         public const string ChevronLeft = "chevron.backward", ChevronRight = "chevron.forward", ChevronDown = "chevron.down", Reset = "circle",
             Pin = "pin", PinFill = "pin.fill", List = "list.bullet", Calendar = "calendar", More = "ellipsis.circle",
             ReminderOpen = "reminder.open", ReminderDone = "reminder.done", Warning = "exclamationmark.triangle",
-            Refresh = "arrow.clockwise";
+            Refresh = "arrow.clockwise", Expand = "arrow.up.left.and.arrow.down.right", Collapse = "arrow.down.right.and.arrow.up.left";
 
         public static FrameworkElement Make(string name, double size, Brush brush)
         {
@@ -72,6 +72,14 @@ namespace MateCalendar
                     Stroke("M10,3.4 L17.2,16.2 L2.8,16.2 Z", 1.4);
                     Stroke("M10,8.2 L10,11.8", 1.6);
                     Dot(10, 14, 0.95);
+                    break;
+                case Expand:
+                    Stroke("M11.6,8.4 L16,4 M12.2,4 L16,4 L16,7.8", 1.6);
+                    Stroke("M8.4,11.6 L4,16 M4,12.2 L4,16 L7.8,16", 1.6);
+                    break;
+                case Collapse:
+                    Stroke("M16,4 L11.6,8.4 M11.6,4.8 L11.6,8.4 L15.2,8.4", 1.6);
+                    Stroke("M4,16 L8.4,11.6 M4.8,11.6 L8.4,11.6 L8.4,15.2", 1.6);
                     break;
                 case Refresh:
                     Stroke("M15.6,10 A5.6,5.6 0 1 1 13.9,6", 1.6);

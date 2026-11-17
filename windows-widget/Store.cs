@@ -127,7 +127,10 @@ namespace MateCalendar
     internal sealed class Settings
     {
         public int? X, Y;                  // 카드 왼쪽 위(화면 픽셀). 없으면 주 모니터 오른쪽 위
+        public int? W;                     // 옮겨 놓을 때의 창 폭(화면 픽셀) - 화면 오른쪽에 둔 카드는 오른쪽 끝을 지킨다
         public double Scale = 1.5;         // 크기 - Calendr 의 1pt 를 몇 DIP 로 그릴지
+        public string Layout = "compact";  // compact(달력 + 목록) · wide(넓게 펼친 달력 + 옆 목록)
+        public double WideScale = 1.25;    // 넓게 펼친 화면의 크기
         public string Appearance = "system";
         public int Transparency = 1;       // 0 낮음 · 1 보통 · 2 높음
         public string Scope = "mine";      // mine · all
@@ -139,6 +142,10 @@ namespace MateCalendar
         public bool Locked;
         public string? SkippedVersion;
         public bool Scratch;               // 점검(--demo)용 - 파일에서 읽지도 남기지도 않는다
+
+        public bool Wide => Layout == "wide";
+        /// <summary>지금 화면(작게 · 넓게)의 크기</summary>
+        public double ActiveScale => Wide ? WideScale : Scale;
 
         public static string Dir => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MATE Calendar");
         private static string File_ => Path.Combine(Dir, "settings.json");
@@ -154,7 +161,10 @@ namespace MateCalendar
                 {
                     X = d.ContainsKey("x") && d["x"] != null ? (int?)d.Long("x") : null,
                     Y = d.ContainsKey("y") && d["y"] != null ? (int?)d.Long("y") : null,
+                    W = d.ContainsKey("w") && d["w"] != null ? (int?)d.Long("w") : null,
                     Scale = Clamp(d.Num("scale", 1.5), 1.0, 2.5),
+                    Layout = d.Str("layout", "compact") == "wide" ? "wide" : "compact",
+                    WideScale = Clamp(d.Num("wideScale", 1.25), 1.0, 2.5),
                     Appearance = d.Str("appearance", "system"),
                     Transparency = (int)Clamp(d.Long("transparency", 1), 0, 2),
                     Scope = d.Str("scope", "mine") == "all" ? "all" : "mine",
@@ -179,7 +189,7 @@ namespace MateCalendar
                 Directory.CreateDirectory(Dir);
                 var d = new Dictionary<string, object?>
                 {
-                    ["x"] = X, ["y"] = Y, ["scale"] = Scale, ["appearance"] = Appearance, ["transparency"] = Transparency,
+                    ["x"] = X, ["y"] = Y, ["w"] = W, ["scale"] = Scale, ["layout"] = Layout, ["wideScale"] = WideScale, ["appearance"] = Appearance, ["transparency"] = Transparency,
                     ["scope"] = Scope, ["colorBy"] = ColorBy, ["weekNumbers"] = WeekNumbers, ["summary"] = Summary,
                     ["monthOutline"] = MonthOutline, ["upcomingDays"] = UpcomingDays, ["locked"] = Locked,
                     ["skippedVersion"] = SkippedVersion,

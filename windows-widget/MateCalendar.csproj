@@ -24,7 +24,7 @@
     <Deterministic>true</Deterministic>
 
     <!-- 고칠 때마다 올린다. 위젯이 public/downloads/mate-calendar.json 의 version 과 견줘 업데이트를 알린다 -->
-    <Version>1.0.1</Version>
+    <Version>1.0.2</Version>
     <Product>MATE 캘린더</Product>
     <AssemblyTitle>MATE 캘린더</AssemblyTitle>
     <Company>MATE</Company>

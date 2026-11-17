@@ -95,12 +95,17 @@ namespace MateCalendar
                 return 0;
             }
 
-            // --demo --work <DIP> : 작업 영역 높이를 흉내 내 작은 화면에서 맞춰지는지 본다(점검용)
+            // --demo --work <높이> 또는 <폭>x<높이>(DIP) : 작은 화면을 흉내 내 맞춰지는지 본다(점검용)
             int work = Array.FindIndex(args, x => x.Equals("--work", StringComparison.OrdinalIgnoreCase));
-            if (a.Contains("--demo") && work >= 0 && work + 1 < args.Length)
-                WidgetWindow.WorkOverride = double.Parse(args[work + 1], CultureInfo.InvariantCulture);
+            if (demo && work >= 0 && work + 1 < args.Length) WidgetWindow.SetWorkOverride(args[work + 1]);
 
             var controller = new Controller(demo);
+            if (demo)
+            {
+                // --wide : 넓게 펼친 화면, --update-ready : 새 판이 나온 것처럼(단추만 보이고 설치는 안 한다)
+                if (a.Contains("--wide")) controller.Settings.Layout = "wide";
+                if (a.Contains("--update-ready")) controller.DemoUpdate("9.9.9");
+            }
             app.Startup += (s, e) => controller.Start();
             app.Run();
             GC.KeepAlive(mutex);
@@ -140,6 +145,14 @@ namespace MateCalendar
             if (!loaded) Data = new Snapshot();
         }
         public bool UpdateReady => _update != null;
+        public string UpdateVersion => _update?.Version.ToString(3) ?? "";
+        public string UpdateNotes => _update?.Notes ?? "";
+        /// <summary>새 판을 받는 중(단추를 다시 못 누르게)</summary>
+        public bool Updating { get; private set; }
+
+        /// <summary>점검용 - 새 판이 나온 것처럼 단추를 보인다</summary>
+        internal void DemoUpdate(string version) =>
+            _update = new Updater.Info { Version = System.Version.Parse(version), Notes = "넓게 펼친 화면 · 업데이트 단추" };
 
         private readonly bool _demo;
         private WidgetWindow? _widget;
@@ -386,12 +399,24 @@ namespace MateCalendar
             _widget?.Render();
         }
 
-        private async Task InstallUpdate()
+        public async Task InstallUpdate()
         {
-            if (_update == null) return;
+            if (_update == null || Updating) return;
+            if (_demo) { MessageBox.Show("점검 화면이라 설치하지 않습니다.", "MATE 캘린더"); return; }
+            Updating = true;
+            _widget?.Render();
             var err = await Updater.Install(_update);
-            if (err != null) MessageBox.Show(err, "MATE 캘린더", MessageBoxButton.OK, MessageBoxImage.Warning);
-            // 성공하면 새 exe 가 이 위젯을 끄라고 알린다(ExitEvent)
+            if (err != null)
+            {
+                Updating = false;
+                _widget?.Render();
+                MessageBox.Show(err, "MATE 캘린더", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            // 성공하면 새 exe 가 이 위젯을 끄라고 알린다(ExitEvent). 1분이 지나도 그대로면 단추를 되살린다
+            await Task.Delay(60000);
+            Updating = false;
+            _widget?.Render();
         }
 
         /* ── 메뉴 ─────────────────────────────────────── */
@@ -461,12 +486,14 @@ namespace MateCalendar
             m.Items.Add(Sub("달력",
                 Item("이번 달 테두리", () => Set(() => Settings.MonthOutline = !Settings.MonthOutline), Settings.MonthOutline),
                 Item("주 번호", () => Set(() => Settings.WeekNumbers = !Settings.WeekNumbers), Settings.WeekNumbers)));
-            m.Items.Add(Sub("크기",
-                Item("작게", () => SetScale(1.0), Math.Abs(Settings.Scale - 1.0) < 0.01),
-                Item("보통", () => SetScale(1.25), Math.Abs(Settings.Scale - 1.25) < 0.01),
-                Item("크게", () => SetScale(1.5), Math.Abs(Settings.Scale - 1.5) < 0.01),
-                Item("아주 크게", () => SetScale(1.75), Math.Abs(Settings.Scale - 1.75) < 0.01),
-                Item("가장 크게", () => SetScale(2.0), Math.Abs(Settings.Scale - 2.0) < 0.01)));
+            m.Items.Add(Item("넓게 펼쳐 보기", () => SetLayout(Settings.Wide ? "compact" : "wide"), Settings.Wide));
+            double sc = Settings.ActiveScale;
+            m.Items.Add(Sub(Settings.Wide ? "크기(넓은 화면)" : "크기",
+                Item("작게", () => SetScale(1.0), Math.Abs(sc - 1.0) < 0.01),
+                Item("보통", () => SetScale(1.25), Math.Abs(sc - 1.25) < 0.01),
+                Item("크게", () => SetScale(1.5), Math.Abs(sc - 1.5) < 0.01),
+                Item("아주 크게", () => SetScale(1.75), Math.Abs(sc - 1.75) < 0.01),
+                Item("가장 크게", () => SetScale(2.0), Math.Abs(sc - 2.0) < 0.01)));
             m.Items.Add(Sub("모양",
                 Item("시스템 설정 따름", () => SetLook(() => Settings.Appearance = "system"), Settings.Appearance == "system"),
                 Item("밝게", () => SetLook(() => Settings.Appearance = "light"), Settings.Appearance == "light"),
@@ -517,9 +544,20 @@ namespace MateCalendar
             _ = Refresh(true);
         }
 
+        /// <summary>작게(달력 + 목록) · 넓게(펼친 달력 + 옆 목록)</summary>
+        public void SetLayout(string layout)
+        {
+            if (Settings.Layout == layout) return;
+            Settings.Layout = layout;
+            Settings.Save();
+            _widget?.Render();
+            _widget?.QueueBackdrop(force: true);
+        }
+
         private void SetScale(double s)
         {
-            Settings.Scale = s;
+            if (Settings.Wide) Settings.WideScale = s;
+            else Settings.Scale = s;
             Settings.Save();
             _widget?.Render();
             _widget?.QueueBackdrop(force: true);
@@ -645,7 +683,15 @@ namespace MateCalendar
             bool real = args.Contains("--cache");
             var c = new Controller(!real);
             c.Settings.Appearance = Arg("--theme", "dark");
-            c.Settings.Scale = double.Parse(Arg("--scale", "1.5"), CultureInfo.InvariantCulture);
+            // --wide : 넓게 펼친 화면(--scale 은 그 화면의 크기, 기본 1.25)
+            if (args.Contains("--wide"))
+            {
+                c.Settings.Layout = "wide";
+                c.Settings.WideScale = double.Parse(Arg("--scale", "1.25"), CultureInfo.InvariantCulture);
+            }
+            else c.Settings.Scale = double.Parse(Arg("--scale", "1.5"), CultureInfo.InvariantCulture);
+            // --update-ready : 새 판이 나왔을 때의 업데이트 단추
+            if (args.Contains("--update-ready")) c.DemoUpdate("1.0.2");
             c.Settings.WeekNumbers = args.Contains("--weeks");
             // 점검용 설정: --scope all · --color domain|label|member · --transparency 0~2 · --upcoming N · --no-outline · --no-summary
             c.Settings.Scope = Arg("--scope", "mine");
@@ -655,9 +701,9 @@ namespace MateCalendar
             c.Settings.MonthOutline = !args.Contains("--no-outline");
             c.Settings.Summary = !args.Contains("--no-summary");
             c.Settings.Locked = args.Contains("--locked");
-            // --work <DIP> : 작업 영역 높이(작은 노트북 화면 흉내)
+            // --work <높이> 또는 <폭>x<높이>(DIP) : 작업 영역(작은 노트북 화면 흉내)
             var workArg = Arg("--work", "");
-            if (workArg != "") WidgetWindow.WorkOverride = double.Parse(workArg, CultureInfo.InvariantCulture);
+            if (workArg != "") WidgetWindow.SetWorkOverride(workArg);
             // --state login|loading|error : 로그인 전 · 읽는 중 · 서버 오류 화면
             switch (Arg("--state", ""))
             {
@@ -688,7 +734,7 @@ namespace MateCalendar
                 var xy = bd.Split(',').Select(v => int.Parse(v, CultureInfo.InvariantCulture)).ToArray();
                 root.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
                 var sz = root.DesiredSize;
-                double k = c.Settings.Scale; // 100% 배율 화면 기준
+                double k = c.Settings.ActiveScale; // 100% 배율 화면 기준
                 int pad = (int)Math.Round(14 * k);
                 var card = new Native.RECT { Left = xy[0] + pad, Top = xy[1] + pad, Right = xy[0] + (int)sz.Width - pad, Bottom = xy[1] + (int)sz.Height - pad };
                 var bmp = Backdrop.Make(card, 34);

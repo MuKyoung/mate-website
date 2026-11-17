@@ -22,6 +22,11 @@ namespace MateCalendar
     ///   도구      📌                          ☰  📅  ⋯
     ///   요약      ▍기한 지남: 2   ▍오늘: 3
     ///   목록      ── 오늘 ──  ▍○ 작업 제목 …
+    ///
+    /// 넓게 펼친 화면(Settings.Layout = wide) - 왼쪽은 큰 달력 칸마다 그날 마감 작업 제목, 오른쪽은 고른 날의 목록
+    ///   2026년 11월  ‹ ○ ›                    [업데이트 설치] 📌 ☰ 📅 ⤡ ⋯
+    ///   일 │ 월 │ … (칸: 날짜 · ▍작업 제목 · +2개 더)          │ ▍기한 지남: 2  ▍오늘: 3
+    ///                                                        │ ── 오늘 ──  ▍○ 작업 제목 …
     /// </summary>
     internal sealed class WidgetWindow : Window
     {
@@ -36,8 +41,32 @@ namespace MateCalendar
         private const double Gap = 4;          // mainStackSpacing
         private const double Edge = 16;        // 작업 영역 가장자리와 카드 사이(DIP)
 
-        /// <summary>점검용(--work) - 작업 영역 높이(DIP)를 흉내 내 작은 화면에서 맞춰지는지 본다</summary>
-        internal static double? WorkOverride;
+        // 넓게 펼친 화면(pt)
+        private const double WCell = 90;       // 날짜 칸 폭
+        private const double WRow = 64;        // 날짜 칸 높이 - 작업 제목 세 줄(화면이 낮으면 WMinRow 까지 줄인다)
+        private const double WMinRow = 44;
+        private const double WWeekday = 18;    // 요일 줄
+        private const double WWeekCol = 22;    // 주 번호 칸
+        private const double WList = 260;      // 오른쪽 목록 폭
+        private const double WGap = 12;        // 달력과 목록 사이
+        private const double DayH = 16;        // 칸 위 날짜 줄
+        private const double ChipH = 13;       // 칸 안 작업 한 줄
+        private const double WideFixed = M + 22 + 2 * Gap + WWeekday + M; // 날짜 칸 여섯 줄을 뺀 카드 높이
+
+        /// <summary>점검용(--work) - 작업 영역(DIP)을 흉내 내 작은 화면에서 맞춰지는지 본다</summary>
+        internal static double? WorkOverride, WorkWidthOverride;
+
+        /// <summary>'672' 는 높이만, '1280x672' 는 폭과 높이</summary>
+        internal static void SetWorkOverride(string v)
+        {
+            var parts = v.ToLowerInvariant().Split('x');
+            if (parts.Length == 2)
+            {
+                WorkWidthOverride = double.Parse(parts[0], CultureInfo.InvariantCulture);
+                WorkOverride = double.Parse(parts[1], CultureInfo.InvariantCulture);
+            }
+            else WorkOverride = double.Parse(v, CultureInfo.InvariantCulture);
+        }
 
         private static readonly string[] WeekDays = { "일", "월", "화", "수", "목", "금", "토" };
         private static readonly string[] Palette = { "blue", "violet", "teal", "pink", "sky", "plum", "brown", "gray" };
@@ -64,8 +93,6 @@ namespace MateCalendar
 
         private ScrollViewer? _scroll;
         private StackPanel? _list;
-        private FrameworkElement? _calendarHost;
-        private Border? _calendarSlot;
         private bool _dragging;
         private Native.POINT _dragStart;
         private Native.RECT _dragRect;
@@ -76,6 +103,7 @@ namespace MateCalendar
         private double _fixedPt;             // 목록을 뺀 카드 높이(pt)
         private bool _overdueOpen;           // 기한 지난 작업을 펼쳤는지(다른 날을 고르면 다시 접는다)
         private bool _fadeUp, _fadeDown;
+        private string _fitKey = "";         // 이번에 맞춘 크기(화면이 바뀌어 맞춤이 달라졌는지 본다)
 
         public IntPtr Handle { get; private set; }
 
@@ -165,9 +193,9 @@ namespace MateCalendar
             int w = r.Width, h = r.Height;
             int x, y;
             var s = _c.Settings;
-            if (s.X.HasValue && s.Y.HasValue && OnScreen(s.X.Value, s.Y.Value, w, h))
+            if (s.X.HasValue && s.Y.HasValue && OnScreen(SavedLeft(w), s.Y.Value, w, h))
             {
-                x = s.X.Value;
+                x = SavedLeft(w);
                 y = s.Y.Value;
             }
             else
@@ -212,10 +240,25 @@ namespace MateCalendar
             if (!_placed || _dragging || Handle == IntPtr.Zero) return;
             if (!_c.Settings.X.HasValue || !_c.Settings.Y.HasValue) { PlaceFirst(); return; }
             Native.GetWindowRect(Handle, out var r);
-            int x = r.Left, y = r.Top;
+            // 저장한 자리에서 다시 맞춘다 - 넓게 펼쳐 화면 밖으로 밀려 당겼던 카드도 접으면 원래 자리로 돌아온다
+            int x = SavedLeft(r.Width), y = _c.Settings.Y.Value;
             ClampToWork(ref x, ref y, r.Width, r.Height);
             if (x != r.Left || y != r.Top)
                 Native.SetWindowPos(Handle, IntPtr.Zero, x, y, 0, 0, Native.SWP_NOSIZE | Native.SWP_NOZORDER | Native.SWP_NOACTIVATE);
+        }
+
+        /// <summary>
+        /// 저장한 자리의 창 왼쪽(화면 픽셀). 화면 오른쪽 반에 옮겨 둔 카드는 오른쪽 끝을 지킨다 -
+        /// 넓게 펼치거나 크기를 바꾸면 왼쪽으로 자라고, 가장자리에서 떨어진 거리는 그대로다
+        /// </summary>
+        private int SavedLeft(int w)
+        {
+            var s = _c.Settings;
+            int x = s.X!.Value;
+            if (!s.W.HasValue) return x;
+            int cx = x + s.W.Value / 2;
+            var work = Native.MonitorAt(cx, s.Y!.Value + PadPx() + 30).rcWork;
+            return cx > work.Left + work.Width / 2 ? x + s.W.Value - w : x;
         }
 
         /// <summary>
@@ -225,32 +268,66 @@ namespace MateCalendar
         private (double list, double scale) Fit(double fixedPt)
         {
             double scale = _c.Settings.Scale;
-            double room = WorkHeightDip() - 2 * Edge;
+            double room = WorkDip().Height - 2 * Edge;
             double avail = room / scale - fixedPt;
             if (avail >= ListHeight) return (ListHeight, scale);
             if (avail >= MinList) return (Math.Floor(avail), scale);
             return (MinList, Math.Max(0.75, room / (fixedPt + MinList)));
         }
 
-        /// <summary>위젯이 있는(아직 안 놓였으면 놓일) 모니터의 작업 영역 높이(DIP)</summary>
-        private double WorkHeightDip()
+        /// <summary>
+        /// 넓게 펼친 화면의 날짜 칸 높이와 배수 - 폭이 작업 영역을 넘으면 배수를 줄이고,
+        /// 높이가 넘으면 날짜 칸을 WMinRow 까지 줄인 뒤 그래도 넘으면 배수를 더 줄인다
+        /// </summary>
+        private (double row, double scale) WideFit()
         {
-            if (WorkOverride.HasValue) return WorkOverride.Value;
+            var work = WorkDip();
+            double scale = _c.Settings.WideScale;
+            double roomW = work.Width - 2 * Edge, roomH = work.Height - 2 * Edge;
+            double w = WideWidth();
+            if (w * scale > roomW) scale = roomW / w;
+            double row = Math.Floor((roomH / scale - WideFixed) / 6);
+            if (row >= WRow) row = WRow;
+            else if (row < WMinRow)
+            {
+                row = WMinRow;
+                scale = Math.Min(scale, roomH / (WideFixed + 6 * WMinRow));
+            }
+            return (row, Math.Max(0.75, scale));
+        }
+
+        private double WideGridWidth() => (_c.Settings.WeekNumbers ? WWeekCol : 0) + 7 * WCell;
+        private double WideWidth() => 2 * M + WideGridWidth() + WGap + WList;
+
+        /// <summary>위젯이 있는(아직 안 놓였으면 놓일) 모니터의 작업 영역(DIP)</summary>
+        private Size WorkDip()
+        {
             Native.MONITORINFOEX mon;
             if (_placed && Handle != IntPtr.Zero) mon = Native.MonitorOf(Handle);
             else if (_c.Settings.X.HasValue && _c.Settings.Y.HasValue) mon = Native.MonitorAt(_c.Settings.X.Value, _c.Settings.Y.Value);
             else mon = Native.MonitorAt(0, 0);
             var m = mon.rcMonitor;
             double dpi = Native.DpiAt(m.Left + m.Width / 2, m.Top + m.Height / 2) / 96.0;
-            return mon.rcWork.Height / dpi;
+            return new Size(WorkWidthOverride ?? mon.rcWork.Width / dpi, WorkOverride ?? mon.rcWork.Height / dpi);
+        }
+
+        private string FitKey()
+        {
+            if (_c.Settings.Wide)
+            {
+                var (row, ws) = WideFit();
+                return string.Format(CultureInfo.InvariantCulture, "w{0}|{1:F3}", row, ws);
+            }
+            if (_fixedPt <= 0) return "";
+            var (list, scale) = Fit(_fixedPt);
+            return string.Format(CultureInfo.InvariantCulture, "c{0}|{1:F3}", list, scale);
         }
 
         /// <summary>모니터 · 배율 · 작업 표시줄이 바뀌었거나 다른 모니터로 옮겼을 때 - 맞춤이 달라졌으면 다시 그린다</summary>
         private void Refit()
         {
-            if (_fixedPt <= 0) return;
-            var (list, scale) = Fit(_fixedPt);
-            if (Math.Abs(list - _listH) > 0.5 || Math.Abs(scale - _scale.ScaleX) > 0.001) Render();
+            if (_fitKey == "") return;
+            if (FitKey() != _fitKey) Render();
             else KeepOnScreen();
         }
 
@@ -271,6 +348,7 @@ namespace MateCalendar
         {
             _c.Settings.X = null;
             _c.Settings.Y = null;
+            _c.Settings.W = null;
             _c.Settings.Save();
             PlaceFirst();
         }
@@ -350,13 +428,25 @@ namespace MateCalendar
             Index();
 
             _stack.Children.Clear();
+            if (_c.Settings.Wide) RenderWide();
+            else RenderCompact();
+            if (keep.HasValue && keep.Value > 0)
+            {
+                var sv = _scroll;
+                Dispatcher.BeginInvoke(new Action(() => sv?.ScrollToVerticalOffset(keep.Value)), DispatcherPriority.Loaded);
+            }
+        }
+
+        /// <summary>작게 - 달력 · 도구 · 요약 · 목록을 위아래로</summary>
+        private void RenderCompact()
+        {
             // 폭은 달력(7칸 + 주 번호)으로 정한다 - 긴 작업 제목 · 안내 글이 카드를 넓히지 않고 그 안에서 줄을 바꾼다
             _stack.Width = 2 * M + (_c.Settings.WeekNumbers ? Cell * WeekRatio : 0) + 7 * Cell;
             _stack.Children.Add(Spaced(Header(), 0));
-            _calendarSlot = new Border { Margin = new Thickness(M, Gap, M, 0) };
-            _calendarSlot.Child = _calendarHost = BuildCalendar();
-            _stack.Children.Add(_calendarSlot);
+            _stack.Children.Add(new Border { Margin = new Thickness(M, Gap, M, 0), Child = BuildCalendar() });
             _stack.Children.Add(Spaced(Toolbar(), Gap));
+            var update = UpdateButton(false);
+            if (update != null) _stack.Children.Add(Spaced(update, Gap + 2));
             var summary = Summary();
             if (summary != null) _stack.Children.Add(Spaced(summary, Gap));
 
@@ -367,12 +457,42 @@ namespace MateCalendar
             var fit = Fit(_fixedPt);
             _listH = fit.list;
             _scale.ScaleX = _scale.ScaleY = fit.scale;
-            _stack.Children.Add(ListArea(listTop));
-            if (keep.HasValue && keep.Value > 0)
+            _fitKey = FitKey();
+            _stack.Children.Add(ListArea(new Thickness(M / 2, listTop, M / 2, M / 2)));
+        }
+
+        /// <summary>넓게 - 위에 머리 · 도구 한 줄, 아래 왼쪽은 큰 달력, 오른쪽은 요약 · 목록</summary>
+        private void RenderWide()
+        {
+            var (rowH, scale) = WideFit();
+            _scale.ScaleX = _scale.ScaleY = scale;
+            _fitKey = FitKey();
+            _stack.Width = WideWidth();
+            _stack.Children.Add(Spaced(WideBar(), 0));
+
+            double colH = WWeekday + 6 * rowH;
+            var body = new Grid { Margin = new Thickness(M, 2 * Gap, M, M) };
+            body.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(WideGridWidth()) });
+            body.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(WGap) });
+            body.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(WList) });
+            body.Children.Add(BuildMonthGrid(rowH));
+
+            var side = new StackPanel { Height = colH };
+            Grid.SetColumn(side, 2);
+            var summary = Summary();
+            double sh = 0;
+            if (summary != null)
             {
-                var sv = _scroll;
-                Dispatcher.BeginInvoke(new Action(() => sv?.ScrollToVerticalOffset(keep.Value)), DispatcherPriority.Loaded);
+                summary.Margin = new Thickness(4, 2, 4, 0);
+                side.Children.Add(summary);
+                summary.Measure(new Size(WList, double.PositiveInfinity));
+                sh = summary.DesiredSize.Height;
             }
+            double top = sh > 0 ? Gap + 2 : 0;
+            _listH = Math.Floor(colH - sh - top);
+            side.Children.Add(ListArea(new Thickness(0, top, 0, 0)));
+            body.Children.Add(side);
+            _stack.Children.Add(body);
         }
 
         private DateTime _listFor;
@@ -461,13 +581,53 @@ namespace MateCalendar
             var title = Text($"{_month.Year}년 {_month.Month}월", 14, _t.Header, Theme.Medium);
             title.VerticalAlignment = VerticalAlignment.Center;
             title.Margin = new Thickness(5, 0, 0, 0);
-            var handle = new Border { Background = Brushes.Transparent, Child = title, Cursor = _c.Settings.Locked ? Cursors.Arrow : Cursors.SizeAll };
-            handle.ToolTip = _c.Settings.Locked ? null : "끌어서 옮기기";
+            dock.Children.Add(DragHandle(title));
+            return dock;
+        }
+
+        /// <summary>넓게 펼친 화면의 위 줄 - 왼쪽은 달 이름 · ‹ ○ ›, 오른쪽은 업데이트 · 도구 단추, 사이 빈 자리도 끌어 옮긴다</summary>
+        private FrameworkElement WideBar()
+        {
+            var dock = new DockPanel { Height = 22, LastChildFill = true };
+            var left = new StackPanel { Orientation = Orientation.Horizontal };
+            var title = Text($"{_month.Year}년 {_month.Month}월", 15, _t.Header, Theme.Medium);
+            title.VerticalAlignment = VerticalAlignment.Center;
+            title.Margin = new Thickness(5, 0, 10, 0);
+            left.Children.Add(DragHandle(title));
+            left.Children.Add(IconButton(Icons.ChevronLeft, "이전 달", () => MoveMonth(-1), 15));
+            left.Children.Add(IconButton(Icons.Reset, "오늘", GoToday, 15));
+            left.Children.Add(IconButton(Icons.ChevronRight, "다음 달", () => MoveMonth(1), 15));
+            DockPanel.SetDock(left, Dock.Left);
+            dock.Children.Add(left);
+
+            var right = new StackPanel { Orientation = Orientation.Horizontal };
+            var update = UpdateButton(true);
+            if (update != null)
+            {
+                update.Margin = new Thickness(0, 0, 8, 0);
+                right.Children.Add(update);
+            }
+            right.Children.Add(PinButton());
+            AddActions(right);
+            DockPanel.SetDock(right, Dock.Right);
+            dock.Children.Add(right);
+            dock.Children.Add(DragHandle(null));
+            return dock;
+        }
+
+        /// <summary>눌러 끌면 위젯을 옮기는 자리(자리 고정이면 그대로)</summary>
+        private Border DragHandle(UIElement? child)
+        {
+            bool locked = _c.Settings.Locked;
+            var handle = new Border
+            {
+                Background = Brushes.Transparent, Child = child, Cursor = locked ? Cursors.Arrow : Cursors.SizeAll,
+                ToolTip = locked ? null : "끌어서 옮기기",
+            };
             handle.MouseLeftButtonDown += (s, e) => BeginDrag(handle, e);
             handle.MouseMove += (s, e) => DragMove_(e);
             handle.MouseLeftButtonUp += (s, e) => EndDrag(handle);
-            dock.Children.Add(handle);
-            return dock;
+            return handle;
         }
 
         private FrameworkElement IconButton(string icon, string tip, Action click, double iconSize = 16, Color? color = null, bool badge = false)
@@ -552,6 +712,7 @@ namespace MateCalendar
                 Native.SetWindowPos(Handle, IntPtr.Zero, x, y, 0, 0, Native.SWP_NOSIZE | Native.SWP_NOZORDER | Native.SWP_NOACTIVATE);
             _c.Settings.X = x;
             _c.Settings.Y = y;
+            _c.Settings.W = r.Width;
             _c.Settings.Save();
             _pin.ToBottom();
             QueueBackdrop();
@@ -663,6 +824,140 @@ namespace MateCalendar
             _cells.Add((d, b));
             PaintCell(d, b);
             return b;
+        }
+
+        /// <summary>넓게 펼친 화면의 달력 - 칸마다 그날 마감인 작업 제목(넘치면 '+N개 더')</summary>
+        private FrameworkElement BuildMonthGrid(double rowH)
+        {
+            _cells.Clear();
+            bool weekNumbers = _c.Settings.WeekNumbers;
+            var g = new Grid();
+            g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(weekNumbers ? WWeekCol : 0) });
+            for (int i = 0; i < 7; i++) g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(WCell) });
+            g.RowDefinitions.Add(new RowDefinition { Height = new GridLength(WWeekday) });
+            for (int i = 0; i < 6; i++) g.RowDefinitions.Add(new RowDefinition { Height = new GridLength(rowH) });
+
+            for (int i = 0; i < 7; i++)
+            {
+                var wd = Text(WeekDays[i], 11, _t.Secondary, Theme.Bold);
+                wd.VerticalAlignment = VerticalAlignment.Center;
+                wd.Margin = new Thickness(8, 0, 0, 2);
+                Grid.SetColumn(wd, i + 1);
+                g.Children.Add(wd);
+            }
+
+            // 칸 안쪽(테두리 · 여백)을 뺀 자리에 들어가는 작업 줄 수
+            int chips = Math.Max(1, (int)Math.Floor((rowH - 9 - DayH) / ChipH));
+            var start = _month.AddDays(-(int)_month.DayOfWeek);
+            var ko = CultureInfo.GetCultureInfo("ko-KR");
+            for (int row = 0; row < 6; row++)
+            {
+                if (weekNumbers)
+                {
+                    int wn = ko.Calendar.GetWeekOfYear(start.AddDays(row * 7), CalendarWeekRule.FirstDay, DayOfWeek.Sunday);
+                    var tb = Text(wn.ToString(CultureInfo.InvariantCulture), 10, _t.Secondary);
+                    tb.HorizontalAlignment = HorizontalAlignment.Center;
+                    tb.Margin = new Thickness(0, 5, 2, 0);
+                    Grid.SetRow(tb, row + 1);
+                    g.Children.Add(tb);
+                }
+                for (int col = 0; col < 7; col++)
+                {
+                    var cell = MakeWideCell(start.AddDays(row * 7 + col), chips);
+                    Grid.SetRow(cell, row + 1);
+                    Grid.SetColumn(cell, col + 1);
+                    g.Children.Add(cell);
+                }
+            }
+            g.MouseLeave += (s, e) => { _hover = null; PaintCells(); };
+            return g;
+        }
+
+        private Border MakeWideCell(DateTime d, int maxChips)
+        {
+            bool inMonth = d.Month == _month.Month && d.Year == _month.Year;
+            bool weekend = d.DayOfWeek == DayOfWeek.Sunday || d.DayOfWeek == DayOfWeek.Saturday;
+            var content = new StackPanel { Margin = new Thickness(5, 2, 4, 1), Opacity = inMonth ? 1 : 0.4 };
+
+            // 날짜 - 매달 1일은 'N월 1일'로(앞뒤 달 칸에서도 어느 달인지 보이게), 오늘은 강조색
+            bool today = d == _today;
+            var num = Text(d.Day == 1 ? $"{d.Month}월 1일" : d.Day.ToString(CultureInfo.InvariantCulture), 11.5,
+                today ? _t.Accent : _t.Header, today ? Theme.Bold : Theme.Regular);
+            num.Height = DayH;
+            content.Children.Add(num);
+
+            // 끝나지 않은 것부터(목록과 같은 순서). 다 못 넣으면 마지막 줄은 '+N개 더'
+            var tasks = _byDate.TryGetValue(d, out var list) ? Order(list).ToList() : new List<TaskItem>();
+            int show = tasks.Count <= maxChips ? tasks.Count : Math.Max(0, maxChips - 1);
+            for (int i = 0; i < show; i++) content.Children.Add(Chip(tasks[i]));
+            if (tasks.Count > show)
+            {
+                var more = Text($"+{tasks.Count - show}개 더", 10, _t.Secondary);
+                more.Height = ChipH;
+                more.Margin = new Thickness(7, 0, 0, 0);
+                content.Children.Add(more);
+            }
+
+            // 칸 바탕 - 평일은 옅게, 주말은 작게 보기의 주말 칸과 같은 색
+            var fill = weekend ? _t.Quaternary : Theme.WithAlpha(_t.Quaternary, _t.Quaternary.A / 255.0 / 2);
+            var b = new Border
+            {
+                CornerRadius = new CornerRadius(6), BorderThickness = new Thickness(1.5), Margin = new Thickness(1.5),
+                Background = Theme.Brush(fill), Child = content, Cursor = Cursors.Hand, ClipToBounds = true,
+            };
+            b.MouseEnter += (s, e) => { _hover = d; PaintCells(); };
+            b.MouseLeftButtonDown += (s, e) =>
+            {
+                e.Handled = true;
+                if (e.ClickCount >= 2) { _c.OpenHub("calendar"); return; }
+                Select(d);
+            };
+            _cells.Add((d, b));
+            PaintCell(d, b);
+            return b;
+        }
+
+        /// <summary>달력 칸 안의 작업 한 줄 - ▍!! 제목. 누르면 그날을 고르고, 두 번 누르면 Hub 에서 연다</summary>
+        private FrameworkElement Chip(TaskItem t)
+        {
+            var color = ColorOf(t);
+            var dock = new DockPanel
+            {
+                Height = ChipH, LastChildFill = true, Background = Brushes.Transparent, Opacity = t.Done ? 0.45 : 1,
+                ToolTip = TaskTip(t, "두 번 누르면 Hub 에서 엽니다"),
+            };
+            var bar = new Border { Width = 3, CornerRadius = new CornerRadius(1.5), Background = Theme.Brush(color), Margin = new Thickness(0, 2, 4, 2) };
+            DockPanel.SetDock(bar, Dock.Left);
+            dock.Children.Add(bar);
+            // 좁은 칸이라 끝난 작업에는 급함 표시를 빼고 제목에 자리를 준다
+            string? marks = t.Done ? null : t.Priority == "urgent" ? "!!!" : t.Priority == "high" ? "!!" : null;
+            if (marks != null)
+            {
+                var pr = Text(marks, 10, color, Theme.Bold);
+                pr.VerticalAlignment = VerticalAlignment.Center;
+                pr.Margin = new Thickness(0, 0, 2, 0);
+                DockPanel.SetDock(pr, Dock.Left);
+                dock.Children.Add(pr);
+            }
+            var title = Text(t.Title.Length > 0 ? t.Title : "(제목 없음)", 10, _t.Header);
+            title.VerticalAlignment = VerticalAlignment.Center;
+            title.TextTrimming = TextTrimming.CharacterEllipsis;
+            if (t.Done) title.TextDecorations = TextDecorations.Strikethrough;
+            dock.Children.Add(title);
+            dock.MouseLeftButtonDown += (s, e) =>
+            {
+                if (e.ClickCount < 2) return; // 한 번은 칸으로 넘겨 그날을 고른다
+                e.Handled = true;
+                _c.OpenTask(t.Id);
+            };
+            return dock;
+        }
+
+        /// <summary>작업 툴팁 - 번호 · 제목 · 상태 · 마감(· 담당자) · 누르면 할 일</summary>
+        private string TaskTip(TaskItem t, string action)
+        {
+            var who = _c.Settings.Scope == "all" && t.Assignee != null && _memberName.TryGetValue(t.Assignee, out var n) && n != "" ? " · " + n : "";
+            return $"{t.Key} {t.Title}\n{TaskItem.StatusLabel(t.Status)} · 마감 {t.Due.Month}월 {t.Due.Day}일{who}\n{action}";
         }
 
         private void PaintCells()
@@ -798,30 +1093,77 @@ namespace MateCalendar
         private FrameworkElement Toolbar()
         {
             var dock = new DockPanel { Height = 22, LastChildFill = true };
-            var pinBtn = IconButton(_c.Settings.Locked ? Icons.PinFill : Icons.Pin,
-                _c.Settings.Locked ? "자리 고정됨. 누르면 다시 옮길 수 있습니다" : "자리 고정", () =>
-                {
-                    _c.Settings.Locked = !_c.Settings.Locked;
-                    _c.Settings.Save();
-                    Render();
-                }, 17);
+            var pinBtn = PinButton();
             DockPanel.SetDock(pinBtn, Dock.Left);
             dock.Children.Add(pinBtn);
 
             var right = new StackPanel { Orientation = Orientation.Horizontal };
-            if (_c.Error != null && !_c.NeedLogin)
-            {
-                right.Children.Add(IconButton(Icons.Warning, _c.Error + "\n누르면 다시 읽습니다", () => _ = _c.Refresh(true), 16, _t.Secondary));
-            }
-            right.Children.Add(IconButton(Icons.List, "Hub 작업 목록 열기", () => _c.OpenHub("list"), 17));
-            right.Children.Add(IconButton(Icons.Calendar, "Hub 캘린더 열기", () => _c.OpenHub("calendar"), 17));
-            FrameworkElement? more = null;
-            more = IconButton(Icons.More, "메뉴 열기", () => _c.ShowMenu(more!), 17, null, _c.UpdateReady);
-            right.Children.Add(more);
+            AddActions(right);
             DockPanel.SetDock(right, Dock.Right);
             dock.Children.Add(right);
             dock.Children.Add(new Border { Background = Brushes.Transparent });
             return dock;
+        }
+
+        private FrameworkElement PinButton() => IconButton(_c.Settings.Locked ? Icons.PinFill : Icons.Pin,
+            _c.Settings.Locked ? "자리 고정됨. 누르면 다시 옮길 수 있습니다" : "자리 고정", () =>
+            {
+                _c.Settings.Locked = !_c.Settings.Locked;
+                _c.Settings.Save();
+                Render();
+            }, 17);
+
+        /// <summary>⚠ ☰ 📅 ⤢ ⋯ - 두 화면이 같은 단추를 쓴다</summary>
+        private void AddActions(Panel panel)
+        {
+            if (_c.Error != null && !_c.NeedLogin)
+            {
+                panel.Children.Add(IconButton(Icons.Warning, _c.Error + "\n누르면 다시 읽습니다", () => _ = _c.Refresh(true), 16, _t.Secondary));
+            }
+            panel.Children.Add(IconButton(Icons.List, "Hub 작업 목록 열기", () => _c.OpenHub("list"), 17));
+            panel.Children.Add(IconButton(Icons.Calendar, "Hub 캘린더 열기", () => _c.OpenHub("calendar"), 17));
+            bool wide = _c.Settings.Wide;
+            panel.Children.Add(IconButton(wide ? Icons.Collapse : Icons.Expand, wide ? "작게 접어 보기" : "넓게 펼쳐 보기",
+                () => _c.SetLayout(wide ? "compact" : "wide"), 15));
+            FrameworkElement? more = null;
+            more = IconButton(Icons.More, "메뉴 열기", () => _c.ShowMenu(more!), 17, null, _c.UpdateReady);
+            panel.Children.Add(more);
+        }
+
+        /// <summary>새 판이 나왔을 때만 보이는 단추 - 누르면 받아서 바로 바꾼다(작게 보기는 도구 줄 아래 한 줄, 넓게 보기는 위 줄 오른쪽)</summary>
+        private FrameworkElement? UpdateButton(bool inline)
+        {
+            if (!_c.UpdateReady) return null;
+            bool busy = _c.Updating;
+            var row = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+            var glyph = Icons.Make(Icons.Refresh, 12, Brushes.White);
+            glyph.VerticalAlignment = VerticalAlignment.Center;
+            glyph.Margin = new Thickness(0, 0, 5, 0);
+            row.Children.Add(glyph);
+            var label = Text(busy ? "새 판을 받는 중…" : $"업데이트 설치 · {_c.UpdateVersion}", 11, Colors.White, Theme.Medium);
+            label.VerticalAlignment = VerticalAlignment.Center;
+            row.Children.Add(label);
+            string notes = _c.UpdateNotes != "" ? "\n" + _c.UpdateNotes : "";
+            var b = new Border
+            {
+                Background = Theme.Brush(_t.Accent), CornerRadius = new CornerRadius(6), Height = 22,
+                Padding = new Thickness(inline ? 10 : 8, 0, inline ? 11 : 8, 0), Child = row,
+                Cursor = busy ? Cursors.Arrow : Cursors.Hand, Opacity = busy ? 0.7 : 1,
+                ToolTip = busy
+                    ? "받고 나면 위젯이 잠깐 꺼졌다가 새 판으로 다시 뜹니다."
+                    : $"새 판 {_c.UpdateVersion}{notes}\n누르면 받아서 바로 바꿉니다. 위젯이 잠깐 꺼졌다가 다시 뜹니다.",
+            };
+            if (!busy)
+            {
+                b.MouseEnter += (s, e) => b.Opacity = 0.86;
+                b.MouseLeave += (s, e) => b.Opacity = 1;
+                b.MouseLeftButtonUp += (s, e) =>
+                {
+                    e.Handled = true;
+                    _ = _c.InstallUpdate();
+                };
+            }
+            return b;
         }
 
         /* ── 요약: ▍기한 지남: 2   ▍오늘: 3 ─────────── */
@@ -879,7 +1221,7 @@ namespace MateCalendar
 
         /* ── 목록 ─────────────────────────────────────── */
 
-        private FrameworkElement ListArea(double top)
+        private FrameworkElement ListArea(Thickness margin)
         {
             // 오른쪽은 얇은 스크롤 막대 자리 - 막대가 글자 · 단추를 덮지 않게
             _list = new StackPanel { Margin = new Thickness(0, 0, 5, 0) };
@@ -887,7 +1229,7 @@ namespace MateCalendar
             {
                 Height = _listH, VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
                 HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled, Content = _list, Focusable = false,
-                Margin = new Thickness(M / 2, top, M / 2, M / 2), Padding = new Thickness(0),
+                Margin = margin, Padding = new Thickness(0),
             };
             Styles.ApplyScroll(_scroll, _t);
             _fadeUp = _fadeDown = false;
@@ -1141,7 +1483,7 @@ namespace MateCalendar
             {
                 CornerRadius = new CornerRadius(8), Background = Brushes.Transparent, Child = g, Cursor = Cursors.Hand,
                 Opacity = t.Done ? 0.5 : 1, Margin = new Thickness(0, 1, 0, 1),
-                ToolTip = $"{t.Key} {t.Title}\n{TaskItem.StatusLabel(t.Status)} · 마감 {t.Due.Month}월 {t.Due.Day}일\n누르면 Hub 에서 엽니다",
+                ToolTip = TaskTip(t, "누르면 Hub 에서 엽니다"),
             };
             var hover = Theme.Brush(_t.Hover);
             row.MouseEnter += (s, e) => row.Background = hover;

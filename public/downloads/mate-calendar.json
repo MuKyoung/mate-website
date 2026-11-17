@@ -1,8 +1,8 @@
 {
-  "version": "1.0.1",
+  "version": "1.0.2",
   "url": "/downloads/MATE-Calendar-Setup.exe",
-  "sha256": "c8981991ec3cf283ba0e4069a1aaa9971a6a21630eec027548e261fd5898dc95",
-  "size": 4961280,
-  "notes": "레이아웃 보완: 카드 폭 고정 · 긴 제목 두 줄 · 화면 높이에 맞춤 · 기한 지난 작업 접기",
+  "sha256": "390258651fd389301eeea12f4c60b5b189705a4f81ec5d51ca0ade9064d1ca94",
+  "size": 4971520,
+  "notes": "넓게 펼쳐 보기(큰 달력 + 옆 목록) · 새 판이 나오면 위젯에 업데이트 단추",
   "date": "2026-11-17"
 }
