@@ -41,6 +41,9 @@ function install() {
   if (typeof Drive === 'undefined') {
     throw new Error("왼쪽 '서비스' 옆 + 를 눌러 Drive API 를 추가한 뒤 다시 실행하세요.");
   }
+  if (SUPABASE_KEY.charAt(0) === '<' || SYNC_KEY.charAt(0) === '<') {
+    throw new Error('맨 위 SUPABASE_KEY · SYNC_KEY 에 받은 값을 넣고 저장한 뒤 다시 실행하세요.');
+  }
   uninstall();
   const props = PropertiesService.getScriptProperties();
   props.setProperty('changeToken', Drive.Changes.getStartPageToken().startPageToken);
