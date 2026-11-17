@@ -383,7 +383,7 @@ function useNow(every: number) {
 }
 
 /* ── 드라이브 확인(바로) - 너무 잦게 누르지 않게 ──────────
-   · 확인하는 동안(10초 남짓)은 다시 누를 수 없다.
+   · 확인하는 동안(목록 전체를 보내므로 20~30초)은 다시 누를 수 없다.
    · 끝나면 1분을 쉰다. 남은 시간은 단추 그림의 원이 줄어드는 것과 '45초 뒤 다시'로 보여 준다.
    · 누구든(1분 갱신 포함) 방금 새 목록을 받았으면 그 시각부터 1분을 쉰다 - 팀이 같은 목록을 함께 본다.
    · 쉬는 동안 누르면 까닭을 알린다. 실패하면 15초만 쉰다.
@@ -574,7 +574,7 @@ export default function Drive({ me }: { me: string }) {
         {snap?.refreshUrl ? (
           <button type="button" onClick={() => void checkNow()} aria-disabled={blocked} aria-busy={checking}
             aria-label={checking ? '구글 드라이브를 확인하는 중' : left > 0 ? `드라이브 확인, ${left}초 뒤에 다시 할 수 있습니다` : '구글 드라이브를 지금 확인'}
-            title={checking ? '구글 드라이브를 확인하는 중입니다(10초 남짓)'
+            title={checking ? '구글 드라이브를 확인하는 중입니다(30초 안팎)'
               : left > 0 ? `새 목록을 방금 받았습니다. 1분에 한 번 확인할 수 있습니다(${left}초 뒤)`
                 : '구글 드라이브를 지금 확인해 새 목록을 받습니다. 1분에 한 번 할 수 있습니다'}
             className={blocked ? checkBlocked : `${tmGhostBtn} min-w-[132px]`}>

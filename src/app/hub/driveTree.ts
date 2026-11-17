@@ -122,7 +122,7 @@ export type DriveCheck =
   | { ok: false; reason: 'not-member' | 'busy' | 'unreachable' | 'failed'; message?: string };
 
 /**
- * 드라이브 쪽 웹 앱을 깨워 지금 목록을 받게 한다(10초 남짓). 누른 사람의 Hub 로그인 토큰을 실어 보내고,
+ * 드라이브 쪽 웹 앱을 깨워 지금 목록을 받게 한다(목록 전체라 20~30초). 누른 사람의 Hub 로그인 토큰을 실어 보내고,
  * 웹 앱은 승인된 팀원인지 본 뒤 30초 안에 받은 것이 있으면 새로 받지 않는다(skipped).
  * text/plain 으로 보내 미리 묻기(CORS preflight) 없이 간다 - 답은 구글이 넘겨 준 주소에서 온다
  */
