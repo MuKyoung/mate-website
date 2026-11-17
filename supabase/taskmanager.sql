@@ -1476,6 +1476,115 @@ revoke execute on function public.tm_doc_shares_stamp(), public.tm_doc_visible(u
   public.tm_shared_doc(text), public.tm_shared_file(text) from public, anon, authenticated;
 grant execute on function public.tm_shared_doc(text), public.tm_shared_file(text) to anon, authenticated;
 
+-- ── 조직도 (2026-11-17) ───────────────────────────────────────
+-- 팀원마다 한 줄: 소속(팀 · 파트) · 상위(보고 대상) · 맡은 역할과 책임 · 쓰는 MATE Studio 도구 · 담당 구글 드라이브 폴더.
+-- Hub 의 '조직도' 화면이 읽고 쓴다. 줄이 없는 팀원도 화면에는 나온다(소속 미정, 도구는 직무로 추천).
+-- 승인된 팀원은 모두 읽는다. 맡은 일 · 도구 · 폴더는 본인과 관리자가, 소속 · 상위는 관리자만 고친다(tm_org_guard).
+-- 팀원 계정을 지우면 그 줄도 지워지고, 그 사람을 상위로 가리키던 줄은 상위가 빈다.
+-- 이 블록만 따로 실행해도 된다(위의 tm_touch · tm_stamp_editor · tm_is_member · tm_is_admin 이 이미 있으면). 여러 번 실행해도 된다.
+create table if not exists public.tm_org (
+  member uuid primary key references public.tm_members (id) on delete cascade,
+  unit text not null default '' check (char_length(unit) <= 40),
+  manager uuid references public.tm_members (id) on delete set null,
+  duties text not null default '' check (char_length(duties) <= 4000),
+  tools text[] not null default '{}' check (cardinality(tools) <= 40),          -- 화면의 도구 id(photo · paint …)
+  folders jsonb not null default '[]'::jsonb                                    -- [{ id: 드라이브 폴더 id, name }]
+    check (jsonb_typeof(folders) = 'array' and jsonb_array_length(folders) <= 30),
+  updated_by uuid references public.tm_members (id) on delete set null,
+  updated_at timestamptz not null default now(),
+  check (manager is null or manager <> member)
+);
+
+-- 규칙 - 줄 주인 고정, 소속 · 상위는 관리자만, 보고 체계 고리 막기, 도구 · 폴더 모양
+create or replace function public.tm_org_guard()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+declare
+  cur uuid;
+  steps int := 0;
+  f jsonb;
+begin
+  if tg_op = 'UPDATE' and new.member is distinct from old.member then
+    raise exception '조직도 줄의 주인은 바꿀 수 없습니다';
+  end if;
+  -- 로그인한 요청이 직접 고칠 때만 본다. SQL Editor 와, 팀원 계정을 지울 때 상위를 비우는 연쇄 고침(트리거 깊이 2 이상)은 허용
+  if auth.uid() is not null and pg_trigger_depth() = 1 and not public.tm_is_admin() then
+    if tg_op = 'INSERT' and (btrim(new.unit) <> '' or new.manager is not null) then
+      raise exception '소속 · 상위는 관리자만 정합니다';
+    end if;
+    if tg_op = 'UPDATE' and (new.unit is distinct from old.unit or new.manager is distinct from old.manager) then
+      raise exception '소속 · 상위는 관리자만 바꿉니다';
+    end if;
+  end if;
+  new.unit := btrim(new.unit);
+  -- 상위를 따라 올라가다 자기에게 돌아오면 막는다
+  cur := new.manager;
+  while cur is not null and steps < 1000 loop
+    if cur = new.member then
+      raise exception '상위를 이렇게 정하면 보고 체계가 돌고 돕니다';
+    end if;
+    select o.manager into cur from public.tm_org o where o.member = cur;
+    steps := steps + 1;
+  end loop;
+  if exists (select 1 from unnest(new.tools) t where t !~ '^[a-z0-9-]{1,24}$') then
+    raise exception '도구 이름이 올바르지 않습니다';
+  end if;
+  if jsonb_typeof(new.folders) <> 'array' then
+    raise exception '드라이브 폴더 칸이 올바르지 않습니다';
+  end if;
+  for f in select value from jsonb_array_elements(new.folders) loop
+    if jsonb_typeof(f) <> 'object' or coalesce(f->>'id', '') !~ '^[A-Za-z0-9_-]{10,120}$'
+       or char_length(coalesce(f->>'name', '')) > 200 then
+      raise exception '드라이브 폴더 칸이 올바르지 않습니다';
+    end if;
+  end loop;
+  return new;
+end;
+$$;
+
+-- 트리거는 이름 순서로 돈다: guard(규칙) → stamp(고친 사람) → touch(고친 시각)
+create or replace trigger tm_org_guard before insert or update on public.tm_org
+  for each row execute function public.tm_org_guard();
+create or replace trigger tm_org_stamp before insert or update on public.tm_org
+  for each row execute function public.tm_stamp_editor();
+create or replace trigger tm_org_touch before update on public.tm_org
+  for each row execute function public.tm_touch();
+
+alter table public.tm_org enable row level security;
+drop policy if exists tm_org_read on public.tm_org;
+create policy tm_org_read on public.tm_org
+  for select to authenticated
+  using ((select public.tm_is_member()));
+drop policy if exists tm_org_add on public.tm_org;
+create policy tm_org_add on public.tm_org
+  for insert to authenticated
+  with check ((select public.tm_is_member()) and (member = (select auth.uid()) or (select public.tm_is_admin())));
+drop policy if exists tm_org_edit on public.tm_org;
+create policy tm_org_edit on public.tm_org
+  for update to authenticated
+  using ((select public.tm_is_member()) and (member = (select auth.uid()) or (select public.tm_is_admin())))
+  with check ((select public.tm_is_member()) and (member = (select auth.uid()) or (select public.tm_is_admin())));
+drop policy if exists tm_org_remove on public.tm_org;
+create policy tm_org_remove on public.tm_org
+  for delete to authenticated
+  using ((select public.tm_is_admin()));
+revoke all on public.tm_org from anon, authenticated;
+grant select, insert (member, unit, manager, duties, tools, folders), update (unit, manager, duties, tools, folders), delete
+  on public.tm_org to authenticated;
+revoke execute on function public.tm_org_guard() from public, anon, authenticated;
+
+-- 실시간 - 다른 사람이 고친 조직도가 새로고침 없이 보이게
+do $$
+begin
+  begin
+    alter publication supabase_realtime add table public.tm_org;
+  exception when duplicate_object then null;
+  end;
+end;
+$$;
+
 -- ── 첫 관리자 정하기 ─────────────────────────────────────────
 -- 위를 실행하고 첫 계정을 만든 뒤, 아래 줄의 메일을 바꾸고 맨 앞의 -- 를 지워 그 줄만 따로 실행한다.
 -- 관리자 칸이 생기기 전부터 쓰던 프로젝트도 한 번 실행한다(그 전에는 아무도 승인할 수 없다).

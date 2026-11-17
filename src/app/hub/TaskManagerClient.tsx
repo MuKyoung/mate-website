@@ -40,6 +40,11 @@ const Drive = dynamic(() => import('./Drive'), {
   ssr: false,
   loading: () => <div className="flex flex-1 items-center justify-center text-[15px] font-semibold text-tm-sub">불러오는 중…</div>,
 });
+/* 조직도도 열 때만 받고, 그때 조직도 · 드라이브 목록 표를 읽는다 */
+const Org = dynamic(() => import('./Org'), {
+  ssr: false,
+  loading: () => <div className="flex flex-1 items-center justify-center text-[15px] font-semibold text-tm-sub">불러오는 중…</div>,
+});
 import Memos from './Memos';
 import { isRemote } from './supabase';
 import {
@@ -84,7 +89,7 @@ interface Account {
 }
 
 type View = 'board' | 'list' | 'timeline' | 'calendar' | 'roadmap';
-type Section = 'tasks' | 'drive' | 'docs' | 'memos' | 'daily' | 'weekly';
+type Section = 'tasks' | 'org' | 'drive' | 'docs' | 'memos' | 'daily' | 'weekly';
 
 /** 보기 - hint 는 쪽 머리의 설명 줄에 나온다 */
 const VIEWS: { id: View; label: string; key: string; hint: string }[] = [
@@ -914,6 +919,13 @@ function Workspace({ account }: { account?: Account }) {
       })),
     },
     {
+      // 팀 구성 · 맡은 일 · 도구 · 담당 폴더 - 열 때 표를 읽으므로 숫자를 달지 않는다
+      label: '팀',
+      items: [
+        { key: 'org', label: '조직도', icon: 'org', active: section === 'org', go: () => setSection('org') },
+      ],
+    },
+    {
       label: '문서',
       items: [
         // 팀 구글 드라이브 트리 - 열 때 목록을 읽으므로 숫자를 달지 않는다
@@ -1156,6 +1168,13 @@ function Workspace({ account }: { account?: Account }) {
 
             {section === 'drive' ? (
               <Drive me={me} />
+            ) : section === 'org' ? (
+              <Org me={me} tasks={store.tasks}
+                /* 소속 · 상위와 남의 카드는 관리자만(DB 도 그렇게 받는다). 브라우저 저장 모드는 계정이 없어 누구나 */
+                admin={!account || account.me.isAdmin === true}
+                onRole={account ? (id, role) => account.update(id, { role }) : undefined}
+                onTasks={(id) => setSection('tasks', () => { setScope({ kind: 'all' }); setAssigneeFilter(id); })}
+                onNotice={(text, tone) => setToast({ text, undo: false, tone: tone === 'err' ? 'err' : undefined })} />
             ) : section === 'docs' ? (
               <Docs store={docStore} me={me} tasks={store.tasks}
                 onTaskClick={(key) => {
