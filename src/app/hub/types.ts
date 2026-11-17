@@ -21,6 +21,8 @@ export interface Member {
   isAdmin?: boolean;
   /** Supabase 계정일 때만 - 영역을 고칠 수 있는지. 관리자와 따로, SQL Editor 에서만 정한다 */
   domainEditor?: boolean;
+  /** Supabase 계정일 때만 - 프로필 사진 주소(공개 저장소의 256px 정사각 그림). 없으면 이니셜을 그린다 */
+  avatar?: string;
 }
 
 /** 작업을 가르는 갈래(웹 · 앱, 게임 · XR …). 메뉴 · 보드 · 타임라인 · 로드맵이 이 순서로 줄을 세운다 */

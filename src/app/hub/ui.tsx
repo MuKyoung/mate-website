@@ -376,19 +376,31 @@ export function Avatar({ id, size = 24 }: { id: string | null; size?: number }) 
       </span>
     );
   }
-  return <MemberAvatar id={m.id} initial={m.initial} title={`${m.name} · ${m.role}`} size={size} />;
+  return <MemberAvatar id={m.id} initial={m.initial} photo={m.avatar} title={`${m.name} · ${m.role}`} size={size} />;
 }
 
-/** 아바타는 그 사람의 색(colorStore - 고른 색, 없으면 자동 색)으로 칠한다 */
-function MemberAvatar({ id, initial, title, size }: { id: string; initial: string; title: string; size: number }) {
+/**
+ * 아바타는 그 사람의 색(colorStore - 고른 색, 없으면 자동 색)으로 칠한다.
+ * 사진이 있으면 이니셜 위에 덮는다 - 받는 동안 · 못 받으면 이니셜이 보인다.
+ * 사진은 Supabase 공개 주소를 그대로 쓴다(next/image 를 거치지 않아 Vercel 이미지 최적화 요금이 없다)
+ */
+export function MemberAvatar({ id, initial, photo, title, size }: {
+  id: string; initial: string; photo?: string; title?: string; size: number;
+}) {
   const p = PAINT[usePainter().member(id)];
+  const [broken, setBroken] = useState<string | null>(null);
   return (
     <span
-      className="inline-flex shrink-0 items-center justify-center rounded-full font-bold tracking-[-0.02em]"
+      className="relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full font-bold tracking-[-0.02em]"
       style={{ width: size, height: size, fontSize: Math.max(size >= 22 ? 11 : 9, size * 0.4), backgroundColor: p.tint, color: p.solid }}
       title={title}
     >
       {initial}
+      {photo && broken !== photo && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={photo} alt="" width={size} height={size} decoding="async" draggable={false}
+          className="absolute inset-0 h-full w-full object-cover" onError={() => setBroken(photo)} />
+      )}
     </span>
   );
 }

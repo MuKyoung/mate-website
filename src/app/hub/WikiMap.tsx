@@ -166,7 +166,9 @@ function buildMap(x: BuildInput): Built {
 
   const avatar = (m: Member) => {
     const p = PAINT[x.paint.member(m.id)];
-    return `<i style="background:${p.tint};color:${p.solid}" title="${esc(m.name)}">${esc(m.initial)}</i>`;
+    // 사진이 있으면 바탕으로 깐다(글자는 감춘다)
+    const bg = m.avatar ? `${p.tint} url('${esc(m.avatar)}') center/cover;color:transparent` : `${p.tint};color:${p.solid}`;
+    return `<i style="background:${bg}" title="${esc(m.name)}">${esc(m.initial)}</i>`;
   };
 
   /** 문서가 가리키는 작업 - 있는 작업만 */

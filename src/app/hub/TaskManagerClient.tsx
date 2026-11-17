@@ -78,6 +78,7 @@ interface Account {
   members: Member[];
   update(id: string, patch: MemberPatch): Promise<string | null>;
   reject(id: string): Promise<string | null>;
+  setAvatar(id: string, photo: Blob | null): Promise<string | null>;
   /** 비밀번호 재설정 메일의 링크로 들어왔다 - 팀원 창을 열어 새 비밀번호를 정하게 한다 */
   recovery?: boolean;
 }
@@ -269,7 +270,7 @@ function RemoteApp() {
 
   return (
     <MembersContext.Provider value={team.members}>
-      <Workspace account={{ me: team.me, members: team.members, update: team.update, reject: team.reject, recovery: auth.recovery }} />
+      <Workspace account={{ me: team.me, members: team.members, update: team.update, reject: team.reject, setAvatar: team.setAvatar, recovery: auth.recovery }} />
     </MembersContext.Provider>
   );
 }
@@ -1589,7 +1590,7 @@ function Workspace({ account }: { account?: Account }) {
 
       {account && teamOpen && (
         <TeamDialog me={account.me} members={account.members} recovery={account.recovery}
-          onUpdate={account.update} onReject={account.reject} onClose={() => setTeamOpen(false)} />
+          onUpdate={account.update} onReject={account.reject} onPhoto={account.setAvatar} onClose={() => setTeamOpen(false)} />
       )}
 
       {creating && (

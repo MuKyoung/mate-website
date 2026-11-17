@@ -157,7 +157,17 @@ export interface MemberRow {
   is_admin?: boolean;
   /** 영역을 고칠 수 있다(SQL Editor 에서만 정한다). SQL 을 다시 실행하기 전의 표에는 없다 */
   domain_editor?: boolean;
+  /** 프로필 사진의 저장소 경로(tm-avatars 의 <id>/<무작위>.webp). 비면 이니셜. SQL 을 다시 실행하기 전의 표에는 없다 */
+  avatar?: string;
   created_at: string;
+}
+
+/** 프로필 사진 저장소(공개 버킷) - 파일 이름이 늘 새것이라 주소가 바뀌지 않고, 브라우저 · CDN 이 1년 동안 들고 있는다 */
+export const AVATARS = 'tm-avatars';
+
+/** 저장소 경로 → 사진 주소. 공개 주소라 서버에 묻지 않고 만든다 */
+export function avatarUrl(path: string): string {
+  return `${SUPABASE_URL}/storage/v1/object/public/${AVATARS}/${path.split('/').map(encodeURIComponent).join('/')}`;
 }
 
 /** 아직 번호를 받지 못한(저장 중인) 새 작업의 번호 자리 */
@@ -319,5 +329,6 @@ export function memberFromRow(r: MemberRow): Member {
     active: r.active,
     isAdmin: r.is_admin === true,
     domainEditor: r.domain_editor === true,
+    avatar: r.avatar ? avatarUrl(r.avatar) : undefined,
   };
 }

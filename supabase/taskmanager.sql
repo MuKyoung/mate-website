@@ -10,6 +10,7 @@
 --     (누구나 로그인 화면에서 가입 요청을 보낼 수 있으므로 이것이 문이다)
 --   · 승인 · 거절 · 승인 취소 · 관리자 지정은 관리자가 화면의 '팀원' 창에서 한다.
 --     첫 관리자는 이 파일 맨 아래의 문장으로 SQL Editor 에서 정한다. 마지막 관리자는 내릴 수 없다.
+--   · 이름 · 역할 · 프로필 사진은 각자 자기 것을 고치고, 관리자는 다른 팀원 것도 고친다.
 --   · 작업 · 문서는 승인된 팀원만 읽고 쓴다(RLS). 로그인하지 않은 요청(anon)은 아무것도 못 본다.
 --   · 개인 메모는 쓴 사람만 읽고 쓴다. 관리자도 남의 메모는 못 본다.
 --   · 영역(작업을 가르는 갈래)은 팀원 모두 읽고, 고치기는 영역을 맡은 사람만 한다.
@@ -27,11 +28,13 @@ create table if not exists public.tm_members (
   active boolean not null default false,
   is_admin boolean not null default false,   -- 승인 · 승인 취소 · 관리자 지정을 할 수 있다
   domain_editor boolean not null default false,   -- 영역을 고칠 수 있다(관리자와 따로, SQL Editor 에서만 정한다)
+  avatar text not null default '',   -- 프로필 사진의 저장소 경로(tm-avatars 의 <id>/<무작위>.webp). 비우면 이니셜
   created_at timestamptz not null default now()
 );
--- 관리자 · 영역 칸이 생기기 전에 만든 표
+-- 관리자 · 영역 · 사진 칸이 생기기 전에 만든 표
 alter table public.tm_members add column if not exists is_admin boolean not null default false;
 alter table public.tm_members add column if not exists domain_editor boolean not null default false;
+alter table public.tm_members add column if not exists avatar text not null default '';
 
 -- ── 영역 ─────────────────────────────────────────────────────
 -- 작업을 가르는 갈래(웹 · 앱, 게임 · XR …). 색은 화면의 네 가지 - 빨강 · 호박색 · 초록은 급함 · 임박 · 끝남의 뜻이라 영역에 주지 않는다
@@ -230,7 +233,7 @@ begin
 end;
 $$;
 
--- 팀원 줄을 고칠 때의 규칙 - 이름 · 역할은 자기 것만, 승인 · 관리자 여부는 관리자가 다른 사람 것만,
+-- 팀원 줄을 고칠 때의 규칙 - 이름 · 역할 · 사진은 자기 것(관리자는 모든 사람 것), 승인 · 관리자 여부는 관리자가 다른 사람 것만,
 -- 승인된 관리자가 하나도 남지 않게는 못 한다. 승인을 취소하면 관리자 · 영역 맡기에서도 빠진다.
 -- 영역을 맡은 사람은 SQL Editor 에서만 정한다(로그인한 사용자는 관리자라도 못 바꾼다)
 create or replace function public.tm_members_guard()
@@ -270,9 +273,14 @@ begin
       raise exception '자기 승인과 관리자 여부는 바꿀 수 없습니다';
     end if;
   end if;
-  if (new.name, new.role, new.initial) is distinct from (old.name, old.role, old.initial)
-     and new.id <> auth.uid() then
-    raise exception '다른 사람의 이름과 역할은 바꿀 수 없습니다';
+  if (new.name, new.role, new.initial, new.avatar) is distinct from (old.name, old.role, old.initial, old.avatar)
+     and new.id <> auth.uid() and not public.tm_is_admin() then
+    raise exception '다른 사람의 정보는 관리자만 바꿀 수 있습니다';
+  end if;
+  -- 사진은 그 사람 폴더에 올린 파일만 가리킨다(남의 파일 · 다른 버킷을 가리키지 못하게)
+  if new.avatar is distinct from old.avatar and new.avatar <> ''
+     and new.avatar !~ ('^' || new.id::text || '/[0-9a-f-]{36}\.(webp|jpg)$') then
+    raise exception '사진 경로가 올바르지 않습니다';
   end if;
   return new;
 end;
@@ -783,6 +791,34 @@ drop policy if exists tm_files_own_remove on storage.objects;
 create policy tm_files_own_remove on storage.objects
   for delete to authenticated
   using (bucket_id = 'tm-files' and owner_id = (select auth.uid())::text and (select public.tm_is_member()));
+
+-- ── 프로필 사진 (2026-11-17) ───────────────────────────────────
+-- 공개 저장소 - 화면이 브라우저에서 256px 정사각 WebP(10~20KB)로 줄여 올리므로 Supabase 이미지 변환 · Vercel 이미지 최적화를 쓰지 않는다.
+-- 공개로 둔 까닭: 파일 이름이 늘 새것이라 주소가 바뀌지 않아 브라우저 · CDN 이 1년 동안 들고 있는다(한 번 받으면 다시 받지 않는다).
+-- 서명 주소는 한 시간마다 새로 받아야 해서 그때마다 다시 내려받고, 사진이 늦게 뜬다.
+-- 주소는 팀원 목록을 볼 수 있는 승인된 팀원에게만 보이고 이름은 무작위다. 다만 주소를 아는 사람은 로그인 없이 받을 수 있다.
+-- 올리기 · 지우기는 자기 폴더(<자기 id>/…)만, 관리자는 모든 사람 폴더. 바꾸면 화면이 예전 파일을 지운다.
+-- 이 블록만 따로 실행해도 된다(tm_is_member · tm_is_admin 이 이미 있으면). 여러 번 실행해도 된다.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('tm-avatars', 'tm-avatars', true, 524288, array['image/webp', 'image/jpeg'])
+on conflict (id) do update
+  set public = excluded.public, file_size_limit = excluded.file_size_limit, allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists tm_avatars_read on storage.objects;
+create policy tm_avatars_read on storage.objects
+  for select to authenticated
+  using (bucket_id = 'tm-avatars' and (select public.tm_is_member())
+    and ((storage.foldername(name))[1] = (select auth.uid())::text or (select public.tm_is_admin())));
+drop policy if exists tm_avatars_write on storage.objects;
+create policy tm_avatars_write on storage.objects
+  for insert to authenticated
+  with check (bucket_id = 'tm-avatars' and (select public.tm_is_member())
+    and ((storage.foldername(name))[1] = (select auth.uid())::text or (select public.tm_is_admin())));
+drop policy if exists tm_avatars_remove on storage.objects;
+create policy tm_avatars_remove on storage.objects
+  for delete to authenticated
+  using (bucket_id = 'tm-avatars' and (select public.tm_is_member())
+    and ((storage.foldername(name))[1] = (select auth.uid())::text or (select public.tm_is_admin())));
 
 -- ── 위키에서 함께 보는 사람(Realtime presence) ─────────────────
 -- 비공개 채널 tm-docs-presence 에 승인된 팀원만 붙는다. 누가 어느 문서를 보는지(id)만 오간다

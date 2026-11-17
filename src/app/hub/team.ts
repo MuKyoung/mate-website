@@ -1,9 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import type { Member } from './types';
-import { isMissingTable, memberFromRow, sb, type MemberRow } from './supabase';
+import { AVATARS, isMissingTable, memberFromRow, sb, type MemberRow } from './supabase';
 
 /*
  * 로그인과 팀원 - Supabase 모드에서만 쓴다.
@@ -113,7 +113,10 @@ export async function changePassword(password: string): Promise<string | null> {
   }
 }
 
-/** 승인(active) · 관리자(is_admin)는 관리자만 다른 사람 것을 바꿀 수 있다 - DB 가 지킨다 */
+/**
+ * 이름 · 역할은 자기 것, 관리자는 모든 사람 것을 바꾼다. 승인(active) · 관리자(is_admin)는 관리자만 다른 사람 것을 바꾼다 - DB 가 지킨다.
+ * 사진은 setAvatar 로(파일을 올리고 지우는 일이 함께 있다)
+ */
 export type MemberPatch = Partial<Pick<MemberRow, 'name' | 'role' | 'initial' | 'active' | 'is_admin'>>;
 
 export interface Team {
@@ -126,10 +129,14 @@ export interface Team {
   update(id: string, patch: MemberPatch): Promise<string | null>;
   /** 승인 대기 계정을 계정째 지운다(가입 요청 거절). 관리자만 - DB 가 지킨다 */
   reject(id: string): Promise<string | null>;
+  /** 프로필 사진을 바꾼다(null = 지운다). 자기 것, 관리자는 모든 사람 것 - DB 가 지킨다 */
+  setAvatar(id: string, photo: Blob | null): Promise<string | null>;
 }
 
 export function useTeam(userId: string | null): Team {
   const [state, setState] = useState<Pick<Team, 'status' | 'members' | 'me'>>({ status: 'loading', members: [], me: null });
+  /** 사람마다 지금 사진의 저장소 경로 - 사진을 바꾸면 예전 파일을 지운다 */
+  const avatarPaths = useRef(new Map<string, string>());
 
   const reload = useCallback(async () => {
     if (!userId) return;
@@ -140,7 +147,9 @@ export function useTeam(userId: string | null): Team {
         setState((s) => (s.status === 'ready' ? s : { ...s, status: isMissingTable(error) ? 'missing' : 'error' }));
         return;
       }
-      const members = (data as MemberRow[]).map(memberFromRow);
+      const rows = data as MemberRow[];
+      avatarPaths.current = new Map(rows.map((r) => [r.id, r.avatar ?? '']));
+      const members = rows.map(memberFromRow);
       setState({ status: 'ready', members, me: members.find((m) => m.id === userId) ?? null });
     } catch {
       setState((s) => (s.status === 'ready' ? s : { ...s, status: 'error' }));
@@ -192,5 +201,39 @@ export function useTeam(userId: string | null): Team {
     }
   }, [reload]);
 
-  return { ...state, reload, update, reject };
+  /*
+   * 사진은 늘 새 이름(<그 사람 id>/<무작위>.webp)으로 올리고 팀원 줄의 경로를 바꾼 뒤 예전 파일을 지운다.
+   * 같은 주소의 내용이 바뀌는 일이 없으니 1년 캐시를 걸어도 옛 사진이 보이지 않는다.
+   */
+  const setAvatar = useCallback(async (id: string, photo: Blob | null) => {
+    const store = sb().storage.from(AVATARS);
+    const old = avatarPaths.current.get(id) ?? '';
+    let path = '';
+    try {
+      if (photo) {
+        path = `${id}/${crypto.randomUUID()}.${photo.type === 'image/webp' ? 'webp' : 'jpg'}`;
+        const { error } = await store.upload(path, photo, { contentType: photo.type, cacheControl: '31536000', upsert: false });
+        if (error) {
+          if (/bucket not found/i.test(error.message)) return '사진 저장소가 아직 DB 에 없습니다. supabase/taskmanager.sql 을 다시 실행해 주세요.';
+          return '사진을 올리지 못했습니다. 잠시 뒤 다시 해 주세요.';
+        }
+      }
+      const { error } = await sb().from('tm_members').update({ avatar: path }).eq('id', id);
+      if (error) {
+        if (path) void store.remove([path]).catch(() => {});
+        if (error.code === 'PGRST204' || /'avatar' column/.test(error.message)) {
+          return '사진 칸이 아직 DB 에 없습니다. supabase/taskmanager.sql 을 다시 실행해 주세요.';
+        }
+        return error.message || '저장하지 못했습니다.';
+      }
+      // 예전 파일은 못 지워도 사진은 바뀌었다(남은 파일은 몇십 KB)
+      if (old && old !== path) void store.remove([old]).catch(() => {});
+      await reload();
+      return null;
+    } catch {
+      return '사진을 저장하지 못했습니다. 인터넷 연결을 확인해 주세요.';
+    }
+  }, [reload]);
+
+  return { ...state, reload, update, reject, setAvatar };
 }

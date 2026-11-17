@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import type { Member } from './types';
 import { changePassword, type MemberPatch } from './team';
+import { PhotoField } from './ProfilePhoto';
 import {
   Avatar, Modal, useConfirm,
   tmBtn, tmCallout, tmEditBtn, tmGhostBtn, tmGhostDanger, tmInput, tmLabel,
@@ -10,8 +11,9 @@ import {
 
 /*
  * 팀원 창 - Supabase 모드에서 내 계정 블록을 누르면 열린다.
- * 내 이름 · 역할 고치기, 비밀번호 바꾸기. 관리자는 가입 요청 승인 · 거절, 승인 취소, 관리자 지정도 한다.
- * 규칙은 DB 가 지킨다(관리자만 남의 승인을 바꾸고, 자기 것은 못 바꾸고, 마지막 관리자는 내릴 수 없다).
+ * 내 사진 · 이름 · 역할 고치기, 비밀번호 바꾸기. 관리자는 가입 요청 승인 · 거절, 승인 취소, 관리자 지정,
+ * 다른 팀원의 사진 · 이름 · 역할 고치기도 한다.
+ * 규칙은 DB 가 지킨다(관리자만 남의 승인 · 정보를 바꾸고, 자기 승인은 못 바꾸고, 마지막 관리자는 내릴 수 없다).
  */
 
 const section = 'mt-7 border-t border-tm-line pt-6';
@@ -20,7 +22,7 @@ const okLine = 'text-[13.5px] font-semibold text-tm-ok-deep';
 const errLine = 'text-[13.5px] font-semibold text-tm-red-deep';
 
 export function TeamDialog({
-  me, members, recovery, onUpdate, onReject, onClose,
+  me, members, recovery, onUpdate, onReject, onPhoto, onClose,
 }: {
   me: Member;
   members: Member[];
@@ -29,6 +31,8 @@ export function TeamDialog({
   onUpdate(id: string, patch: MemberPatch): Promise<string | null>;
   /** 승인 대기 계정을 계정째 지운다 */
   onReject(id: string): Promise<string | null>;
+  /** 프로필 사진을 바꾼다(null = 지운다) */
+  onPhoto(id: string, photo: Blob | null): Promise<string | null>;
   onClose(): void;
 }) {
   const [confirm, confirmNode] = useConfirm();
@@ -45,6 +49,8 @@ export function TeamDialog({
 
   const [rowBusy, setRowBusy] = useState<string | null>(null);
   const [rowErr, setRowErr] = useState<string | null>(null);
+  /** 관리자가 정보를 고치고 있는 팀원 */
+  const [editing, setEditing] = useState<string | null>(null);
 
   const saveProfile = async () => {
     if (!name.trim()) return setProfile({ err: '이름을 적어 주세요.' });
@@ -144,6 +150,9 @@ export function TeamDialog({
       >
         {/* ── 내 정보 ── */}
         <h3 className={heading}>내 정보</h3>
+        <div className="mb-5">
+          <PhotoField member={me} onSave={(photo) => onPhoto(me.id, photo)} />
+        </div>
         <div className="grid grid-cols-2 gap-x-4 gap-y-[18px] max-[480px]:grid-cols-1">
           <div>
             <label className={tmLabel} htmlFor="tm-me-name">이름</label>
@@ -221,6 +230,12 @@ export function TeamDialog({
                     {pending ? '승인 대기' : '승인됨'}
                   </span>
                   {admin && m.id !== me.id && (
+                    <button type="button" aria-expanded={editing === m.id} disabled={busy} className={tmGhostBtn}
+                      onClick={() => setEditing(editing === m.id ? null : m.id)}>
+                      {editing === m.id ? '수정 닫기' : '정보 수정'}
+                    </button>
+                  )}
+                  {admin && m.id !== me.id && (
                     pending ? (
                       <>
                         <button type="button" onClick={() => void setActive(m, true)} disabled={busy} className={tmEditBtn}>
@@ -241,6 +256,9 @@ export function TeamDialog({
                       </>
                     )
                   )}
+                  {admin && editing === m.id && m.id !== me.id && (
+                    <MemberEditor member={m} onUpdate={onUpdate} onPhoto={onPhoto} onDone={() => setEditing(null)} />
+                  )}
                 </li>
               );
             })}
@@ -248,12 +266,58 @@ export function TeamDialog({
           <div className={`${tmCallout} mt-4`}>
             <p className="min-w-0">
               새 팀원이 로그인 화면에서 <b className="font-bold text-tm-deep">가입 요청</b>을 보내면 여기에 승인 대기로 나타납니다.
-              {admin ? ' 모르는 사람이면 거절합니다.' : ' 승인과 거절은 관리자가 합니다.'}
+              {admin ? ' 모르는 사람이면 거절합니다. 다른 팀원의 사진 · 이름 · 역할은 정보 수정에서 고칩니다.' : ' 승인과 거절은 관리자가 합니다.'}
             </p>
           </div>
         </div>
       </Modal>
       {confirmNode}
     </>
+  );
+}
+
+/** 관리자가 다른 팀원의 사진 · 이름 · 역할을 고치는 칸 - 목록의 그 사람 줄 아래에 펼친다 */
+function MemberEditor({ member, onUpdate, onPhoto, onDone }: {
+  member: Member;
+  onUpdate(id: string, patch: MemberPatch): Promise<string | null>;
+  onPhoto(id: string, photo: Blob | null): Promise<string | null>;
+  onDone(): void;
+}) {
+  const [name, setName] = useState(member.name);
+  const [role, setRole] = useState(member.role);
+  const [state, setState] = useState<{ busy?: boolean; ok?: string; err?: string }>({});
+  const changed = name.trim() !== member.name || role.trim() !== member.role;
+
+  const save = async () => {
+    if (!name.trim()) return setState({ err: '이름을 적어 주세요.' });
+    setState({ busy: true });
+    // 아바타 글자는 이름에서 다시 만든다
+    const err = await onUpdate(member.id, { name: name.trim(), role: role.trim(), initial: '' });
+    setState(err ? { err } : { ok: '저장했습니다.' });
+  };
+
+  return (
+    <div className="mt-1 basis-full rounded-tm-sm border border-tm-line bg-white p-4 max-[480px]:p-3.5">
+      <PhotoField member={member} size={56} onSave={(photo) => onPhoto(member.id, photo)} />
+      <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-[18px] max-[480px]:grid-cols-1">
+        <div>
+          <label className={tmLabel} htmlFor={`tm-edit-name-${member.id}`}>이름</label>
+          <input id={`tm-edit-name-${member.id}`} className={tmInput} value={name} onChange={(e) => setName(e.target.value)} />
+        </div>
+        <div>
+          <label className={tmLabel} htmlFor={`tm-edit-role-${member.id}`}>역할</label>
+          <input id={`tm-edit-role-${member.id}`} className={tmInput} placeholder="예: 웹 개발, PM" value={role}
+            onChange={(e) => setRole(e.target.value)} />
+        </div>
+      </div>
+      <div className="mt-3.5 flex flex-wrap items-center gap-3">
+        <button type="button" onClick={() => void save()} disabled={!changed || state.busy} className={tmGhostBtn}>
+          {state.busy ? '저장 중…' : '저장'}
+        </button>
+        <button type="button" onClick={onDone} className={tmGhostBtn}>닫기</button>
+        {state.ok && !changed && <span className={okLine}>{state.ok}</span>}
+        {state.err && <span role="alert" className={errLine}>{state.err}</span>}
+      </div>
+    </div>
   );
 }

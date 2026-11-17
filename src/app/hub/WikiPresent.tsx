@@ -337,11 +337,13 @@ export default function WikiPresent({ graph, label, showTasks, startId, onStep, 
   };
 
   const trail = pathTo(graph, cur.id);
-  const avatar = (m: { id: string; initial: string; name: string }) => {
+  const avatar = (m: { id: string; initial: string; name: string; avatar?: string }) => {
     const p = PAINT[paint.member(m.id)];
     return (
       <i key={m.id} title={m.name} className="inline-grid h-[1.15em] w-[1.15em] flex-none place-items-center rounded-full text-[0.5em] font-bold not-italic"
-        style={{ background: p.tint, color: p.solid }}>
+        style={m.avatar
+          ? { background: `${p.tint} url('${m.avatar}') center/cover`, color: 'transparent' }
+          : { background: p.tint, color: p.solid }}>
         {m.initial}
       </i>
     );
