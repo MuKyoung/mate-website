@@ -2,14 +2,20 @@
 
 import './reports.css';
 import { forwardRef, useEffect, useId, useImperativeHandle, useMemo, useRef, useState, useSyncExternalStore } from 'react';
-import { EditorContent, NodeViewWrapper, ReactNodeViewRenderer, ReactRenderer, useEditor, type Editor, type NodeViewProps } from '@tiptap/react';
-import { Extension, Node, type JSONContent, type Range } from '@tiptap/core';
+import { EditorContent, NodeViewWrapper, ReactNodeViewRenderer, ReactRenderer, useEditor, useEditorState, type Editor, type NodeViewProps } from '@tiptap/react';
+import { BubbleMenu } from '@tiptap/react/menus';
+import { Extension, Mark, Node, type JSONContent, type Range } from '@tiptap/core';
+import { NodeSelection } from '@tiptap/pm/state';
+import { CellSelection } from '@tiptap/pm/tables';
+import { Highlight } from '@tiptap/extension-highlight';
+import { Details, DetailsContent, DetailsSummary } from '@tiptap/extension-details';
+import { TableKit } from '@tiptap/extension-table';
 import { PluginKey } from '@tiptap/pm/state';
 import StarterKit from '@tiptap/starter-kit';
 import { TaskItem, TaskList } from '@tiptap/extension-list';
 import { Placeholder } from '@tiptap/extensions';
 import Suggestion, { type SuggestionKeyDownProps, type SuggestionProps } from '@tiptap/suggestion';
-import { PANEL_KINDS, dateChip, lineKindOf, spansOf, type PanelKind, type StatusColor } from './reportStore';
+import { PANEL_KINDS, TEXT_COLORS, dateChip, lineKindOf, parseLines, spansOf, type LineKind, type PanelKind, type StatusColor, type TextColor } from './reportStore';
 import {
   isImageFile, openReportFile, reportFileInfo, reportFileUrl, reportFilesVersion, sizeLabel, subscribeReportFiles, uploadReportFile,
   type FileScope,
@@ -44,6 +50,9 @@ function inlineNodes(text: string): JSONContent[] {
     if (s.bold) marks.push({ type: 'bold' });
     if (s.italic) marks.push({ type: 'italic' });
     if (s.strike) marks.push({ type: 'strike' });
+    if (s.underline) marks.push({ type: 'underline' });
+    if (s.highlight) marks.push({ type: 'highlight' });
+    if (s.color) marks.push({ type: 'rColor', attrs: { color: s.color } });
     if (s.code) marks.push({ type: 'code' });
     if (s.href) marks.push({ type: 'link', attrs: { href: s.href } });
     return [marks.length ? { type: 'text', text: s.text, marks } : { type: 'text', text: s.text }];
@@ -60,57 +69,101 @@ const emptyDoc = (): JSONContent => ({
 });
 
 type ListType = 'bulletList' | 'orderedList' | 'taskList';
+const listOf = (k: LineKind): ListType | null =>
+  (k === 'item' ? 'bulletList' : k === 'num' ? 'orderedList' : k === 'task' || k === 'done' ? 'taskList' : null);
 
-/** 줄 글 → 편집기 문서. 목록 줄은 들여쓴 만큼 하위 목록(한 번에 한 단계까지), 제목 · 인용 · 패널 · 결정 · 구분선은 맨 위 블록 */
-export function textToDoc(text: string): JSONContent {
-  const top: JSONContent[] = [];
-  let stack: { node: JSONContent; type: ListType }[] = [];
-  for (const raw of text.split('\n')) {
-    if (!raw.trim()) continue;
-    const lead = /^[ \t　]*/.exec(raw)?.[0] ?? '';
-    let width = 0;
-    for (const c of lead) width += c === ' ' ? 1 : 2;
-    const depth = Math.min(4, Math.floor(width / 2));
-    const k = lineKindOf(raw.slice(lead.length).trimEnd(), depth);
-    if (depth === 0 && ['h1', 'h2', 'h3', 'quote', 'divider', 'panel', 'decision'].includes(k.kind)) {
-      stack = [];
-      if (k.kind === 'divider') top.push({ type: 'horizontalRule' });
-      else if (k.kind === 'quote') {
-        const last = top[top.length - 1];
-        if (last?.type === 'blockquote') (last.content ??= []).push(para(k.body));
-        else top.push({ type: 'blockquote', content: [para(k.body)] });
-      } else if (k.kind === 'panel') top.push({ type: 'rPanel', attrs: { kind: k.panel }, content: para(k.body).content });
-      else if (k.kind === 'decision') top.push({ type: 'rDecision', content: para(k.body).content });
-      else top.push({ type: 'heading', attrs: { level: Number(k.kind.slice(1)) }, content: para(k.body).content });
+/** 편집기에 넣을 줄 - 소요기간은 글에 그대로 둔다(편집기는 글 그대로 보여 준다) */
+interface Raw { depth: number; kind: LineKind; body: string; num?: number; panel?: PanelKind; lang?: string; rows?: string[][]; head?: boolean }
+
+function scan(text: string): Raw[] {
+  const out: Raw[] = [];
+  for (const l of parseLines(text)) {
+    let r: Raw;
+    if (l.kind === 'code') r = { depth: l.depth, kind: 'code', body: l.text, lang: l.lang };
+    else if (l.kind === 'table') r = { depth: l.depth, kind: 'table', body: '', rows: l.rows, head: l.head };
+    else {
+      const first = l.raw.split('\n')[0];
+      const rest = first.trimStart();
+      const k = l.note ? { kind: 'item' as LineKind, body: rest } : lineKindOf(rest);
+      r = { depth: l.depth, kind: k.kind, body: k.body, num: k.num, panel: k.panel };
+    }
+    // 한 번에 한 단계까지만 깊어진다 - 부모 없이 깊은 줄은 바로 위 단계의 아래로
+    const prev = out[out.length - 1];
+    r.depth = Math.min(r.depth, prev ? prev.depth + 1 : 0);
+    out.push(r);
+  }
+  return out;
+}
+
+function blockNode(l: Raw): JSONContent {
+  switch (l.kind) {
+    case 'h1': case 'h2': case 'h3': case 'h4': case 'h5': case 'h6':
+      return { type: 'heading', attrs: { level: Number(l.kind.slice(1)) }, content: inlineNodes(l.body) };
+    case 'quote': return { type: 'blockquote', content: [para(l.body)] };
+    case 'divider': return { type: 'horizontalRule' };
+    case 'panel': return { type: 'rPanel', attrs: { kind: l.panel ?? 'info' }, content: inlineNodes(l.body) };
+    case 'decision': return { type: 'rDecision', content: inlineNodes(l.body) };
+    case 'code': return { type: 'codeBlock', attrs: { language: l.lang ?? null }, content: l.body ? [{ type: 'text', text: l.body }] : [] };
+    case 'table': {
+      const rows = l.rows?.length ? l.rows : [['']];
+      const cols = Math.max(...rows.map((r) => r.length));
+      return {
+        type: 'table',
+        content: rows.map((r, i) => ({
+          type: 'tableRow',
+          content: Array.from({ length: cols }, (_, c) => ({
+            type: l.head && i === 0 ? 'tableHeader' : 'tableCell', content: [para(r[c] ?? '')],
+          })),
+        })),
+      };
+    }
+    default: return para(l.body);
+  }
+}
+
+/** depth 단계의 줄을 읽는다 - 목록은 이어진 같은 종류끼리 하나로, 더 깊은 줄은 그 항목(접기는 그 안)의 아래 */
+function build(L: Raw[], start: number, depth: number): { nodes: JSONContent[]; next: number } {
+  const nodes: JSONContent[] = [];
+  let i = start;
+  while (i < L.length && L[i].depth >= depth) {
+    const l = L[i];
+    const lt = listOf(l.kind);
+    if (lt) {
+      const list: JSONContent = lt === 'orderedList' && l.num && l.num !== 1 ? { type: lt, attrs: { start: l.num }, content: [] } : { type: lt, content: [] };
+      while (i < L.length && L[i].depth === depth && listOf(L[i].kind) === lt) {
+        const it = L[i];
+        const kids = build(L, i + 1, depth + 1);
+        const content = [para(it.body), ...kids.nodes];
+        list.content?.push(lt === 'taskList' ? { type: 'taskItem', attrs: { checked: it.kind === 'done' }, content } : { type: 'listItem', content });
+        i = kids.next;
+      }
+      nodes.push(list);
       continue;
     }
-    const type: ListType = k.kind === 'num' ? 'orderedList' : k.kind === 'task' || k.kind === 'done' ? 'taskList' : 'bulletList';
-    const d = Math.min(depth, stack.length);
-    const fresh = (): JSONContent => (type === 'orderedList' && k.num && k.num !== 1
-      ? { type, attrs: { start: k.num }, content: [] } : { type, content: [] });
-    if (d === 0) {
-      if (stack[0]?.type !== type) {
-        const node = fresh();
-        top.push(node);
-        stack = [{ node, type }];
-      } else stack.length = 1;
-    } else if (stack[d]?.type === type) {
-      stack.length = d + 1;
+    const kids = build(L, i + 1, depth + 1);
+    if (l.kind === 'toggle') {
+      nodes.push({
+        type: 'details', attrs: { open: true },
+        content: [
+          { type: 'detailsSummary', content: inlineNodes(l.body) },
+          { type: 'detailsContent', content: kids.nodes.length ? kids.nodes : [{ type: 'paragraph' }] },
+        ],
+      });
     } else {
-      const items = stack[d - 1].node.content ?? [];
-      const parent = items[items.length - 1];
-      const node = fresh();
-      if (parent) (parent.content ??= []).push(node);
-      else (stack[d - 1].node.content ??= []).push(node);
-      stack.length = d;
-      stack.push({ node, type });
+      const last = nodes[nodes.length - 1];
+      // 이어진 인용 줄은 한 인용으로
+      if (l.kind === 'quote' && last?.type === 'blockquote' && !kids.nodes.length) (last.content ??= []).push(para(l.body));
+      else nodes.push(blockNode(l), ...kids.nodes);
     }
-    const body = ['h1', 'h2', 'h3', 'quote', 'divider', 'panel', 'decision'].includes(k.kind) ? raw.slice(lead.length).trimEnd() : k.body;
-    (stack[stack.length - 1].node.content ??= []).push(type === 'taskList'
-      ? { type: 'taskItem', attrs: { checked: k.kind === 'done' }, content: [para(body)] }
-      : { type: 'listItem', content: [para(body)] });
+    i = kids.next;
   }
-  return top.length ? { type: 'doc', content: top } : emptyDoc();
+  return { nodes, next: i };
+}
+
+/** 줄 글 → 편집기 문서 */
+export function textToDoc(text: string): JSONContent {
+  const nodes = build(scan(text), 0, 0).nodes;
+  return nodes.length ? { type: 'doc', content: nodes } : emptyDoc();
 }
 
 function inlineText(nodes: JSONContent[] | undefined): string {
@@ -126,9 +179,14 @@ function inlineText(nodes: JSONContent[] | undefined): string {
     if (!t) return '';
     const has = (k: string) => n.marks?.find((m) => m.type === k);
     if (has('code')) t = `\`${t}\``;
+    // 글자색은 코드 다음 안쪽에 - 색 안의 글에는 '>' 가 올 수 없어 밑줄 · 굵게 같은 표시는 바깥에 둔다
+    const color = has('rColor')?.attrs?.color as string | undefined;
+    if (color) t = `<color:${color}|${t.replace(/>/g, '›')}>`;
     if (has('bold')) t = `**${t}**`;
     if (has('italic')) t = `*${t}*`;
     if (has('strike')) t = `~~${t}~~`;
+    if (has('underline')) t = `<u>${t}</u>`;
+    if (has('highlight')) t = `==${t}==`;
     const href = has('link')?.attrs?.href as string | undefined;
     if (href && href !== n.text) t = `[${t}](${href})`;
     return t;
@@ -136,7 +194,7 @@ function inlineText(nodes: JSONContent[] | undefined): string {
 }
 
 /** 글머리표 줄인데 글이 줄 머리 표시처럼 시작하면 '- ' 를 붙여 그대로 읽히게 한다 */
-const LOOKS_MARKED = /^(?:\[[ xX]\]\s|\[!|<>\s|#{1,3}\s|>\s|\d{1,3}[.)]\s|-{3,}$|_{3,}$|\*{3,}$|[-*•·]\s)/;
+const LOOKS_MARKED = /^(?:\[[ xX+]\]|\[!|<>\s|#{1,6}\s|>\s|\d{1,3}[.)]\s|-{3,}$|_{3,}$|\*{3,}$|[-*•·]\s|¶|```|\|)/;
 
 /** 편집기 문서 → 줄 글. 빈 항목은 뺀다 */
 export function docToText(doc: JSONContent): string {
@@ -147,10 +205,10 @@ export function docToText(doc: JSONContent): string {
     for (const li of n.content ?? []) {
       let first = true;
       for (const c of li.content ?? []) {
-        if (c.type === 'paragraph') {
+        if (c.type === 'paragraph' && first) {
           const t = inlineText(c.content);
           if (t) {
-            const mark = !first ? '' : n.type === 'orderedList' ? `${i}. ` : n.type === 'taskList' ? (li.attrs?.checked ? '[x] ' : '[ ] ')
+            const mark = n.type === 'orderedList' ? `${i}. ` : n.type === 'taskList' ? (li.attrs?.checked ? '[x] ' : '[ ] ')
               : LOOKS_MARKED.test(t) ? '- ' : '';
             out.push(`${pad(depth)}${mark}${t}`);
           }
@@ -160,18 +218,46 @@ export function docToText(doc: JSONContent): string {
       i += 1;
     }
   };
+  const cellText = (cell: JSONContent) =>
+    (cell.content ?? []).map((p) => inlineText(p.content)).filter(Boolean).join('<br>').replace(/\|/g, '\\|');
   const block = (n: JSONContent, depth: number) => {
     const t = inlineText(n.content);
     switch (n.type) {
       case 'bulletList': case 'orderedList': case 'taskList': list(n, depth); break;
-      case 'paragraph': if (t) out.push(`${pad(depth)}${LOOKS_MARKED.test(t) ? '- ' : ''}${t}`); break;
-      case 'heading': if (t) out.push(depth ? `${pad(depth)}${t}` : `${'#'.repeat(Number(n.attrs?.level) || 1)} ${t}`); break;
+      case 'paragraph': if (t) out.push(`${pad(depth)}¶ ${t}`); break;
+      case 'heading': if (t) out.push(`${pad(depth)}${'#'.repeat(Number(n.attrs?.level) || 1)} ${t}`); break;
       case 'blockquote': for (const c of n.content ?? []) {
         if (c.type === 'paragraph') { const q = inlineText(c.content); if (q) out.push(`${pad(depth)}> ${q}`); } else block(c, depth);
       } break;
       case 'horizontalRule': out.push(`${pad(depth)}---`); break;
       case 'rPanel': if (t) out.push(`${pad(depth)}[!${n.attrs?.kind ?? 'info'}] ${t}`); break;
       case 'rDecision': if (t) out.push(`${pad(depth)}<> ${t}`); break;
+      case 'codeBlock': {
+        const code = (n.content ?? []).map((x) => x.text ?? '').join('');
+        if (!code.trim()) break;
+        out.push(`${pad(depth)}\`\`\`${n.attrs?.language ?? ''}`, ...code.split('\n').map((c) => `${pad(depth)}${c}`), `${pad(depth)}\`\`\``);
+        break;
+      }
+      case 'table': {
+        const rows = n.content ?? [];
+        rows.forEach((r, ri) => {
+          const cells = r.content ?? [];
+          out.push(`${pad(depth)}| ${cells.map(cellText).join(' | ')} |`);
+          if (ri === 0 && cells.length && cells.every((c) => c.type === 'tableHeader')) out.push(`${pad(depth)}| ${cells.map(() => '---').join(' | ')} |`);
+        });
+        break;
+      }
+      case 'details': {
+        const summary = (n.content ?? []).find((c) => c.type === 'detailsSummary');
+        const body = (n.content ?? []).find((c) => c.type === 'detailsContent');
+        const s = inlineText(summary?.content);
+        const before = out.length;
+        out.push(`${pad(depth)}[+] ${s}`);
+        for (const c of body?.content ?? []) block(c, depth + 1);
+        // 제목도 안도 비었으면 뺀다
+        if (!s && out.length === before + 1) out.pop();
+        break;
+      }
       default: for (const c of n.content ?? []) block(c, depth);
     }
   };
@@ -187,6 +273,8 @@ export interface EditEnv {
   members: Member[];
   /** 지금 쓰는 사람(Member.id) - 그 사람 작업이 먼저 */
   me: string;
+  /** '[[' 로 거는 팀 위키 문서 */
+  docs?: { id: string; title: string; icon?: string | null }[];
 }
 interface Ui { pick(kind: 'image' | 'file'): void; link(): void }
 
@@ -271,6 +359,16 @@ const RImage = atom('rImage', { src: '', name: '' }, (a) => ['span', { class: 't
   .extend({ addNodeView() { return ReactNodeViewRenderer(ImageView, { as: 'span' }); } });
 const RFile = atom('rFile', { src: '', name: '', size: 0 }, (a) => ['span', { class: 'tm-rfile' }, `[파일 ${a.name}]`])
   .extend({ addNodeView() { return ReactNodeViewRenderer(FileView, { as: 'span' }); } });
+
+/** 글자색 - 정해 둔 몇 가지 색만(테마마다 읽히게 CSS 가 칠한다) */
+const RColor = Mark.create({
+  name: 'rColor',
+  addAttributes() {
+    return { color: { default: 'red', parseHTML: (el: HTMLElement) => el.getAttribute('data-r-color') || 'red', renderHTML: () => ({}) } };
+  },
+  parseHTML() { return [{ tag: 'span[data-r-color]' }]; },
+  renderHTML({ mark }) { return ['span', { 'data-r-color': mark.attrs.color, class: `tm-rcolor-${mark.attrs.color}` }, 0]; },
+});
 
 /** 패널 · 결정 - 한 줄짜리 블록 */
 const RPanel = Node.create({
@@ -359,7 +457,7 @@ const SugList = forwardRef<ListHandle, SuggestionProps<SugItem, SugItem> & { tit
   );
 });
 
-function suggest(name: string, char: string, title: string, items: (query: string) => SugItem[], spaces = false) {
+function suggest(name: string, char: string, title: string, items: (query: string, editor: Editor) => SugItem[], { spaces = false, min = 0 } = {}) {
   return Extension.create({
     name,
     addProseMirrorPlugins() {
@@ -369,13 +467,15 @@ function suggest(name: string, char: string, title: string, items: (query: strin
         char,
         // '/' 메뉴는 Confluence 처럼 띄어 쓴 이름(작업 항목)으로도 찾는다 - 너무 길어지면 글을 쓰는 중으로 보고 닫는다
         allowSpaces: spaces,
-        allow: ({ state, range }) => !state.doc.resolve(range.from).marks().some((m) => m.type.name === 'code')
+        allow: ({ editor, state, range }) => !state.doc.resolve(range.from).marks().some((m) => m.type.name === 'code')
+          && !editor.isActive('codeBlock')
+          && range.to - range.from >= char.length + min
           && (!spaces || (range.to - range.from <= 25 && (() => {
             // 띄어 쓴 뒤에도 맞는 것이 없으면 메뉴가 아니라 글이다 - 닫는다
             const q = state.doc.textBetween(range.from + char.length, range.to, ' ');
-            return !q.includes(' ') || items(q).length > 0;
+            return !q.includes(' ') || items(q, editor).length > 0;
           })())),
-        items: ({ query }) => items(query),
+        items: ({ query, editor }) => items(query, editor),
         command: ({ editor, range, props: it }) => it.run(editor, range),
         render: () => {
           let r: ReactRenderer<ListHandle, SuggestionProps<SugItem, SugItem> & { title: string }> | null = null;
@@ -452,56 +552,161 @@ function mentionItems(envRef: { current: EditEnv }, query: string): SugItem[] {
     }));
 }
 
-/* '/' Confluence 넣기 메뉴 */
+/* '/' Confluence 넣기 메뉴 - 팀 위키의 넣기 메뉴와 같은 이름 · 묶음. 단 나누기 · 목차 · 하위 문서 목록 · 양식 칸은
+   한 문서 전체를 다루는 것이라 사람마다의 보고 칸에는 넣지 않는다 */
 
 const STATUS_PRESETS: { text: string; color: StatusColor }[] = [
   { text: '할 일', color: 'gray' }, { text: '진행 중', color: 'blue' }, { text: '검토', color: 'yellow' },
   { text: '완료', color: 'green' }, { text: '막힘', color: 'red' }, { text: '보류', color: 'purple' },
 ];
+
+/** ':' 로 찾는 이모지 - 이름(한 · 영)으로 */
 const EMOJI: { e: string; label: string; keys: string }[] = [
-  { e: '✅', label: '완료', keys: 'check done ok 체크' }, { e: '❌', label: '안 됨', keys: 'x no fail 실패' },
-  { e: '⚠️', label: '주의', keys: 'warning 경고' }, { e: '💡', label: '아이디어', keys: 'idea bulb 생각' },
-  { e: '🔥', label: '급함', keys: 'fire hot 불' }, { e: '👍', label: '좋아요', keys: 'thumbs up like 좋음' },
-  { e: '🎉', label: '축하', keys: 'party tada 축하' }, { e: '❓', label: '질문', keys: 'question 물음' },
-  { e: '🚧', label: '작업 중', keys: 'construction wip 공사' }, { e: '📌', label: '고정', keys: 'pin 핀 중요' },
+  { e: '✅', label: '완료', keys: 'check done ok white_check_mark 체크' }, { e: '☑️', label: '체크', keys: 'ballot check 체크' },
+  { e: '❌', label: '안 됨', keys: 'x no fail cross 실패' }, { e: '⭕', label: '동그라미', keys: 'o circle 맞음' },
+  { e: '⚠️', label: '주의', keys: 'warning 경고' }, { e: '❗', label: '느낌표', keys: 'exclamation 중요' },
+  { e: '❓', label: '질문', keys: 'question 물음' }, { e: '💡', label: '아이디어', keys: 'idea bulb 생각 전구' },
+  { e: '🔥', label: '급함', keys: 'fire hot 불' }, { e: '🚧', label: '작업 중', keys: 'construction wip 공사' },
+  { e: '📌', label: '고정', keys: 'pin pushpin 핀 중요' }, { e: '📎', label: '첨부', keys: 'paperclip attach 클립' },
+  { e: '📅', label: '날짜', keys: 'calendar date 달력 일정' }, { e: '⏰', label: '시간', keys: 'alarm clock time 알람 마감' },
+  { e: '🎯', label: '목표', keys: 'target goal dart 목표' }, { e: '🚀', label: '출시', keys: 'rocket launch ship 배포' },
+  { e: '🐛', label: '버그', keys: 'bug 버그 벌레' }, { e: '🛠️', label: '수정', keys: 'tools fix wrench 고침 도구' },
+  { e: '🔧', label: '설정', keys: 'wrench settings config 설정' }, { e: '📝', label: '메모', keys: 'memo note write 메모 글' },
+  { e: '📊', label: '자료', keys: 'chart bar data 그래프 통계' }, { e: '📈', label: '상승', keys: 'chart up increase 상승 증가' },
+  { e: '📉', label: '하락', keys: 'chart down decrease 하락 감소' }, { e: '🔍', label: '검토', keys: 'search magnify review 찾기 조사' },
+  { e: '👀', label: '보는 중', keys: 'eyes look watch 확인' }, { e: '👍', label: '좋아요', keys: 'thumbs up like +1 좋음' },
+  { e: '👎', label: '별로', keys: 'thumbs down dislike -1' }, { e: '👏', label: '박수', keys: 'clap applause 박수 칭찬' },
+  { e: '🙏', label: '부탁', keys: 'pray please thanks 감사 부탁' }, { e: '💪', label: '힘내', keys: 'muscle strong 힘' },
+  { e: '🎉', label: '축하', keys: 'party tada celebrate 축하' }, { e: '😊', label: '웃음', keys: 'smile happy 웃음 기쁨' },
+  { e: '😂', label: '웃김', keys: 'joy laugh lol 웃김' }, { e: '😅', label: '머쓱', keys: 'sweat smile 땀' },
+  { e: '🤔', label: '고민', keys: 'thinking hmm 생각 고민' }, { e: '😭', label: '울음', keys: 'cry sob 슬픔' },
+  { e: '🙌', label: '만세', keys: 'raised hands hooray 만세' }, { e: '❤️', label: '하트', keys: 'heart love 사랑' },
+  { e: '⭐', label: '별', keys: 'star 별 중요' }, { e: '🔴', label: '빨강', keys: 'red circle 빨강 위험' },
+  { e: '🟡', label: '노랑', keys: 'yellow circle 노랑 주의' }, { e: '🟢', label: '초록', keys: 'green circle 초록 좋음' },
+  { e: '🔵', label: '파랑', keys: 'blue circle 파랑' }, { e: '➡️', label: '오른쪽', keys: 'arrow right 화살표' },
+  { e: '⬆️', label: '위', keys: 'arrow up 화살표' }, { e: '⬇️', label: '아래', keys: 'arrow down 화살표' },
+  { e: '💬', label: '말', keys: 'speech comment chat 말 댓글' }, { e: '📢', label: '알림', keys: 'loudspeaker announce 공지' },
+  { e: '🎮', label: '게임', keys: 'game controller 게임' }, { e: '🎨', label: '그림', keys: 'art palette design 디자인' },
+  { e: '🎵', label: '음악', keys: 'music note sound 사운드 음악' }, { e: '💻', label: '노트북', keys: 'laptop computer code 개발' },
 ];
+
+function emojiItems(query: string): SugItem[] {
+  const q = norm(query);
+  return EMOJI.filter((m) => !q || norm(`${m.label} ${m.keys}`).includes(q)).slice(0, q ? 20 : 16).map((m) => ({
+    id: `emoji-${m.e}`, label: `${m.e} ${m.label}`, icon: m.e,
+    run: (e, r) => { e.chain().focus().insertContentAt(r, `${m.e} `).run(); },
+  }));
+}
+
+/** '[[' 팀 위키 문서 링크 */
+function docItems(envRef: { current: EditEnv }, query: string): SugItem[] {
+  const q = norm(query.replace(/\]+$/, ''));
+  return (envRef.current.docs ?? []).filter((d) => !q || norm(d.title).includes(q)).slice(0, 12).map((d) => ({
+    id: `doc-${d.id}`, label: d.title || '제목 없는 문서', hint: '팀 위키 문서', icon: d.icon || '📄',
+    run: (e, r) => {
+      const href = `${window.location.origin}/hub/?doc=${encodeURIComponent(d.id)}`;
+      e.chain().focus().insertContentAt(r, [{ type: 'text', text: d.title || '문서', marks: [{ type: 'link', attrs: { href } }] }, { type: 'text', text: ' ' }]).run();
+    },
+  }));
+}
 
 const block = (e: Editor, r: Range) => e.chain().focus().deleteRange(r).clearNodes();
 
-function slashItems(ui: { current: Ui }, query: string): SugItem[] {
+function slashItems(ui: { current: Ui }, query: string, editor: Editor): SugItem[] {
+  const inTable = editor.isActive('table');
+  const tableCmds: SugItem[] = inTable ? [
+    { id: 't-row', group: '표', label: '아래에 행 넣기', icon: '⤓', keys: 'row add 행 추가', run: (e, r) => { e.chain().focus().deleteRange(r).addRowAfter().run(); } },
+    { id: 't-col', group: '표', label: '오른쪽에 열 넣기', icon: '⇥', keys: 'column add 열 추가', run: (e, r) => { e.chain().focus().deleteRange(r).addColumnAfter().run(); } },
+    { id: 't-row-del', group: '표', label: '이 행 지우기', icon: '✕', keys: 'row delete 행 삭제', run: (e, r) => { e.chain().focus().deleteRange(r).deleteRow().run(); } },
+    { id: 't-col-del', group: '표', label: '이 열 지우기', icon: '✕', keys: 'column delete 열 삭제', run: (e, r) => { e.chain().focus().deleteRange(r).deleteColumn().run(); } },
+    { id: 't-head', group: '표', label: '머리 행 켜고 끄기', icon: 'H', keys: 'header 머리 제목', run: (e, r) => { e.chain().focus().deleteRange(r).toggleHeaderRow().run(); } },
+    { id: 't-del', group: '표', label: '표 지우기', icon: '🗑', keys: 'table delete 표 삭제', run: (e, r) => { e.chain().focus().deleteRange(r).deleteTable().run(); } },
+  ] : [];
   const all: SugItem[] = [
-    { id: 'h1', group: '서식', label: '제목 1', icon: 'H1', keys: 'heading h1 제목 큰', run: (e, r) => { block(e, r).setNode('heading', { level: 1 }).run(); } },
-    { id: 'h2', group: '서식', label: '제목 2', icon: 'H2', keys: 'heading h2 제목', run: (e, r) => { block(e, r).setNode('heading', { level: 2 }).run(); } },
-    { id: 'h3', group: '서식', label: '제목 3', icon: 'H3', keys: 'heading h3 제목 작은', run: (e, r) => { block(e, r).setNode('heading', { level: 3 }).run(); } },
-    { id: 'bullet', group: '서식', label: '글머리표 목록', hint: '- 로도 시작', icon: '•', keys: 'bullet list ul 목록 글머리', run: (e, r) => { block(e, r).toggleBulletList().run(); } },
-    { id: 'ordered', group: '서식', label: '번호 목록', hint: '1. 로도 시작', icon: '1.', keys: 'numbered ordered ol list 번호 목록', run: (e, r) => { block(e, r).toggleOrderedList().run(); } },
-    { id: 'quote', group: '서식', label: '인용', hint: '> 로도 시작', icon: '❝', keys: 'quote blockquote 인용', run: (e, r) => { block(e, r).toggleBlockquote().run(); } },
-    { id: 'divider', group: '서식', label: '구분선', hint: '--- 로도', icon: '—', keys: 'divider rule hr line 구분 선', run: (e, r) => { e.chain().focus().deleteRange(r).setHorizontalRule().run(); } },
-    { id: 'code', group: '서식', label: '코드', hint: '` 로 감싸도', icon: '</>', keys: 'code snippet 코드', run: (e, r) => { e.chain().focus().deleteRange(r).toggleCode().run(); } },
-    { id: 'task', group: '작업 · 결정', label: '작업 항목', hint: '[] 로도 시작 · 체크 상자', icon: '☑', keys: 'action item task todo checkbox 할 일 작업 체크', run: (e, r) => { block(e, r).toggleTaskList().run(); } },
-    { id: 'decision', group: '작업 · 결정', label: '결정', hint: '<> 로도 시작', icon: '◆', keys: 'decision 결정', run: (e, r) => { block(e, r).setNode('rDecision').run(); } },
+    ...tableCmds,
+    { id: 'p', group: '기본', label: '본문', hint: '글머리표 없는 글', icon: '¶', keys: 'paragraph text normal 본문 글', run: (e, r) => { block(e, r).run(); } },
+    ...[1, 2, 3, 4, 5, 6].map<SugItem>((n) => ({
+      id: `h${n}`, group: '기본', label: `제목 ${n}`, hint: `${'#'.repeat(n)} 로도 시작`, icon: `H${n}`, keys: `heading h${n} 제목`,
+      run: (e, r) => { block(e, r).setNode('heading', { level: n }).run(); },
+    })),
+    { id: 'bullet', group: '목록', label: '글머리 목록', hint: '- 로도 시작', icon: '•', keys: 'bullet list ul 목록 글머리', run: (e, r) => { block(e, r).toggleBulletList().run(); } },
+    { id: 'ordered', group: '목록', label: '번호 목록', hint: '1. 로도 시작', icon: '1.', keys: 'numbered ordered ol list 번호 목록', run: (e, r) => { block(e, r).toggleOrderedList().run(); } },
+    { id: 'task', group: '목록', label: '작업 항목', hint: '[] 로도 시작 · 체크 상자', icon: '☑', keys: 'action item task todo checkbox 할 일 작업 체크', run: (e, r) => { block(e, r).toggleTaskList().run(); } },
+    { id: 'decision', group: '목록', label: '결정', hint: '<> 로도 시작', icon: '◆', keys: 'decision 결정', run: (e, r) => { block(e, r).setNode('rDecision').run(); } },
+    { id: 'toggle', group: '정보 · 코드', label: '접기', hint: '눌러서 펼쳐 보는 내용', icon: '▸', keys: 'toggle expand details collapse 접기 토글 펼치기', run: (e, r) => { block(e, r).setDetails().updateAttributes('details', { open: true }).run(); } },
     ...PANEL_KINDS.map<SugItem>((p) => ({
-      id: `panel-${p.id}`, group: '패널', label: `${p.label} 패널`, icon: p.icon, keys: `panel ${p.id} ${p.label} 패널`,
+      id: `panel-${p.id}`, group: '정보 · 코드', label: `${p.label} 패널`, icon: p.icon, keys: `panel ${p.id} ${p.label} 패널`,
       run: (e, r) => { block(e, r).setNode('rPanel', { kind: p.id as PanelKind }).run(); },
     })),
-    { id: 'image', group: '넣기', label: '그림', hint: '붙여 넣기 · 끌어 놓기도 됩니다', icon: '🖼️', keys: 'image picture photo screenshot 그림 사진 이미지 캡처', run: (e, r) => { e.chain().focus().deleteRange(r).run(); ui.current.pick('image'); } },
-    { id: 'file', group: '넣기', label: '파일 · PDF', hint: '20MB 까지', icon: '📎', keys: 'file pdf attachment upload 파일 첨부 문서', run: (e, r) => { e.chain().focus().deleteRange(r).run(); ui.current.pick('file'); } },
-    { id: 'link', group: '넣기', label: '링크', hint: 'Ctrl+K', icon: '🔗', keys: 'link url 링크 주소', run: (e, r) => { e.chain().focus().deleteRange(r).run(); ui.current.link(); } },
-    { id: 'mention', group: '넣기', label: '사람 언급', hint: '@ 로도', icon: '@', keys: 'mention people user 언급 사람 태그', run: (e, r) => { e.chain().focus().insertContentAt(r, '@').run(); } },
-    { id: 'tasks', group: '넣기', label: '작업 넣기', hint: '# 로도 · 담당자별 찾기', icon: '#', keys: 'jira issue task 작업 이슈 지라', run: (e, r) => { e.chain().focus().insertContentAt(r, '#').run(); } },
-    { id: 'date', group: '넣기', label: '날짜', hint: '오늘', icon: '📅', keys: 'date today 날짜 오늘', run: (e, r) => { e.chain().focus().insertContentAt(r, [{ type: 'rDate', attrs: { date: localToday() } }, { type: 'text', text: ' ' }]).run(); } },
+    { id: 'quote', group: '정보 · 코드', label: '인용', hint: '> 로도 시작', icon: '❝', keys: 'quote blockquote 인용', run: (e, r) => { block(e, r).toggleBlockquote().run(); } },
+    { id: 'codeblock', group: '정보 · 코드', label: '코드 블록', hint: '``` 로도 시작', icon: '{ }', keys: 'code block snippet 코드 블록', run: (e, r) => { block(e, r).toggleCodeBlock().run(); } },
+    { id: 'code', group: '정보 · 코드', label: '코드 글자', hint: '` 로 감싸도', icon: '</>', keys: 'inline code 코드 글자', run: (e, r) => { e.chain().focus().deleteRange(r).toggleCode().run(); } },
+    { id: 'table', group: '정보 · 코드', label: '표', hint: 'Tab 으로 다음 칸, 표 안에서 / 로 행 · 열', icon: '▦', keys: 'table grid 표', run: (e, r) => { block(e, r).insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(); } },
+    { id: 'divider', group: '정보 · 코드', label: '구분선', hint: '--- 로도', icon: '—', keys: 'divider rule hr line 구분 선', run: (e, r) => { e.chain().focus().deleteRange(r).setHorizontalRule().run(); } },
+    { id: 'image', group: '미디어', label: '그림', hint: '붙여 넣기 · 끌어 놓기도 됩니다', icon: '🖼️', keys: 'image picture photo screenshot 그림 사진 이미지 캡처', run: (e, r) => { e.chain().focus().deleteRange(r).run(); ui.current.pick('image'); } },
+    { id: 'file', group: '미디어', label: '파일 · PDF', hint: '20MB 까지', icon: '📎', keys: 'file pdf hwp attachment upload 파일 첨부 문서', run: (e, r) => { e.chain().focus().deleteRange(r).run(); ui.current.pick('file'); } },
+    { id: 'link', group: '링크 · 사람', label: '링크', hint: 'Ctrl+K', icon: '🔗', keys: 'link url 링크 주소', run: (e, r) => { e.chain().focus().deleteRange(r).run(); ui.current.link(); } },
+    { id: 'doc', group: '링크 · 사람', label: '팀 위키 문서', hint: '[[ 로도', icon: '📄', keys: 'page doc wiki link 문서 위키 링크', run: (e, r) => { e.chain().focus().insertContentAt(r, '[[').run(); } },
+    { id: 'tasks', group: '링크 · 사람', label: '작업 넣기', hint: '# 로도 · 담당자별 찾기', icon: '#', keys: 'jira issue task 작업 이슈 지라', run: (e, r) => { e.chain().focus().insertContentAt(r, '#').run(); } },
+    { id: 'mention', group: '링크 · 사람', label: '사람 언급', hint: '@ 로도', icon: '@', keys: 'mention people user 언급 사람 태그', run: (e, r) => { e.chain().focus().insertContentAt(r, '@').run(); } },
+    { id: 'date', group: '링크 · 사람', label: '날짜', hint: '오늘', icon: '📅', keys: 'date today 날짜 오늘', run: (e, r) => { e.chain().focus().insertContentAt(r, [{ type: 'rDate', attrs: { date: localToday() } }, { type: 'text', text: ' ' }]).run(); } },
     ...STATUS_PRESETS.map<SugItem>((s) => ({
-      id: `status-${s.color}`, group: '상태', label: `상태 · ${s.text}`, icon: <span className={`tm-rstatus tm-rstatus-${s.color}`}>{s.text.slice(0, 1)}</span>,
-      keys: `status lozenge 상태 ${s.text}`,
+      id: `status-${s.color}`, group: '상태 배지', label: `상태 · ${s.text}`, icon: <span className={`tm-rstatus tm-rstatus-${s.color}`}>{s.text.slice(0, 1)}</span>,
+      keys: `status lozenge 상태 배지 ${s.text}`,
       run: (e, r) => { e.chain().focus().insertContentAt(r, [{ type: 'rStatus', attrs: { text: s.text, color: s.color } }, { type: 'text', text: ' ' }]).run(); },
     })),
-    ...EMOJI.map<SugItem>((m) => ({
-      id: `emoji-${m.e}`, group: '이모지', label: `${m.e} ${m.label}`, icon: m.e, keys: `emoji 이모지 ${m.label} ${m.keys}`,
-      run: (e, r) => { e.chain().focus().insertContentAt(r, `${m.e} `).run(); },
-    })),
+    { id: 'emoji', group: '이모지', label: '이모지', hint: ': 로도 · 이름으로 찾기', icon: '😊', keys: 'emoji 이모지 이모티콘', run: (e, r) => { e.chain().focus().insertContentAt(r, ':').run(); } },
   ];
   const q = norm(query);
-  return q ? all.filter((it) => norm(`${it.label} ${it.keys ?? ''} ${it.hint ?? ''}`).includes(q)) : all;
+  if (!q) return all;
+  // 이름이 같은 것 → 이름이 그렇게 시작하는 것 → 이름에 든 것 → 찾는 말 · 설명에 든 것 ('표' 는 '본문'(글머리표 없는 글)보다 '표' 가 먼저)
+  const rank = (it: SugItem) => {
+    const l = norm(it.label);
+    if (l === q) return 0;
+    if (l.startsWith(q)) return 1;
+    if (l.includes(q)) return 2;
+    return norm(`${it.keys ?? ''} ${it.hint ?? ''}`).includes(q) ? 3 : -1;
+  };
+  return all.map((it) => ({ it, r: rank(it) })).filter((x) => x.r >= 0).sort((a, b) => a.r - b.r).map((x) => x.it);
+}
+
+/* ── 글을 고르면 뜨는 서식 막대 ────────────────────────── */
+
+const COLOR_NAMES: Record<TextColor, string> = { red: '빨강', orange: '주황', yellow: '노랑', green: '초록', blue: '파랑', purple: '보라', gray: '회색' };
+
+function Bubble({ editor, onLink }: { editor: Editor; onLink(): void }) {
+  const s = useEditorState({
+    editor,
+    selector: ({ editor: e }) => ({
+      bold: e.isActive('bold'), italic: e.isActive('italic'), underline: e.isActive('underline'), strike: e.isActive('strike'),
+      code: e.isActive('code'), highlight: e.isActive('highlight'), link: e.isActive('link'),
+      color: (e.getAttributes('rColor').color as TextColor | undefined) ?? null,
+    }),
+  });
+  const btn = (label: string, on: boolean, run: () => void, face: React.ReactNode) => (
+    <button key={label} type="button" title={label} aria-label={label} aria-pressed={on} className={on ? 'is-on' : ''}
+      onMouseDown={(e) => e.preventDefault()} onClick={run}>{face}</button>
+  );
+  const c = () => editor.chain().focus();
+  return (
+    <BubbleMenu editor={editor} pluginKey="tmReportBubble" className="tm-rbubble" options={{ placement: 'top', offset: 8 }}
+      shouldShow={({ editor: e, state, from, to }) => e.isEditable && e.isFocused && from !== to
+        && !(state.selection instanceof NodeSelection) && !(state.selection instanceof CellSelection)
+        && !state.doc.resolve(from).parent.type.spec.code}>
+      {btn('굵게 (Ctrl+B)', s.bold, () => c().toggleBold().run(), <b>B</b>)}
+      {btn('기울임 (Ctrl+I)', s.italic, () => c().toggleItalic().run(), <i>I</i>)}
+      {btn('밑줄 (Ctrl+U)', s.underline, () => c().toggleUnderline().run(), <u>U</u>)}
+      {btn('취소선', s.strike, () => c().toggleStrike().run(), <s>S</s>)}
+      {btn('코드 글자', s.code, () => c().toggleCode().run(), <code>{'</>'}</code>)}
+      {btn('형광펜', s.highlight, () => c().toggleHighlight().run(), <mark>H</mark>)}
+      <span className="tm-rbubble-sep" aria-hidden />
+      {TEXT_COLORS.map((col) => btn(`글자색 ${COLOR_NAMES[col]}`, s.color === col,
+        () => (s.color === col ? c().unsetMark('rColor').run() : c().setMark('rColor', { color: col }).run()),
+        <span className={`tm-rbubble-dot tm-rcolor-${col}`}>A</span>))}
+      <span className="tm-rbubble-sep" aria-hidden />
+      {btn('링크 (Ctrl+K)', s.link, onLink, <span aria-hidden>🔗</span>)}
+    </BubbleMenu>
+  );
 }
 
 /* ── 칸 ─────────────────────────────────────────────── */
@@ -582,15 +787,29 @@ export function RichCell({ id, value, onChange, placeholder, label, env, variant
 
   const extensions = useMemo(() => [
     StarterKit.configure({
-      heading: { levels: [1, 2, 3] }, codeBlock: false, underline: false, trailingNode: false,
+      heading: { levels: [1, 2, 3, 4, 5, 6] }, codeBlock: { HTMLAttributes: { class: 'tm-rcode' } }, trailingNode: false,
       link: { openOnClick: false, autolink: true, linkOnPaste: true, defaultProtocol: 'https' },
     }),
     TaskList, TaskItem.configure({ nested: true }),
+    Highlight.configure({ multicolor: false }), RColor,
+    Details.configure({
+      persist: true, // 편집 칸에서는 열림을 문서에 둔다(새로 만든 접기 · 다시 연 접기는 펼친 채로 써 나간다). 저장 글에는 남기지 않는다
+      HTMLAttributes: { class: 'tm-rdetails' },
+      renderToggleButton: ({ element, isOpen }) => {
+        element.setAttribute('aria-label', isOpen ? '접기' : '펼치기');
+        element.setAttribute('aria-expanded', String(isOpen));
+        element.className = 'tm-rdetails-toggle';
+      },
+    }),
+    DetailsSummary, DetailsContent,
+    TableKit.configure({ table: { resizable: false, HTMLAttributes: { class: 'tm-rtable' } } }),
     RPanel, RDecision, RMention, RStatus, RDate, RImage, RFile,
     Placeholder.configure({ placeholder: () => hint.current, includeChildren: true }),
-    suggest('tmReportSlash', '/', '넣기 · 이름으로 찾기', (q) => slashItems(ui, q), true),
+    suggest('tmReportSlash', '/', '넣기 · 이름으로 찾기', (q, ed) => slashItems(ui, q, ed), { spaces: true }),
     suggest('tmReportTaskSlash', '#', '작업 넣기 · 담당자 이름 · 번호 · 제목으로 찾기', (q) => taskItems(envRef, q)),
     suggest('tmReportMention', '@', '사람 언급', (q) => mentionItems(envRef, q)),
+    suggest('tmReportDoc', '[[', '팀 위키 문서 링크 · 제목으로 찾기', (q) => docItems(envRef, q), { spaces: true }),
+    suggest('tmReportEmoji', ':', '이모지 · 이름으로 찾기', (q) => emojiItems(q), { min: 1 }),
     Extension.create({
       name: 'tmReportKeys',
       addKeyboardShortcuts() { return { 'Mod-k': () => { ui.current.link(); return true; } }; },
@@ -664,6 +883,7 @@ export function RichCell({ id, value, onChange, placeholder, label, env, variant
         }
       }}>
       <EditorContent editor={editor} />
+      {editor && <Bubble editor={editor} onLink={() => ui.current.link()} />}
       <input ref={fileInput} type="file" multiple hidden tabIndex={-1} aria-hidden
         accept={pickKind === 'image' ? 'image/png,image/jpeg,image/gif,image/webp' : undefined}
         onChange={(e) => {

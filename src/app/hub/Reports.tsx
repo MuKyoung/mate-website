@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from 'react';
-import { isRemote } from './supabase';
+import { isRemote, sb } from './supabase';
 import { useRemoteReportStore } from './reportRemote';
 import {
   LIMITS, addBlocksTo, addDays, blankDaily, blankWeekly, blocksOf, dailyProjects, dailyText, dayLabel, isDailyFilled, isDay,
@@ -72,8 +72,23 @@ const WEEKLY_COLS: Col<WeeklyProject>[] = [
 ];
 
 const WRITING_HELP =
-  '한 줄에 한 가지씩 적습니다. Confluence 처럼 Enter 새 항목 · Shift+Enter 줄 바꿈 · Tab 하위로, Ctrl+B · I · K 굵게 · 기울임 · 링크. '
-  + '/ 넣기 메뉴(제목 · 작업 항목 · 패널 · 그림 · PDF · 날짜 · 상태 …), # 작업 찾기(내 작업 먼저), @ 사람 언급. 그림 · PDF 는 붙여 넣거나 끌어 놓아도 됩니다.';
+  '한 줄에 한 가지씩 적습니다. Confluence 처럼 Enter 새 항목 · Shift+Enter 줄 바꿈 · Tab 하위로, Ctrl+B · I · U · K 굵게 · 기울임 · 밑줄 · 링크, 글을 고르면 서식 막대(형광펜 · 글자색). '
+  + '/ 넣기 메뉴(제목 1~6 · 본문 · 작업 항목 · 접기 · 패널 · 코드 블록 · 표 · 그림 · PDF · 날짜 · 상태 …), # 작업 찾기(내 작업 먼저), @ 사람 언급, [[ 위키 문서, : 이모지. 그림 · PDF 는 붙여 넣거나 끌어 놓아도 됩니다.';
+
+type WikiDoc = { id: string; title: string; icon?: string | null };
+
+/** '[[' 로 거는 팀 위키 문서 - 휴지통에 없는 것, 최근 고친 것부터. 처음 한 번 읽는다 */
+function useWikiDocs(): WikiDoc[] {
+  const [docs, setDocs] = useState<WikiDoc[]>([]);
+  useEffect(() => {
+    if (!isRemote) return undefined;
+    let live = true;
+    void sb().from('tm_docs').select('id,title,icon').is('trashed_at', null).order('updated_at', { ascending: false }).limit(1000)
+      .then(({ data }) => { if (live && data) setDocs(data as WikiDoc[]); });
+    return () => { live = false; };
+  }, []);
+  return docs;
+}
 
 /** 오늘(YYYY-MM-DD) - 창으로 돌아올 때 날이 바뀌었으면 따라간다 */
 function useTodayISO(): string {
@@ -424,6 +439,7 @@ export default function Reports({
   const mine = linked ?? people.find((p) => p.id === mineChoice) ?? null;
 
   const names = useMemo(() => projectNames(store.daily, store.weekly, today), [store.daily, store.weekly, today]);
+  const docs = useWikiDocs();
   const env = useMemo<RenderEnv>(() => {
     function* texts() {
       for (const e of store.daily) {
@@ -442,8 +458,8 @@ export default function Reports({
         yield e.issues;
       }
     }
-    return { tasks, members, me, jira: jiraBaseOf(texts()), onTask: onTaskOpen };
-  }, [store.daily, store.weekly, tasks, members, me, onTaskOpen]);
+    return { tasks, members, me, jira: jiraBaseOf(texts()), onTask: onTaskOpen, docs };
+  }, [store.daily, store.weekly, tasks, members, me, onTaskOpen, docs]);
 
   const { flush, settle } = store;
   useEffect(() => {

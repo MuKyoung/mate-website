@@ -25,6 +25,8 @@ export interface RenderEnv {
   /** 보고 글에서 배운 Jira 사이트 - 번호만 적은 줄도 그곳으로 잇는다 */
   jira: string | null;
   onTask(id: string): void;
+  /** '[[' 로 거는 팀 위키 문서 */
+  docs?: { id: string; title: string; icon?: string | null }[];
 }
 
 const Env = createContext<RenderEnv>({ tasks: [], members: [], me: '', jira: null, onTask: () => {} });
@@ -106,6 +108,9 @@ function Inline({ text }: { text: string }) {
         if (s.strike) node = <s className="text-tm-sub">{node}</s>;
         if (s.italic) node = <em>{node}</em>;
         if (s.bold) node = <strong className="font-extrabold">{node}</strong>;
+        if (s.underline) node = <u className="underline-offset-[3px]">{node}</u>;
+        if (s.highlight) node = <mark className="tm-rmark">{node}</mark>;
+        if (s.color) node = <span className={`tm-rcolor-${s.color}`}>{node}</span>;
         return <span key={i}>{node}</span>;
       })}
     </>
@@ -216,48 +221,92 @@ function Marker({ l }: { l: Line }) {
   return <span aria-hidden className={`mt-[0.66em] h-[0.34em] w-[0.34em] flex-none rounded-full ${l.depth ? 'border-[1.5px] border-tm-sub' : 'bg-tm-ink/75'}`} />;
 }
 
-/** 칸 글 - 한 줄에 한 가지, 들여쓴 줄은 하위 줄. 제목 · 인용 · 패널 · 구분선 · 작업 항목 · 결정도. 글자 크기는 둘레(em)를 따른다 */
+/** 칸 글 - 한 줄에 한 가지, 들여쓴 줄은 하위 줄. 제목 · 인용 · 패널 · 구분선 · 작업 항목 · 결정 · 접기 · 코드 · 표도. 글자 크기는 둘레(em)를 따른다 */
 export function CellText({ text, empty = '없음' }: { text: string; empty?: string }) {
   const lines = useMemo(() => parseLines(text), [text]);
   if (!lines.length) return <p className="text-[0.92em] text-tm-sub">{empty}</p>;
-  return (
-    <ul className="flex flex-col gap-[0.18em] leading-[1.6]">
-      {lines.map((l, i) => {
-        const pad = { paddingLeft: `${l.depth * 1.15}em` };
-        const body = (
-          <>
-            <Inline text={l.text} />
-            {l.dur && <DurPill d={l.dur} />}
-          </>
-        );
-        if (l.kind === 'divider') return <li key={i} role="separator" className="my-1 border-t border-tm-line" style={pad} />;
-        if (l.kind === 'h1' || l.kind === 'h2' || l.kind === 'h3') {
-          return (
-            <li key={i} className={`mt-[0.3em] font-extrabold leading-[1.35] text-tm-deep [overflow-wrap:anywhere] ${
-              l.kind === 'h1' ? 'text-[1.3em]' : l.kind === 'h2' ? 'text-[1.15em]' : 'text-[1.03em]'}`} style={pad}>{body}</li>
-          );
-        }
-        if (l.kind === 'quote') {
-          return <li key={i} className="border-l-[3px] border-tm-line pl-[0.75em] text-tm-sub [overflow-wrap:anywhere]" style={{ marginLeft: pad.paddingLeft }}>{body}</li>;
-        }
-        if (l.kind === 'panel') {
-          const p = PANEL_KINDS.find((x) => x.id === l.panel) ?? PANEL_KINDS[0];
-          return (
-            <li key={i} className={`my-[0.15em] flex gap-[0.55em] rounded-lg border-l-4 px-[0.7em] py-[0.35em] ${PANEL_STYLE[p.id]}`} style={{ marginLeft: pad.paddingLeft }}>
-              <span role="img" aria-label={`${p.label} 패널`} className="flex-none">{p.icon}</span>
-              <span className="min-w-0 flex-1 [overflow-wrap:anywhere]">{body}</span>
-            </li>
-          );
-        }
-        return (
-          <li key={i} className="flex gap-[0.55em]" style={pad}>
-            <Marker l={l} />
-            <span className={`min-w-0 flex-1 [overflow-wrap:anywhere] ${l.note ? 'text-tm-sub' : ''} ${l.kind === 'done' ? 'text-tm-sub' : ''}`}>{body}</span>
-          </li>
-        );
-      })}
-    </ul>
-  );
+  return <CellLines lines={lines} />;
+}
+
+const HEADING_SIZE: Record<string, string> = {
+  h1: 'text-[1.3em]', h2: 'text-[1.15em]', h3: 'text-[1.03em]', h4: 'text-[1em]', h5: 'text-[0.94em]', h6: 'text-[0.88em] text-tm-sub',
+};
+
+function CellLines({ lines }: { lines: Line[] }) {
+  const out: React.ReactNode[] = [];
+  for (let i = 0; i < lines.length; i += 1) {
+    const l = lines[i];
+    const pad = { paddingLeft: `${l.depth * 1.15}em` };
+    const margin = { marginLeft: pad.paddingLeft };
+    const body = (
+      <>
+        <Inline text={l.text} />
+        {l.dur && <DurPill d={l.dur} />}
+      </>
+    );
+    if (l.kind === 'toggle') {
+      // 접기 - 그 아래 더 깊은 줄이 접힌 내용. 처음에는 접혀 있다
+      let j = i + 1;
+      while (j < lines.length && lines[j].depth > l.depth) j += 1;
+      const kids = lines.slice(i + 1, j);
+      out.push(
+        <li key={i} style={margin}>
+          <details className="tm-rview-details">
+            <summary className="[overflow-wrap:anywhere]">{body}</summary>
+            {kids.length ? <CellLines lines={kids.map((k) => ({ ...k, depth: k.depth - l.depth - 1 }))} />
+              : <p className="text-[0.92em] text-tm-sub">비어 있음</p>}
+          </details>
+        </li>,
+      );
+      i = j - 1;
+      continue;
+    }
+    if (l.kind === 'divider') out.push(<li key={i} role="separator" className="my-1 border-t border-tm-line" style={pad} />);
+    else if (l.kind in HEADING_SIZE) {
+      out.push(<li key={i} className={`mt-[0.3em] font-extrabold leading-[1.35] text-tm-deep [overflow-wrap:anywhere] ${HEADING_SIZE[l.kind]}`} style={pad}>{body}</li>);
+    } else if (l.kind === 'quote') {
+      out.push(<li key={i} className="border-l-[3px] border-tm-line pl-[0.75em] text-tm-sub [overflow-wrap:anywhere]" style={margin}>{body}</li>);
+    } else if (l.kind === 'panel') {
+      const p = PANEL_KINDS.find((x) => x.id === l.panel) ?? PANEL_KINDS[0];
+      out.push(
+        <li key={i} className={`my-[0.15em] flex gap-[0.55em] rounded-lg border-l-4 px-[0.7em] py-[0.35em] ${PANEL_STYLE[p.id]}`} style={margin}>
+          <span role="img" aria-label={`${p.label} 패널`} className="flex-none">{p.icon}</span>
+          <span className="min-w-0 flex-1 [overflow-wrap:anywhere]">{body}</span>
+        </li>,
+      );
+    } else if (l.kind === 'code') {
+      out.push(
+        <li key={i} style={margin} className="min-w-0">
+          <pre className="tm-rview-code" aria-label={l.lang ? `${l.lang} 코드` : '코드'}><code>{l.text}</code></pre>
+        </li>,
+      );
+    } else if (l.kind === 'table') {
+      const rows = l.rows ?? [];
+      const cols = Math.max(1, ...rows.map((r) => r.length));
+      const cell = (r: string[], ri: number, head: boolean) => Array.from({ length: cols }, (_, c) => {
+        const Tag = head ? 'th' : 'td';
+        return <Tag key={c} scope={head ? 'col' : undefined}><Inline text={r[c] ?? ''} /></Tag>;
+      });
+      out.push(
+        <li key={i} style={margin} className="min-w-0 overflow-x-auto">
+          <table className="tm-rview-table">
+            {l.head && rows.length > 0 && <thead><tr>{cell(rows[0], 0, true)}</tr></thead>}
+            <tbody>{rows.slice(l.head ? 1 : 0).map((r, ri) => <tr key={ri}>{cell(r, ri, false)}</tr>)}</tbody>
+          </table>
+        </li>,
+      );
+    } else if (l.kind === 'text') {
+      out.push(<li key={i} className="[overflow-wrap:anywhere]" style={pad}>{body}</li>);
+    } else {
+      out.push(
+        <li key={i} className="flex gap-[0.55em]" style={pad}>
+          <Marker l={l} />
+          <span className={`min-w-0 flex-1 [overflow-wrap:anywhere] ${l.note ? 'text-tm-sub' : ''} ${l.kind === 'done' ? 'text-tm-sub' : ''}`}>{body}</span>
+        </li>,
+      );
+    }
+  }
+  return <ul className="flex flex-col gap-[0.18em] leading-[1.6]">{out}</ul>;
 }
 
 /* ── 프로젝트 표 ─────────────────────────────────────────── */

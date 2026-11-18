@@ -190,11 +190,14 @@ export type DurUnit = '일' | '일차' | '시간';
 export interface Dur { n: number; unit: DurUnit; approx: boolean }
 
 /**
- * 줄의 종류 - Confluence '/' 로 넣는 것들을 줄 머리의 짧은 표시로 적는다.
- *   item 글머리표 · num '1. ' 번호 · task '[ ] ' · done '[x] ' 작업 항목 · decision '<> ' 결정
- *   h1~h3 '# ' · '## ' · '### ' 제목 · quote '> ' 인용 · divider '---' 구분선 · panel '[!info] ' 등 패널
+ * 줄의 종류 - Confluence '/' 로 넣는 것들을 줄 머리의 짧은 표시로 적는다(한 줄 = 한 항목, 앞 공백 두 칸 = 한 단계 하위).
+ *   item 글머리표(표시 없음) · text '¶ ' 본문(글머리표 없이) · num '1. ' 번호 · task '[ ] ' · done '[x] ' 작업 항목 · decision '<> ' 결정
+ *   h1~h6 '# ' ~ '###### ' 제목 · quote '> ' 인용 · divider '---' 구분선 · panel '[!info] ' 등 패널
+ *   toggle '[+] 제목' 접기 - 그 아래 더 들여쓴 줄이 접힌 내용
+ *   code '```말' ~ '```' 코드 블록(여러 줄) · table '| 칸 | 칸 |' 표(이어진 줄, 둘째 줄이 |---| 면 첫 줄이 머리)
  */
-export type LineKind = 'item' | 'num' | 'task' | 'done' | 'decision' | 'h1' | 'h2' | 'h3' | 'quote' | 'divider' | 'panel';
+export type LineKind = 'item' | 'text' | 'num' | 'task' | 'done' | 'decision' | 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
+  | 'quote' | 'divider' | 'panel' | 'toggle' | 'code' | 'table';
 export type PanelKind = 'info' | 'note' | 'success' | 'warning' | 'error';
 export const PANEL_KINDS: { id: PanelKind; label: string; icon: string }[] = [
   { id: 'info', label: '정보', icon: 'ℹ️' },
@@ -207,17 +210,22 @@ export const PANEL_KINDS: { id: PanelKind; label: string; icon: string }[] = [
 export interface Line {
   /** 0 = 맨 위 단계 */
   depth: number;
-  /** 줄 머리 표시 · 머리표 · 소요기간을 뗀 글 */
+  /** 줄 머리 표시 · 머리표 · 소요기간을 뗀 글(코드는 코드 전체, 표는 첫 줄 칸을 이은 글) */
   text: string;
   /** '→' 로 시작하는 덧붙이는 말 */
   note: boolean;
   dur: Dur | null;
-  /** 적은 그대로(들여쓰기 포함) */
+  /** 적은 그대로(들여쓰기 포함, 코드 · 표는 여러 줄) */
   raw: string;
   kind: LineKind;
   panel?: PanelKind;
   /** 번호 줄의 번호 */
   num?: number;
+  /** 코드 블록의 말(언어) */
+  lang?: string;
+  /** 표의 칸 - rows[줄][칸], head 면 첫 줄이 머리 */
+  rows?: string[][];
+  head?: boolean;
 }
 
 const ARROW = /^(?:->|=>|→|⇒)\s*/;
@@ -226,20 +234,36 @@ const BULLET = /^(?:[•·▪◦‣■□▶▷]\s*|\*\s+|-(?![\d>-])\s*)/;
 /** 편집 칸이 줄을 읽을 때도 같은 머리표 규칙 */
 export const stripBullet = (s: string) => s.replace(BULLET, '');
 const DUR_RE = /\s*([·•\-~(])\s*(~?)\s*(\d+(?:\.\d+)?)\s*(일차|일|시간)\s*\)?\s*$/;
+const FENCE = /^```\s*([A-Za-z0-9_+#.-]*)\s*$/;
+const TABLE_SEP = /^\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)*\|?$/;
 
-/** 줄 머리의 종류 표시를 읽는다 - 표시를 뗀 나머지와 함께 */
-export function lineKindOf(rest: string, depth: number): { kind: LineKind; body: string; panel?: PanelKind; num?: number } {
+/** 줄 머리의 종류 표시를 읽는다 - 표시를 뗀 나머지와 함께(코드 · 표는 parseLines 가 여러 줄로 읽는다) */
+export function lineKindOf(rest: string, _depth = 0): { kind: LineKind; body: string; panel?: PanelKind; num?: number } {
   let m: RegExpExecArray | null;
   if (/^(?:-{3,}|_{3,}|\*{3,})$/.test(rest)) return { kind: 'divider', body: '' };
   if ((m = /^\[( |x|X)\]\s+/.exec(rest))) return { kind: m[1] === ' ' ? 'task' : 'done', body: rest.slice(m[0].length) };
+  if ((m = /^\[\+\]\s*/.exec(rest))) return { kind: 'toggle', body: rest.slice(m[0].length) };
   if ((m = /^\[!(info|note|success|warning|error)\]\s*/i.exec(rest))) {
     return { kind: 'panel', panel: m[1].toLowerCase() as PanelKind, body: rest.slice(m[0].length) };
   }
   if ((m = /^<>\s+/.exec(rest))) return { kind: 'decision', body: rest.slice(m[0].length) };
-  if (depth === 0 && (m = /^(#{1,3})\s+/.exec(rest))) return { kind: `h${m[1].length}` as LineKind, body: rest.slice(m[0].length) };
+  if ((m = /^¶\s?/.exec(rest))) return { kind: 'text', body: rest.slice(m[0].length) };
+  if ((m = /^(#{1,6})\s+/.exec(rest))) return { kind: `h${m[1].length}` as LineKind, body: rest.slice(m[0].length) };
   if ((m = /^>\s+/.exec(rest))) return { kind: 'quote', body: rest.slice(m[0].length) };
   if ((m = /^(\d{1,3})[.)]\s+/.exec(rest))) return { kind: 'num', num: Number(m[1]), body: rest.slice(m[0].length) };
   return { kind: 'item', body: rest.replace(BULLET, '') };
+}
+
+/** 표 한 줄의 칸 - \| 는 칸 안의 | */
+export function tableCells(line: string): string[] {
+  const s = line.trim().replace(/^\|/, '').replace(/\|$/, '');
+  const out: string[] = [];
+  let cur = '';
+  for (let i = 0; i < s.length; i += 1) {
+    if (s[i] === '\\' && s[i + 1] === '|') { cur += '|'; i += 1; } else if (s[i] === '|') { out.push(cur.trim()); cur = ''; } else cur += s[i];
+  }
+  out.push(cur.trim());
+  return out;
 }
 
 /** 줄 끝의 소요기간을 뗀다 - 구분 글자(· - ~ 괄호) 없이 끝나는 '2일'(날짜일 수 있다)은 보지 않는다 */
@@ -255,15 +279,56 @@ export function splitDur(text: string): { body: string; dur: Dur | null } {
 const fmtNum = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1).replace(/\.0$/, ''));
 export const durLabel = (d: Dur) => `${d.approx ? '~' : ''}${fmtNum(d.n)}${d.unit}`;
 
+const leadOf = (raw: string) => {
+  const lead = /^[ \t　]*/.exec(raw)?.[0] ?? '';
+  let width = 0;
+  for (const c of lead) width += c === ' ' ? 1 : 2;
+  return { lead, width };
+};
+
 export function parseLines(text: string): Line[] {
   const out: Line[] = [];
-  for (const raw of text.split('\n')) {
+  const all = text.split('\n');
+  for (let i = 0; i < all.length; i += 1) {
+    const raw = all[i];
     if (!raw.trim()) continue;
-    const lead = /^[ \t　]*/.exec(raw)?.[0] ?? '';
-    let width = 0;
-    for (const c of lead) width += c === ' ' ? 1 : 2;
-    const depth = Math.min(4, Math.floor(width / 2));
+    const { lead, width } = leadOf(raw);
+    const depth = Math.min(6, Math.floor(width / 2));
     const rest = raw.slice(lead.length).trimEnd();
+    const fence = FENCE.exec(rest);
+    if (fence) {
+      // 코드 블록 - 닫는 ``` 까지(없으면 끝까지). 안쪽 줄은 여는 줄만큼 들여쓰기를 뗀다
+      const body: string[] = [];
+      const raws = [raw.replace(/\s+$/, '')];
+      let j = i + 1;
+      for (; j < all.length; j += 1) {
+        const r = all[j];
+        raws.push(r.replace(/\s+$/, ''));
+        if (/^```\s*$/.test(r.trim())) break;
+        body.push(r.startsWith(lead) ? r.slice(lead.length) : r.trimStart());
+      }
+      out.push({ depth, text: body.join('\n'), note: false, dur: null, raw: raws.join('\n'), kind: 'code', lang: fence[1] || undefined });
+      i = j;
+      continue;
+    }
+    if (rest.startsWith('|')) {
+      // 표 - 같은 깊이에서 | 로 시작하는 이어진 줄
+      const rows: string[][] = [];
+      const raws: string[] = [];
+      let head = false;
+      let j = i;
+      for (; j < all.length; j += 1) {
+        const r = all[j];
+        const t = r.trim();
+        if (!t.startsWith('|') || leadOf(r).width !== width) break;
+        raws.push(r.replace(/\s+$/, ''));
+        if (TABLE_SEP.test(t)) { if (rows.length === 1) head = true; continue; }
+        rows.push(tableCells(t));
+      }
+      out.push({ depth, text: (rows[0] ?? []).join(' · '), note: false, dur: null, raw: raws.join('\n'), kind: 'table', rows, head });
+      i = j - 1;
+      continue;
+    }
     const note = ARROW.test(rest);
     const k = note ? { kind: 'item' as LineKind, body: rest.replace(ARROW, '') } : lineKindOf(rest, depth);
     const { body, dur } = splitDur(k.body);
@@ -274,18 +339,21 @@ export function parseLines(text: string): Line[] {
 
 /** 같은 일인지 견주는 열쇠 - 줄 종류 표시 · 소요기간 · 머리표 · 띄어쓰기 · 문장부호 · 글꼴 표시를 무시한다 */
 export const itemKey = (text: string) => {
-  const rest = text.trim().replace(ARROW, '');
-  return splitDur(plainOf(lineKindOf(rest, 0).body)).body.toLowerCase().replace(/[\s·•.,:;!?'"`~\-–—()[\]{}*]+/g, ' ').trim();
+  const rest = text.trim().split('\n')[0].replace(ARROW, '');
+  return splitDur(plainOf(lineKindOf(rest).body)).body.toLowerCase().replace(/[\s·•.,:;!?'"`~\-–—()[\]{}*|=¶]+/g, ' ').trim();
 };
 
 /* ── 줄 안의 글꼴 · 넣은 것 - 편집 칸(Confluence 처럼 쓰기)이 저장하는 짧은 표시 ───────────
-   **굵게** · *기울임* · ~~취소선~~ · `코드` · [글](https://주소)
+   **굵게** · *기울임* · ~~취소선~~ · <u>밑줄</u> · ==형광펜== · <color:red|글자색> · `코드` · [글](https://주소)
    <@팀원id|이름> 사람 · <status:글|색> 상태 · <date:YYYY-MM-DD> 날짜 · <img:주소|이름> 그림 · <file:주소|이름|크기> 파일 · <br> 줄 바꿈 */
 
 export type StatusColor = 'gray' | 'blue' | 'green' | 'yellow' | 'red' | 'purple';
+export type TextColor = 'red' | 'orange' | 'yellow' | 'green' | 'blue' | 'purple' | 'gray';
+export const TEXT_COLORS: TextColor[] = ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'gray'];
 export interface Span {
   text: string;
   bold?: boolean; italic?: boolean; strike?: boolean; code?: boolean; href?: string;
+  underline?: boolean; highlight?: boolean; color?: TextColor;
   mention?: { id: string; label: string };
   status?: { text: string; color: StatusColor };
   date?: string;
@@ -294,30 +362,47 @@ export interface Span {
   br?: boolean;
 }
 
-const TOKEN = '<@([^|>\\n]+)\\|([^>\\n]*)>|<status:([^|>\\n]*)\\|(gray|blue|green|yellow|red|purple)>|<date:(\\d{4}-\\d{2}-\\d{2})>'
-  + '|<img:([^|>\\s]+)\\|([^>\\n]*)>|<file:([^|>\\s]+)\\|([^|>\\n]*)\\|(\\d*)>|<br>';
-const MARK_RE = new RegExp(`${TOKEN}|\`([^\`\\n]+)\`|\\[([^\\]\\n]+)\\]\\((https?:\\/\\/[^\\s)]+)\\)|\\*\\*([^*\\n]+?)\\*\\*|~~([^~\\n]+?)~~|(^|[^*\\w])\\*(?!\\s)([^*\\n]+?)\\*(?!\\*)`, 'g');
+const MARK_RE = new RegExp([
+  '<@(?<mid>[^|>\\n]+)\\|(?<mlabel>[^>\\n]*)>',
+  '<status:(?<stext>[^|>\\n]*)\\|(?<scolor>gray|blue|green|yellow|red|purple)>',
+  '<date:(?<date>\\d{4}-\\d{2}-\\d{2})>',
+  '<img:(?<isrc>[^|>\\s]+)\\|(?<iname>[^>\\n]*)>',
+  '<file:(?<fsrc>[^|>\\s]+)\\|(?<fname>[^|>\\n]*)\\|(?<fsize>\\d*)>',
+  '(?<br><br>)',
+  '<color:(?<ccolor>red|orange|yellow|green|blue|purple|gray)\\|(?<ctext>[^>\\n]+)>',
+  '<u>(?<under>.+?)</u>',
+  '==(?<hl>[^=\\n]+?)==',
+  '`(?<code>[^`\\n]+)`',
+  '\\[(?<ltext>[^\\]\\n]+)\\]\\((?<lhref>https?:\\/\\/[^\\s)]+)\\)',
+  '\\*\\*(?<bold>[^*\\n]+?)\\*\\*',
+  '~~(?<strike>[^~\\n]+?)~~',
+  '(?<ipre>^|[^*\\w])\\*(?!\\s)(?<ital>[^*\\n]+?)\\*(?!\\*)',
+].join('|'), 'g');
 
-/** 한 줄을 조각으로 - 굵게 · 취소선 · 기울임 안의 글꼴은 겹쳐 붙인다 */
+/** 한 줄을 조각으로 - 굵게 · 기울임 · 취소선 · 밑줄 · 형광펜 · 글자색 안의 글꼴은 겹쳐 붙인다 */
 export function spansOf(text: string, base: Omit<Span, 'text'> = {}): Span[] {
   const out: Span[] = [];
   let at = 0;
   const push = (t: string, extra: Omit<Span, 'text'> = {}) => { if (t || Object.keys(extra).length) out.push({ ...base, ...extra, text: t }); };
   for (const m of text.matchAll(MARK_RE)) {
-    const pre = m[16] ?? '';
+    const g = m.groups ?? {};
+    const pre = g.ipre ?? '';
     const start = (m.index ?? 0) + pre.length;
     if (start > at) push(text.slice(at, start));
-    if (m[1] !== undefined) push(`@${m[2]}`, { mention: { id: m[1], label: m[2] } });
-    else if (m[3] !== undefined) push(m[3], { status: { text: m[3], color: m[4] as StatusColor } });
-    else if (m[5] !== undefined) push(m[5], { date: m[5] });
-    else if (m[6] !== undefined) push(m[7], { img: { src: m[6], name: m[7] } });
-    else if (m[8] !== undefined) push(m[9], { file: { src: m[8], name: m[9], size: Number(m[10]) || 0 } });
-    else if (m[0] === '<br>') push('', { br: true });
-    else if (m[11] !== undefined) push(m[11], { code: true });
-    else if (m[12] !== undefined) push(m[12], { href: m[13] });
-    else if (m[14] !== undefined) out.push(...spansOf(m[14], { ...base, bold: true }));
-    else if (m[15] !== undefined) out.push(...spansOf(m[15], { ...base, strike: true }));
-    else if (m[17] !== undefined) out.push(...spansOf(m[17], { ...base, italic: true }));
+    if (g.mid !== undefined) push(`@${g.mlabel}`, { mention: { id: g.mid, label: g.mlabel } });
+    else if (g.stext !== undefined) push(g.stext, { status: { text: g.stext, color: g.scolor as StatusColor } });
+    else if (g.date !== undefined) push(g.date, { date: g.date });
+    else if (g.isrc !== undefined) push(g.iname, { img: { src: g.isrc, name: g.iname } });
+    else if (g.fsrc !== undefined) push(g.fname, { file: { src: g.fsrc, name: g.fname, size: Number(g.fsize) || 0 } });
+    else if (g.br !== undefined) push('', { br: true });
+    else if (g.ccolor !== undefined) out.push(...spansOf(g.ctext, { ...base, color: g.ccolor as TextColor }));
+    else if (g.under !== undefined) out.push(...spansOf(g.under, { ...base, underline: true }));
+    else if (g.hl !== undefined) out.push(...spansOf(g.hl, { ...base, highlight: true }));
+    else if (g.code !== undefined) push(g.code, { code: true });
+    else if (g.ltext !== undefined) push(g.ltext, { href: g.lhref });
+    else if (g.bold !== undefined) out.push(...spansOf(g.bold, { ...base, bold: true }));
+    else if (g.strike !== undefined) out.push(...spansOf(g.strike, { ...base, strike: true }));
+    else if (g.ital !== undefined) out.push(...spansOf(g.ital, { ...base, italic: true }));
     at = (m.index ?? 0) + m[0].length;
   }
   if (at < text.length) push(text.slice(at));
@@ -351,7 +436,7 @@ export function blocksOf(text: string): Block[] {
   for (const l of parseLines(text)) {
     const last = out[out.length - 1];
     if (last && (l.depth > 0 || l.note)) last.lines.push(l.raw);
-    else out.push({ key: itemKey(l.text), head: l, lines: [l.raw] });
+    else out.push({ key: itemKey(l.kind === 'code' || l.kind === 'table' ? l.raw : l.text) || itemKey(l.raw), head: l, lines: [l.raw] });
   }
   return out;
 }
@@ -636,17 +721,22 @@ export function jiraBaseOf(texts: Iterable<string>): string | null {
 /** 복사 글의 줄 머리 - 메신저에서도 종류가 보이게 */
 const KIND_MARK: Record<LineKind, (l: Line) => string> = {
   item: () => '', num: (l) => `${l.num ?? 1}. `, task: () => '☐ ', done: () => '☑ ', decision: () => '◆ ',
-  h1: () => '■ ', h2: () => '■ ', h3: () => '■ ', quote: () => '> ', divider: () => '',
+  h1: () => '■ ', h2: () => '■ ', h3: () => '■ ', h4: () => '■ ', h5: () => '■ ', h6: () => '■ ',
+  quote: () => '> ', divider: () => '', text: () => '', toggle: () => '▸ ', code: () => '', table: () => '',
   panel: (l) => `[${PANEL_KINDS.find((p) => p.id === l.panel)?.label ?? '정보'}] `,
 };
 
 function linesFor(project: string, text: string, indent: string): string[] {
   const name = project.trim();
-  return parseLines(text).map((l) => {
-    if (l.kind === 'divider') return `${indent}────────`;
+  return parseLines(text).flatMap((l) => {
+    const pad = `${indent}${'    '.repeat(Math.max(1, l.depth))}`;
+    if (l.kind === 'divider') return [`${indent}────────`];
+    // 코드 · 표는 여러 줄 그대로(표는 칸을 | 로)
+    if (l.kind === 'code') return l.text.split('\n').map((c) => `${pad}${c}`);
+    if (l.kind === 'table') return (l.rows ?? []).map((r) => `${pad}| ${r.map(plainOf).join(' | ')} |`);
     const body = `${l.note ? '→ ' : ''}${KIND_MARK[l.kind](l)}${plainOf(l.text)}${l.dur ? ` · ${durLabel(l.dur)}` : ''}`;
-    if (l.depth === 0 && !l.note) return `${indent}- ${name ? `${name}: ` : ''}${body}`;
-    return `${indent}${'    '.repeat(Math.max(1, l.depth))}${body}`;
+    if (l.depth === 0 && !l.note) return [`${indent}- ${name ? `${name}: ` : ''}${body}`];
+    return [`${pad}${body}`];
   });
 }
 
