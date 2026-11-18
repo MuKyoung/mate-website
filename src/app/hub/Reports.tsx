@@ -68,8 +68,8 @@ const WEEKLY_COLS: Col<WeeklyProject>[] = [
 ];
 
 const WRITING_HELP =
-  '한 줄에 한 가지씩 적습니다. Confluence 처럼 Enter 는 새 항목, Tab · Shift+Tab 은 하위로 · 위로, Ctrl+B · I 는 굵게 · 기울임. '
-  + '/ 를 치면 작업을 찾아 넣습니다(내 작업 먼저, 담당자 이름으로도 찾기). 줄 끝의 · 1일은 소요기간, Jira · Hub 작업 번호는 링크로 보입니다.';
+  '한 줄에 한 가지씩 적습니다. Confluence 처럼 Enter 새 항목 · Shift+Enter 줄 바꿈 · Tab 하위로, Ctrl+B · I · K 굵게 · 기울임 · 링크. '
+  + '/ 넣기 메뉴(제목 · 작업 항목 · 패널 · 그림 · PDF · 날짜 · 상태 …), # 작업 찾기(내 작업 먼저), @ 사람 언급. 그림 · PDF 는 붙여 넣거나 끌어 놓아도 됩니다.';
 
 /** 오늘(YYYY-MM-DD) - 창으로 돌아올 때 날이 바뀌었으면 따라간다 */
 function useTodayISO(): string {

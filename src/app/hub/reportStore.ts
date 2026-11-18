@@ -189,24 +189,58 @@ export const projectLabel = (s: string) => s.trim() || '기타';
 export type DurUnit = '일' | '일차' | '시간';
 export interface Dur { n: number; unit: DurUnit; approx: boolean }
 
+/**
+ * 줄의 종류 - Confluence '/' 로 넣는 것들을 줄 머리의 짧은 표시로 적는다.
+ *   item 글머리표 · num '1. ' 번호 · task '[ ] ' · done '[x] ' 작업 항목 · decision '<> ' 결정
+ *   h1~h3 '# ' · '## ' · '### ' 제목 · quote '> ' 인용 · divider '---' 구분선 · panel '[!info] ' 등 패널
+ */
+export type LineKind = 'item' | 'num' | 'task' | 'done' | 'decision' | 'h1' | 'h2' | 'h3' | 'quote' | 'divider' | 'panel';
+export type PanelKind = 'info' | 'note' | 'success' | 'warning' | 'error';
+export const PANEL_KINDS: { id: PanelKind; label: string; icon: string }[] = [
+  { id: 'info', label: '정보', icon: 'ℹ️' },
+  { id: 'note', label: '메모', icon: '📝' },
+  { id: 'success', label: '성공', icon: '✅' },
+  { id: 'warning', label: '경고', icon: '⚠️' },
+  { id: 'error', label: '오류', icon: '⛔' },
+];
+
 export interface Line {
   /** 0 = 맨 위 단계 */
   depth: number;
-  /** 머리표 · 소요기간을 뗀 글 */
+  /** 줄 머리 표시 · 머리표 · 소요기간을 뗀 글 */
   text: string;
   /** '→' 로 시작하는 덧붙이는 말 */
   note: boolean;
   dur: Dur | null;
   /** 적은 그대로(들여쓰기 포함) */
   raw: string;
+  kind: LineKind;
+  panel?: PanelKind;
+  /** 번호 줄의 번호 */
+  num?: number;
 }
 
 const ARROW = /^(?:->|=>|→|⇒)\s*/;
 /** '-' 는 숫자(-1일) · 화살표(->) 앞이 아닐 때만, '*' 는 뒤에 공백이 있을 때만(**굵게** 와 가른다) 머리표로 본다 */
-const BULLET = /^(?:[•·▪◦‣■□▶▷]\s*|\*\s+|-(?![\d>])\s*|\d{1,2}[.)]\s+)/;
+const BULLET = /^(?:[•·▪◦‣■□▶▷]\s*|\*\s+|-(?![\d>-])\s*)/;
 /** 편집 칸이 줄을 읽을 때도 같은 머리표 규칙 */
 export const stripBullet = (s: string) => s.replace(BULLET, '');
 const DUR_RE = /\s*([·•\-~(])\s*(~?)\s*(\d+(?:\.\d+)?)\s*(일차|일|시간)\s*\)?\s*$/;
+
+/** 줄 머리의 종류 표시를 읽는다 - 표시를 뗀 나머지와 함께 */
+export function lineKindOf(rest: string, depth: number): { kind: LineKind; body: string; panel?: PanelKind; num?: number } {
+  let m: RegExpExecArray | null;
+  if (/^(?:-{3,}|_{3,}|\*{3,})$/.test(rest)) return { kind: 'divider', body: '' };
+  if ((m = /^\[( |x|X)\]\s+/.exec(rest))) return { kind: m[1] === ' ' ? 'task' : 'done', body: rest.slice(m[0].length) };
+  if ((m = /^\[!(info|note|success|warning|error)\]\s*/i.exec(rest))) {
+    return { kind: 'panel', panel: m[1].toLowerCase() as PanelKind, body: rest.slice(m[0].length) };
+  }
+  if ((m = /^<>\s+/.exec(rest))) return { kind: 'decision', body: rest.slice(m[0].length) };
+  if (depth === 0 && (m = /^(#{1,3})\s+/.exec(rest))) return { kind: `h${m[1].length}` as LineKind, body: rest.slice(m[0].length) };
+  if ((m = /^>\s+/.exec(rest))) return { kind: 'quote', body: rest.slice(m[0].length) };
+  if ((m = /^(\d{1,3})[.)]\s+/.exec(rest))) return { kind: 'num', num: Number(m[1]), body: rest.slice(m[0].length) };
+  return { kind: 'item', body: rest.replace(BULLET, '') };
+}
 
 /** 줄 끝의 소요기간을 뗀다 - 구분 글자(· - ~ 괄호) 없이 끝나는 '2일'(날짜일 수 있다)은 보지 않는다 */
 export function splitDur(text: string): { body: string; dur: Dur | null } {
@@ -229,49 +263,85 @@ export function parseLines(text: string): Line[] {
     let width = 0;
     for (const c of lead) width += c === ' ' ? 1 : 2;
     const depth = Math.min(4, Math.floor(width / 2));
-    let rest = raw.slice(lead.length).trimEnd();
+    const rest = raw.slice(lead.length).trimEnd();
     const note = ARROW.test(rest);
-    rest = note ? rest.replace(ARROW, '') : rest.replace(BULLET, '');
-    const { body, dur } = splitDur(rest);
-    out.push({ depth, text: body, note, dur, raw: raw.replace(/\s+$/, '') });
+    const k = note ? { kind: 'item' as LineKind, body: rest.replace(ARROW, '') } : lineKindOf(rest, depth);
+    const { body, dur } = splitDur(k.body);
+    out.push({ depth, text: body, note, dur, raw: raw.replace(/\s+$/, ''), kind: k.kind, panel: 'panel' in k ? k.panel : undefined, num: 'num' in k ? k.num : undefined });
   }
   return out;
 }
 
-/** 같은 일인지 견주는 열쇠 - 소요기간 · 머리표 · 띄어쓰기 · 문장부호 · 글꼴 표시(**)를 무시한다 */
-export const itemKey = (text: string) =>
-  splitDur(plainOf(text.trim().replace(BULLET, ''))).body.toLowerCase().replace(/[\s·•.,:;!?'"`~\-–—()[\]{}*]+/g, ' ').trim();
+/** 같은 일인지 견주는 열쇠 - 줄 종류 표시 · 소요기간 · 머리표 · 띄어쓰기 · 문장부호 · 글꼴 표시를 무시한다 */
+export const itemKey = (text: string) => {
+  const rest = text.trim().replace(ARROW, '');
+  return splitDur(plainOf(lineKindOf(rest, 0).body)).body.toLowerCase().replace(/[\s·•.,:;!?'"`~\-–—()[\]{}*]+/g, ' ').trim();
+};
 
-/* ── 줄 안의 글꼴 - 편집 칸(Confluence 처럼 쓰기)이 저장하는 짧은 표시 ───────────
-   **굵게** · *기울임* · ~~취소선~~ · `코드` · [글](https://주소). 줄 · 들여쓰기 약속은 위와 같다 */
+/* ── 줄 안의 글꼴 · 넣은 것 - 편집 칸(Confluence 처럼 쓰기)이 저장하는 짧은 표시 ───────────
+   **굵게** · *기울임* · ~~취소선~~ · `코드` · [글](https://주소)
+   <@팀원id|이름> 사람 · <status:글|색> 상태 · <date:YYYY-MM-DD> 날짜 · <img:주소|이름> 그림 · <file:주소|이름|크기> 파일 · <br> 줄 바꿈 */
 
-export interface Span { text: string; bold?: boolean; italic?: boolean; strike?: boolean; code?: boolean; href?: string }
+export type StatusColor = 'gray' | 'blue' | 'green' | 'yellow' | 'red' | 'purple';
+export interface Span {
+  text: string;
+  bold?: boolean; italic?: boolean; strike?: boolean; code?: boolean; href?: string;
+  mention?: { id: string; label: string };
+  status?: { text: string; color: StatusColor };
+  date?: string;
+  img?: { src: string; name: string };
+  file?: { src: string; name: string; size: number };
+  br?: boolean;
+}
 
-const MARK_RE = /`([^`\n]+)`|\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)|\*\*([^*\n]+?)\*\*|~~([^~\n]+?)~~|(^|[^*\w])\*(?!\s)([^*\n]+?)\*(?!\*)/g;
+const TOKEN = '<@([^|>\\n]+)\\|([^>\\n]*)>|<status:([^|>\\n]*)\\|(gray|blue|green|yellow|red|purple)>|<date:(\\d{4}-\\d{2}-\\d{2})>'
+  + '|<img:([^|>\\s]+)\\|([^>\\n]*)>|<file:([^|>\\s]+)\\|([^|>\\n]*)\\|(\\d*)>|<br>';
+const MARK_RE = new RegExp(`${TOKEN}|\`([^\`\\n]+)\`|\\[([^\\]\\n]+)\\]\\((https?:\\/\\/[^\\s)]+)\\)|\\*\\*([^*\\n]+?)\\*\\*|~~([^~\\n]+?)~~|(^|[^*\\w])\\*(?!\\s)([^*\\n]+?)\\*(?!\\*)`, 'g');
 
-/** 한 줄을 글꼴 조각으로 - 굵게 · 취소선 · 기울임 안의 글꼴은 겹쳐 붙인다 */
+/** 한 줄을 조각으로 - 굵게 · 취소선 · 기울임 안의 글꼴은 겹쳐 붙인다 */
 export function spansOf(text: string, base: Omit<Span, 'text'> = {}): Span[] {
   const out: Span[] = [];
   let at = 0;
-  const push = (t: string, extra: Omit<Span, 'text'> = {}) => { if (t) out.push({ ...base, ...extra, text: t }); };
+  const push = (t: string, extra: Omit<Span, 'text'> = {}) => { if (t || Object.keys(extra).length) out.push({ ...base, ...extra, text: t }); };
   for (const m of text.matchAll(MARK_RE)) {
-    const pre = m[6] ?? '';
+    const pre = m[16] ?? '';
     const start = (m.index ?? 0) + pre.length;
-    push(text.slice(at, start));
-    if (m[1] !== undefined) push(m[1], { code: true });
-    else if (m[2] !== undefined) push(m[2], { href: m[3] });
-    else if (m[4] !== undefined) out.push(...spansOf(m[4], { ...base, bold: true }));
-    else if (m[5] !== undefined) out.push(...spansOf(m[5], { ...base, strike: true }));
-    else if (m[7] !== undefined) out.push(...spansOf(m[7], { ...base, italic: true }));
+    if (start > at) push(text.slice(at, start));
+    if (m[1] !== undefined) push(`@${m[2]}`, { mention: { id: m[1], label: m[2] } });
+    else if (m[3] !== undefined) push(m[3], { status: { text: m[3], color: m[4] as StatusColor } });
+    else if (m[5] !== undefined) push(m[5], { date: m[5] });
+    else if (m[6] !== undefined) push(m[7], { img: { src: m[6], name: m[7] } });
+    else if (m[8] !== undefined) push(m[9], { file: { src: m[8], name: m[9], size: Number(m[10]) || 0 } });
+    else if (m[0] === '<br>') push('', { br: true });
+    else if (m[11] !== undefined) push(m[11], { code: true });
+    else if (m[12] !== undefined) push(m[12], { href: m[13] });
+    else if (m[14] !== undefined) out.push(...spansOf(m[14], { ...base, bold: true }));
+    else if (m[15] !== undefined) out.push(...spansOf(m[15], { ...base, strike: true }));
+    else if (m[17] !== undefined) out.push(...spansOf(m[17], { ...base, italic: true }));
     at = (m.index ?? 0) + m[0].length;
   }
-  push(text.slice(at));
+  if (at < text.length) push(text.slice(at));
   return out;
 }
 
-/** 글꼴 표시를 뗀 글 - 메신저 · 메일로 복사할 때, 같은 일 견주기 */
-export const plainOf = (text: string) =>
-  spansOf(text).map((s) => (s.href && s.href !== s.text ? `${s.text} (${s.href})` : s.text)).join('');
+const WD2 = ['일', '월', '화', '수', '목', '금', '토'];
+/** 11.18 (수) */
+export function dateChip(iso: string): string {
+  const [y, mo, d] = iso.split('-').map(Number);
+  const dt = new Date(y, (mo || 1) - 1, d || 1);
+  return `${dt.getMonth() + 1}.${dt.getDate()} (${WD2[dt.getDay()]})`;
+}
+
+/** 표시를 뗀 글 - 메신저 · 메일로 복사할 때, 같은 일 견주기 */
+export const plainOf = (text: string) => spansOf(text).map((s) => {
+  if (s.br) return ' / ';
+  if (s.mention) return `@${s.mention.label}`;
+  if (s.status) return `[${s.status.text}]`;
+  if (s.date) return dateChip(s.date);
+  if (s.img) return `[그림 ${s.img.name}]`;
+  if (s.file) return `[파일 ${s.file.name}]`;
+  return s.href && s.href !== s.text ? `${s.text} (${s.href})` : s.text;
+}).join('');
 
 /** 맨 위 단계 줄 하나와 그 밑의 하위 줄 */
 export interface Block { key: string; head: Line; lines: string[] }
@@ -563,10 +633,18 @@ export function jiraBaseOf(texts: Iterable<string>): string | null {
 /* ── 글로 옮기기(메신저 · 메일 · Confluence 에 붙여 넣기) ──────── */
 
 /** '- 프로젝트: 한 일 · 1일' 꼴 - 하위 줄은 네 칸씩 더 들인다 */
+/** 복사 글의 줄 머리 - 메신저에서도 종류가 보이게 */
+const KIND_MARK: Record<LineKind, (l: Line) => string> = {
+  item: () => '', num: (l) => `${l.num ?? 1}. `, task: () => '☐ ', done: () => '☑ ', decision: () => '◆ ',
+  h1: () => '■ ', h2: () => '■ ', h3: () => '■ ', quote: () => '> ', divider: () => '',
+  panel: (l) => `[${PANEL_KINDS.find((p) => p.id === l.panel)?.label ?? '정보'}] `,
+};
+
 function linesFor(project: string, text: string, indent: string): string[] {
   const name = project.trim();
   return parseLines(text).map((l) => {
-    const body = `${l.note ? '→ ' : ''}${plainOf(l.text)}${l.dur ? ` · ${durLabel(l.dur)}` : ''}`;
+    if (l.kind === 'divider') return `${indent}────────`;
+    const body = `${l.note ? '→ ' : ''}${KIND_MARK[l.kind](l)}${plainOf(l.text)}${l.dur ? ` · ${durLabel(l.dur)}` : ''}`;
     if (l.depth === 0 && !l.note) return `${indent}- ${name ? `${name}: ` : ''}${body}`;
     return `${indent}${'    '.repeat(Math.max(1, l.depth))}${body}`;
   });

@@ -1,7 +1,8 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { durLabel, parseLines, projectLabel, spansOf, type Dur } from './reportStore';
+import { PANEL_KINDS, dateChip, durLabel, parseLines, projectLabel, spansOf, type Dur, type Line, type PanelKind } from './reportStore';
+import { openReportFile, reportFileUrl, sizeLabel } from './reportFiles';
 import { RichCell } from './reportEditor';
 import { STATUSES, initialOf, type Member, type Task } from './types';
 import { Avatar, IconArrow, IconClose, IconPlus, tmGhostBtn, tmIconBtn } from './ui';
@@ -83,12 +84,19 @@ function KeyChip({ k }: { k: string }) {
   return <span className={`${chip} text-tm-deep hover:border-tm-line hover:bg-tm-bg`}>{k}</span>;
 }
 
-/** 한 줄 - 글꼴(**굵게** · *기울임* · ~~취소선~~ · `코드` · [글](주소))을 입히고, 그 안의 주소 · 업무 번호는 칩으로 */
+/** 한 줄 - 글꼴 · 사람 · 상태 · 날짜 · 그림 · 파일 · 줄 바꿈을 입히고, 그 안의 주소 · 업무 번호는 칩으로 */
 function Inline({ text }: { text: string }) {
+  const env = useContext(Env);
   const spans = useMemo(() => spansOf(text), [text]);
   return (
     <>
       {spans.map((s, i) => {
+        if (s.br) return <br key={i} />;
+        if (s.mention) return <span key={i} className={`tm-rmention ${s.mention.id === env.me ? 'is-me' : ''}`}>@{s.mention.label}</span>;
+        if (s.status) return <span key={i} className={`tm-rstatus tm-rstatus-${s.status.color}`}>{s.status.text}</span>;
+        if (s.date) return <span key={i} className="tm-rdate">{dateChip(s.date)}</span>;
+        if (s.img) return <ReportImage key={i} src={s.img.src} name={s.img.name} />;
+        if (s.file) return <ReportFile key={i} src={s.file.src} name={s.file.name} size={s.file.size} />;
         if (s.code) return <code key={i} className="rounded-[5px] bg-tm-bg px-1 text-[0.92em]">{s.text}</code>;
         let node: React.ReactNode = s.href
           ? <a href={s.href} target="_blank" rel="noreferrer" title={s.href} className="text-tm-blue underline underline-offset-[3px]">{s.text}</a>
@@ -99,6 +107,38 @@ function Inline({ text }: { text: string }) {
         return <span key={i}>{node}</span>;
       })}
     </>
+  );
+}
+
+/** 보고에 넣은 그림 - 누르면 원본을 새 창으로 */
+function ReportImage({ src, name }: { src: string; name: string }) {
+  const [url, setUrl] = useState<string | null>(null);
+  const [fail, setFail] = useState(false);
+  useEffect(() => {
+    let live = true;
+    reportFileUrl(src).then((u) => { if (live) setUrl(u); }, () => { if (live) setFail(true); });
+    return () => { live = false; };
+  }, [src]);
+  return (
+    <button type="button" onClick={() => void openReportFile(src).catch(() => {})} title={`${name} - 원본 보기`}
+      className="my-1 block max-w-full overflow-hidden rounded-lg border border-tm-line bg-tm-bg text-left align-top">
+      {/* 비공개 저장소의 한 시간짜리 주소 · data URL 이라 next/image 로 줄이지 않는다 */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      {url ? <img src={url} alt={name} className="block max-h-[260px] max-w-full" />
+        : <span className="block px-3 py-2 text-[0.85em] text-tm-sub">{fail ? `그림을 불러오지 못했습니다 · ${name}` : '그림 불러오는 중…'}</span>}
+    </button>
+  );
+}
+
+/** 보고에 넣은 파일 · PDF - 누르면 새 창으로 연다 */
+function ReportFile({ src, name, size }: { src: string; name: string; size: number }) {
+  return (
+    <button type="button" onClick={() => void openReportFile(src).catch(() => {})} title={`${name} 열기`}
+      className="mx-[1px] inline-flex max-w-full items-center gap-1.5 rounded-md border border-tm-line bg-tm-bg px-2 align-baseline text-[0.88em] font-bold leading-[1.7] text-tm-ink hover:border-tm-blue hover:bg-tm-tint">
+      <span aria-hidden>{/\.pdf$/i.test(name) ? '📄' : '📎'}</span>
+      <span className="truncate">{name}</span>
+      {size > 0 && <span className="font-semibold text-tm-sub">{sizeLabel(size)}</span>}
+    </button>
   );
 }
 
@@ -139,23 +179,68 @@ export function DurPill({ d }: { d: Dur }) {
   );
 }
 
-/** 칸 글 - 한 줄에 한 가지, 들여쓴 줄은 하위 줄. 글자 크기는 둘레(em)를 따른다 */
+const PANEL_STYLE: Record<PanelKind, string> = {
+  info: 'border-l-tm-blue bg-tm-tint', note: 'border-l-tm-violet bg-tm-violet-tint', success: 'border-l-tm-ok bg-tm-ok-tint',
+  warning: 'border-l-tm-warn bg-tm-warn-tint', error: 'border-l-tm-red bg-tm-red-tint',
+};
+
+/** 줄 머리 - 종류마다 글머리표 · 번호 · 체크 상자 · 결정 표시 */
+function Marker({ l }: { l: Line }) {
+  if (l.note) return <span aria-hidden className="flex-none text-tm-sub">→</span>;
+  if (l.kind === 'num') return <span aria-hidden className="flex-none font-bold tabular-nums text-tm-sub">{l.num ?? 1}.</span>;
+  if (l.kind === 'task' || l.kind === 'done') {
+    return (
+      <span role="img" aria-label={l.kind === 'done' ? '끝낸 작업 항목' : '작업 항목'}
+        className={`mt-[0.28em] grid h-[1.05em] w-[1.05em] flex-none place-items-center rounded-[4px] border-[1.5px] text-[0.8em] leading-none ${
+          l.kind === 'done' ? 'border-tm-blue bg-tm-blue text-white' : 'border-tm-edge'}`}>
+        {l.kind === 'done' ? '✓' : ''}
+      </span>
+    );
+  }
+  if (l.kind === 'decision') return <span aria-label="결정" role="img" className="flex-none text-[0.9em] text-tm-ok-text">◆</span>;
+  return <span aria-hidden className={`mt-[0.66em] h-[0.34em] w-[0.34em] flex-none rounded-full ${l.depth ? 'border-[1.5px] border-tm-sub' : 'bg-tm-ink/75'}`} />;
+}
+
+/** 칸 글 - 한 줄에 한 가지, 들여쓴 줄은 하위 줄. 제목 · 인용 · 패널 · 구분선 · 작업 항목 · 결정도. 글자 크기는 둘레(em)를 따른다 */
 export function CellText({ text, empty = '없음' }: { text: string; empty?: string }) {
   const lines = useMemo(() => parseLines(text), [text]);
   if (!lines.length) return <p className="text-[0.92em] text-tm-sub">{empty}</p>;
   return (
     <ul className="flex flex-col gap-[0.18em] leading-[1.6]">
-      {lines.map((l, i) => (
-        <li key={i} className="flex gap-[0.55em]" style={{ paddingLeft: `${l.depth * 1.15}em` }}>
-          {l.note
-            ? <span aria-hidden className="flex-none text-tm-sub">→</span>
-            : <span aria-hidden className={`mt-[0.66em] h-[0.34em] w-[0.34em] flex-none rounded-full ${l.depth ? 'border-[1.5px] border-tm-sub' : 'bg-tm-ink/75'}`} />}
-          <span className={`min-w-0 flex-1 [overflow-wrap:anywhere] ${l.note ? 'text-tm-sub' : ''}`}>
+      {lines.map((l, i) => {
+        const pad = { paddingLeft: `${l.depth * 1.15}em` };
+        const body = (
+          <>
             <Inline text={l.text} />
             {l.dur && <DurPill d={l.dur} />}
-          </span>
-        </li>
-      ))}
+          </>
+        );
+        if (l.kind === 'divider') return <li key={i} role="separator" className="my-1 border-t border-tm-line" style={pad} />;
+        if (l.kind === 'h1' || l.kind === 'h2' || l.kind === 'h3') {
+          return (
+            <li key={i} className={`mt-[0.3em] font-extrabold leading-[1.35] text-tm-deep [overflow-wrap:anywhere] ${
+              l.kind === 'h1' ? 'text-[1.3em]' : l.kind === 'h2' ? 'text-[1.15em]' : 'text-[1.03em]'}`} style={pad}>{body}</li>
+          );
+        }
+        if (l.kind === 'quote') {
+          return <li key={i} className="border-l-[3px] border-tm-line pl-[0.75em] text-tm-sub [overflow-wrap:anywhere]" style={{ marginLeft: pad.paddingLeft }}>{body}</li>;
+        }
+        if (l.kind === 'panel') {
+          const p = PANEL_KINDS.find((x) => x.id === l.panel) ?? PANEL_KINDS[0];
+          return (
+            <li key={i} className={`my-[0.15em] flex gap-[0.55em] rounded-lg border-l-4 px-[0.7em] py-[0.35em] ${PANEL_STYLE[p.id]}`} style={{ marginLeft: pad.paddingLeft }}>
+              <span role="img" aria-label={`${p.label} 패널`} className="flex-none">{p.icon}</span>
+              <span className="min-w-0 flex-1 [overflow-wrap:anywhere]">{body}</span>
+            </li>
+          );
+        }
+        return (
+          <li key={i} className="flex gap-[0.55em]" style={pad}>
+            <Marker l={l} />
+            <span className={`min-w-0 flex-1 [overflow-wrap:anywhere] ${l.note ? 'text-tm-sub' : ''} ${l.kind === 'done' ? 'text-tm-sub' : ''}`}>{body}</span>
+          </li>
+        );
+      })}
     </ul>
   );
 }
