@@ -8,6 +8,7 @@ import { useMember, useMembers } from './members';
 import { TEMPLATE_LABEL, WIKI_HOME_ID, WIKI_HOME_TITLE, isUntouchedSampleDoc, isWikiHome, type DocStore, type SaveResult } from './docStore';
 import { docLinkIds, fillTemplate, plainText, templateVars } from './docMarkdown';
 import { isRemote } from './supabase';
+import McpConnect from './McpConnect';
 import { useNoPresence, useRemotePresence, type Presence } from './remote';
 import DocEditor, { focusEditor, scrollToAnchor, scrollToPos, type WikiHeading, type WikiRefs } from './DocEditor';
 import DocTree, { FlatRow, buildTree, type DropZone } from './DocTree';
@@ -1003,6 +1004,7 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
             className="flex min-h-[38px] items-center gap-2 rounded-tm-sm px-2.5 text-[14px] font-semibold text-tm-ink transition-colors hover:bg-tm-tint [@media(pointer:coarse)]:min-h-11">
             가져오기
           </button>
+          <McpConnect onNotice={onNotice} />
           <input ref={importRef} type="file" multiple hidden
             accept=".md,.markdown,.txt,text/markdown,text/plain,.zip,application/zip,.html,.htm,text/html,.doc,.mht,.mhtml,.xml"
             onChange={(e) => {

@@ -1650,6 +1650,183 @@ begin
 end;
 $$;
 
+-- ── AI 도구(MCP) 연결 열쇠 (2026-11-18) ──────────────────────────
+-- 팀원이 Hub 위키의 'AI 연결'에서 만든 열쇠로 Claude Code · Codex 같은 AI 도구가 사이트의 /api/mcp/ 를 거쳐
+-- 팀 위키를 찾고 읽는다(읽기만). 열쇠 글자는 만들 때 한 번만 보이고 DB 에는 sha256 만 둔다.
+-- 끊은 열쇠 · 승인이 거두어진 팀원의 열쇠는 바로 막힌다. 휴지통에 든 문서(그 위 문서 포함)는 보이지 않는다.
+-- 이 블록만 따로 실행해도 된다(위의 tm_is_member · tm_doc_visible 이 이미 있으면). 여러 번 실행해도 된다.
+create table if not exists public.tm_mcp_tokens (
+  id uuid primary key default gen_random_uuid(),
+  member uuid not null references public.tm_members (id) on delete cascade,
+  label text not null default '' check (char_length(label) <= 60),
+  token_hash text not null unique,
+  created_at timestamptz not null default now(),
+  last_used_at timestamptz,
+  revoked_at timestamptz
+);
+create index if not exists tm_mcp_tokens_member_idx on public.tm_mcp_tokens (member);
+
+-- 열쇠 만들기 - 승인된 팀원만, 한 사람에 살아 있는 열쇠 10개까지. 돌려준 글자는 다시 볼 수 없다
+create or replace function public.tm_mcp_issue(p_label text)
+returns text
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  t text;
+begin
+  if not public.tm_is_member() then
+    raise exception '승인된 팀원만 연결 열쇠를 만들 수 있습니다' using errcode = '42501';
+  end if;
+  if (select count(*) from public.tm_mcp_tokens k where k.member = auth.uid() and k.revoked_at is null) >= 10 then
+    raise exception '연결 열쇠는 한 사람에 10개까지입니다. 쓰지 않는 열쇠를 끊어 주세요' using errcode = '54000';
+  end if;
+  -- 추측할 수 없는 열쇠(gen_random_uuid 두 개 = 암호용 난수 244비트)
+  t := 'mtw_' || replace(gen_random_uuid()::text, '-', '') || replace(gen_random_uuid()::text, '-', '');
+  insert into public.tm_mcp_tokens (member, label, token_hash)
+  values (auth.uid(), left(btrim(coalesce(p_label, '')), 60), encode(sha256(convert_to(t, 'UTF8')), 'hex'));
+  return t;
+end;
+$$;
+
+-- 열쇠 끊기 - 자기 열쇠만
+create or replace function public.tm_mcp_revoke(p_id uuid)
+returns boolean
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  update public.tm_mcp_tokens k set revoked_at = now()
+  where k.id = p_id and k.member = auth.uid() and k.revoked_at is null;
+  return found;
+end;
+$$;
+
+-- 열쇠의 주인(승인된 팀원) - 맞지 않거나 끊긴 열쇠면 null. 쓴 때는 1분에 한 번만 적는다
+create or replace function public.tm_mcp_member(p_token text)
+returns uuid
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  k public.tm_mcp_tokens;
+begin
+  if coalesce(p_token, '') !~ '^mtw_[0-9a-f]{64}$' then return null; end if;
+  select * into k from public.tm_mcp_tokens t
+  where t.token_hash = encode(sha256(convert_to(p_token, 'UTF8')), 'hex') and t.revoked_at is null;
+  if k.id is null or not exists (select 1 from public.tm_members m where m.id = k.member and m.active) then
+    return null;
+  end if;
+  if k.last_used_at is null or k.last_used_at < now() - interval '1 minute' then
+    update public.tm_mcp_tokens t set last_used_at = now() where t.id = k.id;
+  end if;
+  return k.member;
+end;
+$$;
+
+-- 연결 확인 - 열쇠 주인의 이름(맞지 않으면 빈 결과)
+create or replace function public.tm_mcp_whoami(p_token text)
+returns table (name text)
+language sql
+security definer
+set search_path = ''
+as $$
+  select m.name from public.tm_members m where m.id = public.tm_mcp_member(p_token)
+$$;
+
+-- 보이는 문서 목록(본문 없이) - 트리를 짓는 데 쓴다
+create or replace function public.tm_mcp_docs(p_token text)
+returns table (id uuid, parent_id uuid, title text, icon text, labels text[], sort double precision, updated_at timestamptz, size int)
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if public.tm_mcp_member(p_token) is null then
+    raise exception '연결 열쇠가 맞지 않거나 끊겼습니다' using errcode = '28000';
+  end if;
+  return query
+    select d.id, d.parent_id, d.title, d.icon, d.labels, d.sort, d.updated_at, char_length(d.body)
+    from public.tm_docs d
+    where public.tm_doc_visible(d.id)
+    order by d.sort, d.created_at;
+end;
+$$;
+
+-- 문서 하나 - 본문(마크다운) · 고친 사람
+create or replace function public.tm_mcp_doc(p_token text, p_id uuid)
+returns table (id uuid, parent_id uuid, title text, icon text, labels text[], body text, updated_at timestamptz, updated_by text)
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if public.tm_mcp_member(p_token) is null then
+    raise exception '연결 열쇠가 맞지 않거나 끊겼습니다' using errcode = '28000';
+  end if;
+  return query
+    select d.id, d.parent_id, d.title, d.icon, d.labels, d.body, d.updated_at, coalesce(m.name, '')
+    from public.tm_docs d
+    left join public.tm_members m on m.id = coalesce(d.updated_by, d.author)
+    where d.id = p_id and public.tm_doc_visible(d.id);
+end;
+$$;
+
+-- 찾기 - 제목 · 본문 · 라벨에 낱말이 모두 든 문서(제목에 든 것 먼저, 최근 고친 순). 본문에서 처음 나온 곳 둘레를 잘라 준다
+create or replace function public.tm_mcp_search(p_token text, p_query text, p_limit int default 20)
+returns table (id uuid, title text, icon text, snippet text, updated_at timestamptz)
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  words text[];
+begin
+  if public.tm_mcp_member(p_token) is null then
+    raise exception '연결 열쇠가 맞지 않거나 끊겼습니다' using errcode = '28000';
+  end if;
+  words := array(select w from unnest(regexp_split_to_array(lower(btrim(coalesce(p_query, ''))), '\s+')) w where w <> '' limit 8);
+  if cardinality(words) = 0 then return; end if;
+  return query
+    with hit as (
+      select d.*, lower(d.title || ' ' || array_to_string(d.labels, ' ') || ' ' || d.body) as hay
+      from public.tm_docs d
+      where public.tm_doc_visible(d.id)
+    )
+    select h.id, h.title, h.icon,
+      case
+        when strpos(lower(h.body), words[1]) > 0
+          then btrim(regexp_replace(substr(h.body, greatest(1, strpos(lower(h.body), words[1]) - 80), 240), '\s+', ' ', 'g'))
+        else btrim(regexp_replace(left(h.body, 200), '\s+', ' ', 'g'))
+      end,
+      h.updated_at
+    from hit h
+    where (select bool_and(strpos(h.hay, w) > 0) from unnest(words) w)
+    order by (select bool_and(strpos(lower(h.title), w) > 0) from unnest(words) w) desc, h.updated_at desc
+    limit least(greatest(coalesce(p_limit, 20), 1), 50);
+end;
+$$;
+
+alter table public.tm_mcp_tokens enable row level security;
+-- 자기 열쇠 목록만 본다(글자 해시는 주지 않는다). 만들기 · 끊기는 위 함수로만
+drop policy if exists tm_mcp_tokens_own on public.tm_mcp_tokens;
+create policy tm_mcp_tokens_own on public.tm_mcp_tokens
+  for select to authenticated
+  using (member = (select auth.uid()) and (select public.tm_is_member()));
+revoke all on public.tm_mcp_tokens from anon, authenticated;
+grant select (id, label, created_at, last_used_at, revoked_at) on public.tm_mcp_tokens to authenticated;
+
+-- 열쇠 확인은 안쪽에서만. 읽기 함수는 사이트 서버가 공개 키(anon)로 부른다(함수가 열쇠를 본다)
+revoke execute on function public.tm_mcp_issue(text), public.tm_mcp_revoke(uuid), public.tm_mcp_member(text),
+  public.tm_mcp_whoami(text), public.tm_mcp_docs(text), public.tm_mcp_doc(text, uuid), public.tm_mcp_search(text, text, int)
+  from public, anon, authenticated;
+grant execute on function public.tm_mcp_issue(text), public.tm_mcp_revoke(uuid) to authenticated;
+grant execute on function public.tm_mcp_whoami(text), public.tm_mcp_docs(text), public.tm_mcp_doc(text, uuid),
+  public.tm_mcp_search(text, text, int) to anon, authenticated;
+
 -- ── 첫 관리자 정하기 ─────────────────────────────────────────
 -- 위를 실행하고 첫 계정을 만든 뒤, 아래 줄의 메일을 바꾸고 맨 앞의 -- 를 지워 그 줄만 따로 실행한다.
 -- 관리자 칸이 생기기 전부터 쓰던 프로젝트도 한 번 실행한다(그 전에는 아무도 승인할 수 없다).
