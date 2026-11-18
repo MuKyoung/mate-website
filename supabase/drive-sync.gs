@@ -135,6 +135,8 @@ function doPost(e) {
   if (!isMember_(token)) return json_({ ok: false, error: 'not-member' });
   // 보고 첨부 옮기기 - 그 밖은 드라이브 바로 확인
   if (body.action === 'reports') return json_(moveReports_(token, body.day, body.kind));
+  // 빈 새 폴더를 휴지통으로 - Hub 의 '새 폴더' 점검(관리자만)
+  if (body.action === 'trash-folder') return json_(trashFolder_(token, String(body.id || '')));
   const lock = LockService.getScriptLock();
   // 다른 사람의 확인 · 1분 갱신이 돌고 있으면 끝나기를 기다린다 - 끝나면 방금 것이라 새로 받지 않는다
   if (!lock.tryLock(45000)) return json_({ ok: false, error: 'busy' });
@@ -167,6 +169,48 @@ function isMember_(token) {
   return res.getResponseCode() === 200 && res.getContentText().trim() === 'true';
 }
 
+/** 승인된 관리자인가 - tm_is_admin 을 그 사람의 토큰으로 */
+function isAdmin_(token) {
+  const res = UrlFetchApp.fetch(SUPABASE_URL + '/rest/v1/rpc/tm_is_admin', {
+    method: 'post',
+    contentType: 'application/json',
+    headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + token },
+    payload: '{}',
+    muteHttpExceptions: true,
+  });
+  return res.getResponseCode() === 200 && res.getContentText().trim() === 'true';
+}
+
+/** 새 폴더로 보는 기간 - Hub 의 NEW_FOLDER_DAYS 와 같다 */
+const NEW_FOLDER_DAYS = 7;
+
+/**
+ * 빈 새 폴더 하나를 드라이브 휴지통으로(30일 안에 드라이브에서 되살린다). 관리자 · 내 드라이브 아래 · 폴더 · 만든 지 7일 안 ·
+ * 안이 비었을 때만. 지운 뒤 목록을 바로 보내 Hub 트리에서 빠지게 한다.
+ * 답: { ok: true } · { ok: false, error: 'not-admin' | 'not-folder' | 'too-old' | 'not-empty' | 'busy' | … }
+ */
+function trashFolder_(token, id) {
+  if (!isAdmin_(token)) return { ok: false, error: 'not-admin' };
+  if (!/^[A-Za-z0-9_-]{10,200}$/.test(id)) return { ok: false, error: 'not-folder' };
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(45000)) return { ok: false, error: 'busy' };
+  try {
+    const f = Drive.Files.get(id, { fields: 'id, mimeType, trashed, createdTime, ownedByMe' });
+    if (!f || f.mimeType !== FOLDER || f.trashed || !f.ownedByMe) return { ok: false, error: 'not-folder' };
+    if (Date.now() - new Date(f.createdTime).getTime() > NEW_FOLDER_DAYS * 86400000) return { ok: false, error: 'too-old' };
+    const kids = Drive.Files.list({ q: "'" + id + "' in parents and trashed = false", pageSize: 1, fields: 'files(id)' });
+    if ((kids.files || []).length) return { ok: false, error: 'not-empty' };
+    Drive.Files.update({ trashed: true }, id);
+    console.log('빈 새 폴더를 휴지통으로 - ' + id);
+    sync();
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: String((err && err.message) || err).slice(0, 200) };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
 function json_(o) {
   return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
 }
@@ -194,7 +238,7 @@ function collect_() {
       q: 'trashed = false',
       pageSize: 1000,
       pageToken: pageToken,
-      fields: 'nextPageToken, files(id, name, mimeType, parents, webViewLink, modifiedTime)',
+      fields: 'nextPageToken, files(id, name, mimeType, parents, webViewLink, modifiedTime, createdTime, size)',
     });
     (res.files || []).forEach(function (f) { all.push(f); });
     pageToken = res.nextPageToken || null;
@@ -220,6 +264,9 @@ function collect_() {
         mime: f.mimeType || '',
         url: f.webViewLink || '',
         modified: f.modifiedTime || null,
+        // 만든 시각 - Hub 의 '새 폴더' 점검, 크기 - 빌드 파일 목록(구글 문서 · 폴더는 없다)
+        created: f.createdTime || null,
+        size: f.size ? Number(f.size) : null,
       });
       if (f.mimeType === FOLDER) queue.push(f.id);
     });

@@ -7,7 +7,7 @@
  * - 필터: 파일 검색 · 태그 · 첨부 파일(여기서는 본문에 적은 작업) · 미연결 노트 · 로컬 그래프(깊이)
  *   + MATE 만의 '위아래 문서 잇기'(위키가 트리라서 - 끄면 옵시디언처럼 링크만 선이 된다)
  * - 그룹: 검색어 + 색. path: · tag: · file: · -빼기를 알아듣는다
- * - 표시: 화살표 · 텍스트 표시 시작점 · 노드 크기 · 링크 두께 · 애니메이션 재생(만든 순서대로 나타나는 타임랩스)
+ * - 표시: 줌 단계로 보기(멀리서는 위 문서만, 당기면 아래가 나타남 · +N) · 위아래 화살표 · 화살표 · 텍스트 표시 시작점 · 노드 크기 · 링크 두께 · 애니메이션 재생(만든 순서대로 나타나는 타임랩스)
  * - 포스: 중심 장력 · 반발력 · 링크 장력 · 링크 거리
  * - 그 노트를 가리키는 링크가 많을수록 원이 크다. 마우스를 올리면 그 노트의 연결만 밝고, 누르면 열린다.
  *   오른쪽 누르기는 메뉴, 끌어서 이동, 휠 · +/- 로 확대, 방향키로 이동(Shift 는 빠르게).
@@ -22,6 +22,7 @@ import type { Doc, Task } from './types';
 import { docLinkIds } from './docMarkdown';
 import { titleOf } from './DocPanels';
 import { TASK_RE, type CanvasApi } from './wikiGraph';
+import { isWikiHome } from './docStore';
 import { useMediaQuery } from './ui';
 
 type Kind = 'doc' | 'tag' | 'task';
@@ -40,6 +41,12 @@ interface ONode {
   created: number;
   /** 그룹 색 */
   color: string | null;
+  /** 깊이 - 맨 위 문서 0, 카테고리 1, … (태그 · 작업은 붙은 문서 + 1). 줌 단계로 보기의 문턱 */
+  depth: number;
+  /** 판 안의 위 노드(문서는 위 문서, 태그 · 작업은 붙은 문서) - 위 노드가 보여야 나타난다 */
+  parent: string | null;
+  /** 카테고리 색(깊을수록 옅게) - 그룹이 없을 때의 기본 색 */
+  catColor: string | null;
   x?: number; y?: number; vx?: number; vy?: number; fx?: number; fy?: number;
 }
 interface OLink { source: string | ONode; target: string | ONode; kind: 'link' | 'tree' | 'tag' | 'task' }
@@ -57,6 +64,10 @@ interface Settings {
   depth: number;
   groups: Group[];
   arrows: boolean;
+  /** 위아래 문서 잇기 선의 화살표(위 → 아래) */
+  treeArrows: boolean;
+  /** 줌 단계로 보기 - 멀리서는 위 문서만, 당기면 아래 문서가 나타난다 */
+  semantic: boolean;
   textFade: number;
   nodeSize: number;
   linkThickness: number;
@@ -71,7 +82,7 @@ interface Settings {
 /** 옵시디언 그래프 설정의 기본값과 같은 자리 */
 const DEFAULTS: Settings = {
   search: '', tags: false, attachments: false, orphans: true, hierarchy: true, local: false, depth: 1, groups: [],
-  arrows: false, textFade: 0, nodeSize: 1, linkThickness: 1,
+  arrows: false, treeArrows: true, semantic: true, textFade: 0, nodeSize: 1, linkThickness: 1,
   center: 0.52, repel: 10, linkForce: 1, linkDistance: 250,
   open: { filters: true, groups: false, display: false, forces: false },
   panel: false,
@@ -96,6 +107,25 @@ const C = {
 const FONT = 'Pretendard, "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif';
 /** 그룹 색 고르기의 처음 색들(옵시디언 그룹은 사람이 고른다) - 태그 초록 · 첨부 노랑과 겹치지 않게 */
 const GROUP_COLORS = ['#e05252', '#027aff', '#ff8c3a', '#a882ff', '#53dfdd', '#fa99cd', '#b5e853', '#e0ac00'];
+/**
+ * 카테고리 기본 색 - 어두운 바탕(#1e1e1e)에서 서로 잘 갈리고, 태그 초록 · 첨부 노랑 · 강조 보라와 겹치지 않는 아홉 색.
+ * 만든 순서로 붙여서 새 카테고리가 생겨도 있던 카테고리 색은 그대로다
+ */
+const CAT_COLORS = ['#ef6b6b', '#4f9dff', '#ff9a4d', '#c084fc', '#2ec4c0', '#ff7fc4', '#d6a676', '#7f8cff', '#9fb4c8'];
+/** 맨 위 문서 색 */
+const HOME_COLOR = '#e6e6e6';
+
+/** #rrggbb 두 색 섞기(t = 0 이면 a, 1 이면 b) */
+function mix(a: string, b: string, t: number): string {
+  const p = (h: string) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const [x, y] = [p(a), p(b)];
+  return `#${x.map((v, i) => Math.round(v + (y[i] - v) * t).toString(16).padStart(2, '0')).join('')}`;
+}
+/** #rrggbb → rgba() */
+function alphaOf(hex: string, a: number): string {
+  const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+  return `rgba(${r}, ${g}, ${b}, ${a})`;
+}
 
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 const ends = (l: OLink): [string, string] => [
@@ -140,11 +170,38 @@ function build(docs: Doc[], all: Map<string, Doc>, tasks: Task[], s: Settings, l
     }
     return parts.join('/');
   };
+  /** 깊이와 카테고리 - 맨 위 문서가 있으면 그 아래가 카테고리(깊이 1), 없으면 위 문서가 없는 문서가 카테고리 */
+  const lineOf = (d: Doc): { depth: number; cat: string | null } => {
+    const chain: Doc[] = [d];
+    for (let cur = d, g = 0; cur.parentId && g < 60; g += 1) {
+      const p = all.get(cur.parentId);
+      if (!p) break;
+      chain.unshift(p);
+      cur = p;
+    }
+    const homeTop = isWikiHome(chain[0].id);
+    return { depth: homeTop ? chain.length - 1 : chain.length, cat: homeTop ? chain[1]?.id ?? null : chain[0].id };
+  };
+  // 카테고리 색 - 만든 순서(같으면 id)로
+  const cats = [...all.values()].filter((d) => lineOf(d).depth === 1)
+    .sort((a, b) => time(a.createdAt) - time(b.createdAt) || a.id.localeCompare(b.id));
+  const catIndex = new Map(cats.map((d, i) => [d.id, i]));
+  const colorOf = (depth: number, cat: string | null) => {
+    if (depth === 0) return HOME_COLOR;
+    const i = cat ? catIndex.get(cat) : undefined;
+    if (i === undefined) return null;
+    // 깊을수록 바탕 쪽으로 옅게(카테고리가 가장 진하다)
+    return mix(CAT_COLORS[i % CAT_COLORS.length], C.bg, Math.min(0.45, 0.15 * (depth - 1)));
+  };
 
   // 파일 검색 - 맞는 노트만 남긴다(태그 · 첨부는 남은 노트에 붙은 것만)
   const search = matcher(s.search);
   docs.forEach((d) => {
-    const n: ONode = { id: d.id, kind: 'doc', name: titleOf(d), docId: d.id, path: pathOf(d), labels: d.labels, weight: 1, created: time(d.createdAt), color: null };
+    const { depth, cat } = lineOf(d);
+    const n: ONode = {
+      id: d.id, kind: 'doc', name: titleOf(d), docId: d.id, path: pathOf(d), labels: d.labels, weight: 1, created: time(d.createdAt), color: null,
+      depth, parent: d.parentId ?? null, catColor: colorOf(depth, cat),
+    };
     if (!search || search(n)) keep(n);
   });
 
@@ -171,7 +228,7 @@ function build(docs: Doc[], all: Map<string, Doc>, tasks: Task[], s: Settings, l
         const id = `tag:${l}`;
         const had = nodes.get(id);
         if (had) { had.weight += 1; had.created = Math.min(had.created, time(d.createdAt)); }
-        else keep({ id, kind: 'tag', name: `#${l}`, path: '', labels: [l], weight: 1, created: time(d.createdAt), color: null });
+        else keep({ id, kind: 'tag', name: `#${l}`, path: '', labels: [l], weight: 1, created: time(d.createdAt), color: null, depth: 0, parent: null, catColor: null });
         links.push({ source: d.id, target: id, kind: 'tag' });
       });
     });
@@ -186,7 +243,7 @@ function build(docs: Doc[], all: Map<string, Doc>, tasks: Task[], s: Settings, l
         const id = `task:${t.id}`;
         const had = nodes.get(id);
         if (had) { had.weight += 1; had.created = Math.min(had.created, time(d.createdAt)); }
-        else keep({ id, kind: 'task', name: `${t.key} ${t.title}`, taskKey: t.key, path: '', labels: [], weight: 1, created: time(d.createdAt), color: null });
+        else keep({ id, kind: 'task', name: `${t.key} ${t.title}`, taskKey: t.key, path: '', labels: [], weight: 1, created: time(d.createdAt), color: null, depth: 0, parent: null, catColor: null });
         links.push({ source: d.id, target: id, kind: 'task' });
       });
     });
@@ -232,12 +289,29 @@ function build(docs: Doc[], all: Map<string, Doc>, tasks: Task[], s: Settings, l
   const groups = s.groups.map((g) => ({ m: matcher(g.query), color: g.color })).filter((g) => g.m);
   list.forEach((n) => { n.color = groups.find((g) => g.m?.(n))?.color ?? null; });
 
+  // 줌 단계 - 위 노드는 판에 남은 것만 친다. 태그 · 작업은 붙은 문서 중 가장 얕은 것 아래
+  const inBoard = new Map(list.map((n) => [n.id, n]));
+  list.forEach((n) => { if (n.kind === 'doc' && n.parent && !inBoard.has(n.parent)) n.parent = null; });
+  edges.forEach((l) => {
+    if (l.kind !== 'tag' && l.kind !== 'task') return;
+    const [a, b] = ends(l);
+    const doc = inBoard.get(a);
+    const leaf = inBoard.get(b);
+    if (!doc || !leaf) return;
+    if (!leaf.parent || doc.depth + 1 < leaf.depth) { leaf.parent = doc.id; leaf.depth = doc.depth + 1; }
+  });
+  const docDepths = list.filter((n) => n.kind === 'doc').map((n) => n.depth);
+  /** 늘 보이는 깊이 - 판에서 가장 얕은 문서와 그 바로 아래(전체면 맨 위 문서 · 카테고리, 한 카테고리면 그 문서와 하위) */
+  const base = (docDepths.length ? Math.min(...docDepths) : 0) + 1;
+  /** 위 노드를 먼저 보도록 얕은 순서 */
+  const order = [...list].sort((a, b) => a.depth - b.depth);
+
   // 남은 문서 수(태그 · 작업 노드는 세지 않는다) - 조건 막대 · 결과 없음
-  return { nodes: list, links: edges, docs: list.filter((n) => n.kind === 'doc').length, local };
+  return { nodes: list, links: edges, docs: list.filter((n) => n.kind === 'doc').length, local, base, order };
 }
 
-/** 노드 색 - 그룹 색이 먼저, 없으면 종류 색 */
-const fillOf = (n: ONode) => n.color ?? (n.kind === 'tag' ? C.tag : n.kind === 'task' ? C.attachment : C.node);
+/** 노드 색 - 그룹 색이 먼저, 없으면 종류 색(태그 · 작업), 그다음 카테고리 색 */
+const fillOf = (n: ONode) => n.color ?? (n.kind === 'tag' ? C.tag : n.kind === 'task' ? C.attachment : n.catColor ?? C.node);
 
 /** 올리거나 고른 노트의 이름 - 화면 폭 260px 안에서 줄을 나눠 다 쓴다(띄어쓰기에서 먼저 나눈다) */
 function wrapText(ctx: CanvasRenderingContext2D, text: string, max: number): string[] {
@@ -385,6 +459,19 @@ export default function WikiObsidian({ docs, allDocs, tasks, categories, activeI
   const lastFitKey = useRef('');
   const scopeKey = useMemo(() => docs.map((d) => d.id).sort().join(','), [docs]);
 
+  /**
+   * 줌 단계로 보기 - 그릴 때마다(onRenderFramePre) 노드마다 보이는 정도(0~1)와 숨은 아래 노드 수를 센다.
+   * all 이면 거르지 않는다(꺼짐 · 검색 · 로컬 그래프). 시뮬레이션은 모든 노드로 돌아 자리가 흔들리지 않는다
+   */
+  const vis = useRef<{ all: boolean; alpha: Map<string, number>; hidden: Map<string, number> }>({ all: true, alpha: new Map(), hidden: new Map() });
+  /** 판의 늘 보이는 깊이 · 얕은 순서 노드 */
+  const board = useRef<{ base: number; order: ONode[] }>({ base: 1, order: [] });
+  /** 화면에 맞췄을 때의 배율 - 아래 단계 문턱의 기준(맞추기 전에는 처음 배율) */
+  const fitK = useRef<number | null>(null);
+  /** 지금 배율 - 점선 · 화살표를 화면 크기로 맞춘다 */
+  const kRef = useRef(1);
+  const shown = (n: ONode) => vis.current.all || (vis.current.alpha.get(n.id) ?? 0) > 0.02;
+
   const radius = (n: ONode) => (2.2 + Math.sqrt(n.weight) * 2.4) * sRef.current.nodeSize;
   const redraw = useCallback(() => {
     const fg = fgRef.current;
@@ -419,8 +506,61 @@ export default function WikiObsidian({ docs, allDocs, tasks, categories, activeI
     fgRef.current = fg;
     /** 화면에 맞춘다 - 노트가 몇 개 안 되면 너무 크게 당겨지므로 2.4배에서 멈춘다 */
     const fit = () => {
-      fg.zoomToFit(500, 50);
-      window.setTimeout(() => { if (fgRef.current === fg && fg.zoom() > 2.4) fg.zoom(2.4, 250); }, 520);
+      // 줌 단계로 볼 때는 지금 보이는 위 노드에 맞춘다 - 위 노드가 화면을 채우고, 당기면 그 둘레에 아래 노드가 나타난다
+      fg.zoomToFit(500, 50, (n) => shown(n));
+      window.setTimeout(() => {
+        if (fgRef.current !== fg) return;
+        if (fg.zoom() > 2.4) fg.zoom(2.4, 250);
+        fitK.current = Math.min(fg.zoom(), 2.4);
+      }, 520);
+    };
+    /** 늘 보이게 둘 노드 - 지금 연 문서와 그 위 문서들, 고른 노트, 그리고 그 둘의 이웃 */
+    const forcedIds = () => {
+      const out = new Set<string>();
+      const roots = [activeRef.current, selRef.current].filter((id): id is string => !!id);
+      if (!roots.length) return out;
+      const byId = new Map(board.current.order.map((n) => [n.id, n]));
+      roots.forEach((id) => {
+        for (let cur = byId.get(id), g = 0; cur && g < 60; g += 1) { out.add(cur.id); cur = cur.parent ? byId.get(cur.parent) : undefined; }
+      });
+      fg.graphData().links.forEach((l) => {
+        const [a, b] = ends(l);
+        if (roots.includes(a)) out.add(b);
+        if (roots.includes(b)) out.add(a);
+      });
+      return out;
+    };
+    /**
+     * 노드마다 보이는 정도 - 늘 보이는 깊이까지는 1, 그 아래는 위 노드가 보여야 하고
+     * 배율이 (맞춘 배율 × 1.45^단계)를 넘으면 서서히 나타난다. 화면 가운데에 가까울수록 최대 35% 먼저 나타난다
+     */
+    const measure = (k: number) => {
+      const v = vis.current;
+      const st = sRef.current;
+      v.alpha.clear();
+      v.hidden.clear();
+      v.all = !st.semantic || !!st.search.trim() || st.local;
+      if (v.all) return;
+      if (fitK.current === null) fitK.current = k;
+      const kFit = fitK.current;
+      const w = el.clientWidth;
+      const h = el.clientHeight;
+      const R = Math.hypot(w, h) / 2 || 1;
+      const { base, order } = board.current;
+      const forced = forcedIds();
+      order.forEach((n) => {
+        let a: number;
+        if (n.depth <= base || forced.has(n.id)) a = 1;
+        else if (n.parent && (v.alpha.get(n.parent) ?? 1) < 0.5) a = 0;
+        else {
+          const p = fg.graph2ScreenCoords(n.x ?? 0, n.y ?? 0);
+          const near = 1 - clamp(Math.hypot(p.x - w / 2, p.y - h / 2) / R, 0, 1);
+          const t = kFit * 1.45 ** (n.depth - base);
+          a = clamp((k * (1 + 0.35 * near) - t) / (t * 0.3), 0, 1);
+        }
+        v.alpha.set(n.id, a);
+        if (a <= 0.02 && n.parent) v.hidden.set(n.parent, (v.hidden.get(n.parent) ?? 0) + 1);
+      });
     };
 
     fg.backgroundColor(C.bg)
@@ -431,10 +571,11 @@ export default function WikiObsidian({ docs, allDocs, tasks, categories, activeI
       // force-graph 가 화살표 · 누르는 자리를 원 반지름(√val)으로 잡으므로 그리는 원과 같게
       .nodeVal((n) => radius(n) ** 2)
       .nodeLabel(() => '')
-      .nodeVisibility((n) => n.created <= until.current)
+      .nodeVisibility((n) => n.created <= until.current && shown(n))
       .linkVisibility((l) => {
         const [a, b] = [l.source, l.target];
-        return typeof a !== 'object' || typeof b !== 'object' || (a.created <= until.current && b.created <= until.current);
+        return typeof a !== 'object' || typeof b !== 'object'
+          || (a.created <= until.current && b.created <= until.current && shown(a) && shown(b));
       })
       .nodeCanvasObjectMode(() => 'replace')
       .nodeCanvasObject((n, ctx, k) => {
@@ -443,7 +584,10 @@ export default function WikiObsidian({ docs, allDocs, tasks, categories, activeI
         const r = radius(n);
         const lit = !h.id || h.nodes.has(n.id);
         const fill = n.id === h.id ? C.focus : fillOf(n);
-        ctx.globalAlpha = lit ? 1 : 0.2;
+        const v = vis.current;
+        // 줌 단계로 막 나타나는 노드는 옅게 시작한다
+        const appear = v.all ? 1 : v.alpha.get(n.id) ?? 1;
+        ctx.globalAlpha = (lit ? 1 : 0.2) * appear;
         ctx.beginPath();
         ctx.arc(n.x ?? 0, n.y ?? 0, r, 0, Math.PI * 2);
         ctx.fillStyle = fill;
@@ -454,11 +598,30 @@ export default function WikiObsidian({ docs, allDocs, tasks, categories, activeI
           ctx.strokeStyle = C.accent;
           ctx.stroke();
         }
+        // 숨은 아래 노드가 있으면 점선 테두리와 '+N' - 당기면 나타난다
+        const hid = v.all ? 0 : v.hidden.get(n.id) ?? 0;
+        if (hid > 0 && appear > 0.5) {
+          ctx.globalAlpha = (lit ? 0.9 : 0.2) * appear;
+          ctx.setLineDash([2.5 / k, 2.5 / k]);
+          ctx.lineWidth = 1.2 / k;
+          ctx.strokeStyle = fill;
+          ctx.beginPath();
+          ctx.arc(n.x ?? 0, n.y ?? 0, r + 3 / k, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.font = `700 ${11 / k}px ${FONT}`;
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'bottom';
+          ctx.fillStyle = C.muted;
+          ctx.fillText(`+${hid}`, (n.x ?? 0) + r * 0.75 + 3 / k, (n.y ?? 0) - r * 0.75);
+        }
         // 텍스트 표시 시작점 - 이만큼 확대해야 이름이 나타난다(마우스를 올린 노트와 이웃은 늘).
+        // 줌 단계로 볼 때 늘 보이는 위 노드(카테고리 등)는 멀리서도 이름을 쓴다.
         // 글자는 화면에서 늘 13px(확대해도 커지지 않는다). 올리거나 고른 노트는 onRenderFramePost 가 맨 위에 쓴다
         const k0 = 1.3 * 2 ** -st.textFade;
-        let a = clamp((k - k0 * 0.75) / (k0 * 0.5), 0, 1);
+        let a = !v.all && n.depth <= board.current.base ? 1 : clamp((k - k0 * 0.75) / (k0 * 0.5), 0, 1);
         if (h.id) a = h.nodes.has(n.id) ? 1 : a * 0.2;
+        a *= appear;
         if (a > 0.02 && n.id !== h.id) {
           const fs = 13 / k;
           const name = n.name.length > 30 ? `${n.name.slice(0, 29)}…` : n.name;
@@ -472,32 +635,51 @@ export default function WikiObsidian({ docs, allDocs, tasks, categories, activeI
         ctx.globalAlpha = 1;
       })
       .nodePointerAreaPaint((n, color, ctx) => {
+        // 줌 단계로 숨었거나 막 나타나는 중(반 넘게 옅음)인 노드는 누르지 않는다
+        if (!vis.current.all && (vis.current.alpha.get(n.id) ?? 0) < 0.5) return;
         ctx.fillStyle = color;
         ctx.beginPath();
         ctx.arc(n.x ?? 0, n.y ?? 0, radius(n) + 2, 0, Math.PI * 2);
         ctx.fill();
       })
+      // 위아래 문서 잇기 = 카테고리 색 실선 + 위 → 아래 화살표, 문서 링크 = 회색 점선(화살표는 설정)
       .linkColor((l) => {
         const h = hover.current;
-        if (!h.id) return C.line;
-        return h.links.has(l) ? C.accent : C.lineFaint;
+        if (h.id) return h.links.has(l) ? C.accent : C.lineFaint;
+        if (l.kind === 'tree') {
+          const t = typeof l.target === 'object' ? l.target : null;
+          return t?.catColor ? alphaOf(t.color ?? t.catColor, 0.55) : C.line;
+        }
+        return l.kind === 'link' ? '#5e5e5e' : C.line;
       })
       .linkWidth((l) => sRef.current.linkThickness * (hover.current.links.has(l) ? 1.6 : 1))
-      .linkDirectionalArrowLength((l) => (sRef.current.arrows && l.kind === 'link' ? 3.6 * Math.max(0.6, sRef.current.linkThickness) : 0))
+      .linkLineDash((l) => (l.kind === 'link' ? [5 / kRef.current, 4 / kRef.current] : null))
+      .linkDirectionalArrowLength((l) => {
+        const st = sRef.current;
+        const on = (l.kind === 'link' && st.arrows) || (l.kind === 'tree' && st.hierarchy && st.treeArrows);
+        // 화면에서 7px 쯤(멀리서도 보이게) - 너무 멀거나 가까우면 선 길이에 맞춰 자른다
+        return on ? clamp(7 / kRef.current, 2, 14) * Math.max(0.6, Math.min(2, st.linkThickness)) : 0;
+      })
       .linkDirectionalArrowRelPos(1)
-      .linkDirectionalArrowColor((l) => (hover.current.links.has(l) ? C.accent : '#6b6b6b'))
+      .linkDirectionalArrowColor((l) => {
+        if (hover.current.links.has(l)) return C.accent;
+        const t = l.kind === 'tree' && typeof l.target === 'object' ? l.target : null;
+        return t?.catColor ? alphaOf(t.color ?? t.catColor, 0.85) : '#7a7a7a';
+      })
       .d3AlphaDecay(0.02)
       .d3VelocityDecay(0.35)
       .cooldownTime(12000)
       .minZoom(0.1)
       .maxZoom(12)
       .d3Force('center', centerRef.current)
+      // 그리기 전에 줌 단계(보이는 노드)를 센다 - 확대 · 이동 · 엔진이 돌 때마다
+      .onRenderFramePre((_ctx, k) => { kRef.current = k; measure(k); })
       // 올리거나 고른 노트의 이름 - 다른 이름 위에 16px 로, 줄을 나눠 다 쓴다(화면 밖으로 나가지 않게 좌우를 맞춘다)
       .onRenderFramePost((ctx, k) => {
         const h = hover.current;
         if (!h.id) return;
         const n = fg.graphData().nodes.find((m) => m.id === h.id);
-        if (!n || n.x === undefined || n.y === undefined || n.created > until.current) return;
+        if (!n || n.x === undefined || n.y === undefined || n.created > until.current || !shown(n)) return;
         const fs = 16 / k;
         ctx.font = `600 ${fs}px ${FONT}`;
         const lines = wrapText(ctx, n.name, 260 / k);
@@ -569,6 +751,7 @@ export default function WikiObsidian({ docs, allDocs, tasks, categories, activeI
     if (!fg) return;
     const prev = new Map(fg.graphData().nodes.map((n) => [n.id, n]));
     const data = build(docs, allById, tasks, sRef.current, localId, prev);
+    board.current = { base: data.base, order: data.order };
     fg.graphData({ nodes: data.nodes, links: data.links });
     setInfo({ docs: data.docs, local: data.local });
     // 고른 노트가 새 판에도 있으면 그대로 밝히고, 없으면 선택을 푼다
@@ -609,7 +792,7 @@ export default function WikiObsidian({ docs, allDocs, tasks, categories, activeI
   }, [s.repel, s.linkDistance, s.linkForce, s.center]);
 
   /* ── 표시 - 다시 그리기만 ── */
-  useEffect(() => { redraw(); }, [s.arrows, s.textFade, s.nodeSize, s.linkThickness, activeId, redraw]);
+  useEffect(() => { redraw(); }, [s.arrows, s.treeArrows, s.semantic, s.textFade, s.nodeSize, s.linkThickness, activeId, redraw]);
 
   /* ── 애니메이션 재생 - 만든 순서대로 노트가 나타난다(옵시디언의 타임랩스) ── */
   const animRef = useRef(0);
@@ -817,7 +1000,10 @@ export default function WikiObsidian({ docs, allDocs, tasks, categories, activeI
                 </div>
               </Section>
               <Section title="표시" open={s.open.display} onToggle={() => set('open', { ...s.open, display: !s.open.display })}>
-                <Switch label="화살표" checked={s.arrows} onChange={(v) => set('arrows', v)} hint="문서 링크의 방향" />
+                <Switch label="줌 단계로 보기" checked={s.semantic} onChange={(v) => set('semantic', v)}
+                  hint="멀리서는 위 문서만 보이고, 당기면 그 아래 문서가 나타납니다(+N 은 숨은 아래 문서 수)" />
+                <Switch label="위아래 화살표" checked={s.treeArrows} onChange={(v) => set('treeArrows', v)} hint="위 문서 → 아래 문서 방향(실선)" />
+                <Switch label="화살표" checked={s.arrows} onChange={(v) => set('arrows', v)} hint="문서 링크(점선)의 방향" />
                 <Slider label="텍스트 표시 시작점" value={s.textFade} min={-3} max={3} step={0.1} onChange={(v) => set('textFade', v)} />
                 <Slider label="노드 크기" value={s.nodeSize} min={0.1} max={5} step={0.05} onChange={(v) => set('nodeSize', v)} />
                 <Slider label="링크 두께" value={s.linkThickness} min={0.1} max={5} step={0.05} onChange={(v) => set('linkThickness', v)} />

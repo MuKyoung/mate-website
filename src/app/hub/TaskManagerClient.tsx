@@ -36,6 +36,11 @@ const Reports = dynamic(() => import('./Reports'), {
   loading: () => <div className="flex flex-1 items-center justify-center text-[15px] font-semibold text-tm-sub">불러오는 중…</div>,
 });
 /* 구글 드라이브 트리도 열 때만 받고, 그때 드라이브 목록 표를 읽는다 */
+/* 빌드 파일도 열 때만 받고, 그때 드라이브 목록 · 안내 · 댓글 표를 읽는다 */
+const Builds = dynamic(() => import('./Builds'), {
+  ssr: false,
+  loading: () => <div className="flex flex-1 items-center justify-center text-[15px] font-semibold text-tm-sub">불러오는 중…</div>,
+});
 const Drive = dynamic(() => import('./Drive'), {
   ssr: false,
   loading: () => <div className="flex flex-1 items-center justify-center text-[15px] font-semibold text-tm-sub">불러오는 중…</div>,
@@ -94,7 +99,7 @@ interface Account {
 }
 
 type View = 'board' | 'list' | 'timeline' | 'calendar' | 'roadmap';
-type Section = 'tasks' | 'org' | 'drive' | 'docs' | 'memos' | 'daily' | 'weekly' | 'blog';
+type Section = 'tasks' | 'org' | 'drive' | 'builds' | 'docs' | 'memos' | 'daily' | 'weekly' | 'blog';
 
 /** 보기 - hint 는 쪽 머리의 설명 줄에 나온다 */
 const VIEWS: { id: View; label: string; key: string; hint: string }[] = [
@@ -937,6 +942,8 @@ function Workspace({ account }: { account?: Account }) {
       items: [
         // 팀 구글 드라이브 트리 - 열 때 목록을 읽으므로 숫자를 달지 않는다
         { key: 'drive', label: '구글 드라이브', icon: 'drive', active: section === 'drive', go: () => setSection('drive') },
+        // 프로젝트별 드라이브 '빌드파일' 폴더의 파일 - 드라이브 목록에서 뽑는다
+        { key: 'builds', label: '빌드 파일', icon: 'build', active: section === 'builds', go: () => setSection('builds') },
         { key: 'docs', label: '팀 위키', icon: 'wiki', count: liveDocCount(docStore.docs),
           active: section === 'docs', go: () => setSection('docs') },
         // 나만 보는 메모 - 브라우저 저장 모드는 '나'를 바꿔 쓸 수 있어 쓴 사람으로 센다
@@ -1184,7 +1191,10 @@ function Workspace({ account }: { account?: Account }) {
           <div className="tm-page-inner mx-auto flex min-h-0 w-full max-w-[1560px] flex-1 flex-col min-[1800px]:max-w-[2200px]">
 
             {section === 'drive' ? (
-              <Drive me={me} />
+              /* 빈 새 폴더 지우기는 관리자만(드라이브 쪽 웹 앱도 다시 본다) */
+              <Drive me={me} admin={!!account && account.me.isAdmin === true} />
+            ) : section === 'builds' ? (
+              <Builds me={me} admin={!!account && account.me.isAdmin === true} />
             ) : section === 'org' ? (
               <Org me={me} tasks={store.tasks}
                 /* 소속 · 상위와 남의 카드는 관리자만(DB 도 그렇게 받는다). 브라우저 저장 모드는 계정이 없어 누구나 */

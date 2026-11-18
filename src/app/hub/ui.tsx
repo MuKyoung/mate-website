@@ -266,7 +266,7 @@ export function useMediaQuery(query: string): boolean {
 }
 
 /** 메뉴 아이콘 */
-export type NavIcon = 'board' | 'mine' | 'drive' | 'wiki' | 'memo' | 'home' | 'menu' | 'phone' | 'monitor' | 'sidebar' | 'filter' | 'mindmap' | 'daily' | 'weekly' | 'org' | 'blog' | 'sun' | 'moon';
+export type NavIcon = 'board' | 'mine' | 'drive' | 'build' | 'wiki' | 'memo' | 'home' | 'menu' | 'phone' | 'monitor' | 'sidebar' | 'filter' | 'mindmap' | 'daily' | 'weekly' | 'org' | 'blog' | 'sun' | 'moon';
 export function IconNav({ name, size = 20 }: { name: NavIcon; size?: number }) {
   const paths: Record<NavIcon, React.ReactNode> = {
     /* 모든 작업 - 보드의 칸 */
@@ -290,6 +290,13 @@ export function IconNav({ name, size = 20 }: { name: NavIcon; size?: number }) {
         <rect x="11" y="8.4" width="6.5" height="3.8" rx="1" />
         <rect x="11" y="13.8" width="6.5" height="3.8" rx="1" />
         <path d="M5.5 7.6v8.1H11M5.5 10.3H11" />
+      </>
+    ),
+    /* 빌드 파일 - 상자에 담긴 꾸러미 */
+    build: (
+      <>
+        <path d="M10 2.5 17 6v8l-7 3.5L3 14V6Z" />
+        <path d="M3 6l7 3.5L17 6M10 9.5v8" />
       </>
     ),
     /* 팀 위키 - 문서 */

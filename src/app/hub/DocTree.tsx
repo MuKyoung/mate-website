@@ -9,7 +9,7 @@ import { IconPlus } from './ui';
 /*
  * 문서 트리 - 왼쪽 목록. 줄을 끌어 놓으면 위 · 아래(같은 깊이에서 순서) 또는 가운데(그 문서 아래)로 옮긴다.
  * HTML5 끌기는 터치 기기에서 동작하지 않으므로 같은 일을 줄 메뉴(⋯) · 문서 메뉴의 '옮기기'로도 할 수 있다.
- * 키보드: ↑ ↓ 줄 이동 · → 펼치기 / 첫 하위 문서 · ← 접기 / 위 문서 · Home End · Enter 열기 · Shift+F10 줄 메뉴
+ * 키보드: ↑ ↓ 줄 이동 · → 펼치기 / 첫 하위 문서 · ← 접기 / 위 문서 · Home End · Enter 열기 · Delete 휴지통으로 · Shift+F10 줄 메뉴
  */
 
 export interface TreeNode extends Doc {
@@ -62,13 +62,15 @@ interface Props {
   watched?: ReadonlySet<string>;
   /** 줄 메뉴(⋯) 항목 - 없으면 메뉴 단추를 두지 않는다 */
   menuFor?(node: TreeNode): MenuEntry[];
+  /** Delete 키 - 줄 메뉴의 '휴지통으로 옮기기'와 같은 일 */
+  onDelete?(id: string): void;
   /** 문서를 연 뒤(서랍을 닫는 등) */
   onAfterSelect?(): void;
   /** 맨 위 문서(팀 위키 자체)의 이름 - 트리의 맨 위 줄들은 모두 이 문서 바로 아래다 */
   topTitle?: string;
 }
 
-export default function DocTree({ roots, activeId, openSet, onToggle, onSelect, onAddChild, onDrop, onBlockedDrop, canDrag, watched, menuFor, onAfterSelect, topTitle }: Props) {
+export default function DocTree({ roots, activeId, openSet, onToggle, onSelect, onAddChild, onDrop, onBlockedDrop, canDrag, watched, menuFor, onDelete, onAfterSelect, topTitle }: Props) {
   const [drag, setDrag] = useState<string | null>(null);
   const [over, setOver] = useState<{ id: string | null; zone: DropZone } | null>(null);
   /* 끄는 문서와 그 아래 문서 - 그 위로는 놓을 수 없다 */
@@ -204,6 +206,7 @@ export default function DocTree({ roots, activeId, openSet, onToggle, onSelect, 
       if (hasKids && expanded) onToggle(id);
       else focusRow(cur.parentElement?.closest<HTMLElement>('[role="treeitem"]'));
     } else if (e.key === 'Enter' || e.key === ' ') { stop(); open(id); }
+    else if (e.key === 'Delete' && onDelete) { stop(); onDelete(id); }
     else if ((e.key === 'F10' && e.shiftKey) || e.key === 'ContextMenu') {
       stop();
       openMenu(id, cur.querySelector<HTMLElement>('[data-row-menu]') ?? cur);

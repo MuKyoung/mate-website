@@ -19,7 +19,7 @@ import {
   type MenuEntry,
 } from './DocPanels';
 import {
-  Avatar, IconNav, IconPlus, IconSearch, Modal, PageHead,
+  Avatar, IconNav, IconPlus, IconSearch, Modal, PageHead, useConfirm,
   tmBtn, tmBtnPrimary, tmCallout, tmEditBtn, tmFieldBase, tmGhostBtn, tmIconBtn, tmInput, tmTab, tmTextBtn,
 } from './ui';
 
@@ -132,6 +132,7 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
     try { window.localStorage.setItem(viewKey, v); } catch { /* noop */ }
   };
   const [askDelete, deleteNode] = useDeleteConfirm();
+  const [confirmTrash, confirmTrashNode] = useConfirm();
 
   const [starred, setStarred] = useStoredList(`mate.taskmanager.docs.stars.v1:${me}`);
   const [recent, setRecent, recentLoaded] = useStoredList(`mate.taskmanager.docs.recent.v1:${me}`, 15);
@@ -885,7 +886,29 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
     { label: starred.includes(d.id) ? '즐겨찾기에서 빼기' : '즐겨찾기에 넣기', onSelect: () => toggleStar(d.id) },
     { label: '사본 만들기', onSelect: () => duplicate(d), sep: true },
     { label: '옮기기', onSelect: () => { setMoveId(d.id); setDialog('move'); } },
+    ...(hidden.has(d.id) ? [] : [{ label: '휴지통으로 옮기기', onSelect: () => void trashFromTree(d), danger: true, sep: true, hint: 'Delete' }]),
   ];
+  /**
+   * 트리에서 휴지통으로 - 문서를 열지 않고 지운다. 하위 문서가 함께 숨으므로 그때만 한 번 묻고,
+   * 하나뿐이면 바로 옮긴다(휴지통에서 되살릴 수 있다)
+   */
+  const trashFromTree = async (d: Doc) => {
+    if (isWikiHome(d.id)) { homeBlocked('지울'); return; }
+    const below = new Set<string>([d.id]);
+    let grew = true;
+    while (grew) {
+      grew = false;
+      for (const x of live) if (x.parentId && below.has(x.parentId) && !below.has(x.id)) { below.add(x.id); grew = true; }
+    }
+    const n = below.size - 1;
+    if (n > 0 && !(await confirmTrash({
+      title: '휴지통으로 옮길까요?',
+      body: <><b>{titleOf(d)}</b> 문서와 그 아래 문서 {n}건이 함께 휴지통으로 갑니다. 휴지통에서 되살릴 수 있습니다.</>,
+      ok: '휴지통으로',
+      tone: 'danger',
+    }))) return;
+    await trashDoc(d);
+  };
   /**
    * 트리 맨 위 줄(맨 위 문서)의 메뉴 - 문서 머리 메뉴의 같은 동작을 쓴다. 지금 연 문서가 아니어도 되는 것만 두고,
    * 옮기기 · 지우기는 숨기지 않고 누르면 까닭을 알린다
@@ -985,7 +1008,8 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
               })()}
               <DocTree roots={tree} activeId={activeId} openSet={openSet} onToggle={toggleOpen} onSelect={select}
                 onAfterSelect={inDrawer ? () => closeDrawer() : undefined} topTitle={homeTitle}
-                onAddChild={(id) => setCreatingUnder(id)} onDrop={onDrop} onBlockedDrop={onBlockedDrop} canDrag={!inDrawer} watched={watched} menuFor={rowMenu} />
+                onAddChild={(id) => setCreatingUnder(id)} onDrop={onDrop} onBlockedDrop={onBlockedDrop} canDrag={!inDrawer} watched={watched} menuFor={rowMenu}
+                onDelete={(id) => { const d = byId.get(id); if (d) void trashFromTree(d); }} />
             </>
           )}
         </nav>
@@ -1540,6 +1564,7 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
         </CommentPanel>
       )}
       {deleteNode}
+      {confirmTrashNode}
     </>
   );
 }

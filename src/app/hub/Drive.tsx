@@ -2,11 +2,15 @@
 
 import { Fragment, useCallback, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
-  DRIVE_ACCOUNT, DRIVE_FOLDER, DRIVE_SYNC_MINUTES, KIND_LABEL,
-  ancestorsOf, buildDriveTree, diffSnapshots, driveUrl, kindOf, loadDrive, loadDriveStamp, previewUrl, requestDriveCheck,
+  DRIVE_ACCOUNT, DRIVE_FOLDER, DRIVE_SYNC_MINUTES, ISSUE_TEXT, KIND_LABEL, NEW_FOLDER_DAYS,
+  ancestorsOf, buildDriveTree, canTrashFolder, diffSnapshots, driveUrl, folderIssues, isNewFolder, kindOf, loadDrive, loadDriveStamp,
+  previewUrl, requestDriveCheck, requestDriveTrash,
   type DriveKind, type DriveLoad, type DriveNode, type DriveSnapshot, type DriveTree,
 } from './driveTree';
-import { IconClose, IconPlus, IconSearch, PageHead, tmFieldBase, tmGhostBtn, tmIconBtn, tmIconBtnSm, useMediaQuery } from './ui';
+import { loadReviews, setReviewed } from './driveNotes';
+import {
+  IconClose, IconPlus, IconSearch, PageHead, tmBtnDanger, tmFieldBase, tmGhostBtn, tmIconBtn, tmIconBtnSm, useConfirm, useMediaQuery,
+} from './ui';
 
 /*
  * 구글 드라이브 - 팀 구글 드라이브의 폴더 · 파일을 왼쪽에서 오른쪽으로 뻗는 트리로 그린다.
@@ -301,12 +305,14 @@ function FilePreview({ node }: { node: DriveNode }) {
 }
 
 /** 고른 노드 - 위 폴더 길, 이름 · 수, 드라이브에서 열기, 그리고 폴더면 안의 목록 · 파일이면 미리보기 */
-function DrivePanel({ tree, node, onPick, onClose }: {
+function DrivePanel({ tree, node, onPick, onClose, extra }: {
   tree: DriveTree;
   node: DriveNode;
   onPick(n: DriveNode): void;
   /** 좁은 화면의 아래 칸만 - 닫기 단추 */
   onClose?: () => void;
+  /** 머리 아래에 끼우는 것 - 새 폴더 점검 */
+  extra?: React.ReactNode;
 }) {
   const kind = kindOf(node.item.mime, node.item.name);
   const folder = kind === 'folder';
@@ -347,6 +353,7 @@ function DrivePanel({ tree, node, onPick, onClose }: {
           className={`${tmGhostBtn} mt-3 hover:border-tm-blue hover:bg-tm-tint`}>
           드라이브에서 열기 <IconOpen />
         </a>
+        {extra}
       </div>
       {folder ? (
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-2.5">
@@ -369,6 +376,119 @@ function DrivePanel({ tree, node, onPick, onClose }: {
       ) : (
         <FilePreview key={node.item.id} node={node} />
       )}
+    </div>
+  );
+}
+
+const chipWarn = 'inline-flex items-center rounded-full border border-tm-warn/50 bg-tm-warn-tint px-2 py-[1px] text-[12px] font-bold text-tm-warn-deep';
+
+/** 새 폴더 점검 - 옆 칸 머리 아래. 문제 · 고칠 방법, 확인함(팀이 함께 본다), 빈 폴더면 관리자가 휴지통으로 */
+function FolderCheck({ n, issues, done, reviewsOn, canTrash, onReview, onTrash, onBack }: {
+  n: DriveNode;
+  issues: ReturnType<typeof folderIssues>;
+  done: boolean;
+  reviewsOn: boolean;
+  canTrash: boolean;
+  onReview(on: boolean): void;
+  onTrash(): void;
+  onBack?: () => void;
+}) {
+  return (
+    <section aria-label="새 폴더 점검" className={`mt-3 rounded-tm-sm border px-3.5 py-3 ${issues.length && !done ? 'border-tm-warn/50 bg-tm-warn-tint/60' : 'border-tm-line bg-tm-bg'}`}>
+      <p className="text-[13px] font-bold text-tm-ink">
+        새 폴더 · {dayText(n.item.created ?? null)}에 만듦{done ? ' · 확인함' : ''}
+      </p>
+      {issues.length ? (
+        <ul className="mt-1.5 space-y-1">
+          {issues.map((i) => (
+            <li key={i} className="text-[12.5px] leading-[1.6] text-tm-ink">
+              <span className={`${chipWarn} mr-1.5`}>{ISSUE_TEXT[i].label}</span>{ISSUE_TEXT[i].tip}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-1 text-[12.5px] leading-[1.6] text-tm-sub">이름 · 위치에 걸리는 것이 없습니다. 맞게 만든 폴더면 확인함으로 넘겨 주세요.</p>
+      )}
+      <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+        {reviewsOn && (
+          <button type="button" onClick={() => onReview(!done)} className={tmGhostBtn} aria-pressed={done}
+            title={done ? '새 폴더 목록에 다시 올립니다' : '팀 모두의 새 폴더 목록에서 뺍니다'}>
+            {done ? '확인 취소' : '확인함'}
+          </button>
+        )}
+        {canTrash && (
+          <button type="button" onClick={onTrash} className={tmBtnDanger}
+            title="빈 새 폴더만 Hub 에서 지울 수 있습니다(관리자). 구글 드라이브 휴지통으로 갑니다">
+            휴지통으로
+          </button>
+        )}
+        {onBack && (
+          <button type="button" onClick={onBack} className="ml-auto text-[12.5px] font-semibold text-tm-blue hover:underline">
+            새 폴더 목록
+          </button>
+        )}
+      </div>
+    </section>
+  );
+}
+
+/** 옆 칸의 새 폴더 목록 - 만든 순(새것 위). 누르면 그 폴더, '확인함'은 바로 넘긴다 */
+function NewFolderList({ list, now, reviewsOn, hasCreated, onPick, onReview, onClose }: {
+  list: DriveNode[];
+  now: number;
+  reviewsOn: boolean;
+  hasCreated: boolean;
+  onPick(n: DriveNode): void;
+  onReview(n: DriveNode): void;
+  onClose(): void;
+}) {
+  const flagged = list.filter((n) => folderIssues(n).length).length;
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="flex flex-none items-start gap-2 border-b border-tm-line px-5 pb-3.5 pt-4 max-[720px]:px-4">
+        <div className="min-w-0 flex-1">
+          <h2 className="text-[18px] font-extrabold leading-[1.4] text-tm-deep">새 폴더 {num(list.length)}</h2>
+          <p className="mt-1 text-[13px] leading-[1.6] text-tm-sub">
+            {!hasCreated
+              ? '드라이브 쪽 스크립트가 아직 만든 시각을 보내지 않습니다. 새 판을 올리면 여기에 모입니다.'
+              : `만든 지 ${NEW_FOLDER_DAYS}일 안 된 폴더 중 아무도 확인하지 않은 것입니다.${flagged ? ` 점검에 걸린 것 ${num(flagged)}개.` : ''} 맞게 만든 폴더는 확인함, 잘못 만든 빈 폴더는 지웁니다.`}
+          </p>
+        </div>
+        <button type="button" onClick={onClose} aria-label="새 폴더 목록 닫기" title="닫기" className={`${tmIconBtnSm} -mr-1.5 -mt-1`}>
+          <IconClose />
+        </button>
+      </div>
+      <ul className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-2.5">
+        {hasCreated && list.length === 0 && (
+          <li className="px-2 py-8 text-center text-[14px] text-tm-sub">확인할 새 폴더가 없습니다</li>
+        )}
+        {list.map((n) => {
+          const issues = folderIssues(n);
+          const days = Math.floor((now - (Date.parse(n.item.created ?? '') || now)) / 86_400_000);
+          return (
+            <li key={n.item.id} className="flex items-start gap-1 rounded-md px-1 py-1 hover:bg-tm-tint">
+              <button type="button" onClick={() => onPick(n)} className="flex min-w-0 flex-1 items-start gap-2.5 rounded-md px-1.5 py-1 text-left">
+                <span className="mt-[2px] text-tm-blue"><KindIcon kind="folder" /></span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[14.5px] font-semibold text-tm-ink">{n.item.name}</span>
+                  <span className="block truncate text-[12.5px] text-tm-sub">{pathOf(n) || '팀 드라이브 바로 아래'} · {days ? `${days}일 전` : '오늘'}</span>
+                  {issues.length > 0 && (
+                    <span className="mt-1 flex flex-wrap gap-1">
+                      {issues.map((i) => <span key={i} className={chipWarn}>{ISSUE_TEXT[i].label}</span>)}
+                    </span>
+                  )}
+                </span>
+              </button>
+              {reviewsOn && (
+                <button type="button" onClick={() => onReview(n)} title="팀 모두의 새 폴더 목록에서 뺍니다"
+                  className="mt-1 flex-none rounded-md px-2 py-1 text-[12.5px] font-semibold text-tm-blue hover:bg-tm-card">
+                  확인함
+                </button>
+              )}
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }
@@ -453,7 +573,7 @@ const NOTICE_TONE = {
 
 /* ── 화면 ───────────────────────────────────────── */
 
-export default function Drive({ me }: { me: string }) {
+export default function Drive({ me, admin = false }: { me: string; admin?: boolean }) {
   /** null - 처음 읽는 중 */
   const [load, setLoad] = useState<DriveLoad | null>(null);
   const [busy, setBusy] = useState(false);
@@ -627,13 +747,21 @@ export default function Drive({ me }: { me: string }) {
       ) : tree && tree.all.length === 0 ? (
         <div className={messageCard}><p className="text-[15px] font-semibold text-tm-sub">드라이브가 비어 있습니다</p></div>
       ) : tree ? (
-        <DriveMap tree={tree} me={me} />
+        <DriveMap tree={tree} me={me} admin={admin} refreshUrl={snap?.refreshUrl ?? null} onChanged={() => void reload(true)} />
       ) : null}
     </>
   );
 }
 
-function DriveMap({ tree, me }: { tree: DriveTree; me: string }) {
+function DriveMap({ tree, me, admin, refreshUrl, onChanged }: {
+  tree: DriveTree;
+  me: string;
+  admin: boolean;
+  /** 드라이브 쪽 웹 앱 - 있어야 빈 새 폴더를 휴지통으로 보낼 수 있다 */
+  refreshUrl: string | null;
+  /** 드라이브를 바꾼 뒤(휴지통) - 목록을 다시 읽는다 */
+  onChanged(): void;
+}) {
   const narrow = useMediaQuery('(max-width: 720px)');
   const coarse = useMediaQuery('(pointer: coarse)');
   const reduced = useMediaQuery('(prefers-reduced-motion: reduce)');
@@ -918,6 +1046,103 @@ function DriveMap({ tree, me }: { tree: DriveTree; me: string }) {
   const shown = results.slice(0, 50);
   const selected = tree.byId.get(selectedId) ?? tree.root;
 
+  /* ── 새 폴더 점검 - 만든 지 7일 안 된 폴더 중 아직 아무도 '확인함'으로 넘기지 않은 것 ── */
+  const now = useNow(60_000);
+  /** null - 읽는 중 · 표 없음(SQL 반영 전)이면 확인함 단추를 숨긴다 */
+  const [reviews, setReviews] = useState<Set<string> | null>(null);
+  const [reviewsOn, setReviewsOn] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    void loadReviews().then((r) => {
+      if (!alive) return;
+      setReviewsOn(r.kind === 'ok');
+      setReviews(r.kind === 'ok' ? r.value : new Set());
+    });
+    return () => { alive = false; };
+  }, []);
+  const hasCreated = useMemo(() => tree.all.some((n) => !!n.item.created), [tree]);
+  const newFolders = useMemo(() => tree.all
+    .filter((n) => isNewFolder(n, now) && !reviews?.has(n.item.id))
+    .sort((a, b) => (b.item.created ?? '').localeCompare(a.item.created ?? '')), [tree, now, reviews]);
+  const newSet = useMemo(() => new Set(newFolders.map((n) => n.item.id)), [newFolders]);
+  /** 옆 칸에 새 폴더 목록을 띄웠나 */
+  const [checkList, setCheckList] = useState(false);
+  const [askTrash, trashNode] = useConfirm();
+  const [checkMsg, setCheckMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  useEffect(() => {
+    if (!checkMsg) return;
+    const id = window.setTimeout(() => setCheckMsg(null), checkMsg.ok ? 6000 : 9000);
+    return () => window.clearTimeout(id);
+  }, [checkMsg]);
+
+  const markReviewed = async (n: DriveNode, on: boolean) => {
+    setReviews((s) => {
+      const next = new Set(s ?? []);
+      if (on) next.add(n.item.id); else next.delete(n.item.id);
+      return next;
+    });
+    const ok = await setReviewed(n.item.id, on);
+    if (!ok) {
+      setReviews((s) => {
+        const next = new Set(s ?? []);
+        if (on) next.delete(n.item.id); else next.add(n.item.id);
+        return next;
+      });
+      setCheckMsg({ ok: false, text: '저장하지 못했습니다. 잠시 뒤 다시 해 주세요' });
+    }
+  };
+  const trashFolder = async (n: DriveNode) => {
+    if (!refreshUrl) return;
+    const yes = await askTrash({
+      title: '이 폴더를 휴지통으로 보낼까요?',
+      body: <><b>{n.item.name}</b> 폴더는 비어 있습니다. 구글 드라이브 휴지통으로 가고, 30일 안에는 드라이브에서 되살릴 수 있습니다.</>,
+      ok: '휴지통으로',
+      tone: 'danger',
+    });
+    if (!yes) return;
+    setCheckMsg({ ok: true, text: `'${n.item.name}' 폴더를 휴지통으로 보내는 중…` });
+    const r = await requestDriveTrash(refreshUrl, n.item.id);
+    if (r.ok) {
+      setCheckMsg({ ok: true, text: `'${n.item.name}' 폴더를 휴지통으로 보냈습니다. 목록이 곧 바뀝니다` });
+      setSelectedId(n.parent?.item.id ?? tree.root.item.id);
+      // 다음 새 폴더를 이어서 보게 목록으로 돌아간다
+      setCheckList(true);
+      onChanged();
+      return;
+    }
+    setCheckMsg({
+      ok: false,
+      text: r.reason === 'not-admin' ? '관리자만 폴더를 지울 수 있습니다'
+        : r.reason === 'not-empty' ? '그사이 폴더에 무엇이 들어왔습니다. 지우지 않았습니다'
+          : r.reason === 'too-old' ? `만든 지 ${NEW_FOLDER_DAYS}일이 지난 폴더는 Hub 에서 지우지 않습니다. 드라이브에서 지워 주세요`
+            : r.reason === 'busy' ? '드라이브 쪽이 다른 일을 하는 중입니다. 잠시 뒤 다시 해 주세요'
+              : r.reason === 'old-script' ? '드라이브 쪽 스크립트가 예전 판이라 지우지 못했습니다. 관리자에게 새 판 설치를 부탁하세요'
+                : '구글 드라이브에 닿지 못했습니다. 잠시 뒤 다시 해 주세요',
+    });
+  };
+  const openCheckList = () => {
+    setCheckList((v) => (wide ? !v : true));
+    if (!wide) setSheet(true);
+  };
+  /** 옆 칸 머리 아래 - 새 폴더면 점검 결과 · 확인함 · 휴지통 */
+  const checkBox = (n: DriveNode) => {
+    if (!isNewFolder(n, now)) return null;
+    const issues = folderIssues(n);
+    const done = reviews?.has(n.item.id) ?? false;
+    return (
+      <FolderCheck n={n} issues={issues} done={done} reviewsOn={reviewsOn}
+        canTrash={admin && !!refreshUrl && canTrashFolder(n, now)}
+        onReview={(on) => void markReviewed(n, on)} onTrash={() => void trashFolder(n)}
+        onBack={newFolders.length ? () => setCheckList(true) : undefined} />
+    );
+  };
+  const panelBody = (onClose?: () => void) => checkList ? (
+    <NewFolderList list={newFolders} now={now} reviewsOn={reviewsOn} hasCreated={hasCreated}
+      onPick={(n) => { setCheckList(false); pick(n); }} onReview={(n) => void markReviewed(n, true)} onClose={onClose ?? (() => setCheckList(false))} />
+  ) : (
+    <DrivePanel tree={tree} node={selected} onPick={pick} onClose={onClose} extra={checkBox(selected)} />
+  );
+
   return (
     <div ref={cardRef} className="tm-fill flex min-h-0 flex-1 flex-col overflow-hidden rounded-tm border border-tm-line bg-tm-card shadow-tm">
       {/* ── 막대: 찾기 · 단계 · 파일 · 크기 ── */}
@@ -992,6 +1217,22 @@ function DriveMap({ tree, me }: { tree: DriveTree; me: string }) {
           title={`폴더 안의 파일도 그립니다. 한 폴더에 ${FILE_CAP}개까지 그리고 나머지는 드라이브에서 봅니다`}>
           파일도 보기
         </button>
+        <button type="button" aria-pressed={checkList} onClick={openCheckList} className={seg}
+          title={hasCreated
+            ? `만든 지 ${NEW_FOLDER_DAYS}일 안 된 폴더 중 아직 아무도 확인하지 않은 것 - 이름 · 위치 · 빈 폴더를 점검합니다`
+            : '드라이브 쪽 스크립트를 새 판으로 올리면 새로 만든 폴더를 모아 보여 줍니다'}>
+          새 폴더
+          {newFolders.length > 0 && (
+            <span className="ml-1.5 inline-grid min-w-[20px] place-items-center rounded-full border border-tm-warn/50 bg-tm-warn-tint px-1.5 text-[11.5px] font-bold tabular-nums text-tm-warn-deep">
+              {num(newFolders.length)}
+            </span>
+          )}
+        </button>
+        {checkMsg && (
+          <p role="status" className={`rounded-tm-sm border px-2.5 py-1 text-[12.5px] font-semibold ${checkMsg.ok ? NOTICE_TONE.ok : NOTICE_TONE.err}`}>
+            {checkMsg.text}
+          </p>
+        )}
 
         <div role="group" aria-label="크기" className="ml-auto flex items-center gap-1">
           <button type="button" onClick={() => zoomTo(zoom - 0.1)} disabled={zoom <= ZOOM_MIN} aria-label="작게 보기" title="작게 (Ctrl+휠)" className={tmIconBtn}>
@@ -1099,6 +1340,11 @@ function DriveMap({ tree, me }: { tree: DriveTree; me: string }) {
                       {isOpen ? <IconMinus size={12} /> : num(hidden)}
                     </button>
                   )}
+                  {newSet.has(n.item.id) && (
+                    <span aria-hidden title="새 폴더 - 아직 아무도 확인하지 않았습니다"
+                      className={`pointer-events-none absolute -right-1 -top-1 h-3 w-3 rounded-full border-2 border-tm-bg ${
+                        folderIssues(n).length ? 'bg-tm-warn' : 'bg-tm-blue'}`} />
+                  )}
                 </div>
               );
             })}
@@ -1107,16 +1353,17 @@ function DriveMap({ tree, me }: { tree: DriveTree; me: string }) {
       </div>
       {wide ? (
         <aside aria-label="미리보기" className="flex w-[380px] flex-none flex-col border-l border-tm-line bg-tm-card min-[1600px]:w-[440px]">
-          <DrivePanel tree={tree} node={selected} onPick={pick} />
+          {panelBody()}
         </aside>
       ) : sheet && (
         <aside aria-label="미리보기" onKeyDown={(e) => { if (e.key === 'Escape') setSheet(false); }}
           className="absolute inset-x-0 bottom-0 z-20 flex h-[58%] flex-col overflow-hidden rounded-t-[18px] border-t border-tm-line bg-tm-card
                      shadow-tm-pop animate-tm-rise max-[720px]:h-[78%]">
-          <DrivePanel tree={tree} node={selected} onPick={pick} onClose={() => setSheet(false)} />
+          {panelBody(() => { setSheet(false); setCheckList(false); })}
         </aside>
       )}
       </div>
+      {trashNode}
 
       {/* ── 아래 줄: 수 · 여는 계정 ── */}
       <div className="flex flex-none flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-tm-line px-4 py-2.5 text-[13px] leading-[1.6]

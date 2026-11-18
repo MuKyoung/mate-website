@@ -22,6 +22,10 @@ export interface DriveItem {
   mime: string;
   url: string;
   modified: string | null;
+  /** 만든 시각 - 2026-11-18 스크립트부터 보낸다. 없으면(예전 목록) 새 폴더 점검에서 빠진다 */
+  created?: string | null;
+  /** 바이트 - 구글 문서 · 폴더는 없다 */
+  size?: number | null;
 }
 
 export interface DriveSnapshot {
@@ -67,6 +71,8 @@ function cleanItems(raw: unknown): DriveItem[] {
       mime: str(o.mime),
       url: str(o.url),
       modified: str(o.modified) || null,
+      created: str(o.created) || null,
+      size: typeof o.size === 'number' && o.size >= 0 ? o.size : typeof o.size === 'string' && /^\d+$/.test(o.size) ? Number(o.size) : null,
     });
   }
   return out;
@@ -305,4 +311,141 @@ export function kindOf(mime: string, name = ''): DriveKind {
   if (/zip|gzip|x-rar|x-7z|x-tar/.test(m)) return 'archive';
   if (/fbx|^model\//.test(m) || /\.(fbx|obj|glb|gltf|blend|max|ma|mb)$/i.test(name)) return 'model';
   return 'file';
+}
+
+/* ── 새 폴더 점검 ───────────────────────────────────── */
+
+/** '새 폴더'로 보는 기간(일) - 만든 지 이만큼 안 된 폴더 */
+export const NEW_FOLDER_DAYS = 7;
+const DAY_MS = 86_400_000;
+
+export type FolderIssue = 'empty' | 'default-name' | 'vague-name' | 'duplicate' | 'numbering' | 'top-level';
+
+export const ISSUE_TEXT: Record<FolderIssue, { label: string; tip: string }> = {
+  'empty': { label: '비어 있음', tip: '안에 아무것도 없습니다. 쓸 일이 정해지지 않았으면 지우고, 쓸 때 만드세요' },
+  'default-name': { label: '기본 이름', tip: "'새 폴더' 같은 기본 이름입니다. 무엇을 담는지 알 수 있는 이름으로 바꿔 주세요" },
+  'vague-name': { label: '뜻 없는 이름', tip: "'임시' · '기타' · '자료'처럼 무엇을 담는지 알 수 없는 이름입니다" },
+  'duplicate': { label: '같은 이름', tip: '같은 위치에 이름이 같은 폴더가 있습니다. 하나로 합쳐 주세요' },
+  'numbering': { label: '번호 규칙', tip: "옆 폴더들은 'NN. 이름'처럼 번호로 시작합니다. 같은 규칙을 따라 주세요" },
+  'top-level': { label: '맨 위에 만듦', tip: '드라이브 맨 위에 만든 폴더입니다. 맞는 상위 폴더 아래로 옮겨 주세요' },
+};
+
+const DEFAULT_NAME = /^(새 폴더|제목 없는 폴더|이름 없는 폴더|untitled folder|new folder|untitled)(\s*\(\d+\))?$/i;
+const VAGUE_NAME = /^(임시|임시 폴더|temp|tmp|기타|misc|etc|자료|모음|정리|백업|backup|test|asdf|qwer|[ㄱ-ㅎ]+|\d+|.)$/i;
+const NUMBERED = /^\d{1,3}\.\s/;
+const bare = (s: string) => s.normalize('NFC').trim().toLowerCase();
+
+export function isNewFolder(n: DriveNode, now: number): boolean {
+  if (n.item.mime !== DRIVE_FOLDER || !n.parent) return false;
+  const t = n.item.created ? Date.parse(n.item.created) : NaN;
+  return Number.isFinite(t) && now - t < NEW_FOLDER_DAYS * DAY_MS;
+}
+
+export function folderIssues(n: DriveNode): FolderIssue[] {
+  const out: FolderIssue[] = [];
+  const name = n.item.name.normalize('NFC').trim();
+  const p = n.parent;
+  if (n.folders.length + n.files.length === 0) out.push('empty');
+  if (DEFAULT_NAME.test(name)) out.push('default-name');
+  else if (VAGUE_NAME.test(name.replace(NUMBERED, ''))) out.push('vague-name');
+  if (p) {
+    const others = p.folders.filter((x) => x !== n);
+    if (others.some((x) => bare(x.item.name) === bare(name))) out.push('duplicate');
+    const numbered = others.filter((x) => NUMBERED.test(x.item.name)).length;
+    if (others.length >= 2 && numbered * 2 >= others.length && !NUMBERED.test(name)) out.push('numbering');
+    if (!p.parent) out.push('top-level');
+  }
+  return out;
+}
+
+/** 빈 새 폴더만 Hub 에서 휴지통으로 보낼 수 있다(관리자 · 드라이브 쪽 웹 앱이 한 번 더 본다) */
+export const canTrashFolder = (n: DriveNode, now: number) => isNewFolder(n, now) && n.folders.length + n.files.length === 0;
+
+export type DriveTrash =
+  | { ok: true }
+  | { ok: false; reason: 'not-admin' | 'not-empty' | 'too-old' | 'not-folder' | 'busy' | 'unreachable' | 'old-script' | 'failed'; message?: string };
+
+/** 빈 새 폴더를 드라이브 휴지통으로(30일 안에 드라이브에서 되살릴 수 있다) - 드라이브 쪽 웹 앱이 관리자인지 · 비었는지 · 새것인지 다시 본다 */
+export async function requestDriveTrash(url: string, id: string): Promise<DriveTrash> {
+  if (!isRemote || !WEBAPP_RE.test(url)) return { ok: false, reason: 'failed' };
+  const { data } = await sb().auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) return { ok: false, reason: 'not-admin' };
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ token, action: 'trash-folder', id }),
+      signal: AbortSignal.timeout(60_000),
+    });
+  } catch {
+    return { ok: false, reason: 'unreachable' };
+  }
+  try {
+    const j = (await res.json()) as { ok?: unknown; error?: unknown; count?: unknown; skipped?: unknown };
+    if (j.ok === true) {
+      // 예전 판 스크립트는 action 을 모르고 '드라이브 확인'으로 답한다 - 지운 것이 아니다
+      return 'count' in j || 'skipped' in j ? { ok: false, reason: 'old-script' } : { ok: true };
+    }
+    const e = typeof j.error === 'string' ? j.error : '';
+    if (e === 'not-admin' || e === 'not-member') return { ok: false, reason: 'not-admin' };
+    if (e === 'not-empty' || e === 'too-old' || e === 'not-folder' || e === 'busy') return { ok: false, reason: e };
+    return { ok: false, reason: 'failed', message: e || undefined };
+  } catch {
+    return { ok: false, reason: 'unreachable' };
+  }
+}
+
+/* ── 빌드 파일 ─────────────────────────────────────── */
+
+/** 프로젝트마다 둔 빌드 폴더 - 이름이 '빌드파일' · '빌드 파일'(앞 번호는 상관없음) */
+const BUILD_FOLDER = /^(\d{1,3}\.\s*)?빌드\s*파일$/;
+/** 이 이름이 들어간 폴더 아래는 지난 것으로 보고 빌드 목록에 넣지 않는다 */
+const ARCHIVE = /보관/;
+/** 'NN. ' 번호를 뗀 이름 */
+export const plainName = (s: string) => s.replace(NUMBERED, '').trim();
+
+export interface BuildFile {
+  node: DriveNode;
+  /** 빌드 폴더의 위 폴더 = 프로젝트 */
+  project: DriveNode;
+  buildFolder: DriveNode;
+  /** 빌드 폴더에서 파일까지의 폴더(빌드 폴더 · 파일은 빼고) - 예: 기능 개발 테스트용 › 퍼즐 테스트 */
+  trail: DriveNode[];
+  /** 언제 올라왔나 - 만든 시각, 없으면 수정 시각 */
+  at: number;
+}
+
+export function buildFilesOf(tree: DriveTree): BuildFile[] {
+  const out: BuildFile[] = [];
+  for (const n of tree.all) {
+    if (n.item.mime !== DRIVE_FOLDER || !BUILD_FOLDER.test(n.item.name.normalize('NFC').trim()) || !n.parent || !n.parent.parent) continue;
+    if (ancestorsOf(n).some((a) => ARCHIVE.test(a.item.name))) continue;
+    const walk = (f: DriveNode, trail: DriveNode[]) => {
+      for (const file of f.files) {
+        const t = Date.parse(file.item.created ?? '') || Date.parse(file.item.modified ?? '') || 0;
+        out.push({ node: file, project: n.parent as DriveNode, buildFolder: n, trail, at: t });
+      }
+      for (const sub of f.folders) walk(sub, [...trail, sub]);
+    };
+    walk(n, []);
+  }
+  return out.sort((a, b) => b.at - a.at);
+}
+
+/** 폴더 이름의 괄호 안 설명 - '01. QA용(안내 필요 없이 테스트)' → '안내 필요 없이 테스트' */
+export function folderHint(name: string): { title: string; hint: string | null } {
+  const m = /^(.*?)\s*\(([^()]+)\)\s*$/.exec(plainName(name));
+  return m ? { title: m[1], hint: m[2] } : { title: plainName(name), hint: null };
+}
+
+export function sizeText(b: number | null | undefined): string {
+  if (b == null) return '';
+  if (b < 1024) return `${b} B`;
+  const u = ['KB', 'MB', 'GB', 'TB'];
+  let v = b / 1024;
+  let i = 0;
+  while (v >= 1024 && i < u.length - 1) { v /= 1024; i++; }
+  return `${v >= 100 ? Math.round(v) : v.toFixed(1)} ${u[i]}`;
 }

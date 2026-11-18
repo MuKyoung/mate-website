@@ -1562,6 +1562,83 @@ grant select on public.tm_drive_snapshot to authenticated;
 revoke execute on function public.tm_drive_sync(text, text, jsonb, text) from public;
 grant execute on function public.tm_drive_sync(text, text, jsonb, text) to anon, authenticated;
 
+-- ── 드라이브 새 폴더 확인 · 빌드 파일 안내 · 댓글 (2026-11-18) ──────
+-- 드라이브 항목(폴더 · 파일 id)에 붙는 팀 기록 세 가지. 드라이브 목록(tm_drive_snapshot)은 그대로 두고 id 로만 잇는다.
+--   tm_drive_reviews  - 새 폴더를 누가 '확인함'으로 넘겼나(한 사람이 넘기면 팀 모두의 '새 폴더' 목록에서 빠진다)
+--   tm_drive_notes    - 빌드 파일 안내(무엇을 · 어떻게 시험하나). 파일마다 한 글, 팀원 누구나 고친다
+--   tm_drive_comments - 빌드 파일 댓글. 쓴 사람과 관리자만 지운다
+-- 화면을 열 때와 쓸 때만 읽고 쓴다(실시간 구독 없음). 이 블록만 따로 실행해도 되고, 여러 번 실행해도 된다.
+create table if not exists public.tm_drive_reviews (
+  item_id text primary key check (char_length(item_id) between 1 and 200),
+  reviewed_by uuid default auth.uid() references public.tm_members (id) on delete set null,
+  reviewed_at timestamptz not null default now()
+);
+create table if not exists public.tm_drive_notes (
+  item_id text primary key check (char_length(item_id) between 1 and 200),
+  body text not null default '' check (char_length(body) <= 20000),
+  updated_by uuid default auth.uid() references public.tm_members (id) on delete set null,
+  updated_at timestamptz not null default now()
+);
+create table if not exists public.tm_drive_comments (
+  id uuid primary key default gen_random_uuid(),
+  item_id text not null check (char_length(item_id) between 1 and 200),
+  author uuid not null default auth.uid() references public.tm_members (id) on delete cascade,
+  body text not null check (char_length(body) between 1 and 4000),
+  created_at timestamptz not null default now()
+);
+create index if not exists tm_drive_comments_item_idx on public.tm_drive_comments (item_id, created_at);
+
+-- 쓴 사람 · 때는 DB 가 정한다 - 화면이 보낸 값을 믿지 않는다
+create or replace function public.tm_drive_stamp()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if tg_table_name = 'tm_drive_reviews' then
+    new.reviewed_by := auth.uid();
+    new.reviewed_at := now();
+  elsif tg_table_name = 'tm_drive_notes' then
+    new.updated_by := auth.uid();
+    new.updated_at := now();
+  elsif tg_op = 'INSERT' then
+    new.author := auth.uid();
+    new.created_at := now();
+  end if;
+  return new;
+end;
+$$;
+create or replace trigger tm_drive_reviews_stamp before insert or update on public.tm_drive_reviews
+  for each row execute function public.tm_drive_stamp();
+create or replace trigger tm_drive_notes_stamp before insert or update on public.tm_drive_notes
+  for each row execute function public.tm_drive_stamp();
+create or replace trigger tm_drive_comments_stamp before insert on public.tm_drive_comments
+  for each row execute function public.tm_drive_stamp();
+revoke execute on function public.tm_drive_stamp() from public, anon, authenticated;
+
+alter table public.tm_drive_reviews enable row level security;
+alter table public.tm_drive_notes enable row level security;
+alter table public.tm_drive_comments enable row level security;
+drop policy if exists tm_drive_reviews_members on public.tm_drive_reviews;
+create policy tm_drive_reviews_members on public.tm_drive_reviews
+  for all to authenticated using (public.tm_is_member()) with check (public.tm_is_member());
+drop policy if exists tm_drive_notes_members on public.tm_drive_notes;
+create policy tm_drive_notes_members on public.tm_drive_notes
+  for all to authenticated using (public.tm_is_member()) with check (public.tm_is_member());
+drop policy if exists tm_drive_comments_read on public.tm_drive_comments;
+create policy tm_drive_comments_read on public.tm_drive_comments
+  for select to authenticated using (public.tm_is_member());
+drop policy if exists tm_drive_comments_write on public.tm_drive_comments;
+create policy tm_drive_comments_write on public.tm_drive_comments
+  for insert to authenticated with check (public.tm_is_member());
+drop policy if exists tm_drive_comments_remove on public.tm_drive_comments;
+create policy tm_drive_comments_remove on public.tm_drive_comments
+  for delete to authenticated using (public.tm_is_member() and (author = auth.uid() or public.tm_is_admin()));
+revoke all on public.tm_drive_reviews, public.tm_drive_notes, public.tm_drive_comments from anon, authenticated;
+grant select, insert, delete on public.tm_drive_reviews to authenticated;
+grant select, insert, update on public.tm_drive_notes to authenticated;
+grant select, insert, delete on public.tm_drive_comments to authenticated;
+
 -- ── 위키 문서 링크 공유 (2026-11-16) ──────────────────────────
 -- 문서마다 공유 링크 하나(/hub/share/<열쇠>/). 링크를 아는 사람은 로그인 없이 그 문서 하나의 제목 · 아이콘 · 본문과
 -- 본문에 든 그림 · 첨부만 본다. 고치기 · 댓글 · 다른 문서 · 작업은 열리지 않는다.
