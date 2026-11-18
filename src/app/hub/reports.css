@@ -1,0 +1,45 @@
+/* 보고 칸 편집기(reportEditor.tsx) - Confluence 문서처럼 쓰는 칸과 '/' 작업 찾기 목록. 색은 Hub 토큰(--tm-*)만 쓴다(다크 모드) */
+
+.tm-rcell { position: relative; cursor: text; color: rgb(var(--tm-ink)); }
+.tm-rcell[data-variant='field'] {
+  border: 1px solid rgb(var(--tm-edge)); border-radius: 10px; background: rgb(var(--tm-card)); padding: 8px 12px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.tm-rcell[data-variant='field']:focus-within { border-color: rgb(var(--tm-blue)); box-shadow: 0 0 0 3px rgb(var(--tm-blue) / 0.2); }
+.tm-rcell[data-variant='cell'] {
+  border: 1px solid transparent; border-radius: 10px; padding: 6px 8px; transition: border-color 0.15s, background-color 0.15s, box-shadow 0.15s;
+}
+.tm-rcell[data-variant='cell']:hover { background: rgb(var(--tm-bg)); }
+.tm-rcell[data-variant='cell']:focus-within { border-color: rgb(var(--tm-blue)); background: rgb(var(--tm-card)); box-shadow: 0 0 0 3px rgb(var(--tm-blue) / 0.2); }
+
+.tm-rcell-pm { outline: none; font-size: 15px; line-height: 1.6; min-height: calc(1.6em * var(--tm-rcell-lines, 1)); overflow-wrap: anywhere; }
+@media (max-width: 760px) { .tm-rcell-pm { font-size: 16px; } }
+.tm-rcell-pm p { margin: 0; }
+.tm-rcell-pm ul { margin: 0; padding-left: 1.25em; list-style: disc; }
+.tm-rcell-pm ul ul { list-style: circle; padding-left: 1.2em; }
+.tm-rcell-pm ul ul ul { list-style: square; }
+.tm-rcell-pm li { margin: 0.1em 0; }
+.tm-rcell-pm li::marker { color: rgb(var(--tm-sub)); }
+.tm-rcell-pm strong { font-weight: 800; }
+.tm-rcell-pm code { border-radius: 5px; background: rgb(var(--tm-bg)); padding: 0 4px; font-size: 0.92em; }
+.tm-rcell-pm a { color: rgb(var(--tm-blue)); text-decoration: underline; text-underline-offset: 3px; }
+.tm-rcell-pm p.is-empty::before {
+  content: attr(data-placeholder); float: left; height: 0; pointer-events: none; color: rgb(var(--tm-sub)); opacity: 0.75;
+}
+/* 표 칸의 도움말은 올리거나 쓸 때만 - 빈 칸이 많아도 표가 어지럽지 않게 */
+.tm-rcell[data-variant='cell']:not(:hover):not(:focus-within) p.is-empty::before { opacity: 0; }
+
+/* '/' 작업 찾기 */
+.tm-rsg-root { z-index: 300; }
+.tm-rsg {
+  width: 340px; max-height: 380px; overflow-y: auto; padding: 6px; border: 1px solid rgb(var(--tm-line)); border-radius: 14px;
+  background: rgb(var(--tm-card)); box-shadow: 0 14px 32px rgba(22, 39, 60, 0.18);
+}
+.tm-rsg-title { padding: 6px 10px 4px; font-size: 12px; font-weight: 700; color: rgb(var(--tm-sub)); }
+.tm-rsg-group { padding: 8px 10px 2px; font-size: 11.5px; font-weight: 800; color: rgb(var(--tm-sub)); }
+.tm-rsg-empty { padding: 10px; font-size: 14px; color: rgb(var(--tm-sub)); }
+.tm-rsg-item { display: flex; width: 100%; align-items: center; gap: 10px; min-height: 44px; padding: 6px 10px; border-radius: 10px; text-align: left; }
+.tm-rsg-item b { font-size: 14px; font-weight: 700; color: rgb(var(--tm-ink)); }
+.tm-rsg-item small { font-size: 12.5px; color: rgb(var(--tm-sub)); }
+.tm-rsg-item[aria-selected='true'] { background: rgb(var(--tm-tint)); }
+.tm-rsg-noone { width: 22px; height: 22px; flex: none; border: 1.5px dashed rgb(var(--tm-edge)); border-radius: 9999px; }

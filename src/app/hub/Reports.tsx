@@ -10,11 +10,12 @@ import {
   type Block, type ReportStore, type ReportStoreOptions,
 } from './reportStore';
 import {
-  CellText, MeetingView, OutlineText, PersonMark, ProjectsEditor, ProjectsView, RenderProvider,
+  CellText, MeetingView, PersonMark, ProjectsEditor, ProjectsView, RenderProvider, useRenderEnv,
   type Col, type MeetingItem, type RenderEnv,
 } from './reportParts';
 import { localToday, type DailyEntry, type DailyProject, type Member, type ReportPerson, type Task, type WeeklyEntry, type WeeklyProject } from './types';
 import { useMembers } from './members';
+import { RichCell } from './reportEditor';
 import { CommitInput } from './DomainDialog';
 import {
   IconArrow, IconPlus, Modal, PageHead, useConfirm,
@@ -67,8 +68,8 @@ const WEEKLY_COLS: Col<WeeklyProject>[] = [
 ];
 
 const WRITING_HELP =
-  '한 줄에 한 가지씩 적습니다. 줄 맨 앞에서 Tab(또는 공백 두 칸)은 하위 줄, 줄 끝의 · 1일은 소요기간, '
-  + 'Jira 주소 · 번호(JM-7)와 Hub 작업 번호(MATE-12)는 링크로 보입니다.';
+  '한 줄에 한 가지씩 적습니다. Confluence 처럼 Enter 는 새 항목, Tab · Shift+Tab 은 하위로 · 위로, Ctrl+B · I 는 굵게 · 기울임. '
+  + '/ 를 치면 작업을 찾아 넣습니다(내 작업 먼저, 담당자 이름으로도 찾기). 줄 끝의 · 1일은 소요기간, Jira · Hub 작업 번호는 링크로 보입니다.';
 
 /** 오늘(YYYY-MM-DD) - 창으로 돌아올 때 날이 바뀌었으면 따라간다 */
 function useTodayISO(): string {
@@ -155,6 +156,14 @@ function scrollWithin(el: HTMLElement, gap = 16) {
   const r = el.getBoundingClientRect();
   const b = box.getBoundingClientRect();
   box.scrollTop += r.top - b.top - gap;
+}
+
+/** 보고의 글 칸 - Confluence 문서처럼 쓰는 편집 칸(목록 · 들여쓰기 · 글꼴 · '/' 작업 넣기) */
+function TextField({ id, value, onChange, placeholder, label, rows = 1 }: {
+  id: string; value: string; onChange(v: string): void; placeholder?: string; label: string; rows?: number;
+}) {
+  const env = useRenderEnv();
+  return <RichCell id={id} value={value} onChange={onChange} placeholder={placeholder} label={label} env={env} minLines={rows} />;
 }
 
 /** 둘 중 하나를 고르는 알약 줄 */
@@ -348,8 +357,8 @@ export default function Reports({
         yield e.issues;
       }
     }
-    return { tasks, jira: jiraBaseOf(texts()), onTask: onTaskOpen };
-  }, [store.daily, store.weekly, tasks, onTaskOpen]);
+    return { tasks, members, me, jira: jiraBaseOf(texts()), onTask: onTaskOpen };
+  }, [store.daily, store.weekly, tasks, members, me, onTaskOpen]);
 
   const { flush, settle } = store;
   useEffect(() => {
@@ -696,14 +705,13 @@ function DailyEditor({ idBase, store, day, person, entry, names, wide, onRemoveA
   return (
     <>
       <ProjectsEditor<DailyProject> idBase={idBase} value={dailyProjects(entry)} cols={DAILY_COLS} names={names} wide={wide}
-        blank={() => blankDaily()} cellMax={LIMITS.cell} nameMax={LIMITS.name} onRemoveAsk={onRemoveAsk} lead={lead}
+        blank={() => blankDaily()} nameMax={LIMITS.name} onRemoveAsk={onRemoveAsk} lead={lead}
         onChange={(next) => store.setDaily(day, person, { projects: next })} />
       <div className="mt-4">
         <label htmlFor={`${idBase}-blocker`} className="mb-1.5 block text-[14px] font-bold text-tm-ink">블로커 / 공유사항</label>
-        <OutlineText id={`${idBase}-blocker`} value={entry?.blocker ?? ''} max={LIMITS.blocker}
+        <TextField id={`${idBase}-blocker`} value={entry?.blocker ?? ''} label="블로커 / 공유사항" rows={2}
           placeholder="막힌 것 · 결정이나 도움이 필요한 것 · 팀에 알릴 것. 없으면 비워 둡니다"
-          onChange={(v) => store.setDaily(day, person, { blocker: v })}
-          className={`${tmFieldBase} block w-full resize-none overflow-hidden px-3.5 py-2.5 text-[15px] leading-[1.6] max-[760px]:text-[16px]`} />
+          onChange={(v) => store.setDaily(day, person, { blocker: v })} />
       </div>
     </>
   );
@@ -977,7 +985,6 @@ function WeeklyRead({ entry, wide, feedback = true }: { entry: WeeklyEntry; wide
   );
 }
 
-const fieldBox = `${tmFieldBase} block w-full resize-none overflow-hidden px-3.5 py-2.5 text-[15px] leading-[1.6] max-[760px]:text-[16px]`;
 
 function WeeklyEditor({ idBase, store, week, person, entry, names, wide, onRemoveAsk, lead }: {
   idBase: string;
@@ -994,17 +1001,17 @@ function WeeklyEditor({ idBase, store, week, person, entry, names, wide, onRemov
   return (
     <>
       <label htmlFor={`${idBase}-summary`} className="mb-1.5 block text-[14px] font-bold text-tm-ink">요약</label>
-      <OutlineText id={`${idBase}-summary`} value={entry?.summary ?? ''} max={LIMITS.summary} rows={1}
-        placeholder="이번 주 핵심을 한두 줄로" onChange={(v) => set({ summary: v })} className={fieldBox} />
+      <TextField id={`${idBase}-summary`} value={entry?.summary ?? ''} label="요약"
+        placeholder="이번 주 핵심을 한두 줄로" onChange={(v) => set({ summary: v })} />
       <div className="mt-4">
         <ProjectsEditor<WeeklyProject> idBase={idBase} value={entry?.projects ?? []} cols={WEEKLY_COLS} names={names} wide={wide}
-          blank={() => blankWeekly()} cellMax={LIMITS.cell} nameMax={LIMITS.name} onRemoveAsk={onRemoveAsk} lead={lead}
+          blank={() => blankWeekly()} nameMax={LIMITS.name} onRemoveAsk={onRemoveAsk} lead={lead}
           onChange={(next) => set({ projects: next })} />
       </div>
       <div className="mt-4">
         <label htmlFor={`${idBase}-issues`} className="mb-1.5 block text-[14px] font-bold text-tm-ink">이슈 / 요청 사항</label>
-        <OutlineText id={`${idBase}-issues`} value={entry?.issues ?? ''} max={LIMITS.issues}
-          placeholder="아직 풀리지 않은 블로커 · 결정이나 도움이 필요한 것만" onChange={(v) => set({ issues: v })} className={fieldBox} />
+        <TextField id={`${idBase}-issues`} value={entry?.issues ?? ''} label="이슈 / 요청 사항" rows={2}
+          placeholder="아직 풀리지 않은 블로커 · 결정이나 도움이 필요한 것만" onChange={(v) => set({ issues: v })} />
       </div>
     </>
   );
@@ -1133,9 +1140,9 @@ function WeeklyView({
         <div className="grid gap-5 px-5 py-4 max-[720px]:px-4 min-[1100px]:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
           <div className="min-w-0">
             {canAdmin && team?.status !== 'final' ? (
-              <OutlineText id={`${uid}-team-summary`} value={team?.summary ?? ''} max={LIMITS.team} rows={3} label="팀 요약"
+              <TextField id={`${uid}-team-summary`} value={team?.summary ?? ''} rows={3} label="팀 요약"
                 placeholder="이번 주 팀 전체의 흐름 · 강조할 것 · 다음 주에 챙길 것"
-                onChange={(v) => store.setTeam(week, v)} className={fieldBox} />
+                onChange={(v) => store.setTeam(week, v)} />
             ) : team?.summary.trim() ? (
               <div className="text-[15px]"><CellText text={team.summary} /></div>
             ) : (
@@ -1263,9 +1270,9 @@ function WeeklyView({
                   {fbOpen && (
                     <div className="mt-4">
                       <label htmlFor={`${uid}-${r.person.id}-fb`} className="mb-1.5 block text-[14px] font-bold text-tm-ink">PM 피드백</label>
-                      <OutlineText id={`${uid}-${r.person.id}-fb`} value={r.entry?.feedback ?? ''} max={LIMITS.feedback} rows={2}
+                      <TextField id={`${uid}-${r.person.id}-fb`} value={r.entry?.feedback ?? ''} rows={2} label="PM 피드백"
                         placeholder="스크럼 · 주간보고 작성에 대한 의견, 칭찬, 다음에 챙길 것"
-                        onChange={(v) => store.setWeekly(week, r.person, { feedback: v })} className={fieldBox} />
+                        onChange={(v) => store.setWeekly(week, r.person, { feedback: v })} />
                     </div>
                   )}
                 </>

@@ -202,8 +202,10 @@ export interface Line {
 }
 
 const ARROW = /^(?:->|=>|→|⇒)\s*/;
-/** '-' 는 숫자(-1일) · 화살표(->) 앞이 아닐 때만 머리표로 본다 */
-const BULLET = /^(?:[•·*▪◦‣■□▶▷]\s*|-(?![\d>])\s*|\d{1,2}[.)]\s+)/;
+/** '-' 는 숫자(-1일) · 화살표(->) 앞이 아닐 때만, '*' 는 뒤에 공백이 있을 때만(**굵게** 와 가른다) 머리표로 본다 */
+const BULLET = /^(?:[•·▪◦‣■□▶▷]\s*|\*\s+|-(?![\d>])\s*|\d{1,2}[.)]\s+)/;
+/** 편집 칸이 줄을 읽을 때도 같은 머리표 규칙 */
+export const stripBullet = (s: string) => s.replace(BULLET, '');
 const DUR_RE = /\s*([·•\-~(])\s*(~?)\s*(\d+(?:\.\d+)?)\s*(일차|일|시간)\s*\)?\s*$/;
 
 /** 줄 끝의 소요기간을 뗀다 - 구분 글자(· - ~ 괄호) 없이 끝나는 '2일'(날짜일 수 있다)은 보지 않는다 */
@@ -236,9 +238,40 @@ export function parseLines(text: string): Line[] {
   return out;
 }
 
-/** 같은 일인지 견주는 열쇠 - 소요기간 · 머리표 · 띄어쓰기 · 문장부호를 무시한다 */
+/** 같은 일인지 견주는 열쇠 - 소요기간 · 머리표 · 띄어쓰기 · 문장부호 · 글꼴 표시(**)를 무시한다 */
 export const itemKey = (text: string) =>
-  splitDur(text.trim().replace(BULLET, '')).body.toLowerCase().replace(/[\s·•.,:;!?'"`~\-–—()[\]{}]+/g, ' ').trim();
+  splitDur(plainOf(text.trim().replace(BULLET, ''))).body.toLowerCase().replace(/[\s·•.,:;!?'"`~\-–—()[\]{}*]+/g, ' ').trim();
+
+/* ── 줄 안의 글꼴 - 편집 칸(Confluence 처럼 쓰기)이 저장하는 짧은 표시 ───────────
+   **굵게** · *기울임* · ~~취소선~~ · `코드` · [글](https://주소). 줄 · 들여쓰기 약속은 위와 같다 */
+
+export interface Span { text: string; bold?: boolean; italic?: boolean; strike?: boolean; code?: boolean; href?: string }
+
+const MARK_RE = /`([^`\n]+)`|\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)|\*\*([^*\n]+?)\*\*|~~([^~\n]+?)~~|(^|[^*\w])\*(?!\s)([^*\n]+?)\*(?!\*)/g;
+
+/** 한 줄을 글꼴 조각으로 - 굵게 · 취소선 · 기울임 안의 글꼴은 겹쳐 붙인다 */
+export function spansOf(text: string, base: Omit<Span, 'text'> = {}): Span[] {
+  const out: Span[] = [];
+  let at = 0;
+  const push = (t: string, extra: Omit<Span, 'text'> = {}) => { if (t) out.push({ ...base, ...extra, text: t }); };
+  for (const m of text.matchAll(MARK_RE)) {
+    const pre = m[6] ?? '';
+    const start = (m.index ?? 0) + pre.length;
+    push(text.slice(at, start));
+    if (m[1] !== undefined) push(m[1], { code: true });
+    else if (m[2] !== undefined) push(m[2], { href: m[3] });
+    else if (m[4] !== undefined) out.push(...spansOf(m[4], { ...base, bold: true }));
+    else if (m[5] !== undefined) out.push(...spansOf(m[5], { ...base, strike: true }));
+    else if (m[7] !== undefined) out.push(...spansOf(m[7], { ...base, italic: true }));
+    at = (m.index ?? 0) + m[0].length;
+  }
+  push(text.slice(at));
+  return out;
+}
+
+/** 글꼴 표시를 뗀 글 - 메신저 · 메일로 복사할 때, 같은 일 견주기 */
+export const plainOf = (text: string) =>
+  spansOf(text).map((s) => (s.href && s.href !== s.text ? `${s.text} (${s.href})` : s.text)).join('');
 
 /** 맨 위 단계 줄 하나와 그 밑의 하위 줄 */
 export interface Block { key: string; head: Line; lines: string[] }
@@ -533,7 +566,7 @@ export function jiraBaseOf(texts: Iterable<string>): string | null {
 function linesFor(project: string, text: string, indent: string): string[] {
   const name = project.trim();
   return parseLines(text).map((l) => {
-    const body = `${l.note ? '→ ' : ''}${l.text}${l.dur ? ` · ${durLabel(l.dur)}` : ''}`;
+    const body = `${l.note ? '→ ' : ''}${plainOf(l.text)}${l.dur ? ` · ${durLabel(l.dur)}` : ''}`;
     if (l.depth === 0 && !l.note) return `${indent}- ${name ? `${name}: ` : ''}${body}`;
     return `${indent}${'    '.repeat(Math.max(1, l.depth))}${body}`;
   });

@@ -1,9 +1,10 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { durLabel, parseLines, projectLabel, type Dur } from './reportStore';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { durLabel, parseLines, projectLabel, spansOf, type Dur } from './reportStore';
+import { RichCell } from './reportEditor';
 import { STATUSES, initialOf, type Member, type Task } from './types';
-import { Avatar, IconArrow, IconClose, IconPlus, tmFieldBase, tmGhostBtn, tmIconBtn } from './ui';
+import { Avatar, IconArrow, IconClose, IconPlus, tmGhostBtn, tmIconBtn } from './ui';
 
 /*
  * 보고 화면의 부품 - 칸 글 보기(링크 · Jira · Hub 작업 · 소요기간), 줄 글 칸(들여쓰기),
@@ -14,13 +15,19 @@ import { Avatar, IconArrow, IconClose, IconPlus, tmFieldBase, tmGhostBtn, tmIcon
 
 export interface RenderEnv {
   tasks: Task[];
+  /** 팀원 - '/' 작업 찾기의 담당자 이름 */
+  members: Member[];
+  /** 지금 쓰는 사람(Member.id) - '/' 작업 찾기에서 내 작업이 먼저 */
+  me: string;
   /** 보고 글에서 배운 Jira 사이트 - 번호만 적은 줄도 그곳으로 잇는다 */
   jira: string | null;
   onTask(id: string): void;
 }
 
-const Env = createContext<RenderEnv>({ tasks: [], jira: null, onTask: () => {} });
+const Env = createContext<RenderEnv>({ tasks: [], members: [], me: '', jira: null, onTask: () => {} });
 export const RenderProvider = Env.Provider;
+/** 보고 화면의 팀원 · 작업 · 나 - 편집 칸('/' 작업 찾기)에 넘긴다 */
+export const useRenderEnv = () => useContext(Env);
 
 const URL_RE = /https?:\/\/[^\s<>"']+/g;
 const KEY_RE = /(^|[^A-Za-z0-9-])([A-Z][A-Z0-9]{1,9}-\d{1,6})(?![A-Za-z0-9])/g;
@@ -76,8 +83,27 @@ function KeyChip({ k }: { k: string }) {
   return <span className={`${chip} text-tm-deep hover:border-tm-line hover:bg-tm-bg`}>{k}</span>;
 }
 
-/** 글 안의 주소 · 업무 번호를 칩으로 */
+/** 한 줄 - 글꼴(**굵게** · *기울임* · ~~취소선~~ · `코드` · [글](주소))을 입히고, 그 안의 주소 · 업무 번호는 칩으로 */
 function Inline({ text }: { text: string }) {
+  const spans = useMemo(() => spansOf(text), [text]);
+  return (
+    <>
+      {spans.map((s, i) => {
+        if (s.code) return <code key={i} className="rounded-[5px] bg-tm-bg px-1 text-[0.92em]">{s.text}</code>;
+        let node: React.ReactNode = s.href
+          ? <a href={s.href} target="_blank" rel="noreferrer" title={s.href} className="text-tm-blue underline underline-offset-[3px]">{s.text}</a>
+          : <Chips text={s.text} />;
+        if (s.strike) node = <s className="text-tm-sub">{node}</s>;
+        if (s.italic) node = <em>{node}</em>;
+        if (s.bold) node = <strong className="font-extrabold">{node}</strong>;
+        return <span key={i}>{node}</span>;
+      })}
+    </>
+  );
+}
+
+/** 글 안의 주소 · 업무 번호를 칩으로 */
+function Chips({ text }: { text: string }) {
   const parts: React.ReactNode[] = [];
   const keys = (s: string, base: number) => {
     let at = 0;
@@ -134,105 +160,6 @@ export function CellText({ text, empty = '없음' }: { text: string; empty?: str
   );
 }
 
-/* ── 줄 글 칸 ─────────────────────────────────────────────
-   글에 맞춰 키가 자란다. Enter 는 윗줄의 들여쓰기를 이어 가고, 빈 하위 줄에서 Enter 는 한 단계 꺼낸다.
-   줄 맨 앞에서 Tab · Shift+Tab 은 들이고 내민다 - 칸에 들어와 글을 친 뒤에만(Tab 으로 칸을 지나가는 것은 막지 않는다).
-   글 넣기는 execCommand 로 해서 Ctrl+Z 가 그대로 듣는다 */
-
-function insert(el: HTMLTextAreaElement, text: string) {
-  const ok = text ? document.execCommand('insertText', false, text) : document.execCommand('delete');
-  if (ok) return;
-  el.setRangeText(text, el.selectionStart, el.selectionEnd, 'end');
-  el.dispatchEvent(new Event('input', { bubbles: true }));
-}
-
-export function OutlineText({ id, value, onChange, placeholder, label, max, className, rows = 2, inputRef, readOnly }: {
-  id: string;
-  value: string;
-  onChange(v: string): void;
-  placeholder?: string;
-  /** 칸 이름(화면 읽기 프로그램) - 보이는 이름표가 따로 있으면 비운다 */
-  label?: string;
-  max: number;
-  className: string;
-  rows?: number;
-  inputRef?: (el: HTMLTextAreaElement | null) => void;
-  readOnly?: boolean;
-}) {
-  const ref = useRef<HTMLTextAreaElement | null>(null);
-  const typed = useRef(false);
-  const fit = useCallback(() => {
-    const el = ref.current;
-    if (!el) return;
-    el.style.height = 'auto';
-    el.style.height = `${el.scrollHeight + el.offsetHeight - el.clientHeight}px`;
-  }, []);
-  useLayoutEffect(fit, [value, fit]);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el || typeof ResizeObserver === 'undefined') return;
-    let width = el.clientWidth;
-    const ro = new ResizeObserver(() => {
-      if (el.clientWidth === width) return;
-      width = el.clientWidth;
-      fit();
-    });
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [fit]);
-
-  const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (readOnly || e.nativeEvent.isComposing || e.keyCode === 229 || e.altKey || e.ctrlKey || e.metaKey) return;
-    const el = e.currentTarget;
-    const s = el.selectionStart;
-    const t = el.selectionEnd;
-    if (s !== t) return;
-    const v = el.value;
-    const lineStart = v.lastIndexOf('\n', s - 1) + 1;
-    const nl = v.indexOf('\n', s);
-    const line = v.slice(lineStart, nl < 0 ? v.length : nl);
-    const lead = /^[ \t]*/.exec(line)?.[0] ?? '';
-    if (e.key === 'Enter' && !e.shiftKey) {
-      if (!lead) return;
-      e.preventDefault();
-      if (!line.trim()) {
-        const n = lead.startsWith('\t') ? 1 : Math.min(2, lead.length);
-        el.setSelectionRange(lineStart, lineStart + n);
-        insert(el, '');
-        el.setSelectionRange(s - n, s - n);
-      } else {
-        insert(el, `\n${lead}`);
-      }
-      return;
-    }
-    if (e.key === 'Tab') {
-      if (!typed.current || s - lineStart > lead.length) return;
-      if (e.shiftKey) {
-        if (!lead) return;
-        e.preventDefault();
-        const n = lead.startsWith('\t') ? 1 : Math.min(2, lead.length);
-        el.setSelectionRange(lineStart, lineStart + n);
-        insert(el, '');
-        el.setSelectionRange(Math.max(lineStart, s - n), Math.max(lineStart, s - n));
-        return;
-      }
-      e.preventDefault();
-      el.setSelectionRange(lineStart, lineStart);
-      insert(el, '  ');
-      el.setSelectionRange(s + 2, s + 2);
-    }
-  };
-
-  return (
-    <textarea ref={(el) => { ref.current = el; inputRef?.(el); }} id={id} value={value} rows={rows} maxLength={max}
-      placeholder={placeholder} aria-label={label} spellCheck={false} readOnly={readOnly}
-      onFocus={() => { typed.current = false; }}
-      onChange={(e) => { typed.current = true; onChange(e.target.value); }}
-      onKeyDown={onKeyDown}
-      className={className} />
-  );
-}
-
 /* ── 프로젝트 표 ─────────────────────────────────────────── */
 
 export interface Col<T> {
@@ -244,14 +171,6 @@ export interface Col<T> {
 
 type Row = { id: string; project: string };
 
-const cellWide =
-  'block w-full resize-none overflow-hidden rounded-tm-sm border border-transparent bg-transparent px-2.5 py-2 text-[15px] leading-[1.6] text-tm-ink ' +
-  'transition-[border-color,background-color,box-shadow] duration-150 placeholder:text-tm-sub placeholder:opacity-0 ' +
-  'hover:bg-tm-bg focus:border-tm-blue focus:bg-tm-card focus:shadow-[0_0_0_3px_rgba(38,68,203,0.2)] focus:placeholder:opacity-100 ' +
-  'group-hover/row:placeholder:opacity-60';
-
-const cellNarrow = `${tmFieldBase} block w-full resize-none overflow-hidden px-3 py-2 text-[16px] leading-[1.6] min-[761px]:text-[15px]`;
-
 const projectInput =
   'w-full min-w-0 rounded-tm-sm border border-transparent bg-transparent px-2.5 py-2 text-[15px] font-extrabold text-tm-deep ' +
   'transition-[border-color,background-color,box-shadow] duration-150 placeholder:font-semibold placeholder:text-tm-sub ' +
@@ -262,7 +181,7 @@ const rowBtn =
   'disabled:opacity-30 disabled:hover:bg-transparent [@media(pointer:coarse)]:h-10 [@media(pointer:coarse)]:w-10';
 
 export function ProjectsEditor<T extends Row>({
-  idBase, value, cols, onChange, blank, names, wide, onRemoveAsk, cellMax, nameMax, lead,
+  idBase, value, cols, onChange, blank, names, wide, onRemoveAsk, nameMax, lead,
 }: {
   idBase: string;
   value: T[];
@@ -274,13 +193,13 @@ export function ProjectsEditor<T extends Row>({
   wide: boolean;
   /** 글이 있는 줄을 빼기 전에 묻는다 - 참이면 뺀다 */
   onRemoveAsk(row: T): Promise<boolean>;
-  cellMax: number;
   nameMax: number;
   /** 표 위 오른쪽에 둘 단추 */
   lead?: React.ReactNode;
 }) {
   /** 줄이 하나도 없을 때 보이는 빈 줄 - 글을 치면 그때 저장한다(같은 id 라 초점이 그대로 남는다) */
   const [phantom] = useState(blank);
+  const env = useContext(Env);
   const rows = value.length ? value : [phantom];
   const focusNext = useRef<string | null>(null);
   useEffect(() => {
@@ -373,9 +292,9 @@ export function ProjectsEditor<T extends Row>({
               </div>
               {cols.map((c) => (
                 <div key={c.key} role="cell" className="min-w-0 border-l border-tm-line p-1">
-                  <OutlineText id={`${idBase}-${row.id}-${c.key}`} value={String(row[c.key] ?? '')} max={cellMax}
+                  <RichCell id={`${idBase}-${row.id}-${c.key}`} value={String(row[c.key] ?? '')} env={env} variant="cell" minLines={2}
                     label={`${row.project.trim() || `${i + 1}번째 프로젝트`} ${c.label}`} placeholder={c.hint}
-                    onChange={(v) => patch(row, { [c.key]: v } as Partial<T>)} className={cellWide} />
+                    onChange={(v) => patch(row, { [c.key]: v } as Partial<T>)} />
                 </div>
               ))}
             </div>
@@ -402,9 +321,10 @@ export function ProjectsEditor<T extends Row>({
             <div className="grid gap-2.5 min-[640px]:grid-cols-2">
               {cols.map((c) => (
                 <div key={c.key} className="min-w-0">
-                  <label htmlFor={`${idBase}-${row.id}-${c.key}`} className="mb-1 block text-[13px] font-bold text-tm-sub">{c.label}</label>
-                  <OutlineText id={`${idBase}-${row.id}-${c.key}`} value={String(row[c.key] ?? '')} max={cellMax} placeholder={c.hint}
-                    onChange={(v) => patch(row, { [c.key]: v } as Partial<T>)} className={cellNarrow} />
+                  <p aria-hidden className="mb-1 text-[13px] font-bold text-tm-sub">{c.label}</p>
+                  <RichCell id={`${idBase}-${row.id}-${c.key}`} value={String(row[c.key] ?? '')} env={env} placeholder={c.hint}
+                    label={`${row.project.trim() || `${i + 1}번째 프로젝트`} ${c.label}`}
+                    onChange={(v) => patch(row, { [c.key]: v } as Partial<T>)} />
                 </div>
               ))}
             </div>
