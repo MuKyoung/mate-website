@@ -1349,6 +1349,138 @@ $$;
 grant insert (hidden), update (hidden) on public.tm_report_people to authenticated;
 revoke execute on function public.tm_report_people_sync(), public.tm_members_report_people() from public, anon, authenticated;
 
+-- ── 보고 첨부 → 구글 드라이브 (2026-11-18) ────────────────────
+-- 일간 · 주간보고에 넣은 그림 · PDF · 파일은 먼저 비공개 저장소 tm-files 의 reports/<종류>/<날>/<사람>/ 에 둔다(바로 보이게).
+-- 올린 지 24시간이 지나거나 그날 '스크럼 종료'를 누르면 드라이브 쪽 Apps Script(supabase/drive-sync.gs)가
+-- 팀 구글 드라이브 'MATE Hub 보고 첨부/<연-월>/<날> 스크럼/<사람>' 으로 옮기고 서버 파일은 지운다. 보고의 칩은 그때부터 드라이브로 연다.
+-- Apps Script 는 단추를 누른(또는 보고 화면을 연) 팀원의 로그인 토큰으로 이 표 · 저장소를 다룬다 - 서비스 키를 두지 않는다.
+-- 위 '위키 파일' · '구글 드라이브 지도' 블록 뒤에 실행한다. 여러 번 실행해도 된다.
+
+create table if not exists public.tm_report_files (
+  path text primary key check (path ~ '^reports/[A-Za-z0-9/_.-]+$' and char_length(path) <= 300),   -- tm-files 안의 경로
+  name text not null default '' check (char_length(name) <= 200),      -- 올린 파일 이름
+  size bigint not null default 0,
+  kind text not null default 'daily' check (kind in ('daily', 'weekly', 'team')),
+  day date,                                                             -- 일간은 그날, 주간 · 팀 요약은 그 주 월요일
+  person uuid,                                                          -- 명단 id(팀 요약은 비움)
+  person_name text not null default '' check (char_length(person_name) <= 40),
+  uploaded_by uuid default auth.uid(),
+  created_at timestamptz not null default now(),
+  moving_at timestamptz,                                                -- 옮기는 중(15분 지나면 다시 집는다)
+  moved_at timestamptz,                                                 -- 옮김 - 서버 파일은 지웠다
+  drive_id text,
+  drive_url text check (drive_url is null or drive_url ~ '^https://(drive|docs)\.google\.com/')
+);
+
+alter table public.tm_report_files enable row level security;
+drop policy if exists tm_report_files_read on public.tm_report_files;
+create policy tm_report_files_read on public.tm_report_files
+  for select to authenticated
+  using ((select public.tm_is_member()));
+drop policy if exists tm_report_files_add on public.tm_report_files;
+create policy tm_report_files_add on public.tm_report_files
+  for insert to authenticated
+  with check ((select public.tm_is_member()) and uploaded_by = (select auth.uid()));
+revoke all on public.tm_report_files from anon, authenticated;
+grant select, insert (path, name, size, kind, day, person, person_name) on public.tm_report_files to authenticated;
+
+-- 옮길 첨부를 집는다 - 24시간이 지난 것, 또는 p_day(· p_kind)의 것. 둘이 함께 불러도 같은 파일을 두 번 집지 않는다
+create or replace function public.tm_report_files_claim(p_day date default null, p_kind text default null, p_limit integer default 15)
+returns setof public.tm_report_files
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if not public.tm_is_member() then
+    raise exception 'not-member';
+  end if;
+  return query
+  update public.tm_report_files f set moving_at = now()
+   where f.path in (
+     select g.path from public.tm_report_files g
+      where g.moved_at is null
+        and (g.moving_at is null or g.moving_at < now() - interval '15 minutes')
+        and (g.created_at < now() - interval '24 hours'
+             or (p_day is not null and g.day = p_day and (p_kind is null or g.kind = p_kind)))
+      order by g.created_at
+      limit greatest(1, least(coalesce(p_limit, 15), 30))
+      for update skip locked)
+  returning f.*;
+end;
+$$;
+
+-- 옮겼다고 적는다 - 드라이브 주소가 없으면(서버에 이미 없던 파일) 옮김으로만 적는다
+create or replace function public.tm_report_file_moved(p_path text, p_drive_id text, p_drive_url text)
+returns boolean
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if not public.tm_is_member() then
+    raise exception 'not-member';
+  end if;
+  update public.tm_report_files
+     set moved_at = now(), moving_at = null, drive_id = nullif(p_drive_id, ''), drive_url = nullif(p_drive_url, '')
+   where path = p_path and moved_at is null;
+  return found;
+end;
+$$;
+
+-- 드라이브 쪽 웹 앱 주소 - 드라이브 지도 목록의 '#refresh' 줄(목록 전체를 받지 않고)
+create or replace function public.tm_drive_webapp()
+returns text
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select e->>'url'
+    from public.tm_drive_snapshot s, jsonb_array_elements(s.items) e
+   where public.tm_is_member() and e->>'id' = '#refresh'
+     and e->>'url' ~ '^https://script\.google\.com/macros/s/[A-Za-z0-9_-]+/exec$'
+   limit 1
+$$;
+
+revoke execute on function public.tm_report_files_claim(date, text, integer), public.tm_report_file_moved(text, text, text),
+  public.tm_drive_webapp() from public, anon;
+grant execute on function public.tm_report_files_claim(date, text, integer), public.tm_report_file_moved(text, text, text),
+  public.tm_drive_webapp() to authenticated;
+
+-- 드라이브로 옮긴 보고 첨부는 팀원 누구나 저장소에서 지운다(옮긴 사람의 토큰으로 Apps Script 가 지운다)
+drop policy if exists tm_files_report_moved_remove on storage.objects;
+create policy tm_files_report_moved_remove on storage.objects
+  for delete to authenticated
+  using (bucket_id = 'tm-files' and name like 'reports/%' and (select public.tm_is_member())
+         and exists (select 1 from public.tm_report_files f where f.path = storage.objects.name and f.moved_at is not null));
+
+-- 이 블록 전에 넣은 첨부(보고 글에만 있고 이 표에 없는 것)도 옮기게 글에서 찾아 적는다 - 마지막으로 고친 때부터 24시간
+insert into public.tm_report_files (path, name, kind, day, person, person_name, uploaded_by, created_at)
+select distinct on (m[1]) m[1], left(m[2], 200), 'daily', d.day, d.person, left(d.name, 40), null, d.updated_at
+  from public.tm_daily_reports d,
+       regexp_matches(d.projects::text || ' ' || d.blocker, '<(?:img|file):tmfile:(reports/[A-Za-z0-9/_.-]+)\|([^|>]*)', 'g') m
+on conflict (path) do nothing;
+insert into public.tm_report_files (path, name, kind, day, person, person_name, uploaded_by, created_at)
+select distinct on (m[1]) m[1], left(m[2], 200), 'weekly', w.week, w.person, left(w.name, 40), null, w.updated_at
+  from public.tm_weekly_entries w,
+       regexp_matches(w.projects::text || ' ' || w.summary || ' ' || w.issues || ' ' || w.feedback, '<(?:img|file):tmfile:(reports/[A-Za-z0-9/_.-]+)\|([^|>]*)', 'g') m
+on conflict (path) do nothing;
+insert into public.tm_report_files (path, name, kind, day, person, person_name, uploaded_by, created_at)
+select distinct on (m[1]) m[1], left(m[2], 200), 'team', t.id::date, null, '', null, t.updated_at
+  from public.tm_weekly_reports t,
+       regexp_matches(t.summary, '<(?:img|file):tmfile:(reports/[A-Za-z0-9/_.-]+)\|([^|>]*)', 'g') m
+on conflict (path) do nothing;
+
+do $$
+begin
+  begin
+    alter publication supabase_realtime add table public.tm_report_files;
+  exception when duplicate_object then null;
+  end;
+end;
+$$;
+
 -- 일간보고 명단을 처음 9명으로 되돌리기 - 다시 실행으로는 채우지 않으므로, 꼭 필요할 때 관리자가 이 줄만 따로 실행한다.
 -- 명단이 비어 있을 때만 넣는다. 맨 앞의 -- 를 지우고 그 줄만 실행한다.
 -- insert into public.tm_report_people (name, sort) select v.name, v.sort from (values ('박무경', 1000::double precision), ('정성권', 2000), ('전승원', 3000), ('박예형', 4000), ('강민정', 5000), ('김학동', 6000), ('조현민', 7000), ('이지영', 8000), ('박수현', 9000)) as v (name, sort) where not exists (select 1 from public.tm_report_people);

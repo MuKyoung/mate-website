@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { isRemote } from './supabase';
 import { useRemoteReportStore } from './reportRemote';
 import {
@@ -16,10 +16,14 @@ import {
 import { localToday, type DailyEntry, type DailyProject, type Member, type ReportPerson, type Task, type WeeklyEntry, type WeeklyProject } from './types';
 import { useMembers } from './members';
 import { RichCell } from './reportEditor';
+import {
+  archiveReportFiles, dueReportFiles, loadReportFiles, pendingOfDay, reportFilesVersion, subscribeReportFiles,
+  type ArchiveResult, type FileScope,
+} from './reportFiles';
 import { CommitInput } from './DomainDialog';
 import {
   IconArrow, IconPlus, Modal, PageHead, useConfirm,
-  tmBtn, tmBtnPrimary, tmCallout, tmEditBtn, tmFieldBase, tmGhostBtn, tmGhostDanger, tmIconBtn, tmSelect, tmTab, tmTextBtn,
+  tmBtn, tmBtnPrimary, tmCallout, tmCount, tmEditBtn, tmFieldBase, tmGhostBtn, tmGhostDanger, tmIconBtn, tmSelect, tmTab, tmTextBtn,
 } from './ui';
 
 /*
@@ -159,11 +163,11 @@ function scrollWithin(el: HTMLElement, gap = 16) {
 }
 
 /** 보고의 글 칸 - Confluence 문서처럼 쓰는 편집 칸(목록 · 들여쓰기 · 글꼴 · '/' 작업 넣기) */
-function TextField({ id, value, onChange, placeholder, label, rows = 1 }: {
-  id: string; value: string; onChange(v: string): void; placeholder?: string; label: string; rows?: number;
+function TextField({ id, value, onChange, placeholder, label, rows = 1, fileScope }: {
+  id: string; value: string; onChange(v: string): void; placeholder?: string; label: string; rows?: number; fileScope?: FileScope;
 }) {
   const env = useRenderEnv();
-  return <RichCell id={id} value={value} onChange={onChange} placeholder={placeholder} label={label} env={env} minLines={rows} />;
+  return <RichCell id={id} value={value} onChange={onChange} placeholder={placeholder} label={label} env={env} minLines={rows} fileScope={fileScope} />;
 }
 
 /** 둘 중 하나를 고르는 알약 줄 */
@@ -289,6 +293,86 @@ function metaOf(e: { updatedAt: string; updatedBy: string | null } | undefined, 
   return `${whenOf(e.updatedAt, today)} 저장${by ? ` · ${by} 님이 고침` : ''}`;
 }
 
+/* ── 보고 첨부 → 구글 드라이브 ───────────────────────────────
+   올린 첨부는 서버(tm-files)에 잠시 둔다. 올린 지 24시간이 지나면 보고 화면을 연 팀원의 브라우저가(이 브라우저에서 10분에 한 번)
+   드라이브 쪽 웹 앱에 옮겨 달라고 하고, '스크럼 종료'는 그날 첨부를 바로 옮긴다. 옮긴 첨부는 드라이브로 열린다(reportFiles.ts) */
+
+const ARCHIVE_KEY = 'mate.taskmanager.reports.archiveAt.v1';
+
+function archiveError(r: Exclude<ArchiveResult, { ok: true }>): string {
+  if (r.reason === 'no-webapp') return "구글 드라이브 연결(드라이브 쪽 웹 앱)이 아직 없어 첨부를 옮기지 못했습니다. 관리자에게 알려 주세요.";
+  if (r.reason === 'not-member') return '로그인이 끝났거나 승인된 팀원이 아니라 옮기지 못했습니다. 다시 로그인해 주세요.';
+  if (r.reason === 'busy') return '드라이브 쪽이 다른 일을 하는 중입니다. 잠시 뒤 다시 눌러 주세요.';
+  if (r.reason === 'unreachable') return '드라이브 쪽에 닿지 않았습니다. 인터넷 연결을 확인한 뒤 다시 눌러 주세요.';
+  if (r.message === 'old-webapp') return '드라이브 쪽 스크립트를 새 판으로 올려야 첨부를 옮길 수 있습니다. 관리자에게 알려 주세요.';
+  return `첨부를 옮기지 못했습니다${r.message ? ` (${r.message})` : ''}.`;
+}
+
+function useReportArchive(onNotice: (text: string, tone?: 'ok' | 'err') => void) {
+  const notice = useRef(onNotice);
+  notice.current = onNotice;
+  const [ready, setReady] = useState(false);
+  const [busy, setBusy] = useState(false);
+  useSyncExternalStore(subscribeReportFiles, reportFilesVersion, reportFilesVersion);
+  const reload = useCallback(async () => {
+    const rows = await loadReportFiles();
+    setReady(rows !== null);
+    return rows;
+  }, []);
+  /** day 를 주면 그날(일간) 첨부까지, quiet 면 알림 없이(24시간 자동) */
+  const run = useCallback(async (day?: string, quiet = false) => {
+    setBusy(true);
+    try {
+      let moved = 0;
+      let failed = 0;
+      // 한 번에 15개 - 남았으면 몇 번 더
+      for (let i = 0; i < 4; i += 1) {
+        const r = await archiveReportFiles(day, day ? 'daily' : undefined);
+        if (!r.ok) {
+          if (!quiet) notice.current(archiveError(r), 'err');
+          // 웹 앱이 없거나 예전 판이면 자동 옮기기는 6시간 쉰다 - 예전 판은 부를 때마다 드라이브 목록을 통째로 받아 실행 시간을 쓴다
+          if (r.reason === 'no-webapp' || r.message === 'old-webapp') {
+            try { window.localStorage.setItem(ARCHIVE_KEY, String(Date.now() + 6 * 3600 * 1000)); } catch { /* 막힌 환경 */ }
+          }
+          return;
+        }
+        moved += r.moved;
+        failed += r.failed;
+        if (!r.left) break;
+      }
+      await reload();
+      if (quiet) return;
+      if (moved) notice.current(`첨부 ${moved}개를 구글 드라이브 'MATE Hub 보고 첨부'로 옮겼습니다.${failed ? ` ${failed}개는 잠시 뒤 다시 옮깁니다.` : ''}`, 'ok');
+      else notice.current(failed ? `첨부 ${failed}개를 옮기지 못했습니다. 잠시 뒤 다시 눌러 주세요.` : '옮길 첨부가 없습니다. 이미 옮겼거나 서버에 남은 첨부가 없습니다.', failed ? 'err' : 'ok');
+    } finally {
+      setBusy(false);
+    }
+  }, [reload]);
+  useEffect(() => {
+    if (!isRemote) return undefined;
+    let live = true;
+    const tick = async () => {
+      const rows = await reload();
+      if (!live || !rows || !dueReportFiles().length) return;
+      // 여러 탭 · 팀원이 한꺼번에 부르지 않게 이 브라우저에서 10분에 한 번
+      let last = 0;
+      try { last = Number(window.localStorage.getItem(ARCHIVE_KEY) || 0); } catch { /* 막힌 환경 */ }
+      if (Date.now() - last < 10 * 60 * 1000) return;
+      try { window.localStorage.setItem(ARCHIVE_KEY, String(Date.now())); } catch { /* 막힌 환경 */ }
+      await run(undefined, true);
+    };
+    void tick();
+    const t = setInterval(() => void tick(), 5 * 60 * 1000);
+    return () => {
+      live = false;
+      clearInterval(t);
+    };
+  }, [reload, run]);
+  return { ready: isRemote && ready, busy, run, pending: (day: string) => pendingOfDay(day).length };
+}
+
+type Archive = ReturnType<typeof useReportArchive>;
+
 export default function Reports({
   kind, onKind, me, canEditPeople, tasks, onTaskOpen, onNotice, flushRef, leaveRef,
 }: {
@@ -311,6 +395,7 @@ export default function Reports({
   const today = useTodayISO();
   const onError = useCallback((text: string) => onNotice(text, 'err'), [onNotice]);
   const store = useReports({ onError, me });
+  const archive = useReportArchive(onNotice);
   const [day, setDay] = useState(today);
   const [week, setWeek] = useState(() => weekOf(today));
   const [rosterOpen, setRosterOpen] = useState(false);
@@ -550,7 +635,7 @@ export default function Reports({
       onRoster: () => setRosterOpen(true),
     };
     body = kind === 'daily' ? (
-      <DailyView {...common} day={day} onDay={setDay}
+      <DailyView {...common} day={day} onDay={setDay} archive={archive}
         onCopyLink={() => void copy('일간보고 링크', linkTo({ view: 'daily', date: day }), `${dayLabel(day)} 스크럼 링크를 복사했습니다.`)} />
     ) : (
       <WeeklyView {...common} week={week} onWeek={setWeek} onOpenDay={(d) => { setDay(d); onKind('daily'); }}
@@ -702,14 +787,15 @@ function DailyEditor({ idBase, store, day, person, entry, names, wide, onRemoveA
   onRemoveAsk(row: DailyProject): Promise<boolean>;
   lead?: React.ReactNode;
 }) {
+  const scope: FileScope = { kind: 'daily', day, person: person.id, personName: person.name };
   return (
     <>
-      <ProjectsEditor<DailyProject> idBase={idBase} value={dailyProjects(entry)} cols={DAILY_COLS} names={names} wide={wide}
+      <ProjectsEditor<DailyProject> idBase={idBase} value={dailyProjects(entry)} cols={DAILY_COLS} names={names} wide={wide} fileScope={scope}
         blank={() => blankDaily()} nameMax={LIMITS.name} onRemoveAsk={onRemoveAsk} lead={lead}
         onChange={(next) => store.setDaily(day, person, { projects: next })} />
       <div className="mt-4">
         <label htmlFor={`${idBase}-blocker`} className="mb-1.5 block text-[14px] font-bold text-tm-ink">블로커 / 공유사항</label>
-        <TextField id={`${idBase}-blocker`} value={entry?.blocker ?? ''} label="블로커 / 공유사항" rows={2}
+        <TextField id={`${idBase}-blocker`} value={entry?.blocker ?? ''} label="블로커 / 공유사항" rows={2} fileScope={scope}
           placeholder="막힌 것 · 결정이나 도움이 필요한 것 · 팀에 알릴 것. 없으면 비워 둡니다"
           onChange={(v) => store.setDaily(day, person, { blocker: v })} />
       </div>
@@ -718,8 +804,8 @@ function DailyEditor({ idBase, store, day, person, entry, names, wide, onRemoveA
 }
 
 function DailyView({
-  store, people, today, members, canAdmin, mine, mineAuto, onMine, names, nameOf, onNotice, onRoster, onCopyLink, day, onDay,
-}: ViewProps & { day: string; onDay(d: string): void }) {
+  store, people, today, members, canAdmin, mine, mineAuto, onMine, names, nameOf, onNotice, onRoster, onCopyLink, day, onDay, archive,
+}: ViewProps & { day: string; onDay(d: string): void; archive: Archive }) {
   const uid = useId();
   const [boxRef, width] = useWidth();
   const wide = width >= 860;
@@ -729,7 +815,30 @@ function DailyView({
   /** 회의 모드에서 전일 보고를 옆에 함께 보는가 - 이 브라우저에 기억 */
   const [sideOn, setSideOn] = useStoredChoice(MEETING_SIDE_KEY, 'on', ON_OFF);
   const [removeAsk, removeNode] = useRemoveAsk();
+  const [confirmEnd, confirmEndNode] = useConfirm();
   const memberOf = (p: ReportPerson) => (p.order === Number.MAX_SAFE_INTEGER ? null : memberOfPerson(p, members));
+
+  /** 스크럼 종료 - 그날 서버에 남은 첨부를 드라이브로 옮긴다 */
+  const pendingFiles = archive.pending(day);
+  const endScrum = async () => {
+    if (!pendingFiles) {
+      onNotice(`${dayLabel(day)} 스크럼에 서버에 남은 첨부가 없습니다. 이미 옮겼거나 올린 첨부가 없습니다.`, 'ok');
+      return;
+    }
+    const yes = await confirmEnd({
+      title: '스크럼을 마치고 첨부를 드라이브로 옮길까요?',
+      body: <>{dayLabel(day)} 스크럼에 올린 첨부 <b>{pendingFiles}개</b>를 구글 드라이브 <b>MATE Hub 보고 첨부 / {day.slice(0, 7)} / {day} 스크럼</b> 폴더로 옮기고 서버에서는 지웁니다. 보고의 첨부는 그대로 두고, 누르면 드라이브에서 열립니다.</>,
+      ok: '스크럼 종료',
+    });
+    if (yes) await archive.run(day);
+  };
+  const endButton = archive.ready && (
+    <button type="button" onClick={() => void endScrum()} disabled={archive.busy} className={tmGhostBtn}
+      title="그날 올린 첨부를 구글 드라이브로 옮기고 서버에서 지웁니다. 첨부는 올린 지 24시간이 지나면 저절로도 옮겨집니다">
+      {archive.busy ? '드라이브로 옮기는 중…' : '스크럼 종료'}
+      {!archive.busy && pendingFiles > 0 && <span className={tmCount}>첨부 {pendingFiles}</span>}
+    </button>
+  );
 
   const ofDay = useMemo(() => store.daily.filter((e) => e.day === day), [store.daily, day]);
   const rows = useMemo(() => rowsOf(people, ofDay, isDailyFilled), [people, ofDay]);
@@ -781,6 +890,7 @@ function DailyView({
         <button type="button" onClick={() => setMeeting(true)} className={tmBtnPrimary} title="한 사람씩 크게 띄웁니다. ← → 로 넘깁니다">
           회의 모드
         </button>
+        {endButton}
         <button type="button" onClick={onCopyLink} className={tmGhostBtn}>링크 복사</button>
         {canAdmin && <button type="button" onClick={onRoster} className={tmGhostBtn}>명단 관리</button>}
       </div>
@@ -873,9 +983,16 @@ function DailyView({
       )}
       {meeting && (
         <MeetingView title={`${dayLabel(day)} 스크럼`} items={meetingItems} onClose={() => setMeeting(false)}
+          actions={archive.ready ? (
+            <button type="button" className={tmGhostBtn} disabled={archive.busy}
+              onClick={() => { setMeeting(false); void endScrum(); }}>
+              스크럼 종료{pendingFiles > 0 ? ` · 첨부 ${pendingFiles}` : ''}
+            </button>
+          ) : undefined}
           side={{ on: sideOn === 'on', label: '전일 보고 함께 보기', onToggle: () => setSideOn(sideOn === 'on' ? 'off' : 'on') }} />
       )}
       {removeNode}
+      {confirmEndNode}
     </div>
   );
 }
@@ -997,20 +1114,21 @@ function WeeklyEditor({ idBase, store, week, person, entry, names, wide, onRemov
   onRemoveAsk(row: WeeklyProject): Promise<boolean>;
   lead?: React.ReactNode;
 }) {
+  const scope: FileScope = { kind: 'weekly', day: week, person: person.id, personName: person.name };
   const set = (patch: Parameters<ReportStore['setWeekly']>[2]) => store.setWeekly(week, person, patch);
   return (
     <>
       <label htmlFor={`${idBase}-summary`} className="mb-1.5 block text-[14px] font-bold text-tm-ink">요약</label>
-      <TextField id={`${idBase}-summary`} value={entry?.summary ?? ''} label="요약"
+      <TextField id={`${idBase}-summary`} value={entry?.summary ?? ''} label="요약" fileScope={scope}
         placeholder="이번 주 핵심을 한두 줄로" onChange={(v) => set({ summary: v })} />
       <div className="mt-4">
-        <ProjectsEditor<WeeklyProject> idBase={idBase} value={entry?.projects ?? []} cols={WEEKLY_COLS} names={names} wide={wide}
+        <ProjectsEditor<WeeklyProject> idBase={idBase} value={entry?.projects ?? []} cols={WEEKLY_COLS} names={names} wide={wide} fileScope={scope}
           blank={() => blankWeekly()} nameMax={LIMITS.name} onRemoveAsk={onRemoveAsk} lead={lead}
           onChange={(next) => set({ projects: next })} />
       </div>
       <div className="mt-4">
         <label htmlFor={`${idBase}-issues`} className="mb-1.5 block text-[14px] font-bold text-tm-ink">이슈 / 요청 사항</label>
-        <TextField id={`${idBase}-issues`} value={entry?.issues ?? ''} label="이슈 / 요청 사항" rows={2}
+        <TextField id={`${idBase}-issues`} value={entry?.issues ?? ''} label="이슈 / 요청 사항" rows={2} fileScope={scope}
           placeholder="아직 풀리지 않은 블로커 · 결정이나 도움이 필요한 것만" onChange={(v) => set({ issues: v })} />
       </div>
     </>
@@ -1141,6 +1259,7 @@ function WeeklyView({
           <div className="min-w-0">
             {canAdmin && team?.status !== 'final' ? (
               <TextField id={`${uid}-team-summary`} value={team?.summary ?? ''} rows={3} label="팀 요약"
+                fileScope={{ kind: 'team', day: week, person: null, personName: '' }}
                 placeholder="이번 주 팀 전체의 흐름 · 강조할 것 · 다음 주에 챙길 것"
                 onChange={(v) => store.setTeam(week, v)} />
             ) : team?.summary.trim() ? (
@@ -1271,6 +1390,7 @@ function WeeklyView({
                     <div className="mt-4">
                       <label htmlFor={`${uid}-${r.person.id}-fb`} className="mb-1.5 block text-[14px] font-bold text-tm-ink">PM 피드백</label>
                       <TextField id={`${uid}-${r.person.id}-fb`} value={r.entry?.feedback ?? ''} rows={2} label="PM 피드백"
+                        fileScope={{ kind: 'weekly', day: week, person: r.person.id, personName: r.person.name }}
                         placeholder="스크럼 · 주간보고 작성에 대한 의견, 칭찬, 다음에 챙길 것"
                         onChange={(v) => store.setWeekly(week, r.person, { feedback: v })} />
                     </div>

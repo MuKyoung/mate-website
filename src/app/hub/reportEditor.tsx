@@ -1,7 +1,7 @@
 'use client';
 
 import './reports.css';
-import { forwardRef, useEffect, useId, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import { forwardRef, useEffect, useId, useImperativeHandle, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { EditorContent, NodeViewWrapper, ReactNodeViewRenderer, ReactRenderer, useEditor, type Editor, type NodeViewProps } from '@tiptap/react';
 import { Extension, Node, type JSONContent, type Range } from '@tiptap/core';
 import { PluginKey } from '@tiptap/pm/state';
@@ -10,7 +10,10 @@ import { TaskItem, TaskList } from '@tiptap/extension-list';
 import { Placeholder } from '@tiptap/extensions';
 import Suggestion, { type SuggestionKeyDownProps, type SuggestionProps } from '@tiptap/suggestion';
 import { PANEL_KINDS, dateChip, lineKindOf, spansOf, type PanelKind, type StatusColor } from './reportStore';
-import { isImageFile, openReportFile, reportFileUrl, sizeLabel, uploadReportFile } from './reportFiles';
+import {
+  isImageFile, openReportFile, reportFileInfo, reportFileUrl, reportFilesVersion, sizeLabel, subscribeReportFiles, uploadReportFile,
+  type FileScope,
+} from './reportFiles';
 import { STATUSES, localToday, type Member, type Status, type Task } from './types';
 import { Avatar } from './ui';
 
@@ -228,6 +231,17 @@ function useFileUrl(src: string) {
 
 function ImageView({ node, selected }: NodeViewProps) {
   const { url, fail } = useFileUrl(String(node.attrs.src));
+  useSyncExternalStore(subscribeReportFiles, reportFilesVersion, reportFilesVersion);
+  const info = reportFileInfo(String(node.attrs.src));
+  // 드라이브로 옮긴 그림은 서버에 없다 - 칩으로(두 번 누르면 드라이브)
+  if (info?.moved_at) {
+    return (
+      <NodeViewWrapper as="span" className={`tm-rfile ${selected ? 'is-selected' : ''}`} data-r-image="" title="구글 드라이브로 옮긴 그림 - 두 번 누르면 엽니다"
+        onDoubleClick={() => void openReportFile(String(node.attrs.src)).catch(() => {})}>
+        <span aria-hidden>🖼️</span>{String(node.attrs.name)}<small>드라이브</small>
+      </NodeViewWrapper>
+    );
+  }
   return (
     <NodeViewWrapper as="span" className={`tm-rimage ${selected ? 'is-selected' : ''}`} data-r-image="">
       {/* 비공개 저장소의 한 시간짜리 주소 · data URL 이라 next/image 로 줄이지 않는다 */}
@@ -240,12 +254,15 @@ function ImageView({ node, selected }: NodeViewProps) {
 
 function FileView({ node, selected }: NodeViewProps) {
   const name = String(node.attrs.name);
+  useSyncExternalStore(subscribeReportFiles, reportFilesVersion, reportFilesVersion);
+  const moved = !!reportFileInfo(String(node.attrs.src))?.moved_at;
   return (
     <NodeViewWrapper as="span" className={`tm-rfile ${selected ? 'is-selected' : ''}`} data-r-file="" title={`${name} - 두 번 누르면 엽니다`}
       onDoubleClick={() => void openReportFile(String(node.attrs.src)).catch(() => {})}>
       <span aria-hidden>{/\.pdf$/i.test(name) ? '📄' : '📎'}</span>
       {name}
       {Number(node.attrs.size) > 0 && <small>{sizeLabel(Number(node.attrs.size))}</small>}
+      {moved && <small>드라이브</small>}
     </NodeViewWrapper>
   );
 }
@@ -493,7 +510,7 @@ function slashItems(ui: { current: Ui }, query: string): SugItem[] {
  * 보고 칸 하나. 글은 줄 글로 주고받는다(value · onChange). 다른 곳에서 바뀐 글(실시간 · 지난 예정 가져오기 · 채우기)은
  * 이 칸을 쓰고 있지 않을 때 받아들이고, 쓰는 중이면 칸을 떠날 때 맞춘다
  */
-export function RichCell({ id, value, onChange, placeholder, label, env, variant = 'field', minLines = 1 }: {
+export function RichCell({ id, value, onChange, placeholder, label, env, variant = 'field', minLines = 1, fileScope }: {
   id: string;
   value: string;
   onChange(v: string): void;
@@ -504,7 +521,11 @@ export function RichCell({ id, value, onChange, placeholder, label, env, variant
   /** cell = 표 칸(테두리 없이, 올리면 회색), field = 입력 칸 */
   variant?: 'cell' | 'field';
   minLines?: number;
+  /** 첨부가 속한 보고 - 서버 경로 · 드라이브 폴더(날 · 사람)를 정한다 */
+  fileScope?: FileScope;
 }) {
+  const scopeRef = useRef(fileScope);
+  scopeRef.current = fileScope;
   const envRef = useRef(env);
   envRef.current = env;
   const last = useRef(value);
@@ -530,7 +551,7 @@ export function RichCell({ id, value, onChange, placeholder, label, env, variant
     setBusy((n) => n + files.length);
     for (const f of files) {
       try {
-        const src = await uploadReportFile(f);
+        const src = await uploadReportFile(f, scopeRef.current);
         const node = isImageFile(f)
           ? { type: 'rImage', attrs: { src, name: f.name } }
           : { type: 'rFile', attrs: { src, name: f.name, size: f.size } };

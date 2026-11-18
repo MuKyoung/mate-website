@@ -3,7 +3,14 @@
  *
  * 팀 구글 드라이브(contact@devteammate.co.kr 의 내 드라이브)의 폴더 · 파일 목록을
  * Hub(Supabase)의 tm_drive_snapshot 으로 보낸다(supabase/taskmanager.sql 의 '구글 드라이브 지도').
- * Hub 의 '구글 드라이브' 화면이 그 목록을 트리로 그린다. 드라이브는 읽기만 한다 - 만들거나 고치거나 지우지 않는다.
+ * Hub 의 '구글 드라이브' 화면이 그 목록을 트리로 그린다. 목록을 위해서는 드라이브를 읽기만 한다.
+ *
+ * 보고 첨부 옮기기(2026-11-18) - 일간 · 주간보고에 넣은 그림 · PDF · 파일을 서버(Supabase 저장소)에서
+ * 이 드라이브의 'MATE Hub 보고 첨부/<연-월>/<날> 스크럼/<사람>' 으로 옮기고 서버 파일은 지운다(올린 지 24시간 · 스크럼 종료).
+ * Hub 가 웹 앱(doPost, action 'reports')을 부르고, 이 스크립트는 부른 팀원의 로그인 토큰으로 Hub 를 다룬다.
+ * 그 폴더는 Hub 의 승인된 팀원 메일과 보기 권한으로 공유한다(알림 메일 없이) - 보고의 칩을 누르면 팀원이 연다.
+ * 이 기능을 처음 켤 때: 이 파일을 다시 붙여 넣고 install 을 실행해 드라이브 쓰기 권한을 허용한 뒤,
+ * '배포 → 배포 관리 → 연필 → 버전: 새 버전 → 배포' 로 웹 앱을 새 판으로 올린다.
  *
  * 1분마다 드라이브에 바뀐 것이 있는지만 가볍게 묻고(Drive 변경 기록), 바뀌었을 때만 목록을 통째로 보낸다.
  * 바뀐 것이 이어지면 통째로 보내기는 3분에 한 번으로 묶고, 바뀐 것이 없어도 30분마다 한 번은 보낸다(놓친 변경 · 살아 있다는 표시).
@@ -46,6 +53,10 @@ const FULL_MINUTES = 30;
 const MANUAL_GAP_SECONDS = 30;
 const FOLDER = 'application/vnd.google-apps.folder';
 const WEBAPP_RE = /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/;
+/** 보고 첨부를 옮겨 둘 드라이브 폴더(내 드라이브 맨 위) */
+const REPORT_FOLDER = 'MATE Hub 보고 첨부';
+/** 한 번에 옮기는 파일 수 - 웹 앱 한 번(6분) 안에 넉넉히 */
+const REPORT_BATCH = 15;
 
 /** 처음 한 번 - 1분마다 tick 을 부르게 하고 지금 한 번 보낸다. 다시 실행해도 된다 */
 function install() {
@@ -64,6 +75,7 @@ function install() {
   uninstall();
   props.setProperty('changeToken', Drive.Changes.getStartPageToken().startPageToken);
   const n = sync();
+  prepareReports_();
   ScriptApp.newTrigger('tick').timeBased().everyMinutes(CHECK_MINUTES).create();
   console.log('설치 완료 - 드라이브가 바뀌면 1분쯤 뒤에 Hub 로 보냅니다. 지금 보낸 폴더 · 파일 ' + n + '개');
   console.log(props.getProperty('webAppUrl')
@@ -119,7 +131,10 @@ function doPost(e) {
   } catch (err) {
     body = {};
   }
-  if (!isMember_(String(body.token || ''))) return json_({ ok: false, error: 'not-member' });
+  const token = String(body.token || '');
+  if (!isMember_(token)) return json_({ ok: false, error: 'not-member' });
+  // 보고 첨부 옮기기 - 그 밖은 드라이브 바로 확인
+  if (body.action === 'reports') return json_(moveReports_(token, body.day, body.kind));
   const lock = LockService.getScriptLock();
   // 다른 사람의 확인 · 1분 갱신이 돌고 있으면 끝나기를 기다린다 - 끝나면 방금 것이라 새로 받지 않는다
   if (!lock.tryLock(45000)) return json_({ ok: false, error: 'busy' });
@@ -232,4 +247,127 @@ function push_(root, items, source) {
   if (code < 200 || code >= 300) {
     throw new Error('Hub 로 보내지 못했습니다(' + code + '): ' + res.getContentText().slice(0, 300));
   }
+}
+
+/* ── 보고 첨부 → 드라이브 ───────────────────────────────── */
+
+/**
+ * 옮길 첨부(24시간이 지난 것, day · kind 를 주면 그날 것도)를 Hub 에서 집어 드라이브로 옮기고 서버 파일을 지운다.
+ * 답: { ok, moved, failed, left } - left 는 이번에 다 못 옮겨 남은 것이 있을 수 있다는 뜻(한 번에 REPORT_BATCH 개)
+ */
+function moveReports_(token, day, kind) {
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(45000)) return { ok: false, error: 'busy' };
+  try {
+    const rows = rest_('post', '/rest/v1/rpc/tm_report_files_claim', token, {
+      p_day: /^\d{4}-\d{2}-\d{2}$/.test(String(day || '')) ? String(day) : null,
+      p_kind: ['daily', 'weekly', 'team'].indexOf(String(kind || '')) >= 0 ? String(kind) : null,
+      p_limit: REPORT_BATCH,
+    }) || [];
+    if (!rows.length) return { ok: true, moved: 0, failed: 0, left: false };
+    const root = reportRoot_(token);
+    let moved = 0;
+    let failed = 0;
+    rows.forEach(function (r) {
+      try {
+        const res = UrlFetchApp.fetch(SUPABASE_URL + '/storage/v1/object/authenticated/tm-files/' + encodePath_(r.path), {
+          headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + token }, muteHttpExceptions: true,
+        });
+        const code = res.getResponseCode();
+        if (code === 404 || code === 400) {
+          // 서버에 이미 없다 - 옮김으로만 적는다
+          rest_('post', '/rest/v1/rpc/tm_report_file_moved', token, { p_path: r.path, p_drive_id: '', p_drive_url: '' });
+          return;
+        }
+        if (code !== 200) throw new Error('내려받기 ' + code);
+        const name = String(r.name || r.path.split('/').pop()).replace(/[\\/]/g, '_').slice(0, 200);
+        const day0 = String(r.day || r.created_at || '').slice(0, 10);
+        const folder = folderIn_(folderIn_(folderIn_(root, day0.slice(0, 7)), day0 + (r.kind === 'daily' ? ' 스크럼' : ' 주간보고')), r.person_name || '팀');
+        const file = folder.createFile(res.getBlob().setName(name));
+        rest_('post', '/rest/v1/rpc/tm_report_file_moved', token, { p_path: r.path, p_drive_id: file.getId(), p_drive_url: file.getUrl() });
+        UrlFetchApp.fetch(SUPABASE_URL + '/storage/v1/object/tm-files', {
+          method: 'delete', contentType: 'application/json',
+          headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + token },
+          payload: JSON.stringify({ prefixes: [r.path] }), muteHttpExceptions: true,
+        });
+        moved++;
+      } catch (err) {
+        // 집은 표시(moving_at)는 15분 뒤에 풀려 다음에 다시 옮긴다
+        failed++;
+        console.log('보고 첨부를 옮기지 못함 ' + r.path + ': ' + String((err && err.message) || err));
+      }
+    });
+    return { ok: true, moved: moved, failed: failed, left: rows.length >= REPORT_BATCH };
+  } catch (err) {
+    return { ok: false, error: String((err && err.message) || err).slice(0, 200) };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/** Hub REST 호출 - 부른 팀원의 토큰으로 */
+function rest_(method, path, token, body) {
+  const opts = {
+    method: method, contentType: 'application/json',
+    headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + token }, muteHttpExceptions: true,
+  };
+  if (body !== undefined) opts.payload = JSON.stringify(body);
+  const res = UrlFetchApp.fetch(SUPABASE_URL + path, opts);
+  const code = res.getResponseCode();
+  if (code < 200 || code >= 300) throw new Error('Hub ' + path + ' (' + code + '): ' + res.getContentText().slice(0, 200));
+  const text = res.getContentText();
+  return text ? JSON.parse(text) : null;
+}
+
+function encodePath_(path) {
+  return String(path).split('/').map(encodeURIComponent).join('/');
+}
+
+/** 이름이 같은 하위 폴더 - 없으면 만든다 */
+function folderIn_(parent, name) {
+  const it = parent.getFoldersByName(name);
+  return it.hasNext() ? it.next() : parent.createFolder(name);
+}
+
+/** 맨 위 보고 첨부 폴더 - 처음이면 만들고, Hub 의 승인된 팀원과 보기 권한으로 공유한다(알림 메일 없이) */
+function reportRoot_(token) {
+  const props = PropertiesService.getScriptProperties();
+  let folder = null;
+  const id = props.getProperty('reportFolderId');
+  if (id) {
+    try {
+      folder = DriveApp.getFolderById(id);
+      if (folder.isTrashed()) folder = null;
+    } catch (err) {
+      folder = null;
+    }
+  }
+  if (!folder) {
+    folder = folderIn_(DriveApp.getRootFolder(), REPORT_FOLDER);
+    props.setProperty('reportFolderId', folder.getId());
+  }
+  try {
+    const members = rest_('get', '/rest/v1/tm_members?select=email&active=eq.true', token) || [];
+    const have = {};
+    (Drive.Permissions.list(folder.getId(), { fields: 'permissions(emailAddress)' }).permissions || [])
+      .forEach(function (p) { if (p.emailAddress) have[p.emailAddress.toLowerCase()] = true; });
+    members.forEach(function (m) {
+      const email = String(m.email || '').trim().toLowerCase();
+      if (!email || have[email]) return;
+      try {
+        Drive.Permissions.create({ type: 'user', role: 'reader', emailAddress: email }, folder.getId(), { sendNotificationEmail: false });
+      } catch (err) {
+        console.log('공유하지 못함 ' + email + ': ' + String((err && err.message) || err));
+      }
+    });
+  } catch (err) {
+    console.log('보고 첨부 폴더 공유를 건너뜀: ' + String((err && err.message) || err));
+  }
+  return folder;
+}
+
+/** install 이 새 권한(드라이브 쓰기)을 받게 한 번 부른다 - 폴더를 만들기만 한다 */
+function prepareReports_() {
+  const it = DriveApp.getRootFolder().getFoldersByName(REPORT_FOLDER);
+  if (!it.hasNext()) DriveApp.getRootFolder().createFolder(REPORT_FOLDER);
 }

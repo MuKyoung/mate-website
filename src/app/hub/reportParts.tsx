@@ -1,8 +1,10 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { PANEL_KINDS, dateChip, durLabel, parseLines, projectLabel, spansOf, type Dur, type Line, type PanelKind } from './reportStore';
-import { openReportFile, reportFileUrl, sizeLabel } from './reportFiles';
+import {
+  openReportFile, reportFileInfo, reportFileUrl, reportFilesVersion, sizeLabel, subscribeReportFiles, type FileScope,
+} from './reportFiles';
 import { RichCell } from './reportEditor';
 import { STATUSES, initialOf, type Member, type Task } from './types';
 import { Avatar, IconArrow, IconClose, IconPlus, tmGhostBtn, tmIconBtn } from './ui';
@@ -112,15 +114,21 @@ function Inline({ text }: { text: string }) {
 
 /** 보고에 넣은 그림 - 누르면 원본을 새 창으로 */
 function ReportImage({ src, name }: { src: string; name: string }) {
+  useSyncExternalStore(subscribeReportFiles, reportFilesVersion, reportFilesVersion);
+  const info = reportFileInfo(src);
+  const moved = !!info?.moved_at;
   const [url, setUrl] = useState<string | null>(null);
   const [fail, setFail] = useState(false);
   useEffect(() => {
+    if (moved) return undefined;
     let live = true;
     reportFileUrl(src).then((u) => { if (live) setUrl(u); }, () => { if (live) setFail(true); });
     return () => { live = false; };
-  }, [src]);
+  }, [src, moved]);
+  // 드라이브로 옮긴 그림은 서버에 없다 - 드라이브로 여는 칩
+  if (moved) return <ReportFile src={src} name={name} size={info?.size ?? 0} image />;
   return (
-    <button type="button" onClick={() => void openReportFile(src).catch(() => {})} title={`${name} - 원본 보기`}
+    <button type="button" onClick={() => void openReportFile(src).catch(() => {})} title={`${name} - 원본 보기${info ? ` · ${PENDING_HINT}` : ''}`}
       className="my-1 block max-w-full overflow-hidden rounded-lg border border-tm-line bg-tm-bg text-left align-top">
       {/* 비공개 저장소의 한 시간짜리 주소 · data URL 이라 next/image 로 줄이지 않는다 */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -131,13 +139,20 @@ function ReportImage({ src, name }: { src: string; name: string }) {
 }
 
 /** 보고에 넣은 파일 · PDF - 누르면 새 창으로 연다 */
-function ReportFile({ src, name, size }: { src: string; name: string; size: number }) {
+const PENDING_HINT = '서버에 잠시 보관 중 · 올린 지 24시간이 지나거나 스크럼을 마치면 구글 드라이브로 옮깁니다';
+
+function ReportFile({ src, name, size, image = false }: { src: string; name: string; size: number; image?: boolean }) {
+  useSyncExternalStore(subscribeReportFiles, reportFilesVersion, reportFilesVersion);
+  const info = reportFileInfo(src);
+  const moved = !!info?.moved_at;
   return (
-    <button type="button" onClick={() => void openReportFile(src).catch(() => {})} title={`${name} 열기`}
+    <button type="button" onClick={() => void openReportFile(src).catch(() => {})}
+      title={moved ? `${name} - 구글 드라이브에서 열기` : `${name} 열기${info ? ` · ${PENDING_HINT}` : ''}`}
       className="mx-[1px] inline-flex max-w-full items-center gap-1.5 rounded-md border border-tm-line bg-tm-bg px-2 align-baseline text-[0.88em] font-bold leading-[1.7] text-tm-ink hover:border-tm-blue hover:bg-tm-tint">
-      <span aria-hidden>{/\.pdf$/i.test(name) ? '📄' : '📎'}</span>
+      <span aria-hidden>{image ? '🖼️' : /\.pdf$/i.test(name) ? '📄' : '📎'}</span>
       <span className="truncate">{name}</span>
       {size > 0 && <span className="font-semibold text-tm-sub">{sizeLabel(size)}</span>}
+      {moved && <span className="rounded bg-tm-ok-tint px-1 text-[0.85em] font-bold text-tm-ok-text">드라이브</span>}
     </button>
   );
 }
@@ -266,7 +281,7 @@ const rowBtn =
   'disabled:opacity-30 disabled:hover:bg-transparent [@media(pointer:coarse)]:h-10 [@media(pointer:coarse)]:w-10';
 
 export function ProjectsEditor<T extends Row>({
-  idBase, value, cols, onChange, blank, names, wide, onRemoveAsk, nameMax, lead,
+  idBase, value, cols, onChange, blank, names, wide, onRemoveAsk, nameMax, lead, fileScope,
 }: {
   idBase: string;
   value: T[];
@@ -281,6 +296,8 @@ export function ProjectsEditor<T extends Row>({
   nameMax: number;
   /** 표 위 오른쪽에 둘 단추 */
   lead?: React.ReactNode;
+  /** 첨부가 속한 보고 */
+  fileScope?: FileScope;
 }) {
   /** 줄이 하나도 없을 때 보이는 빈 줄 - 글을 치면 그때 저장한다(같은 id 라 초점이 그대로 남는다) */
   const [phantom] = useState(blank);
@@ -377,7 +394,7 @@ export function ProjectsEditor<T extends Row>({
               </div>
               {cols.map((c) => (
                 <div key={c.key} role="cell" className="min-w-0 border-l border-tm-line p-1">
-                  <RichCell id={`${idBase}-${row.id}-${c.key}`} value={String(row[c.key] ?? '')} env={env} variant="cell" minLines={2}
+                  <RichCell id={`${idBase}-${row.id}-${c.key}`} value={String(row[c.key] ?? '')} env={env} variant="cell" minLines={2} fileScope={fileScope}
                     label={`${row.project.trim() || `${i + 1}번째 프로젝트`} ${c.label}`} placeholder={c.hint}
                     onChange={(v) => patch(row, { [c.key]: v } as Partial<T>)} />
                 </div>
@@ -407,7 +424,7 @@ export function ProjectsEditor<T extends Row>({
               {cols.map((c) => (
                 <div key={c.key} className="min-w-0">
                   <p aria-hidden className="mb-1 text-[13px] font-bold text-tm-sub">{c.label}</p>
-                  <RichCell id={`${idBase}-${row.id}-${c.key}`} value={String(row[c.key] ?? '')} env={env} placeholder={c.hint}
+                  <RichCell id={`${idBase}-${row.id}-${c.key}`} value={String(row[c.key] ?? '')} env={env} placeholder={c.hint} fileScope={fileScope}
                     label={`${row.project.trim() || `${i + 1}번째 프로젝트`} ${c.label}`}
                     onChange={(v) => patch(row, { [c.key]: v } as Partial<T>)} />
                 </div>
@@ -510,7 +527,11 @@ function clock(ms: number) {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 }
 
-export function MeetingView({ title, items, onClose, side }: { title: string; items: MeetingItem[]; onClose(): void; side?: MeetingSide }) {
+export function MeetingView({ title, items, onClose, side, actions }: {
+  title: string; items: MeetingItem[]; onClose(): void; side?: MeetingSide;
+  /** 머리 오른쪽 닫기 앞에 둘 단추(일간: 스크럼 종료) */
+  actions?: React.ReactNode;
+}) {
   const [idx, setIdx] = useState(() => Math.max(0, items.findIndex((x) => x.filled)));
   const [since, setSince] = useState(() => Date.now());
   const [now, setNow] = useState(() => Date.now());
@@ -591,6 +612,7 @@ export function MeetingView({ title, items, onClose, side }: { title: string; it
         <button type="button" onClick={() => go(idx + 1)} disabled={idx >= items.length - 1} aria-label="다음 사람" title="다음 사람 (→)" className={tmIconBtn}>
           <IconArrow dir="right" />
         </button>
+        {actions}
         <button type="button" onClick={onClose} className={tmGhostBtn} title="닫기 (Esc)">회의 모드 닫기</button>
       </header>
       <nav aria-label="사람" className="flex flex-none gap-1.5 overflow-x-auto border-b border-tm-line bg-tm-card px-6 py-2 max-[720px]:px-4">
