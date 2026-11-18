@@ -1959,6 +1959,304 @@ grant execute on function public.tm_mcp_issue(text), public.tm_mcp_revoke(uuid) 
 grant execute on function public.tm_mcp_whoami(text), public.tm_mcp_docs(text), public.tm_mcp_doc(text, uuid),
   public.tm_mcp_search(text, text, int) to anon, authenticated;
 
+-- ── 팀 블로그 (2026-11-18) ─────────────────────────────────────
+-- Hub '커뮤니티 > 블로그'. 네이버 블로그처럼 카테고리 · 글 · 공감 · 댓글 · 조회수를 두고, 블로그 하나를 팀원 모두가 함께 쓴다.
+-- 승인된 팀원은 모두 읽고 글 · 댓글 · 공감을 단다. 글 고치기 · 지우기는 쓴 사람과 관리자, 공지 표시와 카테고리는 관리자만.
+-- 처음 카테고리는 팀 위키 '팀 블로그' 아래 구조를 따른다(정보 공유 - AI · 개발 · 디자인 · 사운드 · 게임, 활동 공유). 표가 비었을 때만 넣는다.
+-- 그림 · 파일은 위키와 같은 비공개 저장소 tm-files 의 blog/<연-월>/ 아래에 둔다(위의 '위키 파일' 정책을 그대로 쓴다).
+-- 이 블록만 따로 실행해도 된다(위의 tm_touch · tm_is_member · tm_is_admin 이 이미 있으면). 여러 번 실행해도 된다.
+create table if not exists public.tm_blog_categories (
+  id text primary key check (id ~ '^[A-Za-z0-9_-]{1,64}$'),
+  parent_id text references public.tm_blog_categories (id) on delete cascade,   -- 두 단계까지(아래 tm_blog_categories_guard)
+  name text not null check (char_length(btrim(name)) between 1 and 40),
+  sort double precision not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  check (parent_id is null or parent_id <> id)
+);
+
+create table if not exists public.tm_blog_posts (
+  id uuid primary key default gen_random_uuid(),
+  category text references public.tm_blog_categories (id) on delete set null,   -- 카테고리를 지우면 '미분류'
+  title text not null check (char_length(btrim(title)) between 1 and 200),
+  body text not null default '' check (char_length(body) <= 400000),            -- 위키와 같은 마크다운
+  tags text[] not null default '{}' check (cardinality(tags) <= 20),
+  notice boolean not null default false,                                          -- 공지 - 목록 맨 위에 둔다
+  author uuid default auth.uid() references public.tm_members (id) on delete set null,
+  views integer not null default 0 check (views >= 0),                            -- tm_blog_view 만 올린다
+  updated_by uuid references public.tm_members (id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()                                   -- 글을 고친 시각(조회수 · 공지로는 바뀌지 않는다)
+);
+
+-- 공감 - 한 사람이 한 글에 하나. id 는 '<글 id>:<팀원 id>' 라 두 창에서 함께 눌러도 한 줄이다
+create table if not exists public.tm_blog_likes (
+  id text primary key,
+  post uuid not null references public.tm_blog_posts (id) on delete cascade,
+  member uuid not null default auth.uid() references public.tm_members (id) on delete cascade,
+  created_at timestamptz not null default now(),
+  unique (post, member),
+  check (id = post::text || ':' || member::text)
+);
+
+-- 댓글 - 답글은 한 단계(parent_id 는 맨 위 댓글). 지우기는 removed 표시로 자리만 남긴다(답글이 남게)
+create table if not exists public.tm_blog_comments (
+  id uuid primary key default gen_random_uuid(),
+  post uuid not null references public.tm_blog_posts (id) on delete cascade,
+  parent_id uuid references public.tm_blog_comments (id) on delete cascade,
+  author uuid default auth.uid() references public.tm_members (id) on delete set null,
+  body text not null default '' check (char_length(body) <= 4000),
+  removed boolean not null default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists tm_blog_categories_parent_idx on public.tm_blog_categories (parent_id);
+create index if not exists tm_blog_posts_category_idx on public.tm_blog_posts (category);
+create index if not exists tm_blog_posts_author_idx on public.tm_blog_posts (author);
+create index if not exists tm_blog_posts_updated_by_idx on public.tm_blog_posts (updated_by);
+create index if not exists tm_blog_likes_member_idx on public.tm_blog_likes (member);
+create index if not exists tm_blog_comments_post_idx on public.tm_blog_comments (post);
+create index if not exists tm_blog_comments_parent_idx on public.tm_blog_comments (parent_id);
+create index if not exists tm_blog_comments_author_idx on public.tm_blog_comments (author);
+
+-- 카테고리 규칙 - 두 단계까지(아래 카테고리 밑에는 또 두지 않는다)
+create or replace function public.tm_blog_categories_guard()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  new.name := btrim(new.name);
+  if new.parent_id is not null then
+    if exists (select 1 from public.tm_blog_categories p where p.id = new.parent_id and p.parent_id is not null) then
+      raise exception '카테고리는 두 단계까지만 둘 수 있습니다';
+    end if;
+    if tg_op = 'UPDATE' and exists (select 1 from public.tm_blog_categories c where c.parent_id = new.id) then
+      raise exception '아래 카테고리가 있는 카테고리는 다른 카테고리 밑으로 옮길 수 없습니다';
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
+-- 글 규칙 - 쓴 사람 · 쓴 시각은 DB 가 적는다. 공지 표시는 관리자만. 조회수는 tm_blog_view 만(칸 권한도 주지 않는다)
+create or replace function public.tm_blog_posts_guard()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if exists (select 1 from unnest(new.tags) t where char_length(btrim(t)) not between 1 and 30) then
+    raise exception '태그는 1~30자로 적어 주세요';
+  end if;
+  if tg_op = 'INSERT' then
+    if auth.uid() is not null then
+      new.author := auth.uid();
+      new.created_at := now();
+      new.views := 0;
+      if new.notice and not public.tm_is_admin() then
+        raise exception '공지는 관리자만 정합니다';
+      end if;
+    end if;
+    new.updated_at := new.created_at;
+    new.updated_by := new.author;
+    return new;
+  end if;
+  if auth.uid() is not null then
+    if (new.id, new.author, new.created_at) is distinct from (old.id, old.author, old.created_at) then
+      raise exception '바꿀 수 없는 칸입니다';
+    end if;
+    if new.notice is distinct from old.notice and not public.tm_is_admin() then
+      raise exception '공지는 관리자만 정합니다';
+    end if;
+  end if;
+  -- 카테고리를 지워 DB 가 비운 것(연쇄 고침, 트리거 깊이 2 이상)은 글을 고친 것으로 보지 않는다
+  if (new.title, new.body, new.tags) is distinct from (old.title, old.body, old.tags)
+     or (new.category is distinct from old.category and pg_trigger_depth() = 1) then
+    new.updated_at := now();
+    if auth.uid() is not null then
+      new.updated_by := auth.uid();
+    end if;
+  else
+    new.updated_at := old.updated_at;
+    new.updated_by := old.updated_by;
+  end if;
+  return new;
+end;
+$$;
+
+-- 댓글 규칙 - 쓴 사람 · 시각은 DB 가 적고, 본문 고치기는 쓴 사람만, 지우기는 쓴 사람과 관리자. 지운 댓글은 되살리지 않는다
+create or replace function public.tm_blog_comments_guard()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if tg_op = 'INSERT' then
+    if auth.uid() is not null then
+      new.author := auth.uid();
+      new.created_at := now();
+    end if;
+    new.removed := false;
+    new.updated_at := new.created_at;
+    if btrim(new.body) = '' then
+      raise exception '댓글 내용을 적어 주세요';
+    end if;
+    if new.parent_id is not null and not exists (
+      select 1 from public.tm_blog_comments p
+      where p.id = new.parent_id and p.post = new.post and p.parent_id is null
+    ) then
+      raise exception '답글은 같은 글의 댓글에만 달 수 있습니다';
+    end if;
+    return new;
+  end if;
+  if (new.id, new.post, new.parent_id, new.author, new.created_at)
+     is distinct from (old.id, old.post, old.parent_id, old.author, old.created_at) then
+    raise exception '바꿀 수 없는 칸입니다';
+  end if;
+  if old.removed and not new.removed then
+    raise exception '지운 댓글은 되살릴 수 없습니다';
+  end if;
+  if auth.uid() is not null then
+    if new.body is distinct from old.body and not new.removed and old.author is distinct from auth.uid() then
+      raise exception '남의 댓글은 고칠 수 없습니다';
+    end if;
+    if new.removed and not old.removed and old.author is distinct from auth.uid() and not public.tm_is_admin() then
+      raise exception '남의 댓글은 지울 수 없습니다';
+    end if;
+  end if;
+  if new.removed then
+    new.body := '';
+  elsif new.body is distinct from old.body then
+    if btrim(new.body) = '' then
+      raise exception '댓글 내용을 적어 주세요';
+    end if;
+    new.updated_at := now();
+  end if;
+  return new;
+end;
+$$;
+
+create or replace trigger tm_blog_categories_guard before insert or update on public.tm_blog_categories
+  for each row execute function public.tm_blog_categories_guard();
+create or replace trigger tm_blog_categories_touch before update on public.tm_blog_categories
+  for each row execute function public.tm_touch();
+create or replace trigger tm_blog_posts_guard before insert or update on public.tm_blog_posts
+  for each row execute function public.tm_blog_posts_guard();
+create or replace trigger tm_blog_comments_guard before insert or update on public.tm_blog_comments
+  for each row execute function public.tm_blog_comments_guard();
+
+-- 조회수 - 글을 연 팀원이 부른다(같은 창에서는 한 번만 부르는 것은 화면이 한다)
+create or replace function public.tm_blog_view(post_id uuid)
+returns integer
+language sql
+security definer
+set search_path = ''
+as $$
+  update public.tm_blog_posts set views = views + 1
+  where id = post_id and public.tm_is_member()
+  returning views
+$$;
+
+alter table public.tm_blog_categories enable row level security;
+alter table public.tm_blog_posts enable row level security;
+alter table public.tm_blog_likes enable row level security;
+alter table public.tm_blog_comments enable row level security;
+
+drop policy if exists tm_blog_categories_read on public.tm_blog_categories;
+create policy tm_blog_categories_read on public.tm_blog_categories
+  for select to authenticated using ((select public.tm_is_member()));
+drop policy if exists tm_blog_categories_admin on public.tm_blog_categories;
+create policy tm_blog_categories_admin on public.tm_blog_categories
+  for all to authenticated
+  using ((select public.tm_is_admin()))
+  with check ((select public.tm_is_admin()));
+
+drop policy if exists tm_blog_posts_read on public.tm_blog_posts;
+create policy tm_blog_posts_read on public.tm_blog_posts
+  for select to authenticated using ((select public.tm_is_member()));
+drop policy if exists tm_blog_posts_add on public.tm_blog_posts;
+create policy tm_blog_posts_add on public.tm_blog_posts
+  for insert to authenticated with check ((select public.tm_is_member()));
+drop policy if exists tm_blog_posts_edit on public.tm_blog_posts;
+create policy tm_blog_posts_edit on public.tm_blog_posts
+  for update to authenticated
+  using ((select public.tm_is_member()) and (author = (select auth.uid()) or (select public.tm_is_admin())))
+  with check ((select public.tm_is_member()) and (author = (select auth.uid()) or (select public.tm_is_admin())));
+drop policy if exists tm_blog_posts_remove on public.tm_blog_posts;
+create policy tm_blog_posts_remove on public.tm_blog_posts
+  for delete to authenticated
+  using ((select public.tm_is_member()) and (author = (select auth.uid()) or (select public.tm_is_admin())));
+
+drop policy if exists tm_blog_likes_read on public.tm_blog_likes;
+create policy tm_blog_likes_read on public.tm_blog_likes
+  for select to authenticated using ((select public.tm_is_member()));
+drop policy if exists tm_blog_likes_add on public.tm_blog_likes;
+create policy tm_blog_likes_add on public.tm_blog_likes
+  for insert to authenticated with check ((select public.tm_is_member()) and member = (select auth.uid()));
+drop policy if exists tm_blog_likes_remove on public.tm_blog_likes;
+create policy tm_blog_likes_remove on public.tm_blog_likes
+  for delete to authenticated using (member = (select auth.uid()));
+
+drop policy if exists tm_blog_comments_read on public.tm_blog_comments;
+create policy tm_blog_comments_read on public.tm_blog_comments
+  for select to authenticated using ((select public.tm_is_member()));
+drop policy if exists tm_blog_comments_add on public.tm_blog_comments;
+create policy tm_blog_comments_add on public.tm_blog_comments
+  for insert to authenticated with check ((select public.tm_is_member()));
+drop policy if exists tm_blog_comments_edit on public.tm_blog_comments;
+create policy tm_blog_comments_edit on public.tm_blog_comments
+  for update to authenticated
+  using ((select public.tm_is_member()) and (author = (select auth.uid()) or (select public.tm_is_admin())))
+  with check ((select public.tm_is_member()));
+
+revoke all on public.tm_blog_categories, public.tm_blog_posts, public.tm_blog_likes, public.tm_blog_comments from anon, authenticated;
+grant select, insert (id, parent_id, name, sort), update (parent_id, name, sort), delete on public.tm_blog_categories to authenticated;
+grant select, insert (id, category, title, body, tags, notice), update (category, title, body, tags, notice), delete
+  on public.tm_blog_posts to authenticated;
+grant select, insert (id, post, member), delete on public.tm_blog_likes to authenticated;
+grant select, insert (id, post, parent_id, body), update (body, removed) on public.tm_blog_comments to authenticated;
+revoke execute on function public.tm_blog_categories_guard(), public.tm_blog_posts_guard(), public.tm_blog_comments_guard(),
+  public.tm_blog_view(uuid) from public, anon, authenticated;
+grant execute on function public.tm_blog_view(uuid) to authenticated;
+
+-- 처음 카테고리 - 팀 위키 '팀 블로그' 아래 구조. 표가 비었을 때만(관리자가 고친 뒤 다시 실행해도 그대로)
+insert into public.tm_blog_categories (id, parent_id, name, sort)
+select v.id, null, v.name, v.sort
+from (values ('info', '정보 공유', 1), ('activity', '활동 공유', 2)) as v(id, name, sort)
+where not exists (select 1 from public.tm_blog_categories);
+insert into public.tm_blog_categories (id, parent_id, name, sort)
+select v.id, 'info', v.name, v.sort
+from (values ('info-ai', 'AI', 1), ('info-dev', '개발', 2), ('info-design', '디자인', 3), ('info-sound', '사운드', 4), ('info-game', '게임', 5))
+  as v(id, name, sort)
+where (select count(*) from public.tm_blog_categories) = 2
+  and exists (select 1 from public.tm_blog_categories where id = 'info' and name = '정보 공유')
+  and exists (select 1 from public.tm_blog_categories where id = 'activity' and name = '활동 공유')
+  and not exists (select 1 from public.tm_blog_categories where parent_id is not null);
+
+-- 실시간 - 다른 사람이 쓴 글 · 댓글 · 공감이 새로고침 없이 보이게
+do $$
+begin
+  begin
+    alter publication supabase_realtime add table public.tm_blog_categories;
+  exception when duplicate_object then null;
+  end;
+  begin
+    alter publication supabase_realtime add table public.tm_blog_posts;
+  exception when duplicate_object then null;
+  end;
+  begin
+    alter publication supabase_realtime add table public.tm_blog_likes;
+  exception when duplicate_object then null;
+  end;
+  begin
+    alter publication supabase_realtime add table public.tm_blog_comments;
+  exception when duplicate_object then null;
+  end;
+end;
+$$;
+
 -- ── 첫 관리자 정하기 ─────────────────────────────────────────
 -- 위를 실행하고 첫 계정을 만든 뒤, 아래 줄의 메일을 바꾸고 맨 앞의 -- 를 지워 그 줄만 따로 실행한다.
 -- 관리자 칸이 생기기 전부터 쓰던 프로젝트도 한 번 실행한다(그 전에는 아무도 승인할 수 없다).

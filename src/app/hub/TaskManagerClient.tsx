@@ -45,6 +45,11 @@ const Org = dynamic(() => import('./Org'), {
   ssr: false,
   loading: () => <div className="flex flex-1 items-center justify-center text-[15px] font-semibold text-tm-sub">불러오는 중…</div>,
 });
+/* 커뮤니티 > 블로그도 열 때만 받고, 그때 블로그 표에 붙는다 */
+const Blog = dynamic(() => import('./Blog'), {
+  ssr: false,
+  loading: () => <div className="flex flex-1 items-center justify-center text-[15px] font-semibold text-tm-sub">불러오는 중…</div>,
+});
 import Memos from './Memos';
 import { isRemote } from './supabase';
 import {
@@ -89,7 +94,7 @@ interface Account {
 }
 
 type View = 'board' | 'list' | 'timeline' | 'calendar' | 'roadmap';
-type Section = 'tasks' | 'org' | 'drive' | 'docs' | 'memos' | 'daily' | 'weekly';
+type Section = 'tasks' | 'org' | 'drive' | 'docs' | 'memos' | 'daily' | 'weekly' | 'blog';
 
 /** 보기 - hint 는 쪽 머리의 설명 줄에 나온다 */
 const VIEWS: { id: View; label: string; key: string; hint: string }[] = [
@@ -410,6 +415,8 @@ function Workspace({ account }: { account?: Account }) {
     if (v && VIEWS.some((x) => x.id === v)) { setSection('tasks'); setView(v as View); }
     // 보고 링크(?view=daily&date= · ?view=weekly&week=) - 날짜 · 주는 보고 화면이 읽는다
     if (v === 'daily' || v === 'weekly') setSection(v);
+    // 블로그 글 링크(?post=<id>) · ?view=blog - 글은 블로그 화면이 읽는다
+    if (v === 'blog' || q.has('post')) setSection('blog');
     if (q.has('task')) setSection('tasks');
     setPrefsLoaded(true);
   }, [setSection]);
@@ -945,6 +952,13 @@ function Workspace({ account }: { account?: Account }) {
         { key: 'weekly', label: '주간보고', icon: 'weekly', active: section === 'weekly', go: () => setSection('weekly') },
       ],
     },
+    {
+      // 팀원 모두가 함께 쓰는 블로그 하나 - 열 때 표를 읽으므로 숫자를 달지 않는다
+      label: '커뮤니티',
+      items: [
+        { key: 'blog', label: '블로그', icon: 'blog', active: section === 'blog', go: () => setSection('blog') },
+      ],
+    },
   ];
 
   const navLinks = (after?: () => void, compact = false) =>
@@ -1188,6 +1202,24 @@ function Workspace({ account }: { account?: Account }) {
                 onNotice={(text, tone) => setToast({ text, undo: false, tone: tone === 'err' ? 'err' : undefined })} />
             ) : section === 'memos' ? (
               <Memos store={memoStore} me={me} />
+            ) : section === 'blog' ? (
+              <Blog me={me} docs={docStore.docs} tasks={store.tasks}
+                /* 공지 · 카테고리 · 남의 글 지우기는 관리자만(DB 도 그렇게 받는다). 브라우저 저장 모드는 계정이 없어 누구나 */
+                admin={!account || account.me.isAdmin === true}
+                onOpenDoc={(id) => {
+                  // 위키는 열 때 주소의 ?doc= 를 읽는다
+                  const url = new URL(window.location.href);
+                  url.searchParams.delete('post');
+                  url.searchParams.set('doc', id);
+                  window.history.replaceState(window.history.state, '', url);
+                  setSection('docs');
+                }}
+                onTaskOpen={(key) => {
+                  const hit = store.tasks.find((t) => t.key === key);
+                  if (hit) setSection('tasks', () => setOpenId(hit.id));
+                  else setToast({ text: `${key} 작업을 찾을 수 없습니다`, undo: false });
+                }}
+                onNotice={(text, tone) => setToast({ text, undo: false, tone: tone === 'err' ? 'err' : undefined })} />
             ) : section === 'daily' || section === 'weekly' ? (
               <Reports kind={section} onKind={setSection} me={me} tasks={store.tasks} flushRef={reportsFlush} leaveRef={reportsLeave}
                 /* 명단은 Supabase 모드에서 관리자만(DB 도 관리자 것만 받는다). 브라우저 저장 모드는 계정이 없어 누구나 */

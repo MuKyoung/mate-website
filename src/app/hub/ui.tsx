@@ -266,7 +266,7 @@ export function useMediaQuery(query: string): boolean {
 }
 
 /** 메뉴 아이콘 */
-export type NavIcon = 'board' | 'mine' | 'drive' | 'wiki' | 'memo' | 'home' | 'menu' | 'phone' | 'monitor' | 'sidebar' | 'filter' | 'mindmap' | 'daily' | 'weekly' | 'org' | 'sun' | 'moon';
+export type NavIcon = 'board' | 'mine' | 'drive' | 'wiki' | 'memo' | 'home' | 'menu' | 'phone' | 'monitor' | 'sidebar' | 'filter' | 'mindmap' | 'daily' | 'weekly' | 'org' | 'blog' | 'sun' | 'moon';
 export function IconNav({ name, size = 20 }: { name: NavIcon; size?: number }) {
   const paths: Record<NavIcon, React.ReactNode> = {
     /* 모든 작업 - 보드의 칸 */
@@ -327,6 +327,13 @@ export function IconNav({ name, size = 20 }: { name: NavIcon; size?: number }) {
         <rect x="2.5" y="13" width="6" height="4.5" rx="1.2" />
         <rect x="11.5" y="13" width="6" height="4.5" rx="1.2" />
         <path d="M10 7v3M5.5 13v-3h9v3" />
+      </>
+    ),
+    /* 블로그 - 펜과 줄 */
+    blog: (
+      <>
+        <path d="M3.5 16.5h6" />
+        <path d="M12.8 3.7a1.6 1.6 0 0 1 2.3 0l1.2 1.2a1.6 1.6 0 0 1 0 2.3L9 14.5l-3.6.9.9-3.6z" />
       </>
     ),
     home: <path d="M3.5 9.5L10 4l6.5 5.5V16a.5.5 0 01-.5.5h-3.5v-4.5h-5v4.5H4a.5.5 0 01-.5-.5z" />,
