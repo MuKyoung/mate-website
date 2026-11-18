@@ -238,12 +238,12 @@ const IconTarget = ({ size = 18 }: { size?: number }) => (
 
 /** 단계 · 파일 알약 - aria-pressed 면 파랗게 채운다 */
 const seg =
-  'inline-flex h-[38px] flex-none items-center whitespace-nowrap rounded-full border border-tm-edge bg-white px-3.5 text-[14px] font-bold text-tm-ink ' +
+  'inline-flex h-[38px] flex-none items-center whitespace-nowrap rounded-full border border-tm-edge bg-tm-card px-3.5 text-[14px] font-bold text-tm-ink ' +
   'transition-colors duration-150 hover:border-tm-blue hover:bg-tm-tint aria-pressed:border-tm-blue aria-pressed:bg-tm-blue aria-pressed:text-white ' +
   '[@media(pointer:coarse)]:h-11';
 
 const messageCard =
-  'tm-fill flex min-h-0 flex-1 flex-col items-center justify-center gap-3 rounded-tm border border-tm-line bg-white px-6 py-16 text-center shadow-tm';
+  'tm-fill flex min-h-0 flex-1 flex-col items-center justify-center gap-3 rounded-tm border border-tm-line bg-tm-card px-6 py-16 text-center shadow-tm';
 
 /* ── 옆 칸 - 고른 노드의 안 ─────────────────────────── */
 
@@ -284,7 +284,7 @@ function FilePreview({ node }: { node: DriveNode }) {
   }
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 p-3">
-      <div className="relative min-h-[240px] flex-1 overflow-hidden rounded-tm-sm border border-tm-line bg-white">
+      <div className="relative min-h-[240px] flex-1 overflow-hidden rounded-tm-sm border border-tm-line bg-tm-card">
         <iframe src={url} title={`${node.item.name} 미리보기`} onLoad={() => setLoaded(true)} allow="autoplay; fullscreen" allowFullScreen
           className="absolute inset-0 h-full w-full border-0" />
         {!loaded && (
@@ -447,7 +447,7 @@ const checkBlocked =
 
 const NOTICE_TONE = {
   ok: 'border-tm-ok/40 bg-tm-ok-tint text-tm-ok-deep',
-  info: 'border-tm-line bg-white text-tm-sub',
+  info: 'border-tm-line bg-tm-card text-tm-sub',
   err: 'border-tm-red-line bg-tm-red-tint text-tm-red-deep',
 } as const;
 
@@ -919,7 +919,7 @@ function DriveMap({ tree, me }: { tree: DriveTree; me: string }) {
   const selected = tree.byId.get(selectedId) ?? tree.root;
 
   return (
-    <div ref={cardRef} className="tm-fill flex min-h-0 flex-1 flex-col overflow-hidden rounded-tm border border-tm-line bg-white shadow-tm">
+    <div ref={cardRef} className="tm-fill flex min-h-0 flex-1 flex-col overflow-hidden rounded-tm border border-tm-line bg-tm-card shadow-tm">
       {/* ── 막대: 찾기 · 단계 · 파일 · 크기 ── */}
       <div className="flex flex-none flex-wrap items-center gap-2 border-b border-tm-line px-4 py-3 max-[720px]:px-3">
         <div ref={searchBox} className="relative min-w-0 flex-[1_1_220px] max-w-[340px] max-[720px]:max-w-none">
@@ -947,7 +947,7 @@ function DriveMap({ tree, me }: { tree: DriveTree; me: string }) {
           )}
           {panel && q && (
             <div id="drive-results"
-              className="absolute left-0 top-[calc(100%+6px)] z-20 w-[min(560px,calc(100vw-48px))] overflow-hidden rounded-tm-sm border border-tm-line bg-white shadow-tm-up">
+              className="absolute left-0 top-[calc(100%+6px)] z-20 w-[min(560px,calc(100vw-48px))] overflow-hidden rounded-tm-sm border border-tm-line bg-tm-card shadow-tm-up">
               <p className="border-b border-tm-line px-3.5 py-2 text-[13px] font-semibold text-tm-sub" aria-live="polite">
                 {results.length === 0 ? '찾은 것이 없습니다'
                   : results.length > shown.length ? `${num(results.length)}개 찾음 · 앞의 ${shown.length}개`
@@ -1046,7 +1046,7 @@ function DriveMap({ tree, me }: { tree: DriveTree; me: string }) {
                     <button type="button" onClick={() => select(n)}
                       title={`${n.item.name} 의 파일 ${num(n.files.length)}개를 옆 칸에서 모두 봅니다`}
                       className="flex h-full w-full items-center gap-2 rounded-tm-sm border border-dashed border-tm-edge px-2.5 text-left text-[13.5px] font-semibold
-                                 text-tm-sub transition-colors duration-150 hover:border-tm-blue hover:bg-white hover:text-tm-blue
+                                 text-tm-sub transition-colors duration-150 hover:border-tm-blue hover:bg-tm-card hover:text-tm-blue
                                  focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-tm-blue">
                       <span className="min-w-0 flex-1 truncate">파일 {num(p.more)}개 더 보기</span>
                     </button>
@@ -1062,10 +1062,10 @@ function DriveMap({ tree, me }: { tree: DriveTree; me: string }) {
               const box = isRoot
                 ? 'border-tm-blue bg-tm-blue font-bold text-white hover:border-tm-blue-hover hover:bg-tm-blue-hover'
                 : hit
-                  ? 'border-tm-blue bg-tm-tint text-tm-deep hover:bg-white'
+                  ? 'border-tm-blue bg-tm-tint text-tm-deep hover:bg-tm-card'
                   : n.depth === 1
-                    ? 'border-tm-blue/50 bg-white font-bold text-tm-deep hover:border-tm-blue hover:bg-tm-tint'
-                    : 'border-tm-line bg-white text-tm-ink hover:border-tm-blue hover:bg-tm-tint';
+                    ? 'border-tm-blue/50 bg-tm-card font-bold text-tm-deep hover:border-tm-blue hover:bg-tm-tint'
+                    : 'border-tm-line bg-tm-card text-tm-ink hover:border-tm-blue hover:bg-tm-tint';
               const weight = isRoot || n.depth === 1 ? '' : folder || hit ? 'font-semibold' : 'font-normal';
               return (
                 <div key={p.key} data-key={p.key} className="absolute" style={style}>
@@ -1093,7 +1093,7 @@ function DriveMap({ tree, me }: { tree: DriveTree; me: string }) {
                       aria-label={isOpen ? `${n.item.name} 접기` : `${n.item.name} 펼치기, 아래 ${hidden}개`}
                       title={isOpen ? '접기' : `펼치기 (아래 ${hidden}개)`}
                       className="absolute left-full top-1/2 z-[1] grid h-6 min-w-[24px] -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border
-                                 border-tm-edge bg-white px-1.5 text-[11.5px] font-bold tabular-nums text-tm-sub transition-colors duration-150
+                                 border-tm-edge bg-tm-card px-1.5 text-[11.5px] font-bold tabular-nums text-tm-sub transition-colors duration-150
                                  hover:border-tm-blue hover:text-tm-blue focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2
                                  focus-visible:outline-tm-blue [@media(pointer:coarse)]:h-8 [@media(pointer:coarse)]:min-w-[32px]">
                       {isOpen ? <IconMinus size={12} /> : num(hidden)}
@@ -1106,12 +1106,12 @@ function DriveMap({ tree, me }: { tree: DriveTree; me: string }) {
         </div>
       </div>
       {wide ? (
-        <aside aria-label="미리보기" className="flex w-[380px] flex-none flex-col border-l border-tm-line bg-white min-[1600px]:w-[440px]">
+        <aside aria-label="미리보기" className="flex w-[380px] flex-none flex-col border-l border-tm-line bg-tm-card min-[1600px]:w-[440px]">
           <DrivePanel tree={tree} node={selected} onPick={pick} />
         </aside>
       ) : sheet && (
         <aside aria-label="미리보기" onKeyDown={(e) => { if (e.key === 'Escape') setSheet(false); }}
-          className="absolute inset-x-0 bottom-0 z-20 flex h-[58%] flex-col overflow-hidden rounded-t-[18px] border-t border-tm-line bg-white
+          className="absolute inset-x-0 bottom-0 z-20 flex h-[58%] flex-col overflow-hidden rounded-t-[18px] border-t border-tm-line bg-tm-card
                      shadow-tm-pop animate-tm-rise max-[720px]:h-[78%]">
           <DrivePanel tree={tree} node={selected} onPick={pick} onClose={() => setSheet(false)} />
         </aside>

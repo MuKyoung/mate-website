@@ -6,11 +6,11 @@
 .tm-wikimap .map-container {
   font-family: inherit;
   letter-spacing: 0;
-  background-color: #f4f6f9;
+  background-color: rgb(var(--tm-bg));
 }
 .tm-wikimap .wm-host:focus-visible {
   outline: none;
-  box-shadow: inset 0 0 0 2px #2644cb;
+  box-shadow: inset 0 0 0 2px rgb(var(--tm-blue));
 }
 
 /* ── 노드 ── */
@@ -21,15 +21,15 @@
 .tm-wikimap .map-container .me-parent .me-tpc {
   max-width: 300px;
   padding: 7px 11px;
-  border: 1px solid #d7dce4;
+  border: 1px solid rgb(var(--tm-line));
   border-radius: 10px;
-  background-color: #ffffff;
+  background-color: rgb(var(--tm-card));
   box-shadow: 0 1px 2px rgba(22, 39, 60, 0.06);
 }
 .tm-wikimap .map-container .me-main > .me-wrapper > .me-parent > .me-tpc {
   padding: 9px 13px;
   border-radius: 12px;
-  background-color: #ffffff;
+  background-color: rgb(var(--tm-card));
 }
 .tm-wikimap .map-container .me-root .me-tpc {
   max-width: 340px;
@@ -38,10 +38,10 @@
   box-shadow: 0 14px 32px rgba(22, 39, 60, 0.14);
 }
 .tm-wikimap .map-container .me-tpc:hover {
-  box-shadow: 0 0 0 3px rgba(38, 68, 203, 0.18);
+  box-shadow: 0 0 0 3px rgb(var(--tm-blue) / 0.18);
 }
 .tm-wikimap .map-container .selected {
-  outline: 2px solid #2644cb;
+  outline: 2px solid rgb(var(--tm-blue));
   outline-offset: 2px;
 }
 
@@ -64,7 +64,7 @@
   font-size: 14.5px;
   font-weight: 700;
   line-height: 1.35;
-  color: #1b2430;
+  color: rgb(var(--tm-ink));
 }
 .tm-wikimap .me-main > .me-wrapper > .me-parent .wm-t {
   font-size: 15.5px;
@@ -93,7 +93,7 @@
   font-size: 12.5px;
   font-weight: 600;
   line-height: 1.4;
-  color: #5b6676;
+  color: rgb(var(--tm-sub));
 }
 .tm-wikimap .wm-root .wm-m {
   color: rgba(255, 255, 255, 0.85);
@@ -122,7 +122,7 @@
 .tm-wikimap .wm-p b {
   font-size: 12px;
   font-weight: 700;
-  color: #5b6676;
+  color: rgb(var(--tm-sub));
 }
 
 /* 작업 잎 - 상태 점 · 번호 · 제목 한 줄 */
@@ -134,7 +134,7 @@
   font-size: 13px;
   font-weight: 600;
   line-height: 1.35;
-  color: #1b2430;
+  color: rgb(var(--tm-ink));
   white-space: nowrap;
 }
 .tm-wikimap .wm-k i {
@@ -147,7 +147,7 @@
   flex: none;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  color: #5b6676;
+  color: rgb(var(--tm-sub));
 }
 .tm-wikimap .wm-kt {
   min-width: 0;
@@ -155,13 +155,13 @@
   text-overflow: ellipsis;
 }
 .tm-wikimap .wm-k[data-s='done'] .wm-kt {
-  color: #5b6676;
+  color: rgb(var(--tm-sub));
   text-decoration: line-through;
 }
 .tm-wikimap .wm-more {
   font-size: 12.5px;
   font-weight: 700;
-  color: #2644cb;
+  color: rgb(var(--tm-blue-text));
   white-space: nowrap;
 }
 

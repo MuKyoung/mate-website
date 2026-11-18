@@ -183,7 +183,7 @@ export function DomainDialog({
                       return (
                         <button key={c.id} type="button" aria-pressed={on} aria-label={c.label} title={c.label}
                           onClick={() => { if (!on) onUpdate(d.id, { color: c.id }); }}
-                          className="grid h-9 w-9 place-items-center rounded-full transition-colors duration-150 hover:bg-white
+                          className="grid h-9 w-9 place-items-center rounded-full transition-colors duration-150 hover:bg-tm-card
                                      [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11">
                           <span className={`h-5 w-5 rounded-full ${DOMAIN_FILL[c.id]} ${on ? 'ring-2 ring-tm-ink ring-offset-2 ring-offset-tm-bg' : ''}`} />
                         </button>

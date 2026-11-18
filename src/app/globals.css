@@ -75,23 +75,76 @@
 /* ── App Shell ────────────────────────────────────────
    /hub(예전 /taskmanager)는 마케팅 사이트와 다른 제품이다. 관성 스크롤을 끄고 자체 셸에 맡긴다.
    모양은 세종호이스트크레인 리뉴얼 관리자를 옮겼다(2026-10-22) - 글꼴 Pretendard, 회색 바탕에 흰 카드,
-   세종 네이비 자리에 로고 파랑. 색 값은 tailwind.config.ts 의 tm 에 있다. */
+   세종 네이비 자리에 로고 파랑. 색 이름은 tailwind.config.ts 의 tm 에, 값은 아래 --tm-* 에 있다.
+
+   다크 모드(2026-11-18): html[data-tm-theme='dark'] 이면 같은 이름에 어두운 값을 넣는다.
+   값은 "R G B" 세 수라 bg-tm-blue/20 같은 투명도 표기가 그대로 먹는다.
+   -fill 은 흰 글자를 얹는 바탕, -text 는 글자 색 - 다크에서는 채움과 글자 색이 갈라진다(tailwind 의 textColor · backgroundColor).
+   인쇄는 늘 밝은 값으로 한다(@media screen). */
+:root {
+  --tm-blue: 38 68 203; --tm-blue-hover: 46 91 240; --tm-blue-text: 38 68 203;
+  --tm-deep: 24 48 143; --tm-deep-fill: 24 48 143;
+  --tm-tint: 238 242 255;
+  --tm-ink: 27 36 48; --tm-sub: 91 102 118;
+  --tm-line: 215 220 228; --tm-edge: 127 139 158;
+  --tm-bg: 244 246 249; --tm-card: 255 255 255;
+  --tm-red: 211 45 39; --tm-red-text: 211 45 39; --tm-red-deep: 168 31 27; --tm-red-deep-fill: 168 31 27;
+  --tm-red-tint: 253 238 236; --tm-red-line: 220 143 139;
+  --tm-ok: 23 128 90; --tm-ok-text: 23 128 90; --tm-ok-deep: 15 93 65; --tm-ok-tint: 227 244 236;
+  --tm-warn: 138 90 0; --tm-warn-text: 138 90 0; --tm-warn-deep: 85 61 12; --tm-warn-tint: 255 247 232;
+  --tm-violet: 106 76 147; --tm-violet-text: 106 76 147; --tm-violet-deep: 79 55 114; --tm-violet-tint: 241 236 248;
+  --tm-teal: 15 118 110; --tm-teal-text: 15 118 110; --tm-teal-deep: 17 94 89; --tm-teal-tint: 226 243 241;
+  /* 사람 · 라벨 색(ui.tsx PAINT)의 바탕 · 글자 - 밝을 때는 옅은 바탕에 진한 글자 */
+  --tm-pt-blue: #dfe6ff; --tm-pf-blue: #2644cb;
+  --tm-pt-violet: #e8dff5; --tm-pf-violet: #6a4c93;
+  --tm-pt-teal: #d8f0ec; --tm-pf-teal: #0f766e;
+  --tm-pt-pink: #fadde9; --tm-pf-pink: #b8255f;
+  --tm-pt-sky: #d5edfa; --tm-pf-sky: #0369a1;
+  --tm-pt-plum: #f5dcf2; --tm-pf-plum: #9d1f9a;
+  --tm-pt-brown: #f1e2d7; --tm-pf-brown: #8a4a26;
+  --tm-pt-gray: #e3e8ee; --tm-pf-gray: #5b6676;
+}
+@media screen {
+  html[data-tm-theme='dark'] {
+    color-scheme: dark;
+    --tm-blue: 69 102 232; --tm-blue-hover: 86 119 240; --tm-blue-text: 125 151 255;
+    --tm-deep: 174 189 255; --tm-deep-fill: 44 63 153;
+    --tm-tint: 31 42 71;
+    --tm-ink: 228 233 240; --tm-sub: 155 166 182;
+    --tm-line: 43 52 65; --tm-edge: 93 104 121;
+    --tm-bg: 14 18 24; --tm-card: 22 27 35;
+    --tm-red: 201 53 47; --tm-red-text: 255 123 114; --tm-red-deep: 255 143 134; --tm-red-deep-fill: 168 48 42;
+    --tm-red-tint: 58 28 28; --tm-red-line: 124 59 55;
+    --tm-ok: 29 127 90; --tm-ok-text: 111 216 168; --tm-ok-deep: 111 216 168; --tm-ok-tint: 19 46 36;
+    --tm-warn: 154 107 16; --tm-warn-text: 226 169 60; --tm-warn-deep: 243 198 110; --tm-warn-tint: 51 40 15;
+    --tm-violet: 126 95 176; --tm-violet-text: 192 166 238; --tm-violet-deep: 201 179 242; --tm-violet-tint: 42 33 66;
+    --tm-teal: 19 120 111; --tm-teal-text: 92 200 189; --tm-teal-deep: 111 214 203; --tm-teal-tint: 15 46 44;
+    --tm-pt-blue: #22305f; --tm-pf-blue: #a9bbff;
+    --tm-pt-violet: #31264a; --tm-pf-violet: #cdb8f2;
+    --tm-pt-teal: #123a37; --tm-pf-teal: #7fdcd1;
+    --tm-pt-pink: #45202f; --tm-pf-pink: #f7a8c8;
+    --tm-pt-sky: #13344a; --tm-pf-sky: #8fd0f5;
+    --tm-pt-plum: #42203f; --tm-pf-plum: #eea6e8;
+    --tm-pt-brown: #3d2a1f; --tm-pf-brown: #e6b896;
+    --tm-pt-gray: #2a313c; --tm-pf-gray: #c3ccd8;
+  }
+}
 html[data-shell='app'] {
-  background: #f4f6f9;
+  background: rgb(var(--tm-bg));
   scroll-behavior: auto;
   font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI',
     'Malgun Gothic', sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 html[data-shell='app'] body {
-  background: #f4f6f9;
-  color: #1b2430;
+  background: rgb(var(--tm-bg));
+  color: rgb(var(--tm-ink));
   overflow: hidden;
   font-family: inherit;
   letter-spacing: 0;
 }
 html[data-shell='app'] body > main { min-height: 0; }
-html[data-shell='app'] ::selection { background: #2644cb; color: #fff; }
+html[data-shell='app'] ::selection { background: rgb(var(--tm-blue)); color: #fff; }
 
 /* 코드와 문서 편집 칸만 등폭 - 작업 번호와 날짜는 고정폭 숫자(tabular-nums)로 맞춘다 */
 html[data-shell='app'] .tm-mono {
@@ -103,7 +156,7 @@ html[data-shell='app'] .tm-mono {
    :where 로 무게를 낮춰 두어 칸마다 focus-visible:outline-* 으로 덮을 수 있다.
    입력 칸은 윤곽선 대신 파란 테두리와 옅은 띠를 쓴다(ui.tsx 의 tmInput). */
 :where(html[data-shell='app']) :focus-visible {
-  outline: 2px solid #2644cb;
+  outline: 2px solid rgb(var(--tm-blue));
   outline-offset: 2px;
 }
 :where(html[data-shell='app']) :is(input, textarea, select):focus-visible { outline: none; }
@@ -112,9 +165,9 @@ html[data-shell='app'] .tm-mono {
 html[data-shell='app'] ::-webkit-scrollbar { width: 10px; height: 10px; }
 html[data-shell='app'] ::-webkit-scrollbar-track { background: transparent; }
 html[data-shell='app'] ::-webkit-scrollbar-thumb {
-  background: #d7dce4; border-radius: 9999px; border: 2px solid transparent; background-clip: padding-box;
+  background: rgb(var(--tm-line)); border-radius: 9999px; border: 2px solid transparent; background-clip: padding-box;
 }
-html[data-shell='app'] ::-webkit-scrollbar-thumb:hover { background: #7f8b9e; background-clip: padding-box; }
+html[data-shell='app'] ::-webkit-scrollbar-thumb:hover { background: rgb(var(--tm-edge)); background-clip: padding-box; }
 
 /* 좁은 화면(휴대폰)과 낮은 화면(가로로 든 휴대폰)에서는 쪽 머리(제목 · 보기 · 찾기)를 위로 넘기고,
    본문(보드 · 목록 · 타임라인 · 문서 · 메모)은 화면 한 장 높이를 다 쓴다. 본문 안의 스크롤은 넓은 화면과 같다.

@@ -117,7 +117,7 @@ export default function Calendar({
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col overflow-auto">
-        <div className="flex flex-[1_0_auto] flex-col overflow-hidden rounded-tm border border-tm-line bg-white shadow-tm max-[640px]:flex-none">
+        <div className="flex flex-[1_0_auto] flex-col overflow-hidden rounded-tm border border-tm-line bg-tm-card shadow-tm max-[640px]:flex-none">
           {/* 요일 머리 */}
           <div className="grid grid-cols-7 border-b border-tm-line bg-tm-bg">
             {WEEKDAY.map((w, i) => (
@@ -182,7 +182,7 @@ export default function Calendar({
                     <button type="button" onClick={(e) => { e.stopPropagation(); onCreateAt(key); }}
                       aria-label={`${d.getMonth() + 1}월 ${d.getDate()}일에 작업 추가`}
                       className="pointer-events-auto grid h-6 w-6 place-items-center rounded-md text-tm-sub opacity-0 transition
-                                 hover:bg-white hover:text-tm-blue focus-visible:opacity-100 group-hover:opacity-100 max-[640px]:hidden">
+                                 hover:bg-tm-card hover:text-tm-blue focus-visible:opacity-100 group-hover:opacity-100 max-[640px]:hidden">
                       <IconPlus size={15} />
                     </button>
                   </div>
@@ -220,10 +220,10 @@ export default function Calendar({
                             setDragId(t.id);
                           }}
                           onDragEnd={() => { setDragId(null); setOverKey(null); }}
-                          style={p ? { backgroundColor: p.tint, boxShadow: `inset 3px 0 0 ${p.solid}` } : undefined}
+                          style={p ? { backgroundColor: p.bg, boxShadow: `inset 3px 0 0 ${p.solid}` } : undefined}
                           className={`flex w-full items-center gap-1.5 rounded-md py-1 pr-1.5 text-left text-[13px] leading-[1.35] transition-[filter,box-shadow,background-color]
                                       [@media(pointer:coarse)]:py-[7px]
-                                      ${p ? 'pl-2.5 hover:brightness-95' : 'pl-1.5 hover:bg-white hover:shadow-tm'}
+                                      ${p ? 'pl-2.5 hover:brightness-95' : 'pl-1.5 hover:bg-tm-card hover:shadow-tm'}
                                       ${done ? 'opacity-55' : ''} ${dragId === t.id ? 'opacity-40' : ''}`}>
                           {/* 칠하지 않은 항목(담당자 · 라벨 없음)은 빈 점 */}
                           {!p && <span className="h-1.5 w-1.5 shrink-0 rounded-full ring-1 ring-inset ring-tm-edge" />}
@@ -242,7 +242,7 @@ export default function Calendar({
                           : `${d.getMonth() + 1}월 ${d.getDate()}일 작업 ${items.length - 3}건 더 보기`}
                         onClick={(e) => { e.stopPropagation(); setOpenDay(openDay === key ? null : key); }}
                         className="block rounded-md px-1.5 py-0.5 text-[12.5px] font-semibold text-tm-sub transition-colors
-                                   hover:bg-white hover:text-tm-blue">
+                                   hover:bg-tm-card hover:text-tm-blue">
                         {openDay === key ? '접기' : `+${items.length - 3}건 더`}
                       </button>
                     )}
@@ -255,7 +255,7 @@ export default function Calendar({
 
         {compact && (
           <section aria-label={`${selDate.getMonth() + 1}월 ${selDate.getDate()}일 작업`}
-            className="mt-3 flex-none rounded-tm border border-tm-line bg-white shadow-tm">
+            className="mt-3 flex-none rounded-tm border border-tm-line bg-tm-card shadow-tm">
             <div className="flex items-center gap-2 border-b border-tm-line py-2 pl-4 pr-2">
               <h3 className="text-[16px] font-extrabold tabular-nums text-tm-deep">
                 {selDate.getMonth() + 1}월 {selDate.getDate()}일 ({WEEKDAY[selDate.getDay()]})

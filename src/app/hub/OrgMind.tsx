@@ -57,22 +57,22 @@ const THEME: Theme = {
     '--node-gap-y': '9px',
     '--main-gap-x': '54px',
     '--main-gap-y': '14px',
-    '--main-color': '#1b2430',
-    '--main-bgcolor': '#ffffff',
-    '--main-bgcolor-transparent': 'rgba(255, 255, 255, 0.9)',
-    '--color': '#1b2430',
-    '--bgcolor': '#f4f6f9',
-    '--selected': '#2644cb',
-    '--accent-color': '#2644cb',
+    '--main-color': 'rgb(var(--tm-ink))',
+    '--main-bgcolor': 'rgb(var(--tm-card))',
+    '--main-bgcolor-transparent': 'rgb(var(--tm-card) / 0.9)',
+    '--color': 'rgb(var(--tm-ink))',
+    '--bgcolor': 'rgb(var(--tm-bg))',
+    '--selected': 'rgb(var(--tm-blue))',
+    '--accent-color': 'rgb(var(--tm-blue))',
     '--root-color': '#ffffff',
-    '--root-bgcolor': '#2644cb',
-    '--root-border-color': '#2644cb',
+    '--root-bgcolor': 'rgb(var(--tm-blue))',
+    '--root-border-color': 'rgb(var(--tm-blue))',
     '--root-radius': '14px',
     '--main-radius': '12px',
     '--topic-padding': '7px 11px',
-    '--panel-color': '#1b2430',
-    '--panel-bgcolor': '#ffffff',
-    '--panel-border-color': '#d7dce4',
+    '--panel-color': 'rgb(var(--tm-ink))',
+    '--panel-bgcolor': 'rgb(var(--tm-card))',
+    '--panel-border-color': 'rgb(var(--tm-line))',
     '--map-padding': '56px 72px',
   },
 };
@@ -103,7 +103,7 @@ interface BuildInput {
 function buildData(x: BuildInput): MindElixirData<Meta> {
   const avatar = (m: Member) => {
     const p = PAINT[x.paint.member(m.id)];
-    const bg = m.avatar ? `${p.tint} url('${esc(m.avatar)}') center/cover;color:transparent` : `${p.tint};color:${p.solid}`;
+    const bg = m.avatar ? `${p.bg} url('${esc(m.avatar)}') center/cover;color:transparent` : `${p.bg};color:${p.fg}`;
     return `<i style="background:${bg}" title="${esc(m.name)}">${esc(m.initial)}</i>`;
   };
   /** 엔진 노드 id - 팀 이름은 아무 글자나 될 수 있어 차례 번호로 */
@@ -116,8 +116,8 @@ function buildData(x: BuildInput): MindElixirData<Meta> {
     return id;
   };
   const folded = (id: string, kids: number) => (kids ? x.toggled.get(id) ?? true : undefined);
-  const selectedStyle = { background: '#eef2ff', border: '2px solid #2644cb' };
-  const detailStyle = { background: '#ffffff', border: '1px solid #e3e7ee' };
+  const selectedStyle = { background: 'rgb(var(--tm-tint))', border: '2px solid rgb(var(--tm-blue))' };
+  const detailStyle = { background: 'rgb(var(--tm-card))', border: '1px solid rgb(var(--tm-line))' };
 
   const detailsOf = (n: OrgNode): NodeObj<Meta>[] => {
     const m = n.member!;
@@ -209,7 +209,7 @@ function buildData(x: BuildInput): MindElixirData<Meta> {
     topic: 'MATE 조직도',
     children: root.kids.map((k, i) => nodeOf(k, 1, PALETTE[i % PALETTE.length])),
     metadata: { kind: 'root' },
-    ...(x.selected === 'root' ? { style: { border: '2px solid #18308f' } } : {}),
+    ...(x.selected === 'root' ? { style: { border: '2px solid rgb(var(--tm-deep))' } } : {}),
     dangerouslySetInnerHTML: `<span class="wm-n wm-root"><span class="wm-t"><span class="wm-tt">${esc(root.label)}</span></span>`
       + `<span class="wm-m">조직도${units ? ` · 팀 ${units}개` : ''}</span></span>`,
   };

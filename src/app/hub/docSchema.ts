@@ -215,7 +215,8 @@ export const ColorMark = Mark.create({
   renderHTML({ mark }) {
     const color = hexColor(mark.attrs.color);
     const bg = hexColor(mark.attrs.bg);
-    const style = [color ? `color: ${color}` : '', bg ? `background-color: ${bg}` : ''].filter(Boolean).join('; ');
+    // --tm-tc · --tm-tb: 다크 모드가 같은 색을 어두운 바탕에 맞게 섞어 칠한다(wiki.css)
+    const style = [color ? `color: ${color}; --tm-tc: ${color}` : '', bg ? `background-color: ${bg}; --tm-tb: ${bg}` : ''].filter(Boolean).join('; ');
     return ['span', { style, class: bg ? 'tm-bg' : null }, 0];
   },
 
@@ -964,7 +965,7 @@ const cellBackground = {
         ?? (el.style?.backgroundColor || el.getAttribute('bgcolor')),
     ),
     renderHTML: (attrs: { background?: string | null }) => (attrs.background
-      ? { 'data-bg': attrs.background, style: `background-color: ${attrs.background}` } : {}),
+      ? { 'data-bg': attrs.background, style: `background-color: ${attrs.background}; --tm-cb: ${attrs.background}` } : {}),
   },
 };
 

@@ -79,22 +79,22 @@ const THEME: Theme = {
     '--node-gap-y': '9px',
     '--main-gap-x': '54px',
     '--main-gap-y': '14px',
-    '--main-color': '#1b2430',
-    '--main-bgcolor': '#ffffff',
-    '--main-bgcolor-transparent': 'rgba(255, 255, 255, 0.9)',
-    '--color': '#1b2430',
-    '--bgcolor': '#f4f6f9',
-    '--selected': '#2644cb',
-    '--accent-color': '#2644cb',
+    '--main-color': 'rgb(var(--tm-ink))',
+    '--main-bgcolor': 'rgb(var(--tm-card))',
+    '--main-bgcolor-transparent': 'rgb(var(--tm-card) / 0.9)',
+    '--color': 'rgb(var(--tm-ink))',
+    '--bgcolor': 'rgb(var(--tm-bg))',
+    '--selected': 'rgb(var(--tm-blue))',
+    '--accent-color': 'rgb(var(--tm-blue))',
     '--root-color': '#ffffff',
-    '--root-bgcolor': '#2644cb',
-    '--root-border-color': '#2644cb',
+    '--root-bgcolor': 'rgb(var(--tm-blue))',
+    '--root-border-color': 'rgb(var(--tm-blue))',
     '--root-radius': '14px',
     '--main-radius': '12px',
     '--topic-padding': '7px 11px',
-    '--panel-color': '#1b2430',
-    '--panel-bgcolor': '#ffffff',
-    '--panel-border-color': '#d7dce4',
+    '--panel-color': 'rgb(var(--tm-ink))',
+    '--panel-bgcolor': 'rgb(var(--tm-card))',
+    '--panel-border-color': 'rgb(var(--tm-line))',
     '--map-padding': '56px 72px',
   },
 };
@@ -167,7 +167,7 @@ function buildMap(x: BuildInput): Built {
   const avatar = (m: Member) => {
     const p = PAINT[x.paint.member(m.id)];
     // 사진이 있으면 바탕으로 깐다(글자는 감춘다)
-    const bg = m.avatar ? `${p.tint} url('${esc(m.avatar)}') center/cover;color:transparent` : `${p.tint};color:${p.solid}`;
+    const bg = m.avatar ? `${p.bg} url('${esc(m.avatar)}') center/cover;color:transparent` : `${p.bg};color:${p.fg}`;
     return `<i style="background:${bg}" title="${esc(m.name)}">${esc(m.initial)}</i>`;
   };
 
@@ -214,7 +214,7 @@ function buildMap(x: BuildInput): Built {
       dangerouslySetInnerHTML:
         `<span class="wm-k" data-s="${t.status}"><i style="background:${STATUS_DOT[t.status]}"></i><b>${esc(t.key)}</b>`
         + `<span class="wm-kt">${esc(t.title)}</span></span>`,
-      style: { background: '#ffffff', border: '1px solid #e3e7ee' },
+      style: { background: 'rgb(var(--tm-card))', border: '1px solid rgb(var(--tm-line))' },
       metadata: { kind: 'task', key: t.key },
     };
   };
@@ -227,7 +227,7 @@ function buildMap(x: BuildInput): Built {
         id: `more-${d.id}`,
         topic: `작업 ${tasks.length - TASKS_PER_DOC}건 더`,
         dangerouslySetInnerHTML: `<span class="wm-more">작업 ${tasks.length - TASKS_PER_DOC}건 더 · 문서에서 보기</span>`,
-        style: { background: '#ffffff', border: '1px dashed #c3cad5' },
+        style: { background: 'rgb(var(--tm-card))', border: '1px dashed rgb(var(--tm-edge))' },
         metadata: { kind: 'more', id: d.id },
       });
     }
@@ -257,7 +257,7 @@ function buildMap(x: BuildInput): Built {
       expanded,
       ...(depth === 1 ? { branchColor: color } : {}),
       style: on
-        ? { background: '#eef2ff', border: '2px solid #2644cb' }
+        ? { background: 'rgb(var(--tm-tint))', border: '2px solid rgb(var(--tm-blue))' }
         : depth === 1 ? { border: `2px solid ${color}` } : {},
       metadata: { kind: 'doc', id: d.id },
     };
@@ -289,7 +289,7 @@ function buildMap(x: BuildInput): Built {
       dangerouslySetInnerHTML: docHtml(center, PALETTE[0], { folded: onlyCenter, tasks, root: catRoot ? 'cat' : 'home' }),
       children: onlyCenter ? [] : [...mainKids, ...leaves],
       metadata: { kind: 'doc', id: center.id },
-      ...(center.id === x.activeId ? { style: { border: '2px solid #18308f' } } : {}),
+      ...(center.id === x.activeId ? { style: { border: '2px solid rgb(var(--tm-deep))' } } : {}),
     };
   } else {
     // 맨 위 문서를 아직 만들지 못했다(목록을 읽는 중 · 만들기 실패) - 이름만 둔다
@@ -840,7 +840,7 @@ export default function WikiMap({
   const levelShort = adjusted ? '직접' : pressed === 'all' ? '모두' : `${pressed}단`;
   const compact = max >= 8;
   const levelBtn = `inline-flex h-[30px] min-w-[42px] flex-none items-center justify-center whitespace-nowrap rounded-full px-2 text-[13.5px] font-bold tabular-nums
-    text-tm-ink transition-colors duration-150 hover:bg-white aria-pressed:bg-tm-blue aria-pressed:text-white
+    text-tm-ink transition-colors duration-150 hover:bg-tm-card aria-pressed:bg-tm-blue aria-pressed:text-white
     [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:min-w-11`;
   const levelHelp = '가운데가 1단입니다 · 작업 잎도 한 단으로 세므로 작업을 켜고 끄면 가장 깊은 단이 바뀔 수 있습니다';
   /** 고르면 휴대폰은 '표시' 칸을 닫아 지도를 바로 보게 한다 */
@@ -865,7 +865,7 @@ export default function WikiMap({
             onChange={(e) => { if (e.target.value) pickLevel(Number(e.target.value)); }}
             className={`h-[30px] flex-none cursor-pointer rounded-full border-0 px-2.5 text-[13.5px] font-bold tabular-nums
                         [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:text-[16px] ${
-              typeof pressed === 'number' && pressed > 3 ? 'bg-tm-blue text-white' : 'bg-transparent text-tm-ink hover:bg-white'}`}>
+              typeof pressed === 'number' && pressed > 3 ? 'bg-tm-blue text-white' : 'bg-transparent text-tm-ink hover:bg-tm-card'}`}>
             <option value="" disabled>단계 선택</option>
             {Array.from({ length: max - 3 }, (_, i) => i + 4).map((n) => <option key={n} value={n}>{n}단</option>)}
           </select>
@@ -900,7 +900,7 @@ export default function WikiMap({
   };
 
   return (
-    <div className="tm-wikimap flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-tm border border-tm-line bg-white shadow-tm">
+    <div className="tm-wikimap flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-tm border border-tm-line bg-tm-card shadow-tm">
       <div className="flex flex-none flex-wrap items-center gap-x-3 gap-y-2 border-b border-tm-line px-4 py-3 max-[720px]:px-3 max-[720px]:py-2.5">
         {/* 보기 방식 */}
         <div role="group" aria-label="보기 방식"
@@ -909,7 +909,7 @@ export default function WikiMap({
             <button key={m.id} type="button" aria-pressed={mode === m.id} title={m.hint} aria-label={m.aria}
               onClick={() => setPrefs((p) => ({ ...p, mode: m.id }))}
               className="inline-flex h-[34px] items-center justify-center gap-1.5 whitespace-nowrap rounded-full px-3 text-[14px] font-bold text-tm-ink transition-colors duration-150
-                         hover:bg-white aria-pressed:bg-tm-blue aria-pressed:text-white max-[720px]:flex-auto max-[720px]:px-2.5 max-[720px]:text-[13.5px]
+                         hover:bg-tm-card aria-pressed:bg-tm-blue aria-pressed:text-white max-[720px]:flex-auto max-[720px]:px-2.5 max-[720px]:text-[13.5px]
                          [@media(pointer:coarse)]:h-11">
               {/* 휴대폰: 네 보기가 한 줄에 들어가게 그림은 뺀다 */}
               <span className="max-[720px]:hidden"><ModeIcon mode={m.id} /></span>
@@ -947,7 +947,7 @@ export default function WikiMap({
           )}
           {narrow && hasOpts && (
             <button type="button" onClick={() => setShowOpts((v) => !v)} aria-expanded={showOpts} aria-controls={showOpts ? 'wm-opts' : undefined}
-              className={`${touchBtn} ${showOpts ? 'border-tm-blue bg-tm-tint text-tm-deep' : 'border-tm-edge bg-white text-tm-ink'}`}>
+              className={`${touchBtn} ${showOpts ? 'border-tm-blue bg-tm-tint text-tm-deep' : 'border-tm-edge bg-tm-card text-tm-ink'}`}>
               {/* 닫혀 있어도 지금 단계가 보이게(마인드맵) - 표시 · 2단 · 표시 · 모두 · 표시 · 직접 */}
               {mode === 'map' && max > 1 ? `표시 · ${levelShort}` : '표시'}
               <svg viewBox="0 0 20 20" width="12" height="12" aria-hidden fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
@@ -959,7 +959,7 @@ export default function WikiMap({
           {coarse && (
             <button type="button" onClick={() => setTouchOn((v) => !v)} aria-pressed={touchOn}
               title={touchOn ? '지도를 끌고 확대할 수 있습니다. 다시 누르면 쪽 스크롤로 돌아갑니다' : '켜면 지도를 끌고 확대하고 누를 수 있습니다'}
-              className={`${touchBtn} ${touchOn ? 'border-tm-blue bg-tm-blue text-white' : 'border-tm-edge bg-white text-tm-ink'}`}>
+              className={`${touchBtn} ${touchOn ? 'border-tm-blue bg-tm-blue text-white' : 'border-tm-edge bg-tm-card text-tm-ink'}`}>
               지도 조작
             </button>
           )}
@@ -1023,7 +1023,7 @@ export default function WikiMap({
           <div aria-hidden onClick={showLockHint} className="absolute inset-0 z-[5]" style={{ touchAction: 'pan-y' }} />
         )}
         {lockHint && coarse && !touchOn && (
-          <p role="status" className="pointer-events-none absolute left-1/2 top-3 z-10 -translate-x-1/2 whitespace-nowrap rounded-full bg-tm-ink px-3.5 py-2 text-[13px] font-semibold text-white shadow-tm-up">
+          <p role="status" className="pointer-events-none absolute left-1/2 top-3 z-10 -translate-x-1/2 whitespace-nowrap rounded-full bg-tm-deep px-3.5 py-2 text-[13px] font-semibold text-white shadow-tm-up">
             지도를 움직이려면 &apos;지도 조작&apos;을 켜세요
           </p>
         )}
@@ -1031,7 +1031,7 @@ export default function WikiMap({
         {/* 아래 문서가 없는 카테고리 - 무엇을 하면 되는지(위쪽에 - 프레젠테이션의 넘기기 막대와 겹치지 않게) */}
         {built.empty && (
           <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-center p-4">
-            <div className="pointer-events-auto flex max-w-[560px] flex-wrap items-center justify-center gap-x-4 gap-y-2.5 rounded-tm border border-tm-line bg-white px-5 py-3.5 text-center shadow-tm-up">
+            <div className="pointer-events-auto flex max-w-[560px] flex-wrap items-center justify-center gap-x-4 gap-y-2.5 rounded-tm border border-tm-line bg-tm-card px-5 py-3.5 text-center shadow-tm-up">
               <p className="text-[14.5px] leading-[1.6] text-tm-ink">
                 {catDoc
                   ? <>아직 <b className="font-bold text-tm-deep">{titleOf(catDoc)}</b> 아래에 문서가 없습니다. 문서를 만들면 가지로 펼쳐집니다.</>

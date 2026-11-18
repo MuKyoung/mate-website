@@ -161,11 +161,11 @@ export default function Timeline({
         </div>
       </div>
 
-      <div ref={boxRef} className="min-h-0 flex-1 overflow-auto rounded-tm border border-tm-line bg-white shadow-tm">
+      <div ref={boxRef} className="min-h-0 flex-1 overflow-auto rounded-tm border border-tm-line bg-tm-card shadow-tm">
         <div className="flex min-w-max">
           {/* 왼쪽 고정 열 */}
-          <div className="sticky left-0 z-20 shrink-0 border-r border-tm-line bg-white" style={{ width: labelW }}>
-            <div className="sticky top-0 z-10 flex h-[52px] items-end border-b border-tm-line bg-white px-4 pb-2.5 text-[13px] font-bold text-tm-sub max-[640px]:px-3">
+          <div className="sticky left-0 z-20 shrink-0 border-r border-tm-line bg-tm-card" style={{ width: labelW }}>
+            <div className="sticky top-0 z-10 flex h-[52px] items-end border-b border-tm-line bg-tm-card px-4 pb-2.5 text-[13px] font-bold text-tm-sub max-[640px]:px-3">
               작업
             </div>
             {groups.map((g) => (
@@ -193,7 +193,7 @@ export default function Timeline({
           {/* 격자 */}
           <div className="relative" style={{ width: span * COL }}>
             {/* 날짜 머리 */}
-            <div className="sticky top-0 z-10 flex h-[52px] border-b border-tm-line bg-white">
+            <div className="sticky top-0 z-10 flex h-[52px] border-b border-tm-line bg-tm-card">
               {days.map((d, i) => {
                 const weekend = d.getDay() === 0 || d.getDay() === 6;
                 const isToday = i === todayIdx;
@@ -248,7 +248,7 @@ export default function Timeline({
                           className={`absolute top-[9px] flex h-[26px] items-center gap-1.5 px-2.5 text-[12.5px] font-bold
                                       [@media(pointer:coarse)]:top-[6px] [@media(pointer:coarse)]:h-8
                                       shadow-tm transition-[filter,box-shadow] duration-150 hover:shadow-tm-up hover:brightness-110
-                                      ${c ? 'text-white' : 'border border-dashed border-tm-edge bg-white text-tm-ink'} ${done ? 'opacity-45' : ''}
+                                      ${c ? 'text-white' : 'border border-dashed border-tm-edge bg-tm-card text-tm-ink'} ${done ? 'opacity-45' : ''}
                                       ${b.cutLeft ? 'rounded-l-none' : 'rounded-l-lg'}
                                       ${b.cutRight ? 'rounded-r-none' : 'rounded-r-lg'}`}>
                           <span className="truncate tabular-nums">{t.key}</span>
@@ -265,14 +265,14 @@ export default function Timeline({
 
         {/* 날짜가 없는 작업 */}
         {undated.length > 0 && (
-          <div className="border-t border-tm-line bg-white p-5">
+          <div className="border-t border-tm-line bg-tm-card p-5">
             <p className="mb-3 flex items-center gap-2 text-[14px] font-extrabold text-tm-deep">
               날짜 없음 <span className={tmCount}>{undated.length}</span>
             </p>
             <div className="flex flex-wrap gap-2">
               {undated.map((t) => (
                 <button key={t.id} type="button" onClick={() => onOpen(t.id)}
-                  className="inline-flex min-h-[38px] items-center gap-2 rounded-tm-sm border border-tm-line bg-white px-3 text-[14px] font-semibold text-tm-ink
+                  className="inline-flex min-h-[38px] items-center gap-2 rounded-tm-sm border border-tm-line bg-tm-card px-3 text-[14px] font-semibold text-tm-ink
                              transition-colors duration-150 hover:border-tm-blue hover:bg-tm-tint">
                   <PriorityDot p={t.priority} />
                   <span className="text-[12.5px] font-bold tabular-nums text-tm-sub">{t.key}</span>

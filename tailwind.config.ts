@@ -8,6 +8,9 @@ import type { Config } from "tailwindcss";
  * 모양은 Figma 「(주)세종호이스트크레인 웹사이트 리뉴얼」 디자인 시스템이고, 주요 색만 로고 파랑이다.
  * 칸의 짜임(섹션 배치)만 그 사이트와 다르게 둔다 (2026-10-22).
  */
+/** /hub 색 - globals.css 의 --tm-<이름>("R G B")을 투명도 표기가 먹는 꼴로 */
+const tmc = (name: string) => `rgb(var(--tm-${name}) / <alpha-value>)`;
+
 const config: Config = {
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
@@ -77,22 +80,40 @@ const config: Config = {
         // 세종호이스트크레인 리뉴얼 관리자의 틀과 값을 옮겼다(2026-10-22).
         // 세종 네이비 자리에는 로고 파랑 #2644CB 를, 제목 글자에는 한 단계 짙은 파랑을 쓴다.
         // 빨강 · 호박색 · 초록은 급함 · 임박 · 끝남에만, 보라 · 청록은 영역을 가르는 데만 쓴다.
-        // 고정 HEX 인 이유: 라이트 전용 화면이고, bg-tm-blue/20 같은 투명도 표기가 먹어야 한다.
+        // 값은 globals.css 의 --tm-* ("R G B") - 밝은 값(괄호 안)과 다크 값이 거기 있다. bg-tm-blue/20 같은 투명도 표기가 먹는다.
         tm: {
-          blue: { DEFAULT: "#2644cb", hover: "#2e5bf0" }, // 채움 · 고른 메뉴 · 초점 - 흰 글자 7.6:1
-          deep: "#18308f", // 제목 글자 · 알림 바탕
-          tint: "#eef2ff", // 마우스를 올린 칸 · 숫자 알약 바탕 - 파란 글자 6.8:1
-          ink: "#1b2430",  // 본문
-          sub: "#5b6676",  // 보조 글자 - 흰 바탕 5.8:1, bg 5.4:1
-          line: "#d7dce4", // 구분선 · 카드 테두리
-          edge: "#7f8b9e", // 입력 칸 · 버튼 테두리 - 흰 바탕 3.4:1
-          bg: "#f4f6f9",   // 바탕
-          red: { DEFAULT: "#d32d27", deep: "#a81f1b", tint: "#fdeeec", line: "#dc8f8b" },
-          ok: { DEFAULT: "#17805a", deep: "#0f5d41", tint: "#e3f4ec" },
-          warn: { DEFAULT: "#8a5a00", deep: "#553d0c", tint: "#fff7e8" },
-          violet: { DEFAULT: "#6a4c93", deep: "#4f3772", tint: "#f1ecf8" },
-          teal: { DEFAULT: "#0f766e", deep: "#115e59", tint: "#e2f3f1" },
+          blue: { DEFAULT: tmc("blue"), hover: tmc("blue-hover") }, // 채움 · 고른 메뉴 · 초점 (#2644cb, 흰 글자 7.6:1)
+          deep: tmc("deep"), // 제목 글자 (#18308f) - 알림 바탕은 backgroundColor 쪽
+          tint: tmc("tint"), // 마우스를 올린 칸 · 숫자 알약 바탕 (#eef2ff, 파란 글자 6.8:1)
+          ink: tmc("ink"),   // 본문 (#1b2430)
+          sub: tmc("sub"),   // 보조 글자 (#5b6676, 흰 바탕 5.8:1)
+          line: tmc("line"), // 구분선 · 카드 테두리 (#d7dce4)
+          edge: tmc("edge"), // 입력 칸 · 버튼 테두리 (#7f8b9e, 흰 바탕 3.4:1)
+          bg: tmc("bg"),     // 바탕 (#f4f6f9)
+          card: tmc("card"), // 카드 · 창 · 입력 칸 (#ffffff) - 다크에서는 바탕보다 한 단계 밝은 면
+          red: { DEFAULT: tmc("red"), deep: tmc("red-deep"), tint: tmc("red-tint"), line: tmc("red-line") },
+          ok: { DEFAULT: tmc("ok"), deep: tmc("ok-deep"), tint: tmc("ok-tint") },
+          warn: { DEFAULT: tmc("warn"), deep: tmc("warn-deep"), tint: tmc("warn-tint") },
+          violet: { DEFAULT: tmc("violet"), deep: tmc("violet-deep"), tint: tmc("violet-tint") },
+          teal: { DEFAULT: tmc("teal"), deep: tmc("teal-deep"), tint: tmc("teal-tint") },
         },
+      },
+      // /hub 다크 모드 - 같은 이름이라도 글자 색은 더 밝게, 흰 글자를 얹는 바탕은 더 짙게 갈라 쓴다
+      textColor: {
+        tm: {
+          blue: { DEFAULT: tmc("blue-text") },
+          red: { DEFAULT: tmc("red-text") },
+          ok: { DEFAULT: tmc("ok-text") },
+          warn: { DEFAULT: tmc("warn-text") },
+          violet: { DEFAULT: tmc("violet-text") },
+          teal: { DEFAULT: tmc("teal-text") },
+        },
+      },
+      backgroundColor: {
+        tm: { deep: tmc("deep-fill"), red: { deep: tmc("red-deep-fill") } }, // 알림 · 위험 버튼(흰 글자)
+      },
+      borderColor: {
+        tm: { red: { deep: tmc("red-deep-fill") } },
       },
 
       // ── Shape ────────────────────────────────────────────────

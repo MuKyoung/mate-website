@@ -39,7 +39,7 @@ function whenOf(stamp: string) {
 }
 
 const messageCard =
-  'flex min-h-0 flex-1 flex-col items-center justify-center gap-2.5 rounded-tm border border-tm-line bg-white px-6 py-16 text-center shadow-tm';
+  'flex min-h-0 flex-1 flex-col items-center justify-center gap-2.5 rounded-tm border border-tm-line bg-tm-card px-6 py-16 text-center shadow-tm';
 
 export default function Memos({ store, me }: { store: MemoStore; me: string }) {
   const bodyRef = useRef<HTMLTextAreaElement>(null);
@@ -200,7 +200,7 @@ export default function Memos({ store, me }: { store: MemoStore; me: string }) {
         <div className="tm-fill flex min-h-0 flex-1 gap-5">
 
           {/* 메모 목록 */}
-          <aside className={`${listing ? 'flex' : 'hidden'} min-h-0 w-full flex-col overflow-hidden rounded-tm border border-tm-line bg-white shadow-tm
+          <aside className={`${listing ? 'flex' : 'hidden'} min-h-0 w-full flex-col overflow-hidden rounded-tm border border-tm-line bg-tm-card shadow-tm
                              md:flex md:w-[300px] md:shrink-0`}>
             <div className="relative flex-none border-b border-tm-line p-3">
               <span className="pointer-events-none absolute left-[26px] top-1/2 -translate-y-1/2 text-tm-sub">
@@ -249,7 +249,7 @@ export default function Memos({ store, me }: { store: MemoStore; me: string }) {
 
           {/* 편집 - 늘 고칠 수 있는 상태다 */}
           {memo && (
-            <div className={`${listing ? 'hidden' : 'flex'} min-w-0 flex-1 flex-col overflow-hidden rounded-tm border border-tm-line bg-white shadow-tm md:flex`}>
+            <div className={`${listing ? 'hidden' : 'flex'} min-w-0 flex-1 flex-col overflow-hidden rounded-tm border border-tm-line bg-tm-card shadow-tm md:flex`}>
               <div className="flex flex-none flex-wrap items-center gap-x-3.5 gap-y-2 border-b border-tm-line px-7 py-3 max-[720px]:px-4">
                 <button type="button" onClick={() => setListing(true)} className={`${tmGhostBtn} md:hidden`}>
                   <IconArrow dir="left" />

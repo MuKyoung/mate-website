@@ -26,7 +26,7 @@ import {
 const WikiMap = dynamic(() => import('./WikiMap'), {
   ssr: false,
   loading: () => (
-    <div className="flex min-w-0 flex-1 items-center justify-center rounded-tm border border-tm-line bg-white text-[15px] font-semibold text-tm-sub shadow-tm">
+    <div className="flex min-w-0 flex-1 items-center justify-center rounded-tm border border-tm-line bg-tm-card text-[15px] font-semibold text-tm-sub shadow-tm">
       지도를 불러오는 중…
     </div>
   ),
@@ -952,7 +952,7 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
                 const on = activeId === home.id;
                 const side = `grid h-7 w-7 shrink-0 place-items-center rounded-md transition-[opacity,background-color] duration-150
                   [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11 [@media(pointer:coarse)]:opacity-100 aria-expanded:opacity-100 ${
-                  on ? 'text-white opacity-100 hover:bg-white/20' : 'text-tm-sub opacity-0 hover:bg-white hover:text-tm-blue group-hover/home:opacity-100 group-focus-within/home:opacity-100'}`;
+                  on ? 'text-white opacity-100 hover:bg-white/20' : 'text-tm-sub opacity-0 hover:bg-tm-card hover:text-tm-blue group-hover/home:opacity-100 group-focus-within/home:opacity-100'}`;
                 return (
                   <div className={`group/home mb-0.5 flex min-h-[38px] items-center gap-0.5 rounded-tm-sm pr-1 transition-colors duration-150 [@media(pointer:coarse)]:min-h-11 ${
                     on ? 'bg-tm-blue text-white' : 'text-tm-deep hover:bg-tm-tint'}`}>
@@ -966,7 +966,7 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
                       <span className="min-w-0 flex-1 truncate">{homeTitle}</span>
                       {watched.has(home.id) && (
                         <span aria-label="다른 팀원이 보는 중" title="다른 팀원이 보는 중"
-                          className={`h-2 w-2 flex-none rounded-full ${on ? 'bg-white' : 'bg-tm-ok'}`} />
+                          className={`h-2 w-2 flex-none rounded-full ${on ? 'bg-tm-card' : 'bg-tm-ok'}`} />
                       )}
                     </button>
                     <button type="button" onClick={() => { if (inDrawer) closeDrawer(false); setCreatingUnder(home.id); }}
@@ -1161,14 +1161,14 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
 
         {/* ── 문서 트리(PC) - 접으면 본문이 넓어진다. 휴대폰은 서랍(아래)에 같은 것을 담는다 ── */}
         <aside id="doc-tree-panel" aria-label="문서 목록"
-          className={`hidden w-[272px] shrink-0 flex-col overflow-hidden rounded-tm border border-tm-line bg-white shadow-tm ${treeOpen ? 'md:flex' : ''}`}>
+          className={`hidden w-[272px] shrink-0 flex-col overflow-hidden rounded-tm border border-tm-line bg-tm-card shadow-tm ${treeOpen ? 'md:flex' : ''}`}>
           {treePanel(false)}
         </aside>
 
         {/* ── 본문 ── */}
         {!doc && store.loadError ? (
           /* 처음 목록을 읽지 못했다 - '문서가 없습니다'로 보이면 다 지워진 줄 안다 */
-          <div role="alert" className="flex min-w-0 flex-1 flex-col items-center justify-center gap-2.5 rounded-tm border border-tm-line bg-white px-6 py-16 text-center shadow-tm">
+          <div role="alert" className="flex min-w-0 flex-1 flex-col items-center justify-center gap-2.5 rounded-tm border border-tm-line bg-tm-card px-6 py-16 text-center shadow-tm">
             <p className="text-[20px] font-extrabold text-tm-deep">문서를 불러오지 못했습니다</p>
             <p className="mb-3 max-w-[44ch] text-[15.5px] leading-[1.7] text-tm-ink">{store.loadError}</p>
             <button type="button" onClick={() => void retryLoad()} disabled={retrying} className={tmBtnPrimary}>
@@ -1176,7 +1176,7 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
             </button>
           </div>
         ) : !doc ? (
-          <div className="flex min-w-0 flex-1 flex-col items-center justify-center gap-2.5 rounded-tm border border-tm-line bg-white px-6 py-16 text-center shadow-tm">
+          <div className="flex min-w-0 flex-1 flex-col items-center justify-center gap-2.5 rounded-tm border border-tm-line bg-tm-card px-6 py-16 text-center shadow-tm">
             <p className="text-[20px] font-extrabold text-tm-deep">문서가 없습니다</p>
             <p className="mb-3 max-w-[44ch] text-[15.5px] leading-[1.7] text-tm-ink">
               회의록이나 요구사항 정의서 같은 양식을 골라 첫 문서를 만들어 보세요.
@@ -1187,7 +1187,7 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
             </button>
           </div>
         ) : (
-          <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-tm border border-tm-line bg-white shadow-tm">
+          <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-tm border border-tm-line bg-tm-card shadow-tm">
             {/* 문서 막대 - 경로 · 함께 보는 사람 · 동작 */}
             <div className="flex flex-none flex-wrap items-center gap-2 border-b border-tm-line px-5 py-2.5 max-[720px]:px-3">
               {/* 휴대폰 - 문서 목록 서랍(찾기 · 즐겨찾기 · 트리 · 휴지통)을 연다 */}
@@ -1223,7 +1223,7 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
                 {here2.length > 0 && (
                   <span className="mr-1 flex items-center -space-x-1.5" aria-label={`함께 보는 사람 ${here2.length}명`}>
                     {here2.slice(0, 4).map((p) => (
-                      <span key={p.member} className={`rounded-full ring-2 ${p.editing ? 'ring-tm-ok' : 'ring-white'}`}>
+                      <span key={p.member} className={`rounded-full ring-2 ${p.editing ? 'ring-tm-ok' : 'ring-tm-card'}`}>
                         <Avatar id={p.member} size={26} />
                       </span>
                     ))}
@@ -1233,7 +1233,7 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
                   <button type="button" onClick={openShare} aria-haspopup="dialog"
                     title={docShared ? '링크로 공유 중 · 눌러서 링크 보기 · 끊기' : '링크로 공유 · 로그인 없이 이 문서만 읽게 하기'}
                     className={`inline-flex h-[38px] items-center gap-1.5 rounded-tm-sm border px-2.5 text-[13.5px] font-bold transition-colors [@media(pointer:coarse)]:h-11 ${
-                      docShared ? 'border-tm-ok bg-tm-ok-tint text-tm-ok-deep hover:bg-white' : 'border-tm-edge bg-white text-tm-ink hover:border-tm-blue hover:bg-tm-tint'}`}>
+                      docShared ? 'border-tm-ok bg-tm-ok-tint text-tm-ok-deep hover:bg-tm-card' : 'border-tm-edge bg-tm-card text-tm-ink hover:border-tm-blue hover:bg-tm-tint'}`}>
                     <LinkGlyph />
                     <span className="max-[720px]:sr-only">{docShared ? '공유 중' : '공유'}</span>
                   </button>
@@ -1241,7 +1241,7 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
                 {wikiOn && (
                   <button ref={commentBtn} type="button" title={commentsOpen ? '댓글 닫기' : '댓글 보기'} aria-label={`댓글 ${commentCount}개 ${commentsOpen ? '닫기' : '보기'}`}
                     aria-expanded={commentsOpen} aria-controls="doc-comment-panel"
-                    className="inline-flex h-[38px] items-center gap-1.5 rounded-tm-sm border border-tm-edge bg-white px-2.5 text-[13.5px] font-bold text-tm-ink transition-colors
+                    className="inline-flex h-[38px] items-center gap-1.5 rounded-tm-sm border border-tm-edge bg-tm-card px-2.5 text-[13.5px] font-bold text-tm-ink transition-colors
                                hover:border-tm-blue hover:bg-tm-tint aria-expanded:border-tm-blue aria-expanded:bg-tm-tint [@media(pointer:coarse)]:h-11"
                     onClick={() => (commentsOpen ? closeComments() : setCommentsOpen(true))}>
                     <CommentGlyph />
@@ -1631,7 +1631,7 @@ function Drawer({ onClose, children }: { onClose(): void; children: React.ReactN
         trapTab(e, box.current);
       }}>
       <div aria-hidden className="absolute inset-0 bg-[rgba(15,26,41,0.5)]" onClick={() => close.current()} />
-      <div ref={box} className="absolute inset-y-0 left-0 flex w-[min(88vw,340px)] flex-col bg-white shadow-tm-pop">
+      <div ref={box} className="absolute inset-y-0 left-0 flex w-[min(88vw,340px)] flex-col bg-tm-card shadow-tm-pop">
         <div className="flex flex-none items-center justify-between gap-3 border-b border-tm-line py-2.5 pl-4 pr-3">
           <b className="text-[16px] font-extrabold text-tm-deep">문서 목록</b>
           <button type="button" data-drawer-close onClick={() => close.current()} aria-label="문서 목록 닫기" className={tmIconBtn}>
@@ -1657,7 +1657,7 @@ function CommentPanel({ count, openCount, resolvedCount, filter, onFilter, onClo
   const tabs = [['open', `미해결 ${openCount}`], ['resolved', `해결 ${resolvedCount}`], ['all', '전체']] as const;
   return (
     <aside ref={box} id="doc-comment-panel" aria-label="댓글"
-      className="fixed inset-y-0 right-0 z-[80] flex w-[min(420px,100vw)] flex-col border-l border-tm-line bg-white shadow-tm-pop max-[720px]:w-full"
+      className="fixed inset-y-0 right-0 z-[80] flex w-[min(420px,100vw)] flex-col border-l border-tm-line bg-tm-card shadow-tm-pop max-[720px]:w-full"
       onKeyDown={(e) => { if (e.key === 'Escape' && !e.defaultPrevented) { e.stopPropagation(); onClose(); } }}>
       <div className="flex flex-none items-center gap-3 border-b border-tm-line py-2.5 pl-5 pr-3">
         <b data-panel-title tabIndex={-1} className="min-w-0 flex-1 truncate text-[16px] font-extrabold text-tm-deep outline-none">

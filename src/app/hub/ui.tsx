@@ -9,6 +9,7 @@ import {
 import { useMember } from './members';
 import { useDomain } from './domainStore';
 import { usePainter } from './colorStore';
+import { setTmTheme, useTmTheme, type TmTheme } from './ShellScope';
 
 /*
  * 작업 관리 도구의 화면 부품.
@@ -79,7 +80,7 @@ export const PRIORITY_STYLE: Record<Priority, { dot: string; text: string }> = {
   high: { dot: 'bg-tm-warn', text: 'font-bold text-tm-warn' },
   normal: { dot: 'bg-tm-edge', text: 'font-semibold text-tm-sub' },
   // 낮음은 속이 빈 점
-  low: { dot: 'border-[1.5px] border-tm-edge bg-white', text: 'font-semibold text-tm-sub' },
+  low: { dot: 'border-[1.5px] border-tm-edge bg-tm-card', text: 'font-semibold text-tm-sub' },
 };
 
 /** 영역 알약 - 영역의 색으로 */
@@ -111,16 +112,17 @@ export const STATUS_STYLE: Record<Status, { dot: string; pill: string }> = {
  * 사람 · 라벨 색의 값 - 고른 색은 런타임에 정해져 class 대신 style 로 칠한다.
  * solid: 타임라인 막대(흰 글자 5.4:1 이상) · 캘린더 항목의 왼쪽 띠 · 아바타 글자,
  * tint: 캘린더 항목 · 아바타의 바탕(본문 글자 12:1, 빨간 지연 글자 5.6:1, solid 글자 4.5:1 이상)
+ * bg · fg: 화면에 칠할 때 쓰는 tint · solid - 다크 모드에서 어두운 바탕 · 밝은 글자로 바뀐다(globals.css --tm-pt-* · --tm-pf-*)
  */
-export const PAINT: Record<TaskColor, { solid: string; tint: string }> = {
-  blue: { solid: '#2644cb', tint: '#dfe6ff' },
-  violet: { solid: '#6a4c93', tint: '#e8dff5' },
-  teal: { solid: '#0f766e', tint: '#d8f0ec' },
-  pink: { solid: '#b8255f', tint: '#fadde9' },
-  sky: { solid: '#0369a1', tint: '#d5edfa' },
-  plum: { solid: '#9d1f9a', tint: '#f5dcf2' },
-  brown: { solid: '#8a4a26', tint: '#f1e2d7' },
-  gray: { solid: '#5b6676', tint: '#e3e8ee' },
+export const PAINT: Record<TaskColor, { solid: string; tint: string; bg: string; fg: string }> = {
+  blue: { solid: '#2644cb', tint: '#dfe6ff', bg: 'var(--tm-pt-blue)', fg: 'var(--tm-pf-blue)' },
+  violet: { solid: '#6a4c93', tint: '#e8dff5', bg: 'var(--tm-pt-violet)', fg: 'var(--tm-pf-violet)' },
+  teal: { solid: '#0f766e', tint: '#d8f0ec', bg: 'var(--tm-pt-teal)', fg: 'var(--tm-pf-teal)' },
+  pink: { solid: '#b8255f', tint: '#fadde9', bg: 'var(--tm-pt-pink)', fg: 'var(--tm-pf-pink)' },
+  sky: { solid: '#0369a1', tint: '#d5edfa', bg: 'var(--tm-pt-sky)', fg: 'var(--tm-pf-sky)' },
+  plum: { solid: '#9d1f9a', tint: '#f5dcf2', bg: 'var(--tm-pt-plum)', fg: 'var(--tm-pf-plum)' },
+  brown: { solid: '#8a4a26', tint: '#f1e2d7', bg: 'var(--tm-pt-brown)', fg: 'var(--tm-pf-brown)' },
+  gray: { solid: '#5b6676', tint: '#e3e8ee', bg: 'var(--tm-pt-gray)', fg: 'var(--tm-pf-gray)' },
 };
 
 /* ── 버튼 · 입력 칸 ───────────────────────────────────
@@ -129,7 +131,7 @@ export const PAINT: Record<TaskColor, { solid: string; tint: string }> = {
    손가락으로 쓰는 기기에서는 누르는 칸을 44px 로 키운다. */
 
 export const tmBtn =
-  'inline-flex h-[46px] items-center justify-center gap-2 whitespace-nowrap rounded-tm-btn border border-tm-edge bg-white px-5 ' +
+  'inline-flex h-[46px] items-center justify-center gap-2 whitespace-nowrap rounded-tm-btn border border-tm-edge bg-tm-card px-5 ' +
   'text-[15px] font-bold text-tm-ink transition-colors duration-150 ' +
   'enabled:hover:border-tm-blue enabled:hover:bg-tm-tint disabled:cursor-default disabled:opacity-50';
 
@@ -145,12 +147,12 @@ export const tmBtnDanger =
 
 /** 작은 버튼 - 창 안의 보조 동작, 예시 지우기 같은 것 */
 export const tmGhostBtn =
-  'inline-flex h-[38px] items-center justify-center gap-1.5 whitespace-nowrap rounded-tm-sm border border-tm-edge bg-white px-3.5 ' +
+  'inline-flex h-[38px] items-center justify-center gap-1.5 whitespace-nowrap rounded-tm-sm border border-tm-edge bg-tm-card px-3.5 ' +
   'text-[13.5px] font-semibold text-tm-ink transition-colors duration-150 ' +
   'enabled:hover:border-tm-blue enabled:hover:bg-tm-tint disabled:cursor-default disabled:opacity-50 [@media(pointer:coarse)]:h-11';
 
 export const tmGhostDanger =
-  'inline-flex h-[38px] items-center justify-center gap-1.5 whitespace-nowrap rounded-tm-sm border border-tm-red-line bg-white px-3.5 ' +
+  'inline-flex h-[38px] items-center justify-center gap-1.5 whitespace-nowrap rounded-tm-sm border border-tm-red-line bg-tm-card px-3.5 ' +
   'text-[13.5px] font-semibold text-tm-red-deep transition-colors duration-150 ' +
   'enabled:hover:border-tm-red-deep enabled:hover:bg-tm-red-tint disabled:cursor-default disabled:opacity-50 [@media(pointer:coarse)]:h-11';
 
@@ -161,7 +163,7 @@ export const tmEditBtn =
   'data-[on]:bg-tm-blue data-[on]:text-white data-[on]:hover:bg-tm-blue-hover [@media(pointer:coarse)]:h-11';
 
 export const tmIconBtn =
-  'grid h-[38px] w-[38px] flex-none place-items-center rounded-tm-sm border border-tm-edge bg-white p-0 text-tm-ink ' +
+  'grid h-[38px] w-[38px] flex-none place-items-center rounded-tm-sm border border-tm-edge bg-tm-card p-0 text-tm-ink ' +
   'transition-colors duration-150 enabled:hover:border-tm-blue enabled:hover:bg-tm-tint disabled:cursor-default disabled:opacity-30 ' +
   '[@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11';
 
@@ -172,7 +174,7 @@ export const tmIconBtnSm =
 
 /** 둘 이상 중 하나를 고르는 알약 - aria-pressed 인 것을 파랗게 채운다 */
 export const tmTab =
-  'inline-flex h-[42px] flex-none items-center gap-1.5 whitespace-nowrap rounded-full border border-tm-edge bg-white px-4 ' +
+  'inline-flex h-[42px] flex-none items-center gap-1.5 whitespace-nowrap rounded-full border border-tm-edge bg-tm-card px-4 ' +
   'text-[14.5px] font-bold text-tm-ink transition-colors duration-150 hover:border-tm-blue hover:bg-tm-tint ' +
   'aria-pressed:border-tm-blue aria-pressed:bg-tm-blue aria-pressed:text-white [@media(pointer:coarse)]:h-11';
 
@@ -187,7 +189,7 @@ export const tmCount =
 
 /** 입력 칸 바탕 - 너비 · 높이 · 글자 크기는 쓰는 곳에서 정한다 */
 export const tmFieldBase =
-  'rounded-tm-sm border border-tm-edge bg-white text-tm-ink transition-[border-color,box-shadow] duration-150 ' +
+  'rounded-tm-sm border border-tm-edge bg-tm-card text-tm-ink transition-[border-color,box-shadow] duration-150 ' +
   'placeholder:text-tm-sub placeholder:opacity-100 focus:border-tm-blue focus:shadow-[0_0_0_3px_rgba(38,68,203,0.2)] ' +
   'aria-[invalid=true]:border-tm-red';
 export const tmInput = `${tmFieldBase} h-12 w-full px-3.5 text-[16px]`;
@@ -199,11 +201,11 @@ export const tmSelect = `${tmFieldBase} h-12 cursor-pointer pl-3.5 pr-2 text-[16
 export const tmLabel = 'mb-[7px] block text-[14px] font-bold text-tm-ink';
 
 /** 흰 카드 */
-export const tmCard = 'rounded-tm border border-tm-line bg-white shadow-tm';
+export const tmCard = 'rounded-tm border border-tm-line bg-tm-card shadow-tm';
 
 /** 안내 띠 - 왼쪽에 파란 굵은 선. 좁은 화면에서는 글과 버튼을 한 줄에 두도록 줄인다 */
 export const tmCallout =
-  'flex flex-wrap items-center gap-x-4 gap-y-2.5 rounded-tm-sm border border-l-4 border-tm-line border-l-tm-blue bg-white ' +
+  'flex flex-wrap items-center gap-x-4 gap-y-2.5 rounded-tm-sm border border-l-4 border-tm-line border-l-tm-blue bg-tm-card ' +
   'px-[18px] py-3.5 text-[15px] leading-[1.7] text-tm-ink max-[720px]:px-4 max-[720px]:py-3 max-[720px]:text-[14px] max-[720px]:leading-[1.6]';
 
 /* ── 아이콘(선 굵기 1.8 통일 - 세종 관리자와 같은 그림) ───── */
@@ -264,7 +266,7 @@ export function useMediaQuery(query: string): boolean {
 }
 
 /** 메뉴 아이콘 */
-export type NavIcon = 'board' | 'mine' | 'drive' | 'wiki' | 'memo' | 'home' | 'menu' | 'phone' | 'monitor' | 'sidebar' | 'filter' | 'mindmap' | 'daily' | 'weekly' | 'org';
+export type NavIcon = 'board' | 'mine' | 'drive' | 'wiki' | 'memo' | 'home' | 'menu' | 'phone' | 'monitor' | 'sidebar' | 'filter' | 'mindmap' | 'daily' | 'weekly' | 'org' | 'sun' | 'moon';
 export function IconNav({ name, size = 20 }: { name: NavIcon; size?: number }) {
   const paths: Record<NavIcon, React.ReactNode> = {
     /* 모든 작업 - 보드의 칸 */
@@ -362,11 +364,59 @@ export function IconNav({ name, size = 20 }: { name: NavIcon; size?: number }) {
         <path d="M8 8.3L5.4 6M12 8.3l2.6-2.3M12 11.7l2.6 2.3" />
       </>
     ),
+    /* 화면 모드 - 해 · 달 · 모니터(시스템은 monitor) */
+    sun: (
+      <>
+        <circle cx="10" cy="10" r="3.4" />
+        <path d="M10 2.5v1.8M10 15.7v1.8M2.5 10h1.8M15.7 10h1.8M4.7 4.7l1.3 1.3M14 14l1.3 1.3M4.7 15.3L6 14M14 6l1.3-1.3" />
+      </>
+    ),
+    moon: <path d="M15.8 12.6A6.5 6.5 0 0 1 7.4 4.2a6.5 6.5 0 1 0 8.4 8.4z" />,
   };
   return (
     <svg viewBox="0 0 20 20" width={size} height={size} aria-hidden className="flex-none" {...svg}>
       {paths[name]}
     </svg>
+  );
+}
+
+/* ── 화면 모드(밝게 · 어둡게 · 시스템) ───────────────── */
+
+const THEMES: { id: TmTheme; label: string; icon: NavIcon }[] = [
+  { id: 'light', label: '밝게', icon: 'sun' },
+  { id: 'dark', label: '어둡게', icon: 'moon' },
+  { id: 'system', label: '시스템', icon: 'monitor' },
+];
+
+/** 세 칸 고르기 - 메뉴 아래쪽 · 휴대폰 사람 메뉴 */
+export function ThemeSwitch() {
+  const pref = useTmTheme();
+  return (
+    <div role="radiogroup" aria-label="화면 모드" className="grid grid-cols-3 gap-0.5 rounded-tm-sm bg-tm-bg p-[3px]">
+      {THEMES.map((t) => (
+        <button key={t.id} type="button" role="radio" aria-checked={pref === t.id} onClick={() => setTmTheme(t.id)}
+          className="flex h-9 items-center justify-center gap-1.5 rounded-[8px] text-[13px] font-semibold text-tm-sub transition-colors duration-150
+                     hover:text-tm-ink aria-checked:bg-tm-card aria-checked:text-tm-ink aria-checked:shadow-tm [@media(pointer:coarse)]:h-10">
+          <IconNav name={t.icon} size={16} />
+          {t.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** 접은 메뉴의 단추 하나 - 누를 때마다 밝게 → 어둡게 → 시스템 */
+export function ThemeCycle({ className }: { className: string }) {
+  const pref = useTmTheme();
+  const i = THEMES.findIndex((t) => t.id === pref);
+  const cur = THEMES[i];
+  const next = THEMES[(i + 1) % THEMES.length];
+  return (
+    <button type="button" onClick={() => setTmTheme(next.id)} className={className}
+      title={`화면 모드: ${cur.label} (누르면 ${next.label})`} aria-label={`화면 모드 ${cur.label}, 누르면 ${next.label}`}>
+      <IconNav name={cur.icon} />
+      <span aria-hidden>{cur.label}</span>
+    </button>
   );
 }
 
@@ -401,7 +451,7 @@ export function MemberAvatar({ id, initial, photo, title, size }: {
   return (
     <span
       className="relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full font-bold tracking-[-0.02em]"
-      style={{ width: size, height: size, fontSize: Math.max(size >= 22 ? 11 : 9, size * 0.4), backgroundColor: p.tint, color: p.solid }}
+      style={{ width: size, height: size, fontSize: Math.max(size >= 22 ? 11 : 9, size * 0.4), backgroundColor: p.bg, color: p.fg }}
       title={title}
     >
       {initial}
@@ -521,7 +571,7 @@ export function PageHead({
                          [@media(max-height:500px)]:text-[22px]">{title}</h1>
           {saved && (
             <p
-              className={`inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-tm-line bg-white px-3 py-[5px] text-[13px] font-semibold text-tm-sub ${
+              className={`inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-tm-line bg-tm-card px-3 py-[5px] text-[13px] font-semibold text-tm-sub ${
                 saved.tone === 'warn' ? '' : 'max-[720px]:hidden'}`}
             >
               <i className={`h-2 w-2 rounded-full ${
@@ -644,7 +694,7 @@ export function Modal({
         aria-modal="true"
         aria-labelledby={`${id}-title`}
         tabIndex={-1}
-        className={`flex max-h-[calc(100dvh-48px)] animate-tm-pop flex-col overflow-hidden rounded-tm-lg bg-white text-[15.5px] leading-[1.6] text-tm-ink shadow-tm-pop ${width}`}
+        className={`flex max-h-[calc(100dvh-48px)] animate-tm-pop flex-col overflow-hidden rounded-tm-lg bg-tm-card text-[15.5px] leading-[1.6] text-tm-ink shadow-tm-pop ${width}`}
       >
         <div className="flex flex-none items-center justify-between gap-4 border-b border-tm-line py-[18px] pl-[26px] pr-5 max-[720px]:py-3.5 max-[720px]:pl-4 max-[720px]:pr-3">
           <div className="min-w-0">
@@ -874,7 +924,7 @@ function StatusMenu({ task, onMove }: { task: Task; onMove(s: Status, keyboard: 
 
       {open && createPortal(
         <div ref={place} role="menu" aria-label="상태 바꾸기" onKeyDown={onMenuKey}
-          className="fixed left-0 top-0 z-50 w-[156px] animate-tm-fade overflow-hidden rounded-tm border border-tm-line bg-white py-1.5 shadow-tm-up">
+          className="fixed left-0 top-0 z-50 w-[156px] animate-tm-fade overflow-hidden rounded-tm border border-tm-line bg-tm-card py-1.5 shadow-tm-up">
           <p className="px-3 pb-1 pt-0.5 text-[12px] font-bold text-tm-sub">상태 바꾸기</p>
           {STATUSES.map((st) => {
             const cur = st.id === task.status;
@@ -974,7 +1024,7 @@ export function TaskCard({ task, onOpen, onDragStart, onDragEnd, dragging, onMov
       tabIndex={0}
       role="button"
       aria-label={`${task.key} ${task.title}${kin}`}
-      className={`group relative cursor-pointer rounded-tm-btn border border-tm-line bg-white px-3.5 pb-3.5 pt-3 shadow-tm
+      className={`group relative cursor-pointer rounded-tm-btn border border-tm-line bg-tm-card px-3.5 pb-3.5 pt-3 shadow-tm
                   transition-[border-color,box-shadow,transform] duration-200
                   hover:-translate-y-0.5 hover:border-tm-blue hover:shadow-[0_8px_20px_rgba(22,39,60,0.12)]
                   [@media(hover:none)]:hover:translate-y-0 [@media(hover:none)]:hover:shadow-tm

@@ -16,7 +16,7 @@ import {
   type ColorBy, type DomainColor, type DomainKey, type Member, type Priority, type Status, type Task,
 } from './types';
 import {
-  Avatar, DOMAIN_FILL, DomainChip, DueBadge, IconChevron, IconNav, IconPlus, IconSearch, Modal,
+  Avatar, DOMAIN_FILL, DomainChip, DueBadge, IconChevron, IconNav, IconPlus, IconSearch, Modal, ThemeCycle, ThemeSwitch,
   PRIORITY_STYLE, PageHead, ParentLine, PriorityDot, STATUS_STYLE, StatusPill, SubCount, TaskCard, Toast,
   tmBtn, tmBtnPrimary, tmCallout, tmCount, tmEditBtn, tmGhostBtn, tmIconBtnSm, tmInput, tmSelect, tmTab, tmTextBtn,
   useMediaQuery, type NavIcon,
@@ -163,7 +163,7 @@ function AccountButton({ member, pending, onOpen }: { member: Member; pending: n
       <span className="relative flex-none">
         <Avatar id={member.id} size={36} />
         {pending > 0 && (
-          <span className="absolute -right-1 -top-1 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-tm-red px-1 text-[11px] font-bold leading-none text-white ring-2 ring-white">
+          <span className="absolute -right-1 -top-1 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-tm-red px-1 text-[11px] font-bold leading-none text-white ring-2 ring-tm-card">
             {pending}
           </span>
         )}
@@ -185,7 +185,7 @@ const railItem =
   'transition-colors duration-150 hover:bg-tm-tint';
 
 const logoutBtn =
-  'h-[42px] w-full rounded-tm-sm border border-tm-edge bg-white text-[14px] font-semibold text-tm-ink transition-colors duration-150 ' +
+  'h-[42px] w-full rounded-tm-sm border border-tm-edge bg-tm-card text-[14px] font-semibold text-tm-ink transition-colors duration-150 ' +
   'hover:border-tm-blue hover:bg-tm-tint disabled:cursor-default disabled:opacity-50 [@media(pointer:coarse)]:h-11';
 
 /* 위젯 앱(android-widget/)을 다시 빌드하면 이 파일도 새 APK 로 바꾼다 */
@@ -978,7 +978,7 @@ function Workspace({ account }: { account?: Account }) {
               )}
               {(it.count ?? 0) > 0 && (
                 <span className={`absolute -right-3 -top-1.5 inline-grid h-[18px] min-w-[20px] place-items-center rounded-full px-1 text-[12px] font-bold leading-none tabular-nums ${
-                  it.active ? 'bg-white text-tm-blue' : 'bg-tm-tint text-tm-deep'}`}>
+                  it.active ? 'bg-tm-card text-tm-blue' : 'bg-tm-tint text-tm-deep'}`}>
                   {it.count}
                 </span>
               )}
@@ -999,7 +999,7 @@ function Workspace({ account }: { account?: Account }) {
             <span className="min-w-0 truncate">{it.label}</span>
             {it.count !== undefined && (
               <span className={`ml-auto inline-grid h-[22px] min-w-[26px] flex-none place-items-center rounded-full px-2 text-[12.5px] font-bold tabular-nums ${
-                it.active ? 'bg-white/20 text-white' : 'bg-tm-tint text-tm-deep group-hover:bg-white'}`}>
+                it.active ? 'bg-white/20 text-white' : 'bg-tm-tint text-tm-deep group-hover:bg-tm-card'}`}>
                 {it.count}
               </span>
             )}
@@ -1032,7 +1032,7 @@ function Workspace({ account }: { account?: Account }) {
                     rail ? 'grid-cols-[88px_minmax(0,1fr)]' : 'grid-cols-[268px_minmax(0,1fr)]'}`}>
 
       {/* ── 넓은 화면: 왼쪽 메뉴 ── */}
-      <aside className={`flex min-h-0 flex-col overflow-y-auto overflow-x-hidden border-r border-tm-line bg-white pb-3.5 max-[900px]:hidden ${
+      <aside className={`flex min-h-0 flex-col overflow-y-auto overflow-x-hidden border-r border-tm-line bg-tm-card pb-3.5 max-[900px]:hidden ${
         rail ? 'px-2 pt-4' : 'px-4 pt-[22px]'}`}>
         {rail ? (
           <div className="mb-2 flex flex-col items-center gap-1.5">
@@ -1077,6 +1077,7 @@ function Workspace({ account }: { account?: Account }) {
               <IconNav name="home" />
               <span aria-hidden>홈페이지</span>
             </Link>
+            <ThemeCycle className={railItem} />
             {/* 로그인했으면 팀원 창(내 정보), 아니면 '지금 쓰는 사람'을 고르도록 메뉴를 편다. 로그아웃도 펼친 메뉴에 있다 */}
             <button type="button" onClick={() => (account ? setTeamOpen(true) : setRail(false))}
               aria-haspopup={account ? 'dialog' : undefined}
@@ -1085,7 +1086,7 @@ function Workspace({ account }: { account?: Account }) {
               className="relative mx-auto mt-1 grid h-12 w-12 place-items-center rounded-full transition-colors duration-150 hover:bg-tm-tint">
               <Avatar id={me} size={36} />
               {pendingCount > 0 && (
-                <span className="absolute right-0.5 top-0.5 h-3 w-3 rounded-full bg-tm-red ring-2 ring-white" aria-label={`승인 대기 ${pendingCount}명`} />
+                <span className="absolute right-0.5 top-0.5 h-3 w-3 rounded-full bg-tm-red ring-2 ring-tm-card" aria-label={`승인 대기 ${pendingCount}명`} />
               )}
             </button>
           </div>
@@ -1106,6 +1107,7 @@ function Workspace({ account }: { account?: Account }) {
             <IconNav name="home" />
             <span>홈페이지로</span>
           </Link>
+          <ThemeSwitch />
           {account ? (
             <>
               <AccountButton member={account.me} pending={pendingCount} onOpen={() => setTeamOpen(true)} />
@@ -1123,7 +1125,7 @@ function Workspace({ account }: { account?: Account }) {
       <div className="flex min-h-0 min-w-0 flex-col">
 
         {/* ── 좁은 화면: 위쪽 띠 ── */}
-        <header className="relative z-30 flex h-[58px] flex-none items-center justify-between gap-3 border-b border-tm-line bg-white px-4 min-[901px]:hidden
+        <header className="relative z-30 flex h-[58px] flex-none items-center justify-between gap-3 border-b border-tm-line bg-tm-card px-4 min-[901px]:hidden
                            [@media(max-height:500px)]:h-12">
           <button type="button" onClick={() => goTasks({ kind: 'all' })} aria-label="Hub 처음 화면"
             className="flex min-h-11 min-w-0 items-center gap-2.5 rounded-tm-sm">
@@ -1135,10 +1137,10 @@ function Workspace({ account }: { account?: Account }) {
               className="relative grid h-11 w-11 cursor-pointer list-none place-items-center rounded-full [&::-webkit-details-marker]:hidden">
               <Avatar id={me} size={34} />
               {pendingCount > 0 && (
-                <span className="absolute right-0 top-0 h-3 w-3 rounded-full bg-tm-red ring-2 ring-white" aria-label={`승인 대기 ${pendingCount}명`} />
+                <span className="absolute right-0 top-0 h-3 w-3 rounded-full bg-tm-red ring-2 ring-tm-card" aria-label={`승인 대기 ${pendingCount}명`} />
               )}
             </summary>
-            <div className="absolute right-0 top-[50px] z-40 flex w-[256px] flex-col gap-3 rounded-tm border border-tm-line bg-white p-4 shadow-tm-up">
+            <div className="absolute right-0 top-[50px] z-40 flex w-[256px] flex-col gap-3 rounded-tm border border-tm-line bg-tm-card p-4 shadow-tm-up">
               {account ? (
                 <AccountButton member={account.me} pending={pendingCount}
                   onOpen={() => { if (acct.current) acct.current.open = false; setTeamOpen(true); }} />
@@ -1153,6 +1155,7 @@ function Workspace({ account }: { account?: Account }) {
                 className="flex min-h-[44px] items-center justify-between gap-2 rounded-tm-sm bg-tm-tint px-3 text-left text-[14px] font-semibold text-tm-ink">
                 갤럭시 위젯 앱 <IconNav name="phone" size={18} />
               </button>
+              <ThemeSwitch />
               {account && (
                 <button type="button" onClick={() => void logout()} disabled={leaving} className={logoutBtn}>
                   {leaving ? '로그아웃 중…' : '로그아웃'}
@@ -1236,7 +1239,7 @@ function Workspace({ account }: { account?: Account }) {
 
                   {compactFilters && (
                   <button type="button" onClick={() => setFiltersOpen(!filtersOpen)} aria-expanded={filtersOpen} aria-controls="tm-filters"
-                    className="inline-flex h-12 flex-none items-center gap-2 rounded-tm-sm border border-tm-edge bg-white px-3.5 text-[15px] font-bold text-tm-ink
+                    className="inline-flex h-12 flex-none items-center gap-2 rounded-tm-sm border border-tm-edge bg-tm-card px-3.5 text-[15px] font-bold text-tm-ink
                                transition-colors duration-150 aria-expanded:border-tm-blue aria-expanded:bg-tm-tint">
                     <IconNav name="filter" size={18} />
                     걸러 보기
@@ -1319,7 +1322,7 @@ function Workspace({ account }: { account?: Account }) {
 
                 {/* ── 목록을 읽지 못함(Supabase 모드) - 빈 보드처럼 보이지 않게 ── */}
                 {slot === 'error' && (
-                  <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2.5 rounded-tm border border-tm-line bg-white px-6 py-16 text-center shadow-tm">
+                  <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2.5 rounded-tm border border-tm-line bg-tm-card px-6 py-16 text-center shadow-tm">
                     <p className="text-[20px] font-extrabold text-tm-deep">작업을 불러오지 못했습니다</p>
                     <p className="mb-3 max-w-[44ch] text-[15.5px] leading-[1.7] text-tm-ink">{store.loadError}</p>
                     <button type="button" onClick={() => void retryLoad()} disabled={retrying} className={tmBtn}>
@@ -1344,7 +1347,7 @@ function Workspace({ account }: { account?: Account }) {
 
                 {/* ── 보드 - 걸러 보기에 맞는 것이 하나도 없으면 칸마다 '작업 추가'를 늘어놓지 않고 한 번만 알린다 ── */}
                 {slot === 'board' && filtersOn && visible.length === 0 && (
-                  <div className="min-h-0 flex-1 overflow-auto rounded-tm border border-tm-line bg-white shadow-tm">{emptyState}</div>
+                  <div className="min-h-0 flex-1 overflow-auto rounded-tm border border-tm-line bg-tm-card shadow-tm">{emptyState}</div>
                 )}
                 {slot === 'board' && !(filtersOn && visible.length === 0) && (
                   <div className="-mx-1 -mb-1 min-h-0 flex-1 overflow-x-auto overflow-y-hidden px-1 pb-1
@@ -1360,7 +1363,7 @@ function Workspace({ account }: { account?: Account }) {
                             onDrop={(e) => onDrop(e, s.id, null)}
                             className={`flex h-full min-h-0 w-[288px] shrink-0 flex-col rounded-tm border shadow-tm transition-colors duration-150
                                         max-[900px]:w-[272px] max-[900px]:snap-start max-[560px]:w-[calc(100vw-72px)] xl:w-auto xl:min-w-[196px] xl:flex-1 ${
-                              active ? 'border-tm-blue bg-tm-tint' : 'border-tm-line bg-white'
+                              active ? 'border-tm-blue bg-tm-tint' : 'border-tm-line bg-tm-card'
                             }`}>
                             <div className="flex flex-none items-center gap-2.5 py-3 pl-4 pr-2.5">
                               <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${STATUS_STYLE[s.id].dot}`} aria-hidden />
@@ -1437,7 +1440,7 @@ function Workspace({ account }: { account?: Account }) {
 
                 {/* ── 목록 ── */}
                 {slot === 'list' && (
-                  <div className="min-h-0 flex-1 overflow-auto rounded-tm border border-tm-line bg-white shadow-tm max-[640px]:hidden">
+                  <div className="min-h-0 flex-1 overflow-auto rounded-tm border border-tm-line bg-tm-card shadow-tm max-[640px]:hidden">
                     <table className="w-full min-w-[780px] border-collapse text-[15px]">
                       <thead>
                         <tr className="text-left text-[13px] text-tm-sub">
@@ -1450,7 +1453,7 @@ function Workspace({ account }: { account?: Account }) {
                             ['assignee', '담당', 'w-[72px] text-center'],
                           ] as const).map(([by, label, cls]) => (
                             <th key={by}
-                              className={`sticky top-0 z-10 bg-tm-bg px-4 py-3 font-bold shadow-[inset_0_-1px_0_#d7dce4] ${cls}`}
+                              className={`sticky top-0 z-10 bg-tm-bg px-4 py-3 font-bold shadow-[inset_0_-1px_0_rgb(var(--tm-line))] ${cls}`}
                               aria-sort={sort?.by === by ? (sort.dir === 1 ? 'ascending' : 'descending') : 'none'}>
                               {/* 손가락 기기에서는 칸 높이만큼 누를 자리를 넓힌다 - 글자 높이(21px)로는 잘 안 눌린다 */}
                               <button type="button" onClick={() => toggleSort(by)}
@@ -1530,7 +1533,7 @@ function Workspace({ account }: { account?: Account }) {
                       </select>
                       <span className="flex-none text-[14px] font-semibold tabular-nums text-tm-sub">{visible.length}건</span>
                     </div>
-                    <div className="min-h-0 flex-1 overflow-auto rounded-tm border border-tm-line bg-white shadow-tm">
+                    <div className="min-h-0 flex-1 overflow-auto rounded-tm border border-tm-line bg-tm-card shadow-tm">
                       <ul>
                         {sorted.map((t) => (
                           <li key={t.id} className="border-b border-tm-line last:border-0">
@@ -1573,7 +1576,7 @@ function Workspace({ account }: { account?: Account }) {
 
         {/* ── 좁은 화면: 아래쪽 메뉴 ── */}
         <nav aria-label="Hub 메뉴"
-          className="grid flex-none grid-cols-4 gap-1 border-t border-tm-line bg-white px-2 pb-[calc(6px+env(safe-area-inset-bottom))] pt-1.5 min-[901px]:hidden">
+          className="grid flex-none grid-cols-4 gap-1 border-t border-tm-line bg-tm-card px-2 pb-[calc(6px+env(safe-area-inset-bottom))] pt-1.5 min-[901px]:hidden">
           {tabs.map((t) => (
             <button key={t.key} type="button" onClick={t.go} aria-current={t.active ? 'page' : undefined} className={tabItem(t.active)}>
               {t.icon && <IconNav name={t.icon} />}

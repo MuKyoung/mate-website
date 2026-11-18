@@ -170,7 +170,7 @@ export default function Roadmap({
 
       <div className="relative min-h-0 flex-1 overflow-auto">
         {lanes.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 rounded-tm border border-tm-line bg-white px-6 py-[72px] text-center shadow-tm">
+          <div className="flex flex-col items-center gap-2 rounded-tm border border-tm-line bg-tm-card px-6 py-[72px] text-center shadow-tm">
             <p className="text-[20px] font-extrabold text-tm-deep">조건에 맞는 작업이 없습니다</p>
             <p className="text-[15.5px] text-tm-ink">
               {hiddenDone > 0
@@ -203,7 +203,7 @@ export default function Roadmap({
                   ) : (
                     <div className="space-y-2.5">
                       {groups.map(({ lane, items }) => (
-                        <div key={lane.id} className="rounded-tm border border-tm-line bg-white p-2 shadow-tm">
+                        <div key={lane.id} className="rounded-tm border border-tm-line bg-tm-card p-2 shadow-tm">
                           <div className="mb-2 flex items-center gap-2 px-1 pt-1">
                             {laneMark(lane.id)}
                             <p className="min-w-0 truncate text-[14px] font-bold text-tm-ink">{lane.label}</p>
@@ -255,7 +255,7 @@ export default function Roadmap({
                     <div key={cell.horizon}
                       className={`min-h-[84px] rounded-tm p-2 ${
                         cell.items.length
-                          ? 'border border-tm-line bg-white shadow-tm'
+                          ? 'border border-tm-line bg-tm-card shadow-tm'
                           : 'border-2 border-dashed border-tm-line'}`}>
                       {cell.items.length === 0 ? (
                         <span className="sr-only">없음</span>

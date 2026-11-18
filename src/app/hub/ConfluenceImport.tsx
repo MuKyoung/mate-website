@@ -146,7 +146,7 @@ export default function ConfluenceImport({ file, store, me, remote, docs, onOpen
     >
       {phase === 'reading' && <Busy text={status} />}
       {phase === 'error' && (
-        <p role="alert" className="rounded-tm-sm border border-[#f0c1bd] bg-[#fdeeec] px-4 py-3 text-[15px] font-semibold text-[#a81f1b]">{error}</p>
+        <p role="alert" className="rounded-tm-sm border border-tm-red-line bg-tm-red-tint px-4 py-3 text-[15px] font-semibold text-tm-red-deep">{error}</p>
       )}
       {phase === 'running' && (
         <div className="py-6" aria-live="polite">
@@ -274,7 +274,7 @@ function Check({ on, disabled, onChange, label, hint }: {
 }) {
   return (
     <label className={`flex items-start gap-2.5 rounded-tm-sm border border-tm-line px-3 py-2.5 ${disabled ? 'opacity-55' : 'cursor-pointer hover:bg-tm-tint'}`}>
-      <input type="checkbox" className="mt-1 h-4 w-4 flex-none accent-[#2644cb]" checked={on && !disabled} disabled={disabled}
+      <input type="checkbox" className="mt-1 h-4 w-4 flex-none accent-tm-blue" checked={on && !disabled} disabled={disabled}
         onChange={(e) => onChange(e.target.checked)} />
       <span className="min-w-0">
         <b className="block text-[14px] font-bold text-tm-ink">{label}</b>
@@ -299,7 +299,7 @@ function ReportView({ report }: { report: ImportReport }) {
   const groups = [...report.warns.entries()].filter(([, m]) => m.size);
   return (
     <div className="space-y-4">
-      <p className="rounded-tm-sm border border-[#b5dfca] bg-[#e3f4ec] px-4 py-3 text-[15px] font-bold text-[#0f6b47]">
+      <p className="rounded-tm-sm border border-tm-ok/40 bg-tm-ok-tint px-4 py-3 text-[15px] font-bold text-tm-ok-deep">
         문서 {report.docs}건 · 첨부 {report.files}건{report.comments ? ` · 댓글 ${report.comments}건` : ''}을 옮겼습니다
       </p>
       {groups.length === 0 ? <p className="text-[14px] text-tm-sub">빠진 것 없이 옮겼습니다.</p> : groups.map(([kind, m]) => (

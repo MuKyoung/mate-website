@@ -297,7 +297,7 @@ function MemberEditor({ member, onUpdate, onPhoto, onDone }: {
   };
 
   return (
-    <div className="mt-1 basis-full rounded-tm-sm border border-tm-line bg-white p-4 max-[480px]:p-3.5">
+    <div className="mt-1 basis-full rounded-tm-sm border border-tm-line bg-tm-card p-4 max-[480px]:p-3.5">
       <PhotoField member={member} size={56} onSave={(photo) => onPhoto(member.id, photo)} />
       <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-[18px] max-[480px]:grid-cols-1">
         <div>

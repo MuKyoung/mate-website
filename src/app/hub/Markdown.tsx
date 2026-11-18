@@ -238,7 +238,7 @@ export default function Markdown({
               return (
                 <li key={n} className="list-none -ml-5 flex items-start gap-2">
                   <span className={`mt-[5px] flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border-[1.5px] ${
-                    checked ? 'border-tm-blue bg-tm-blue text-white' : 'border-tm-edge bg-white'}`}>
+                    checked ? 'border-tm-blue bg-tm-blue text-white' : 'border-tm-edge bg-tm-card'}`}>
                     {checked && (
                       <svg width="9" height="9" viewBox="0 0 12 12" fill="none" aria-hidden>
                         <path d="M2.5 6.2l2.3 2.3 4.7-4.8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />

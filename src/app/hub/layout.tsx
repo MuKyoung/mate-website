@@ -22,7 +22,11 @@ export default function TaskManagerLayout({ children }: { children: React.ReactN
       {/* 첫 페인트 전에 셸을 전환해 다크 플래시를 막는다 */}
       <script
         dangerouslySetInnerHTML={{
-          __html: "document.documentElement.setAttribute('data-shell','app')",
+          // 다크 모드도 같은 때 정한다(ShellScope.tsx 와 같은 규칙: 'tm-theme' 이 없으면 기기 설정)
+          __html:
+            "var d=document.documentElement;d.setAttribute('data-shell','app');" +
+            "try{var t=localStorage.getItem('tm-theme');if(t!=='light'&&t!=='dark')" +
+            "t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';d.setAttribute('data-tm-theme',t)}catch(e){}",
         }}
       />
       {/* 라우트를 떠날 때 속성을 떼어 마케팅 사이트가 라이트 셸을 물려받지 않게 한다 */}

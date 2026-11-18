@@ -192,7 +192,7 @@ function DayPicker({ value, onPick, label, text }: { value: string; onPick(v: st
 }
 
 const messageCard =
-  'flex flex-1 flex-col items-center justify-center gap-2.5 rounded-tm border border-tm-line bg-white px-6 py-16 text-center shadow-tm';
+  'flex flex-1 flex-col items-center justify-center gap-2.5 rounded-tm border border-tm-line bg-tm-card px-6 py-16 text-center shadow-tm';
 
 /** 한 사람 칸 - 머리(동그라미 · 이름 · 작성 시각 · 단추)와 몸 */
 function PersonCard({ id, person, member, mine, gone, meta, action, children, highlight }: {
@@ -208,7 +208,7 @@ function PersonCard({ id, person, member, mine, gone, meta, action, children, hi
 }) {
   return (
     <article id={id} aria-label={person.name}
-      className={`scroll-mt-4 rounded-tm border bg-white shadow-tm ${highlight ? 'border-tm-blue ring-2 ring-tm-blue/15' : 'border-tm-line'}`}>
+      className={`scroll-mt-4 rounded-tm border bg-tm-card shadow-tm ${highlight ? 'border-tm-blue ring-2 ring-tm-blue/15' : 'border-tm-line'}`}>
       <header className={`flex flex-wrap items-center gap-x-3 gap-y-1.5 px-5 py-3 max-[720px]:px-4 ${children ? 'border-b border-tm-line' : ''}`}>
         <PersonMark name={person.name} member={member} size={34} />
         <h3 className="text-[16.5px] font-extrabold text-tm-deep">{person.name}</h3>
@@ -480,7 +480,7 @@ export default function Reports({
           className="inline-flex min-h-[38px] items-center gap-1.5 rounded-full px-2 text-[13px] font-semibold text-tm-sub hover:text-tm-blue
                      max-[720px]:hidden [@media(pointer:coarse)]:min-h-11">
           <span aria-hidden className={`inline-block h-4 w-7 rounded-full p-0.5 transition-colors ${keys === 'on' ? 'bg-tm-blue' : 'bg-tm-edge'}`}>
-            <span className={`block h-3 w-3 rounded-full bg-white transition-transform ${keys === 'on' ? 'translate-x-3' : ''}`} />
+            <span className={`block h-3 w-3 rounded-full bg-tm-card transition-transform ${keys === 'on' ? 'translate-x-3' : ''}`} />
           </span>
           단축키 S · W
         </button>
@@ -779,7 +779,7 @@ function DailyView({
 
       <div className={scrollBox}>
       {/* 내 스크럼 */}
-      <section aria-label="내 스크럼" className="mb-6 rounded-tm border border-tm-line bg-white shadow-tm">
+      <section aria-label="내 스크럼" className="mb-6 rounded-tm border border-tm-line bg-tm-card shadow-tm">
         <ComposerHead title={mine ? `내 스크럼 · ${mine.name}` : '내 스크럼'} mine={mine} members={members}
           sub={mine ? `${dayLabel(day)} · ${myEntry && isDailyFilled(myEntry) ? `${whenOf(myEntry.updatedAt, today)} 저장` : '적는 대로 저장됩니다'}` : '명단에서 나를 고르면 내 칸을 바로 씁니다'}
           picker={!mineAuto && <MinePicker id={`${uid}-mine`} people={people} mine={mine} onMine={onMine} />}>
@@ -1118,7 +1118,7 @@ function WeeklyView({
 
       <div className={scrollBox}>
       {/* 팀 요약 - PM */}
-      <section aria-labelledby={`${uid}-team`} className="mb-6 rounded-tm border border-tm-line bg-white shadow-tm">
+      <section aria-labelledby={`${uid}-team`} className="mb-6 rounded-tm border border-tm-line bg-tm-card shadow-tm">
         <header className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-b border-tm-line px-5 py-3.5 max-[720px]:px-4">
           <h2 id={`${uid}-team`} className="text-[17px] font-extrabold text-tm-deep">팀 요약</h2>
           <p className="text-[13.5px] font-semibold text-tm-sub">
@@ -1164,7 +1164,7 @@ function WeeklyView({
       </section>
 
       {/* 내 주간보고 */}
-      <section aria-label="내 주간보고" className="mb-6 rounded-tm border border-tm-line bg-white shadow-tm">
+      <section aria-label="내 주간보고" className="mb-6 rounded-tm border border-tm-line bg-tm-card shadow-tm">
         <ComposerHead title={mine ? `내 주간보고 · ${mine.name}` : '내 주간보고'} mine={mine} members={members}
           sub={mine ? `${w.text} (${w.range}) · ${myEntry && isWeeklyFilled(myEntry) ? `${whenOf(myEntry.updatedAt, today)} 저장` : '적는 대로 저장됩니다'}` : '명단에서 나를 고르면 내 칸을 바로 씁니다'}
           picker={!mineAuto && <MinePicker id={`${uid}-mine`} people={people} mine={mine} onMine={onMine} />}>
@@ -1195,7 +1195,7 @@ function WeeklyView({
               <p className="mb-2.5 text-[13.5px] font-bold text-tm-sub">이번 주 내 스크럼 - 날짜를 누르면 그날 일간보고로 갑니다</p>
               <div className="flex flex-col gap-3">
                 {myScrum.map(({ day, entry }) => (
-                  <div key={day} className="rounded-tm-sm bg-white px-3.5 py-2.5 text-[14px]">
+                  <div key={day} className="rounded-tm-sm bg-tm-card px-3.5 py-2.5 text-[14px]">
                     <button type="button" onClick={() => onOpenDay(day)} className="mb-1.5 text-[13.5px] font-extrabold text-tm-deep hover:text-tm-blue hover:underline">
                       {dayLabel(day)}
                     </button>
@@ -1347,7 +1347,7 @@ function RosterDialog({ store, members, local, onClose }: { store: ReportStore; 
     const a = accountOf(p);
     return a
       ? <span className="text-[12.5px] font-semibold text-tm-sub">{a.role || '팀원'}{p.member ? '' : ' · 이름이 같은 계정'}</span>
-      : <span className="rounded-full bg-white px-2 py-px text-[12px] font-bold text-tm-sub">계정 없음</span>;
+      : <span className="rounded-full bg-tm-card px-2 py-px text-[12px] font-bold text-tm-sub">계정 없음</span>;
   };
 
   return (

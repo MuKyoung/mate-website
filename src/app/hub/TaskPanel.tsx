@@ -555,7 +555,7 @@ export function TaskPanel({
     <>
       <div className="fixed inset-0 z-[60] animate-tm-fade bg-[rgba(15,26,41,0.4)] lg:bg-transparent" onClick={onClose} aria-hidden />
       <aside ref={trapRef} role="dialog" aria-modal="true" aria-label={`${task.key} 상세`} tabIndex={-1}
-        className="fixed inset-y-0 right-0 z-[60] flex w-full max-w-[480px] animate-tm-slide flex-col border-l border-tm-line bg-white text-[15.5px] leading-[1.6] shadow-tm-pop outline-none">
+        className="fixed inset-y-0 right-0 z-[60] flex w-full max-w-[480px] animate-tm-slide flex-col border-l border-tm-line bg-tm-card text-[15.5px] leading-[1.6] shadow-tm-pop outline-none">
 
         <header className="flex flex-none items-center gap-2.5 border-b border-tm-line py-[18px] pl-[26px] pr-5 max-[720px]:py-3.5 max-[720px]:pl-4 max-[720px]:pr-3">
           <PriorityDot p={task.priority} />

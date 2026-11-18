@@ -16,7 +16,7 @@ function GateCard({ title, children }: { title: string; children: React.ReactNod
     // 휴대폰에서 자판이 올라와도 카드가 잘리지 않게 바깥이 스크롤한다
     <div className="h-[100dvh] overflow-y-auto bg-tm-bg text-[15.5px] leading-[1.6] text-tm-ink">
       <div className="flex min-h-full items-center justify-center p-6 max-[480px]:p-4">
-        <div className="w-[min(440px,100%)] rounded-tm-lg border border-tm-line bg-white px-8 py-9 shadow-tm-up max-[480px]:px-5 max-[480px]:py-7">
+        <div className="w-[min(440px,100%)] rounded-tm-lg border border-tm-line bg-tm-card px-8 py-9 shadow-tm-up max-[480px]:px-5 max-[480px]:py-7">
           <div className="mb-[22px] flex items-center gap-2.5">
             <Image src="/images/logo.png" alt="MATE" width={112} height={28} priority className="h-auto w-[112px]" />
             <span className="rounded-full bg-tm-tint px-[11px] py-[3px] text-[12.5px] font-bold text-tm-deep">Hub</span>

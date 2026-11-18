@@ -247,7 +247,7 @@ type Row = { id: string; project: string };
 const cellWide =
   'block w-full resize-none overflow-hidden rounded-tm-sm border border-transparent bg-transparent px-2.5 py-2 text-[15px] leading-[1.6] text-tm-ink ' +
   'transition-[border-color,background-color,box-shadow] duration-150 placeholder:text-tm-sub placeholder:opacity-0 ' +
-  'hover:bg-tm-bg focus:border-tm-blue focus:bg-white focus:shadow-[0_0_0_3px_rgba(38,68,203,0.2)] focus:placeholder:opacity-100 ' +
+  'hover:bg-tm-bg focus:border-tm-blue focus:bg-tm-card focus:shadow-[0_0_0_3px_rgba(38,68,203,0.2)] focus:placeholder:opacity-100 ' +
   'group-hover/row:placeholder:opacity-60';
 
 const cellNarrow = `${tmFieldBase} block w-full resize-none overflow-hidden px-3 py-2 text-[16px] leading-[1.6] min-[761px]:text-[15px]`;
@@ -255,7 +255,7 @@ const cellNarrow = `${tmFieldBase} block w-full resize-none overflow-hidden px-3
 const projectInput =
   'w-full min-w-0 rounded-tm-sm border border-transparent bg-transparent px-2.5 py-2 text-[15px] font-extrabold text-tm-deep ' +
   'transition-[border-color,background-color,box-shadow] duration-150 placeholder:font-semibold placeholder:text-tm-sub ' +
-  'hover:bg-tm-bg focus:border-tm-blue focus:bg-white focus:shadow-[0_0_0_3px_rgba(38,68,203,0.2)] max-[760px]:text-[16px]';
+  'hover:bg-tm-bg focus:border-tm-blue focus:bg-tm-card focus:shadow-[0_0_0_3px_rgba(38,68,203,0.2)] max-[760px]:text-[16px]';
 
 const rowBtn =
   'grid h-7 w-7 flex-none place-items-center rounded-md text-tm-sub transition-colors hover:bg-tm-tint hover:text-tm-blue ' +
@@ -366,7 +366,7 @@ export function ProjectsEditor<T extends Row>({
             ))}
           </div>
           {rows.map((row, i) => (
-            <div key={row.id} role="row" className="group/row grid border-b border-tm-line bg-white last:border-b-0" style={tpl}>
+            <div key={row.id} role="row" className="group/row grid border-b border-tm-line bg-tm-card last:border-b-0" style={tpl}>
               <div role="cell" className="flex min-w-0 flex-col gap-1 p-1">
                 {nameField(row, i)}
                 <span className="px-1">{actions(row, i)}</span>
@@ -394,7 +394,7 @@ export function ProjectsEditor<T extends Row>({
       {datalist}
       <ol className="flex flex-col gap-2.5">
         {rows.map((row, i) => (
-          <li key={row.id} className="group/row rounded-tm-sm border border-tm-line bg-white p-2.5">
+          <li key={row.id} className="group/row rounded-tm-sm border border-tm-line bg-tm-card p-2.5">
             <div className="mb-1.5 flex items-center gap-1.5">
               <div className="min-w-0 flex-1">{nameField(row, i)}</div>
               {actions(row, i)}
@@ -565,7 +565,7 @@ export function MeetingView({ title, items, onClose, side }: { title: string; it
   return (
     <div ref={box} role="dialog" aria-modal="true" aria-label={`${title} 회의 모드`} tabIndex={-1}
       className="fixed inset-0 z-[80] flex flex-col bg-tm-bg outline-none animate-tm-fade">
-      <header className="flex flex-none flex-wrap items-center gap-x-4 gap-y-2 border-b border-tm-line bg-white px-6 py-3 max-[720px]:px-4">
+      <header className="flex flex-none flex-wrap items-center gap-x-4 gap-y-2 border-b border-tm-line bg-tm-card px-6 py-3 max-[720px]:px-4">
         <p className="text-[17px] font-extrabold text-tm-deep">{title}</p>
         <p className="text-[13.5px] font-semibold text-tm-sub">작성 {done}/{items.length}명 · 회의 {clock(now - total)}</p>
         <span className="flex-1" />
@@ -574,7 +574,7 @@ export function MeetingView({ title, items, onClose, side }: { title: string; it
           <button type="button" aria-pressed={side.on} onClick={side.onToggle} title={`${side.label} (P)`}
             className="inline-flex min-h-[38px] items-center gap-1.5 rounded-full px-2 text-[13px] font-semibold text-tm-sub hover:text-tm-blue [@media(pointer:coarse)]:min-h-11">
             <span aria-hidden className={`inline-block h-4 w-7 rounded-full p-0.5 transition-colors ${side.on ? 'bg-tm-blue' : 'bg-tm-edge'}`}>
-              <span className={`block h-3 w-3 rounded-full bg-white transition-transform ${side.on ? 'translate-x-3' : ''}`} />
+              <span className={`block h-3 w-3 rounded-full bg-tm-card transition-transform ${side.on ? 'translate-x-3' : ''}`} />
             </span>
             {side.label}
           </button>
@@ -588,13 +588,13 @@ export function MeetingView({ title, items, onClose, side }: { title: string; it
         </button>
         <button type="button" onClick={onClose} className={tmGhostBtn} title="닫기 (Esc)">회의 모드 닫기</button>
       </header>
-      <nav aria-label="사람" className="flex flex-none gap-1.5 overflow-x-auto border-b border-tm-line bg-white px-6 py-2 max-[720px]:px-4">
+      <nav aria-label="사람" className="flex flex-none gap-1.5 overflow-x-auto border-b border-tm-line bg-tm-card px-6 py-2 max-[720px]:px-4">
         {items.map((x, i) => (
           <button key={x.id} type="button" onClick={() => go(i)} aria-current={i === idx ? 'true' : undefined}
             className={`inline-flex h-9 flex-none items-center gap-1.5 rounded-full border px-3 text-[13.5px] font-bold transition-colors ${
               i === idx ? 'border-tm-blue bg-tm-blue text-white'
-                : x.filled ? 'border-tm-line bg-white text-tm-ink hover:border-tm-blue' : 'border-dashed border-tm-edge bg-white text-tm-sub hover:border-tm-blue'}`}>
-            <i aria-hidden className={`h-1.5 w-1.5 rounded-full ${i === idx ? 'bg-white' : x.filled ? 'bg-tm-ok' : 'bg-tm-edge'}`} />
+                : x.filled ? 'border-tm-line bg-tm-card text-tm-ink hover:border-tm-blue' : 'border-dashed border-tm-edge bg-tm-card text-tm-sub hover:border-tm-blue'}`}>
+            <i aria-hidden className={`h-1.5 w-1.5 rounded-full ${i === idx ? 'bg-tm-card' : x.filled ? 'bg-tm-ok' : 'bg-tm-edge'}`} />
             {x.name}
             {!x.filled && <span className="sr-only">(미작성)</span>}
           </button>
@@ -603,7 +603,7 @@ export function MeetingView({ title, items, onClose, side }: { title: string; it
       <div ref={body} className="min-h-0 flex-1 overflow-y-auto px-6 py-6 max-[720px]:px-4">
         {/* 전일 보고를 켜면 넓은 화면은 오른쪽에 나란히, 좁은 화면은 아래에 */}
         <div className={`mx-auto grid items-start gap-5 ${showSide ? 'max-w-[1680px] min-[1180px]:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]' : 'max-w-[1280px]'}`}>
-          <article className="min-w-0 rounded-tm border border-tm-line bg-white px-8 py-7 text-[18px] shadow-tm max-[720px]:px-4 max-[720px]:py-5 max-[720px]:text-[16px]">
+          <article className="min-w-0 rounded-tm border border-tm-line bg-tm-card px-8 py-7 text-[18px] shadow-tm max-[720px]:px-4 max-[720px]:py-5 max-[720px]:text-[16px]">
             <div className="mb-5 flex items-center gap-3.5">
               <PersonMark name={cur.name} member={cur.member} size={48} />
               <div className="min-w-0">
@@ -615,7 +615,7 @@ export function MeetingView({ title, items, onClose, side }: { title: string; it
           </article>
           {showSide && cur.side && (
             <aside aria-label={cur.side.title}
-              className="min-w-0 rounded-tm border border-dashed border-tm-edge bg-white/70 px-6 py-5 text-[16px] max-[720px]:px-4 max-[720px]:text-[15px]">
+              className="min-w-0 rounded-tm border border-dashed border-tm-edge bg-tm-card/70 px-6 py-5 text-[16px] max-[720px]:px-4 max-[720px]:text-[15px]">
               <p className="mb-3 text-[15px] font-extrabold text-tm-sub">{cur.side.title}</p>
               {cur.side.body}
             </aside>

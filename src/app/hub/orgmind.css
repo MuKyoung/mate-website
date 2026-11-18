@@ -8,21 +8,21 @@
   flex: none;
   padding: 0 6px;
   border-radius: 9999px;
-  background: #eef2ff;
+  background: rgb(var(--tm-tint));
   font-size: 11px;
   font-style: normal;
   font-weight: 700;
   line-height: 18px;
-  color: #2644cb;
+  color: rgb(var(--tm-blue-text));
 }
 .tm-orgmind .om-cnt {
   font-size: 12px;
   font-weight: 600;
   line-height: 1.4;
-  color: #18308f;
+  color: rgb(var(--tm-deep));
 }
 .tm-orgmind .om-none .wm-t {
-  color: #5b6676;
+  color: rgb(var(--tm-sub));
 }
 
 /* 찾기 · 도구로 짚기 - 맞지 않는 사람은 흐리게, 맞는 사람은 파란 테두리 */
@@ -30,8 +30,8 @@
   opacity: 0.38;
 }
 .tm-orgmind .map-container .me-tpc:has(.om-hit) {
-  border-color: #2644cb;
-  background-color: #eef2ff;
+  border-color: rgb(var(--tm-blue));
+  background-color: rgb(var(--tm-tint));
 }
 
 /* 사람 가지 - 맡은 일 · 도구 · 폴더 */
@@ -46,7 +46,7 @@
   font-size: 11.5px;
   font-weight: 700;
   letter-spacing: 0.01em;
-  color: #5b6676;
+  color: rgb(var(--tm-sub));
 }
 .tm-orgmind .om-l {
   position: relative;
@@ -54,7 +54,7 @@
   font-size: 13px;
   font-weight: 500;
   line-height: 1.45;
-  color: #1b2430;
+  color: rgb(var(--tm-ink));
   overflow-wrap: anywhere;
 }
 .tm-orgmind .om-l::before {
@@ -65,26 +65,26 @@
   width: 5px;
   height: 5px;
   border-radius: 9999px;
-  background: #2644cb;
+  background: rgb(var(--tm-blue));
 }
 .tm-orgmind .om-f {
   display: flex;
   align-items: center;
   gap: 5px;
   padding-left: 0;
-  color: #18308f;
+  color: rgb(var(--tm-deep));
 }
 .tm-orgmind .om-f::before {
   display: none;
 }
 .tm-orgmind .om-f svg {
   flex: none;
-  color: #2644cb;
+  color: rgb(var(--tm-blue-text));
 }
 .tm-orgmind .om-x {
   font-size: 12px;
   font-weight: 600;
-  color: #5b6676;
+  color: rgb(var(--tm-sub));
 }
 .tm-orgmind .om-chips {
   display: flex;
@@ -96,17 +96,17 @@
   align-items: center;
   height: 22px;
   padding: 0 6px;
-  border: 1px solid rgba(38, 68, 203, 0.4);
+  border: 1px solid rgb(var(--tm-blue) / 0.4);
   border-radius: 6px;
-  background: #eef2ff;
+  background: rgb(var(--tm-tint));
   font-size: 12px;
   font-style: normal;
   font-weight: 700;
   line-height: 1;
-  color: #18308f;
+  color: rgb(var(--tm-deep));
 }
 .tm-orgmind .om-c.om-pin {
-  border-color: #2644cb;
-  background: #2644cb;
+  border-color: rgb(var(--tm-blue));
+  background: rgb(var(--tm-blue));
   color: #ffffff;
 }

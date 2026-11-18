@@ -26,7 +26,7 @@ function ColorRow({ name, picked, onPick, children }: {
           return (
             <button key={c.id} type="button" aria-pressed={on} aria-label={c.label} title={c.label}
               onClick={() => onPick(on ? null : c.id)}
-              className="grid h-9 w-9 place-items-center rounded-full transition-colors duration-150 hover:bg-white
+              className="grid h-9 w-9 place-items-center rounded-full transition-colors duration-150 hover:bg-tm-card
                          [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11">
               <span className={`h-5 w-5 rounded-full ${on ? 'ring-2 ring-tm-ink ring-offset-2 ring-offset-tm-bg' : ''}`}
                 style={{ backgroundColor: PAINT[c.id].solid }} />
@@ -34,8 +34,8 @@ function ColorRow({ name, picked, onPick, children }: {
           );
         })}
         <button type="button" aria-pressed={!picked} onClick={() => onPick(null)} title="고르지 않은 자동 색"
-          className="ml-1 h-9 rounded-full px-3 text-[13px] font-bold text-tm-sub transition-colors duration-150 hover:bg-white
-                     aria-pressed:bg-white aria-pressed:text-tm-ink aria-pressed:ring-1 aria-pressed:ring-inset aria-pressed:ring-tm-edge
+          className="ml-1 h-9 rounded-full px-3 text-[13px] font-bold text-tm-sub transition-colors duration-150 hover:bg-tm-card
+                     aria-pressed:bg-tm-card aria-pressed:text-tm-ink aria-pressed:ring-1 aria-pressed:ring-inset aria-pressed:ring-tm-edge
                      [@media(pointer:coarse)]:h-11">
           자동
         </button>
@@ -103,7 +103,7 @@ export function ColorDialog({ members, labels, picks, local, start, onPick, onCl
               <ColorRow key={l} name={l} picked={picks.get(key)} onPick={(next) => onPick(key, next)}>
                 {/* 캘린더에서 보일 모양 */}
                 <span className="min-w-0 truncate rounded-md py-1 pl-2.5 pr-2 text-[13.5px] font-semibold text-tm-ink"
-                  style={{ backgroundColor: PAINT[c].tint, boxShadow: `inset 3px 0 0 ${PAINT[c].solid}` }}>
+                  style={{ backgroundColor: PAINT[c].bg, boxShadow: `inset 3px 0 0 ${PAINT[c].solid}` }}>
                   {l}
                 </span>
               </ColorRow>

@@ -1981,7 +1981,7 @@ function Toolbar({ editor, pick, canUpload, onLink }: {
       <ToolBtn label="기울임 (Ctrl+I)" on={s.italic} onClick={() => run((c) => c.toggleItalic())}><i className="font-serif text-[16px]">I</i></ToolBtn>
       <ToolBtn label="밑줄 (Ctrl+U)" on={s.underline} onClick={() => run((c) => c.toggleUnderline())}><u className="text-[15px]">U</u></ToolBtn>
       <ToolBtn label="글자 색 · 바탕색" expanded={open === 'color'} btnRef={colorBtn} onClick={() => toggle('color')}>
-        <span className="tm-color-ico" style={{ ['--tm-ink' as string]: s.textColor || '#1b2430' }}><Ico n="color" /></span>
+        <span className="tm-color-ico" style={{ ['--tm-ico' as string]: s.textColor || 'rgb(var(--tm-ink))' }}><Ico n="color" /></span>
       </ToolBtn>
       <ToolBtn label="형광펜 (Ctrl+Shift+H)" on={s.highlight} onClick={() => run((c) => c.toggleHighlight())}><Ico n="highlight" /></ToolBtn>
       <ToolBtn label="링크 (Ctrl+K)" on={s.link} onClick={onLink}><Ico n="link" /></ToolBtn>

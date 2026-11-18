@@ -64,7 +64,7 @@ export function Snippet({ text, q }: { text: string; q: string }) {
     <>
       {from > 0 && '…'}
       {text.slice(from, i)}
-      <mark className="rounded-sm bg-[#ffe066] px-0.5 text-tm-ink">{text.slice(i, i + q.length)}</mark>
+      <mark className="rounded-sm bg-[#ffe066] px-0.5 text-[#1b2430]">{text.slice(i, i + q.length)}</mark>
       {text.slice(i + q.length, i + q.length + 60)}
     </>
   );
@@ -208,7 +208,7 @@ export function EmojiPicker({ value, onPick, onClose }: { value: string; onPick(
   }, [onClose]);
   return (
     <div ref={box} role="dialog" aria-label="아이콘 고르기"
-      className="absolute left-0 top-[calc(100%+6px)] z-[60] w-[300px] rounded-tm border border-tm-line bg-white p-3 shadow-tm-up">
+      className="absolute left-0 top-[calc(100%+6px)] z-[60] w-[300px] rounded-tm border border-tm-line bg-tm-card p-3 shadow-tm-up">
       <div className="mb-2 flex items-center justify-between">
         <p className="text-[13px] font-bold text-tm-sub">아이콘</p>
         {value && (
@@ -296,7 +296,7 @@ export function NewDocDialog({
           return (
             <label key={t.id}
               className={`flex cursor-pointer items-start gap-2.5 rounded-tm-sm border p-3.5 transition-[border-color,box-shadow,background-color] duration-150 ${
-                on ? 'border-tm-blue bg-tm-tint shadow-[inset_0_0_0_1px_#2644cb]' : 'border-tm-edge bg-white hover:border-tm-blue'}`}>
+                on ? 'border-tm-blue bg-tm-tint shadow-[inset_0_0_0_1px_#2644cb]' : 'border-tm-edge bg-tm-card hover:border-tm-blue'}`}>
               <input type="radio" name="doc-template" value={t.id} checked={on}
                 onChange={() => { setPicked(t.id); setTitle(t.title); }}
                 className="mt-[3px] h-[18px] w-[18px] flex-none accent-tm-blue" />
@@ -320,7 +320,7 @@ export function NewDocDialog({
               return (
                 <label key={t.id}
                   className={`flex cursor-pointer items-start gap-2.5 rounded-tm-sm border p-3.5 transition-[border-color,box-shadow,background-color] duration-150 ${
-                    on ? 'border-tm-blue bg-tm-tint shadow-[inset_0_0_0_1px_#2644cb]' : 'border-tm-edge bg-white hover:border-tm-blue'}`}>
+                    on ? 'border-tm-blue bg-tm-tint shadow-[inset_0_0_0_1px_#2644cb]' : 'border-tm-edge bg-tm-card hover:border-tm-blue'}`}>
                   <input type="radio" name="doc-template" value={t.id} checked={on}
                     onChange={() => { setPicked(t.id); setTitle(t.name); }}
                     className="mt-[3px] h-[18px] w-[18px] flex-none accent-tm-blue" />
@@ -800,7 +800,7 @@ export function HistoryDialog({ doc, store, refs, onRestore, onClose }: {
           )}
         </ol>
 
-        <div className="min-w-0 flex-1 rounded-tm border border-tm-line bg-white">
+        <div className="min-w-0 flex-1 rounded-tm border border-tm-line bg-tm-card">
           <div className="flex flex-wrap items-center gap-2.5 border-b border-tm-line px-5 py-3">
             <b className="mr-auto min-w-0 truncate text-[16px] font-extrabold text-tm-deep">{titleOf(chosen)}</b>
             {chosen.id !== 'now' && (
@@ -1049,7 +1049,7 @@ function Thread({ docId, root, replies, me, canWrite, onAdd, onUpdate, onTaskCli
   const [replying, setReplying] = useState(false);
   const [act, actNode] = useCommentAct();
   return (
-    <li className={`rounded-tm border border-tm-line bg-white p-4 ${root.resolved ? 'bg-tm-bg' : ''}`}>
+    <li className={`rounded-tm border border-tm-line bg-tm-card p-4 ${root.resolved ? 'bg-tm-bg' : ''}`}>
       <CommentItem c={root} docId={docId} me={me} canWrite={canWrite} onUpdate={onUpdate} onTaskClick={onTaskClick}
         extra={canWrite && !root.removed ? (
           <button type="button" className="text-[13px] font-bold text-tm-sub hover:text-tm-blue"
@@ -1203,7 +1203,7 @@ export function LabelEditor({ labels, onChange }: { labels: string[]; onChange(n
           {l}
           {/* 손가락 기기에서는 칩 높이는 그대로 두고 누를 자리만 넓힌다 */}
           <button type="button" aria-label={`라벨 ${l} 빼기`} onClick={() => remove(labels.filter((x) => x !== l))}
-            className="grid h-5 w-5 place-items-center rounded-full text-tm-sub hover:bg-white hover:text-tm-red-deep
+            className="grid h-5 w-5 place-items-center rounded-full text-tm-sub hover:bg-tm-card hover:text-tm-red-deep
                        [@media(pointer:coarse)]:-my-1.5 [@media(pointer:coarse)]:h-8 [@media(pointer:coarse)]:w-8">×</button>
         </span>
       ))}
@@ -1215,7 +1215,7 @@ export function LabelEditor({ labels, onChange }: { labels: string[]; onChange(n
         }}
         onBlur={add}
         // iPhone · iPad 는 16px 보다 작은 칸을 누르면 화면을 확대한다 - 손가락 기기에서만 키운다
-        className="h-7 w-[96px] rounded-full border border-dashed border-tm-edge bg-white px-2.5 text-[12.5px] font-semibold text-tm-ink placeholder:text-tm-sub focus:border-tm-blue focus:outline-none
+        className="h-7 w-[96px] rounded-full border border-dashed border-tm-edge bg-tm-card px-2.5 text-[12.5px] font-semibold text-tm-ink placeholder:text-tm-sub focus:border-tm-blue focus:outline-none
                    [@media(pointer:coarse)]:h-9 [@media(pointer:coarse)]:w-[112px] [@media(pointer:coarse)]:text-[16px]" />
       {/* 읽어 주는 칸은 늘 두고(비면 화면에서 뺀다) 까닭이 생기면 글자를 넣는다 */}
       <span role="status" className={hint ? 'text-[12.5px] font-semibold text-tm-red-deep' : 'sr-only'}>{hint}</span>

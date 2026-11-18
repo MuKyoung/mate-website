@@ -213,7 +213,7 @@ const IconFit = ({ size = 18 }: { size?: number }) => <Svg size={size}><path d="
 
 /** 하나를 고르는 알약 - aria-pressed 면 파랗게 */
 const seg =
-  'inline-flex h-[38px] flex-none items-center whitespace-nowrap rounded-full border border-tm-edge bg-white px-3.5 text-[14px] font-bold text-tm-ink ' +
+  'inline-flex h-[38px] flex-none items-center whitespace-nowrap rounded-full border border-tm-edge bg-tm-card px-3.5 text-[14px] font-bold text-tm-ink ' +
   'transition-colors duration-150 hover:border-tm-blue hover:bg-tm-tint aria-pressed:border-tm-blue aria-pressed:bg-tm-blue aria-pressed:text-white ' +
   '[@media(pointer:coarse)]:h-11';
 /** 도구 이름 알약(카드 · 칸) */
@@ -258,7 +258,7 @@ function FolderCard({ f, dtree, owner }: { f: OrgFolder; dtree: DriveTree | null
   const v = folderView(f, dtree);
   const recent = v.node ? recentFiles(v.node, 3) : [];
   return (
-    <li className="rounded-tm-sm border border-tm-line bg-white">
+    <li className="rounded-tm-sm border border-tm-line bg-tm-card">
       <div className="flex items-start gap-2.5 px-3 py-2.5">
         <span className="mt-0.5 text-tm-blue"><IconFolder size={18} /></span>
         <div className="min-w-0 flex-1">
@@ -299,7 +299,7 @@ function FolderCard({ f, dtree, owner }: { f: OrgFolder; dtree: DriveTree | null
 
 function ToolRow({ app, pinned, why }: { app: StudioApp; pinned: boolean; why?: string[] }) {
   return (
-    <li className="flex items-start gap-2.5 rounded-tm-sm border border-tm-line bg-white px-3 py-2.5">
+    <li className="flex items-start gap-2.5 rounded-tm-sm border border-tm-line bg-tm-card px-3 py-2.5">
       <span className={`${pinned ? chipPinned : chipSuggested} mt-0.5 min-w-[54px] justify-center`}>{shortName(app)}</span>
       <div className="min-w-0 flex-1">
         <p className="text-[14px] font-bold text-tm-ink">
@@ -498,7 +498,7 @@ function UnitPanel({ name, p }: { name: string; p: PanelProps }) {
               {toolList.map((t) => (
                 <li key={t.app.id}>
                   <button type="button" onClick={() => p.onTool(t.app.id)} title={`${t.who.join(', ')} · 누르면 조직도에서 짚습니다`}
-                    className="inline-flex h-8 items-center gap-1.5 rounded-full border border-tm-line bg-white px-3 text-[13px] font-semibold text-tm-ink
+                    className="inline-flex h-8 items-center gap-1.5 rounded-full border border-tm-line bg-tm-card px-3 text-[13px] font-semibold text-tm-ink
                                transition-colors duration-150 hover:border-tm-blue hover:bg-tm-tint [@media(pointer:coarse)]:h-11">
                     {shortName(t.app)} <span className="tabular-nums text-tm-sub">{t.who.length}</span>
                   </button>
@@ -562,7 +562,7 @@ function RootPanel({ p, missing }: { p: PanelProps; missing: boolean }) {
                   <span className={`min-w-0 flex-1 truncate text-[14.5px] font-bold ${u === NO_UNIT ? 'text-tm-sub' : 'text-tm-ink'}`}>{u}</span>
                   <span className="flex flex-none -space-x-1.5">
                     {(units.get(u) ?? []).slice(0, 5).map((x) => (
-                      <span key={x.key} className="rounded-full ring-2 ring-white"><Avatar id={x.key} size={24} /></span>
+                      <span key={x.key} className="rounded-full ring-2 ring-tm-card"><Avatar id={x.key} size={24} /></span>
                     ))}
                   </span>
                 </button>
@@ -582,7 +582,7 @@ function RootPanel({ p, missing }: { p: PanelProps; missing: boolean }) {
                   <span className="min-w-0 flex-1 truncate text-[12.5px] text-tm-sub">{t.app.replaces ? `${t.app.replaces} 대신` : t.app.does}</span>
                   <span className="flex flex-none -space-x-1.5">
                     {t.who.slice(0, 4).map((x) => (
-                      <span key={x.key} className="rounded-full ring-2 ring-white"><Avatar id={x.key} size={22} /></span>
+                      <span key={x.key} className="rounded-full ring-2 ring-tm-card"><Avatar id={x.key} size={22} /></span>
                     ))}
                   </span>
                   {t.who.length > 4 && <span className="flex-none text-[12px] font-semibold text-tm-sub">+{t.who.length - 4}</span>}
@@ -734,7 +734,7 @@ function OrgEditor({ member, entry, members, entries, units, dtree, driveNote, c
                 {STUDIO_APPS.filter((a) => a.group === g.id).map((a) => (
                   <button key={a.id} type="button" aria-pressed={tools.includes(a.id)} onClick={() => toggleTool(a.id)}
                     title={`${a.name}${a.replaces ? ` · ${a.replaces} 대신` : ''}\n${a.does}`}
-                    className="relative inline-flex h-9 items-center gap-1.5 rounded-full border border-tm-edge bg-white px-3 text-[13.5px] font-semibold text-tm-ink
+                    className="relative inline-flex h-9 items-center gap-1.5 rounded-full border border-tm-edge bg-tm-card px-3 text-[13.5px] font-semibold text-tm-ink
                                transition-colors duration-150 hover:border-tm-blue hover:bg-tm-tint aria-pressed:border-tm-blue aria-pressed:bg-tm-blue
                                aria-pressed:text-white [@media(pointer:coarse)]:h-11">
                     {shortName(a)}
@@ -754,7 +754,7 @@ function OrgEditor({ member, entry, members, entries, units, dtree, driveNote, c
             {folders.map((f) => {
               const v = folderView(f, dtree);
               return (
-                <li key={f.id} className="flex items-center gap-2 rounded-tm-sm border border-tm-line bg-white py-1.5 pl-3 pr-1.5">
+                <li key={f.id} className="flex items-center gap-2 rounded-tm-sm border border-tm-line bg-tm-card py-1.5 pl-3 pr-1.5">
                   <span className="text-tm-blue"><IconFolder /></span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-[14px] font-bold text-tm-ink">{v.name}</span>
@@ -777,7 +777,7 @@ function OrgEditor({ member, entry, members, entries, units, dtree, driveNote, c
             <input value={find} onChange={(e) => setFind(e.target.value)} placeholder="팀 드라이브에서 폴더 이름 찾기" aria-label="드라이브 폴더 찾기"
               className={`${tmInput} pl-10`} />
             {q && (
-              <ul className="mt-1.5 max-h-[240px] overflow-y-auto rounded-tm-sm border border-tm-line bg-white py-1">
+              <ul className="mt-1.5 max-h-[240px] overflow-y-auto rounded-tm-sm border border-tm-line bg-tm-card py-1">
                 {found.length === 0 && <li className="px-3 py-2 text-[13.5px] text-tm-sub">찾은 폴더가 없습니다</li>}
                 {found.map((n) => {
                   const linked = folders.some((f) => f.id === n.item.id);
@@ -885,7 +885,7 @@ export default function Org({ me, admin, tasks, onRole, onTasks, onNotice }: {
       </PageHead>
 
       {store.status === 'loading' ? (
-        <div className="tm-fill flex min-h-0 flex-1 items-center justify-center rounded-tm border border-tm-line bg-white shadow-tm">
+        <div className="tm-fill flex min-h-0 flex-1 items-center justify-center rounded-tm border border-tm-line bg-tm-card shadow-tm">
           <p className="text-[15px] font-semibold text-tm-sub">조직도를 읽는 중…</p>
         </div>
       ) : (
@@ -1138,7 +1138,7 @@ function OrgMap({ tree, me, view, prefs, savePrefs, dtree, openTasks, missing, c
   const brokenNames = tree.broken.map((id) => tree.byKey.get(id)?.label).filter(Boolean);
 
   return (
-    <div ref={cardRef} className="tm-fill flex min-h-0 flex-1 flex-col overflow-hidden rounded-tm border border-tm-line bg-white shadow-tm">
+    <div ref={cardRef} className="tm-fill flex min-h-0 flex-1 flex-col overflow-hidden rounded-tm border border-tm-line bg-tm-card shadow-tm">
       {/* ── 막대: 찾기 · 도구 · 보기 · 크기 ── */}
       <div className="flex flex-none flex-wrap items-center gap-2 border-b border-tm-line px-4 py-3 max-[720px]:px-3">
         <div className="relative min-w-0 max-w-[300px] flex-[1_1_200px] max-[720px]:max-w-none">
@@ -1246,12 +1246,12 @@ function OrgMap({ tree, me, view, prefs, savePrefs, dtree, openTasks, missing, c
         </div>
         )}
         {wide ? (
-          <aside aria-label="자세히" className="flex w-[400px] flex-none flex-col border-l border-tm-line bg-white min-[1600px]:w-[440px]">
+          <aside aria-label="자세히" className="flex w-[400px] flex-none flex-col border-l border-tm-line bg-tm-card min-[1600px]:w-[440px]">
             {panel()}
           </aside>
         ) : sheet && (
           <aside aria-label="자세히" onKeyDown={(e) => { if (e.key === 'Escape') setSheet(false); }}
-            className="absolute inset-x-0 bottom-0 z-20 flex h-[62%] flex-col overflow-hidden rounded-t-[18px] border-t border-tm-line bg-white
+            className="absolute inset-x-0 bottom-0 z-20 flex h-[62%] flex-col overflow-hidden rounded-t-[18px] border-t border-tm-line bg-tm-card
                        shadow-tm-pop animate-tm-rise max-[720px]:h-[80%]">
             {panel(() => setSheet(false))}
           </aside>
@@ -1304,7 +1304,7 @@ function NodeCard({ b, me, view, openTasks, selected, dim, hit, closed, onPick, 
     <button type="button" onClick={onToggle} aria-expanded={!closed}
       aria-label={closed ? `${n.label} 아래 펼치기, ${n.below}명` : `${n.label} 아래 접기`} title={closed ? `펼치기 (아래 ${n.below}명)` : '접기'}
       className="absolute left-1/2 top-full z-[1] grid h-6 min-w-[24px] -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border
-                 border-tm-edge bg-white px-1.5 text-[11.5px] font-bold tabular-nums text-tm-sub transition-colors duration-150
+                 border-tm-edge bg-tm-card px-1.5 text-[11.5px] font-bold tabular-nums text-tm-sub transition-colors duration-150
                  hover:border-tm-blue hover:text-tm-blue focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2
                  focus-visible:outline-tm-blue [@media(pointer:coarse)]:h-8 [@media(pointer:coarse)]:min-w-[32px]">
       {closed ? n.below : <IconMinus size={12} />}
@@ -1332,15 +1332,15 @@ function NodeCard({ b, me, view, openTasks, selected, dim, hit, closed, onPick, 
         <button type="button" onClick={onPick} aria-current={selected ? 'true' : undefined}
           aria-label={`${n.label}, 팀원 ${n.below}명, 누르면 옆에 자세히`}
           className={`flex h-full w-full items-center gap-2 rounded-tm-sm border px-3 text-left transition-colors duration-150 ${focus} ${ring} ${
-            none ? 'border-dashed border-tm-edge bg-white text-tm-sub hover:border-tm-blue hover:bg-tm-tint'
-              : 'border-tm-blue/50 bg-white text-tm-deep hover:border-tm-blue hover:bg-tm-tint'}`}>
+            none ? 'border-dashed border-tm-edge bg-tm-card text-tm-sub hover:border-tm-blue hover:bg-tm-tint'
+              : 'border-tm-blue/50 bg-tm-card text-tm-deep hover:border-tm-blue hover:bg-tm-tint'}`}>
           <span className="min-w-0 flex-1">
             <span className="block truncate text-[15px] font-extrabold">{n.label}</span>
             <span className="block text-[12px] font-semibold text-tm-sub">{n.below}명</span>
           </span>
           <span className="flex flex-none -space-x-1.5" aria-hidden>
             {people.slice(0, 4).map((k) => (
-              <span key={k.key} className="rounded-full ring-2 ring-white"><Avatar id={k.key} size={24} /></span>
+              <span key={k.key} className="rounded-full ring-2 ring-tm-card"><Avatar id={k.key} size={24} /></span>
             ))}
           </span>
         </button>
@@ -1373,7 +1373,7 @@ function NodeCard({ b, me, view, openTasks, selected, dim, hit, closed, onPick, 
     <div className={`absolute transition-opacity duration-150 ${dim ? 'opacity-40' : ''}`} style={style}>
       <button type="button" onClick={onPick} aria-current={selected ? 'true' : undefined}
         aria-label={`${m.name}, ${m.role || '직무 미정'}${e.unit ? `, ${e.unit}` : ''}, 누르면 옆에 자세히`}
-        className={`flex h-full w-full flex-col gap-2 rounded-tm-sm border bg-white px-3 py-3 text-left transition-colors duration-150 hover:border-tm-blue
+        className={`flex h-full w-full flex-col gap-2 rounded-tm-sm border bg-tm-card px-3 py-3 text-left transition-colors duration-150 hover:border-tm-blue
                     ${hit ? 'border-tm-blue bg-tm-tint' : 'border-tm-line'} ${focus} ${ring}`}>
         <span className="flex w-full items-center gap-2.5">
           <Avatar id={m.id} size={38} />

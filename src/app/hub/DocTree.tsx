@@ -245,7 +245,7 @@ export default function DocTree({ roots, activeId, openSet, onToggle, onSelect, 
               title={expanded && lockedOpen.has(node.id) ? '지금 보는 문서가 이 아래에 있어 접을 수 없습니다' : undefined}
               className={`grid h-7 w-7 shrink-0 place-items-center rounded-md transition-colors duration-150
                           [@media(pointer:coarse)]:h-9 [@media(pointer:coarse)]:w-9 ${
-                active ? 'text-white hover:bg-white/20' : 'text-tm-sub hover:bg-white hover:text-tm-ink'}`}>
+                active ? 'text-white hover:bg-white/20' : 'text-tm-sub hover:bg-tm-card hover:text-tm-ink'}`}>
               <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden
                 className={`transition-transform duration-150 ${expanded ? 'rotate-90' : ''}`}>
                 <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -260,7 +260,7 @@ export default function DocTree({ roots, activeId, openSet, onToggle, onSelect, 
             <span className="truncate">{titleOf(node)}</span>
             {watched?.has(node.id) && (
               <span aria-label="다른 팀원이 보는 중" title="다른 팀원이 보는 중"
-                className={`h-2 w-2 flex-none rounded-full ${active ? 'bg-white' : 'bg-tm-ok'}`} />
+                className={`h-2 w-2 flex-none rounded-full ${active ? 'bg-tm-card' : 'bg-tm-ok'}`} />
             )}
           </div>
           {menuFor && (
@@ -270,7 +270,7 @@ export default function DocTree({ roots, activeId, openSet, onToggle, onSelect, 
               className={`grid h-7 w-7 shrink-0 place-items-center rounded-md transition-[opacity,background-color] duration-150
                           [@media(pointer:coarse)]:h-9 [@media(pointer:coarse)]:w-9 [@media(pointer:coarse)]:opacity-100 ${
                 active || menuOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 group-focus-within/item:opacity-100'} ${
-                active ? 'text-white hover:bg-white/20' : 'text-tm-sub hover:bg-white hover:text-tm-blue'}`}>
+                active ? 'text-white hover:bg-white/20' : 'text-tm-sub hover:bg-tm-card hover:text-tm-blue'}`}>
               <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden fill="currentColor">
                 <circle cx="4.5" cy="10" r="1.5" /><circle cx="10" cy="10" r="1.5" /><circle cx="15.5" cy="10" r="1.5" />
               </svg>
@@ -278,7 +278,7 @@ export default function DocTree({ roots, activeId, openSet, onToggle, onSelect, 
           )}
           <button type="button" tabIndex={-1} onClick={() => onAddChild(node.id)} aria-label={`${titleOf(node)} 아래에 새 문서`} title="아래에 새 문서"
             className={`grid h-7 w-7 shrink-0 place-items-center rounded-md opacity-0 transition-[opacity,background-color] duration-150 group-hover:opacity-100
-                        [@media(pointer:coarse)]:hidden ${active ? 'text-white hover:bg-white/20' : 'text-tm-sub hover:bg-white hover:text-tm-blue'}`}>
+                        [@media(pointer:coarse)]:hidden ${active ? 'text-white hover:bg-white/20' : 'text-tm-sub hover:bg-tm-card hover:text-tm-blue'}`}>
             <IconPlus size={15} />
           </button>
         </div>
