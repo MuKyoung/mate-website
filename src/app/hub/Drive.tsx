@@ -3,7 +3,7 @@
 import { Fragment, useCallback, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   DRIVE_ACCOUNT, DRIVE_FOLDER, DRIVE_SYNC_MINUTES, ISSUE_TEXT, KIND_LABEL, NEW_FOLDER_DAYS,
-  ancestorsOf, buildDriveTree, canTrashFolder, diffSnapshots, driveUrl, folderIssues, isNewFolder, kindOf, loadDrive, loadDriveStamp,
+  ancestorsOf, buildDriveTree, canTrashFolder, diffSnapshots, driveUrl, folderIssues, isNewFolder, kindOf, loadDrive, loadDriveStamp, plainName,
   previewUrl, requestDriveCheck, requestDriveTrash,
   type DriveKind, type DriveLoad, type DriveNode, type DriveSnapshot, type DriveTree,
 } from './driveTree';
@@ -65,6 +65,7 @@ type Kid = { node: DriveNode } | { more: number };
 
 /** 펼친 폴더 아래에 그릴 것 - 폴더 다음 파일. pin 은 찾기로 고른 파일(파일을 끈 때도, 앞 20개 밖이어도 보인다) */
 function kidsOf(n: DriveNode, files: boolean, pin: DriveNode | null): Kid[] {
+  if (isArchive(n)) return [];
   const out: Kid[] = n.folders.map((node) => ({ node }));
   const pinned = pin && pin.parent === n && pin.item.mime !== DRIVE_FOLDER ? pin : null;
   if (files) {
@@ -80,7 +81,14 @@ function kidsOf(n: DriveNode, files: boolean, pin: DriveNode | null): Kid[] {
 }
 
 /** 접힌 폴더의 동그라미에 적는 수 - 펼치면 바로 아래에 생길 칸 수 */
-const hiddenOf = (n: DriveNode, files: boolean) => n.folders.length + (files ? n.files.length : 0);
+const hiddenOf = (n: DriveNode, files: boolean) => (isArchive(n) ? 0 : n.folders.length + (files ? n.files.length : 0));
+
+/**
+ * 보관함 - 휴지통처럼 지난 것을 넣어 두는 폴더라 Hub 에서는 열지 않는다(펼치기 · 안의 목록 · 찾기 · 새 폴더 점검에서 뺌).
+ * 꺼내야 할 때는 옆 칸의 '드라이브에서 열기'로 드라이브에서 연다
+ */
+const isArchive = (n: DriveNode) => n.item.mime === DRIVE_FOLDER && plainName(n.item.name.normalize('NFC')) === '보관함';
+const underArchive = (n: DriveNode) => ancestorsOf(n).some(isArchive);
 
 /** 잎은 위에서 아래로 한 줄씩, 폴더는 첫 아이와 끝 아이의 가운데 - 단계마다 한 칸(왼쪽 → 오른쪽) */
 function layoutOf(root: DriveNode, open: Set<string>, files: boolean, pin: DriveNode | null, d: Dims): Layout {
@@ -365,7 +373,11 @@ function DrivePanel({ tree, node, onPick, onClose, extra }: {
         </a>
         {extra}
       </div>
-      {folder ? (
+      {folder && isArchive(node) ? (
+        <p className="px-5 py-6 text-[14px] leading-[1.7] text-tm-sub max-[720px]:px-4">
+          보관함은 지난 것을 넣어 두는 곳이라 Hub 에서는 열지 않습니다. 꺼내야 할 것이 있으면 드라이브에서 열어 주세요.
+        </p>
+      ) : folder ? (
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-2.5">
           {node.folders.length + node.files.length === 0 && (
             <p className="px-2 py-8 text-center text-[14px] text-tm-sub">비어 있는 폴더입니다</p>
@@ -981,7 +993,7 @@ function DriveMap({ tree, me, admin, refreshUrl, onChanged }: {
   const results = useMemo(() => {
     if (!q) return [];
     return tree.all
-      .filter((n) => norm(n.item.name).includes(q))
+      .filter((n) => norm(n.item.name).includes(q) && !underArchive(n))
       .sort((a, b) =>
         Number(a.item.mime !== DRIVE_FOLDER) - Number(b.item.mime !== DRIVE_FOLDER)
         || a.depth - b.depth
@@ -991,7 +1003,7 @@ function DriveMap({ tree, me, admin, refreshUrl, onChanged }: {
   const deferredQ = useDeferredValue(q);
   const hits = useMemo(() => {
     if (!deferredQ) return null;
-    return new Set(tree.all.filter((n) => norm(n.item.name).includes(deferredQ)).map((n) => n.item.id));
+    return new Set(tree.all.filter((n) => norm(n.item.name).includes(deferredQ) && !underArchive(n)).map((n) => n.item.id));
   }, [tree, deferredQ]);
 
   useEffect(() => {
@@ -1073,7 +1085,7 @@ function DriveMap({ tree, me, admin, refreshUrl, onChanged }: {
   }, []);
   const hasCreated = useMemo(() => tree.all.some((n) => !!n.item.created), [tree]);
   const newFolders = useMemo(() => tree.all
-    .filter((n) => isNewFolder(n, now) && !reviews?.has(n.item.id))
+    .filter((n) => isNewFolder(n, now) && !reviews?.has(n.item.id) && !underArchive(n))
     .sort((a, b) => (b.item.created ?? '').localeCompare(a.item.created ?? '')), [tree, now, reviews]);
   const newSet = useMemo(() => new Set(newFolders.map((n) => n.item.id)), [newFolders]);
   /** 옆 칸에 새 폴더 목록을 띄웠나 */
