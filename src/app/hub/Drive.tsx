@@ -89,6 +89,8 @@ const hiddenOf = (n: DriveNode, files: boolean) => (isArchive(n) ? 0 : n.folders
  */
 const isArchive = (n: DriveNode) => n.item.mime === DRIVE_FOLDER && plainName(n.item.name.normalize('NFC')) === '보관함';
 const underArchive = (n: DriveNode) => ancestorsOf(n).some(isArchive);
+/** 보관함 자신 또는 그 안 - 새 폴더 점검에서 뺀다(보관함은 일부러 맨 위에 번호 없이 둔 폴더) */
+const inArchive = (n: DriveNode) => isArchive(n) || underArchive(n);
 
 /** 잎은 위에서 아래로 한 줄씩, 폴더는 첫 아이와 끝 아이의 가운데 - 단계마다 한 칸(왼쪽 → 오른쪽) */
 function layoutOf(root: DriveNode, open: Set<string>, files: boolean, pin: DriveNode | null, d: Dims): Layout {
@@ -1085,7 +1087,7 @@ function DriveMap({ tree, me, admin, refreshUrl, onChanged }: {
   }, []);
   const hasCreated = useMemo(() => tree.all.some((n) => !!n.item.created), [tree]);
   const newFolders = useMemo(() => tree.all
-    .filter((n) => isNewFolder(n, now) && !reviews?.has(n.item.id) && !underArchive(n))
+    .filter((n) => isNewFolder(n, now) && !reviews?.has(n.item.id) && !inArchive(n))
     .sort((a, b) => (b.item.created ?? '').localeCompare(a.item.created ?? '')), [tree, now, reviews]);
   const newSet = useMemo(() => new Set(newFolders.map((n) => n.item.id)), [newFolders]);
   /** 옆 칸에 새 폴더 목록을 띄웠나 */
@@ -1197,7 +1199,7 @@ function DriveMap({ tree, me, admin, refreshUrl, onChanged }: {
   };
   /** 옆 칸 머리 아래 - 새 폴더면 점검 결과 · 확인함 · 휴지통 */
   const checkBox = (n: DriveNode) => {
-    if (!isNewFolder(n, now)) return null;
+    if (!isNewFolder(n, now) || inArchive(n)) return null;
     const issues = folderIssues(n);
     const done = reviews?.has(n.item.id) ?? false;
     return (
