@@ -9,6 +9,10 @@ import {
 } from './driveTree';
 import { loadReviews, setReviewed } from './driveNotes';
 import {
+  freshnessOf, isSheet, loadFolderOwners, readFeedPrefs, recentGroups, sheetsOf, writeFeedPrefs, type FeedPrefs, type FolderOwners,
+} from './driveFeed';
+import { BigPreview, RecentPanel, SheetPanel, freshChip } from './DriveLists';
+import {
   IconClose, IconPlus, IconSearch, PageHead, tmBtnDanger, tmFieldBase, tmGhostBtn, tmIconBtn, tmIconBtnSm, useConfirm, useMediaQuery,
 } from './ui';
 
@@ -279,6 +283,8 @@ function PanelRow({ n, onPick }: { n: DriveNode; onPick(n: DriveNode): void }) {
 function FilePreview({ node }: { node: DriveNode }) {
   const url = previewUrl(node.item);
   const [loaded, setLoaded] = useState(false);
+  const [big, setBig] = useState(false);
+  const kind = kindOf(node.item.mime, node.item.name);
   if (!url) {
     return (
       <p className="px-5 py-6 text-[14px] leading-[1.7] text-tm-sub max-[720px]:px-4">
@@ -298,8 +304,12 @@ function FilePreview({ node }: { node: DriveNode }) {
         )}
       </div>
       <p className="px-1 text-[12.5px] leading-[1.6] text-tm-sub">
+        {(kind === 'sheet' || kind === 'doc' || kind === 'slide' || kind === 'pdf') && (
+          <button type="button" onClick={() => setBig(true)} className="mr-1.5 font-bold text-tm-blue hover:underline">크게 보기</button>
+        )}
         미리보기가 비거나 로그인 · 권한 안내가 뜨면 이 브라우저에서 {DRIVE_ACCOUNT} 로 구글에 로그인해 주세요.
       </p>
+      {big && <BigPreview node={node} onClose={() => setBig(false)} />}
     </div>
   );
 }
@@ -941,6 +951,7 @@ function DriveMap({ tree, me, admin, refreshUrl, onChanged }: {
   /* ── 고르기 - 트리에서 누르면 옆 칸에, 두 번 누르면 드라이브에서 ── */
   const select = (n: DriveNode) => {
     setSelectedId(n.item.id);
+    setFeedFrom(null);
     if (!wide) openSheet(n);
   };
   /**
@@ -1067,6 +1078,52 @@ function DriveMap({ tree, me, admin, refreshUrl, onChanged }: {
   const newSet = useMemo(() => new Set(newFolders.map((n) => n.item.id)), [newFolders]);
   /** 옆 칸에 새 폴더 목록을 띄웠나 */
   const [checkList, setCheckList] = useState(false);
+
+  /* ── 최근 올라온 것 · 구글 시트 - 받아 둔 목록에서만 셈한다(driveFeed.ts) ── */
+  const [feed, setFeed] = useState<'recent' | 'sheets' | null>(null);
+  /** 목록에서 고른 항목을 보는 중 - 옆 칸 머리에 '목록으로' */
+  const [feedFrom, setFeedFrom] = useState<'recent' | 'sheets' | null>(null);
+  const [feedPrefs, setFeedPrefs] = useState<FeedPrefs>(() => readFeedPrefs(me));
+  /** 최근 목록을 열기 전에 본 때 - 그 뒤에 올라온 것에 점을 찍는다 */
+  const [prevSeen, setPrevSeen] = useState(feedPrefs.seen);
+  const saveFeed = useCallback((patch: Partial<FeedPrefs>) => {
+    setFeedPrefs((p) => {
+      const next = { ...p, ...patch };
+      writeFeedPrefs(me, next);
+      return next;
+    });
+  }, [me]);
+  const [owners, setOwners] = useState<FolderOwners>(() => new Map());
+  useEffect(() => {
+    let alive = true;
+    void loadFolderOwners().then((o) => { if (alive) setOwners(o); });
+    return () => { alive = false; };
+  }, []);
+  const myFolders = useMemo(() => new Set([...owners].filter(([, ids]) => ids.includes(me)).map(([id]) => id)), [owners, me]);
+  /** 단추의 숫자 - 마지막으로 본 뒤 고른 기간 안에 올라온 파일(처음이면 기간 안 전부) */
+  const unseen = useMemo(() => {
+    if (feed === 'recent') return 0;
+    const mine = feedPrefs.mine && myFolders.size ? myFolders : null;
+    return recentGroups(tree, now, feedPrefs.range, mine)
+      .reduce((s, g) => s + g.files.filter((f) => f.at > feedPrefs.seen).length, 0);
+  }, [tree, now, feedPrefs.range, feedPrefs.mine, feedPrefs.seen, myFolders, feed]);
+  const staleSheets = useMemo(() => sheetsOf(tree).filter((n) => freshnessOf(n, now).tone === 'stale').length, [tree, now]);
+  const openFeed = (f: 'recent' | 'sheets') => {
+    const on = !(wide && feed === f);
+    setFeed(on ? f : null);
+    setFeedFrom(null);
+    setCheckList(false);
+    if (on && f === 'recent') {
+      setPrevSeen(feedPrefs.seen);
+      saveFeed({ seen: Date.now() });
+    }
+    if (!wide) setSheet(true);
+  };
+  const pickFromFeed = (n: DriveNode) => {
+    setFeedFrom(feed);
+    setFeed(null);
+    pick(n);
+  };
   const [askTrash, trashNode] = useConfirm();
   const [checkMsg, setCheckMsg] = useState<{ ok: boolean; text: string } | null>(null);
   useEffect(() => {
@@ -1121,6 +1178,8 @@ function DriveMap({ tree, me, admin, refreshUrl, onChanged }: {
     });
   };
   const openCheckList = () => {
+    setFeed(null);
+    setFeedFrom(null);
     setCheckList((v) => (wide ? !v : true));
     if (!wide) setSheet(true);
   };
@@ -1136,11 +1195,35 @@ function DriveMap({ tree, me, admin, refreshUrl, onChanged }: {
         onBack={newFolders.length ? () => setCheckList(true) : undefined} />
     );
   };
-  const panelBody = (onClose?: () => void) => checkList ? (
+  /** 옆 칸 머리 아래 - 시트면 얼마나 오래 그대로인지, 목록에서 왔으면 돌아가기 */
+  const feedBox = (n: DriveNode) => {
+    const f = isSheet(n) ? freshnessOf(n, now) : null;
+    if (!f && !feedFrom) return null;
+    return (
+      <div className="mt-2.5 flex flex-wrap items-center gap-2 text-[12.5px] leading-[1.6] text-tm-sub">
+        {f && freshChip(f.tone, f.days)}
+        {f?.tone === 'stale' && <span>30일 넘게 그대로입니다. 아직 쓰는 시트면 고쳐 두고, 끝났으면 보관함으로 옮겨 주세요.</span>}
+        {feedFrom && (
+          <button type="button" onClick={() => { setFeed(feedFrom); setFeedFrom(null); }} className="ml-auto font-semibold text-tm-blue hover:underline">
+            {feedFrom === 'recent' ? '최근 목록으로' : '시트 목록으로'}
+          </button>
+        )}
+      </div>
+    );
+  };
+  const kindIcon = (k: DriveKind) => <KindIcon kind={k} />;
+  const closeFeed = (onClose?: () => void) => onClose ?? (() => setFeed(null));
+  const panelBody = (onClose?: () => void) => feed === 'recent' ? (
+    <RecentPanel tree={tree} now={now} prefs={feedPrefs} prevSeen={prevSeen} owners={owners} myFolders={myFolders} icon={kindIcon}
+      onPrefs={saveFeed} onPick={pickFromFeed} onClose={closeFeed(onClose)} />
+  ) : feed === 'sheets' ? (
+    <SheetPanel tree={tree} now={now} prefs={feedPrefs} owners={owners} icon={kindIcon}
+      onPrefs={saveFeed} onPick={pickFromFeed} onClose={closeFeed(onClose)} />
+  ) : checkList ? (
     <NewFolderList list={newFolders} now={now} reviewsOn={reviewsOn} hasCreated={hasCreated}
       onPick={(n) => { setCheckList(false); pick(n); }} onReview={(n) => void markReviewed(n, true)} onClose={onClose ?? (() => setCheckList(false))} />
   ) : (
-    <DrivePanel tree={tree} node={selected} onPick={pick} onClose={onClose} extra={checkBox(selected)} />
+    <DrivePanel tree={tree} node={selected} onPick={pick} onClose={onClose} extra={<>{checkBox(selected)}{feedBox(selected)}</>} />
   );
 
   return (
@@ -1225,6 +1308,26 @@ function DriveMap({ tree, me, admin, refreshUrl, onChanged }: {
           {newFolders.length > 0 && (
             <span className="ml-1.5 inline-grid min-w-[20px] place-items-center rounded-full border border-tm-warn/50 bg-tm-warn-tint px-1.5 text-[11.5px] font-bold tabular-nums text-tm-warn-deep">
               {num(newFolders.length)}
+            </span>
+          )}
+        </button>
+        <button type="button" aria-pressed={feed === 'recent'} onClick={() => openFeed('recent')} className={seg}
+          title="새로 올라오거나 고친 파일을 폴더별로 모아 봅니다. 기간(하루 · 3일 · 7일 · 30일)과 내 담당 폴더만 보기는 나에게만 적용됩니다">
+          최근 올라온 것
+          {unseen > 0 && (
+            <span aria-label={`처음 보는 것 ${unseen}개`}
+              className="ml-1.5 inline-grid min-w-[20px] place-items-center rounded-full bg-tm-blue px-1.5 text-[11.5px] font-bold tabular-nums text-white">
+              {num(unseen)}
+            </span>
+          )}
+        </button>
+        <button type="button" aria-pressed={feed === 'sheets'} onClick={() => openFeed('sheets')} className={seg}
+          title="팀 드라이브의 시트를 최근에 고친 순으로 모아 보고, 오래 그대로인 시트를 짚습니다">
+          구글 시트
+          {staleSheets > 0 && (
+            <span aria-label={`오래된 시트 ${staleSheets}개`}
+              className="ml-1.5 inline-grid min-w-[20px] place-items-center rounded-full border border-tm-warn/50 bg-tm-warn-tint px-1.5 text-[11.5px] font-bold tabular-nums text-tm-warn-deep">
+              {num(staleSheets)}
             </span>
           )}
         </button>
@@ -1359,7 +1462,7 @@ function DriveMap({ tree, me, admin, refreshUrl, onChanged }: {
         <aside aria-label="미리보기" onKeyDown={(e) => { if (e.key === 'Escape') setSheet(false); }}
           className="absolute inset-x-0 bottom-0 z-20 flex h-[58%] flex-col overflow-hidden rounded-t-[18px] border-t border-tm-line bg-tm-card
                      shadow-tm-pop animate-tm-rise max-[720px]:h-[78%]">
-          {panelBody(() => { setSheet(false); setCheckList(false); })}
+          {panelBody(() => { setSheet(false); setCheckList(false); setFeed(null); })}
         </aside>
       )}
       </div>
