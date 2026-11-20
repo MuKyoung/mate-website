@@ -658,6 +658,11 @@ body {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
+  /* 블록 무늬 면(01 · 04)도 같은 이유로 - 입자를 섞는 mix-blend-mode 와 줄이 흐르는 애니메이션이
+     도는 3D 면 안에서 검게 번쩍였다. 터치 기기의 큐브 안에서만 끈다 */
+  .cube-face .grain { isolation: auto; }
+  .cube-face .grain::after { display: none; }
+  .cube-face .row-drift { animation: none; }
 }
 .cube-tone--light .cube-glass { border-color: rgba(255, 255, 255, 0.6); }
 
