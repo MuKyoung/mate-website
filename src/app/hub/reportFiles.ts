@@ -41,7 +41,7 @@ function readLocal(): Record<string, string> {
 }
 
 /** 올리고 칸 글에 적을 주소(tmfile:…)를 돌려준다. 실패하면 사람이 읽을 까닭을 던진다 */
-export async function uploadReportFile(file: File, scope?: FileScope): Promise<string> {
+export async function uploadReportFile(file: File, scope?: FileScope, folder: 'reports' | 'tasks' = 'reports'): Promise<string> {
   if (file.size > REPORT_FILE_MAX) throw new Error(`'${file.name}' 은(는) 20MB 를 넘어 올릴 수 없습니다.`);
   const ext = (/\.([A-Za-z0-9]{1,8})$/.exec(file.name)?.[1] ?? 'bin').toLowerCase();
   const id = crypto.randomUUID();
@@ -65,7 +65,7 @@ export async function uploadReportFile(file: File, scope?: FileScope): Promise<s
   const d = new Date();
   const path = scope && /^\d{4}-\d{2}-\d{2}$/.test(scope.day)
     ? `reports/${scope.kind}/${scope.day}/${(scope.person ?? 'team').replace(/[^A-Za-z0-9_-]/g, '')}/${id}.${ext}`
-    : `reports/${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}/${id}.${ext}`;
+    : `${folder}/${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}/${id}.${ext}`;
   const { error } = await sb().storage.from(FILES).upload(path, file, {
     contentType: FILE_TYPES.has(file.type) ? file.type : 'application/octet-stream', upsert: false,
   });

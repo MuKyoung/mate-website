@@ -511,6 +511,11 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
     () => (doc ? live.filter((d) => d.id !== doc.id && d.body.includes(`(doc:${doc.id})`) && docLinkIds(d.body).includes(doc.id)) : []),
     [doc, live],
   );
+  /** 이 문서를 참고자료로 단 작업 - 작업 창의 '참고자료' 칸 */
+  const refTasks = useMemo(
+    () => (doc ? tasks.filter((t) => t.refs?.some((r) => r.kind === 'wiki' && r.target === doc.id)) : []),
+    [doc, tasks],
+  );
   const docComments = useMemo(() => (doc ? store.comments.filter((c) => c.docId === doc.id) : []), [doc, store.comments]);
   const commentCount = docComments.filter((c) => !c.removed).length;
 
@@ -1450,7 +1455,7 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
                   )}
 
                   {/* 하위 문서 · 이 문서를 링크한 문서 - 비어 있는 맨 위 문서의 카테고리는 위에 이미 있다 */}
-                  {((children.length > 0 && !homeCats) || backlinks.length > 0) && !editing && (
+                  {((children.length > 0 && !homeCats) || backlinks.length > 0 || refTasks.length > 0) && !editing && (
                     <div className="mt-12 grid gap-6 border-t border-tm-line pt-7 lg:grid-cols-2">
                       {children.length > 0 && !homeCats && (
                         <section aria-labelledby={`kids-${doc.id}`}>
@@ -1463,6 +1468,23 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
                                   <span className="text-tm-sub"><DocIcon icon={c.icon} size={18} /></span>
                                   <span className="min-w-0 flex-1 truncate text-[15px] font-bold text-tm-ink">{titleOf(c)}</span>
                                   <span className="flex-none text-[12.5px] tabular-nums text-tm-sub">{ago(c.updatedAt)}</span>
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        </section>
+                      )}
+                      {refTasks.length > 0 && (
+                        <section aria-labelledby={`tasks-${doc.id}`}>
+                          <h3 id={`tasks-${doc.id}`} className="mb-2.5 text-[14px] font-bold text-tm-sub">이 문서를 참고하는 작업 {refTasks.length}</h3>
+                          <ul className="space-y-1">
+                            {refTasks.map((t) => (
+                              <li key={t.id}>
+                                <button type="button" onClick={() => onTaskClick?.(t.key)}
+                                  className="flex w-full items-center gap-2.5 rounded-tm-sm px-3 py-2 text-left transition-colors hover:bg-tm-tint">
+                                  <span className="flex-none text-[13px] font-bold tabular-nums text-tm-sub">{t.key}</span>
+                                  <span className={`min-w-0 flex-1 truncate text-[15px] font-semibold underline underline-offset-[3px] ${
+                                    t.status === 'done' ? 'text-tm-sub line-through' : 'text-tm-blue'}`}>{t.title || '제목 없음'}</span>
                                 </button>
                               </li>
                             ))}

@@ -594,17 +594,23 @@ const keyNum = (key: string) => {
 
 /** 상위 업무 칸(SQL 의 tm_tasks.parent_id) */
 const parentProbe = () => [sb().from('tm_tasks').select('parent_id').limit(1)];
+/** 나만 보기 · 참고자료 칸(SQL 의 tm_tasks.private · refs) */
+const extrasProbe = () => [sb().from('tm_tasks').select('private,refs').limit(1)];
 
-/** 새 줄로 넣는 작업 - 상위 업무가 없으면 그 칸을 빼고 보낸다. 상위 업무 SQL 을 아직 돌리지 않은 DB 에서도 만들어지게 */
+/** 새 줄로 넣는 작업 - 상위 업무가 없으면 그 칸을 빼고 보낸다. 상위 업무 SQL 을 아직 돌리지 않은 DB 에서도 만들어지게.
+    나만 보기 · 참고자료도 처음 값(공개 · 없음)이면 뺀다 */
 const insertRow = (t: Task): Partial<TaskRow> => {
   const row = taskToRow(t);
   if (!row.parent_id) delete row.parent_id;
+  if (!row.private) delete row.private;
+  if (!t.refs?.length) delete row.refs;
   return row;
 };
 
 export function useRemoteTaskStore(opts: StoreOptions = {}): Store {
   /* 상위 · 하위 업무는 그 칸이 있을 때만 - 앱을 먼저 배포하고 SQL 을 나중에 돌려도 예전처럼 돈다 */
   const hierarchy = useTablesExist(parentProbe) === true;
+  const extras = useTablesExist(extrasProbe) === true;
   const { items, ready, sync, loadError, deleted, eng } = useRowSync<Task, TaskRow>({
     table: 'tm_tasks', fromRow: taskFromRow, toRow: taskToRow, onError: opts.onError,
     texts: {
@@ -651,6 +657,10 @@ export function useRemoteTaskStore(opts: StoreOptions = {}): Store {
       due: input.due ?? null,
       labels: input.labels ?? [],
       parentId: input.parentId ?? null,
+      private: input.private ?? false,
+      // 서버는 created_by 를 auth.uid() 로 채운다 - 받기 전에도 내 나만 보기 작업이 보이게 미리 적는다
+      owner: input.owner ?? null,
+      refs: input.refs ?? [],
       order: top,
       createdAt: now,
       updatedAt: now,
@@ -735,7 +745,7 @@ export function useRemoteTaskStore(opts: StoreOptions = {}): Store {
   return {
     tasks: items, ready, persistent: true, sync, loadError, deletedElsewhere: deleted,
     create, update, remove, move, flush, reload,
-    reset: noop, clearSamples: noop, hierarchy,
+    reset: noop, clearSamples: noop, hierarchy, extras,
     undoLabel: undoState.label, undoSeq: undoState.seq, undo, dropUndo,
   };
 }

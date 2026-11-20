@@ -66,11 +66,73 @@ export interface Task {
    * 그래서 없는 작업을 가리킬 수 있고, 화면은 그때 맨 위 업무로 본다(parentOf). 예전 저장본 · 칸이 없는 DB 에서는 비어 있다
    */
   parentId?: string | null;
+  /**
+   * 나만 보기 - 참이면 만든 사람(owner)만 본다. Supabase 에서는 RLS(tm_tasks_members)가 남에게 주지 않는다.
+   * 예전 저장본 · 칸이 없는 DB 에서는 비어 있다(공개)
+   */
+  private?: boolean;
+  /** 만든 사람(Member.id) - 나만 보기 작업의 주인. 모르면 null */
+  owner?: string | null;
+  /** 참고자료 - 위키 문서 · 드라이브 파일 · 올린 파일 · 링크. 예전 저장본 · 칸이 없는 DB 에서는 비어 있다 */
+  refs?: TaskRef[];
   /** 같은 상태 안에서의 정렬 순서. 작을수록 위. */
   order: number;
   createdAt: string;
   updatedAt: string;
 }
+
+/* ── 참고자료 ── 작업 창의 '참고자료' 칸. 설명과 따로, 무엇인지 아이콘(PDF · 한글 · 위키 …)으로 보인다 */
+
+/** wiki: 팀 위키 문서(target = 문서 id) · drive: 구글 드라이브(target = 주소) · file: 올린 파일(target = tmfile:경로) · link: 그 밖의 주소 */
+export type TaskRefKind = 'wiki' | 'drive' | 'file' | 'link';
+export interface TaskRef {
+  kind: TaskRefKind;
+  title: string;
+  target: string;
+  /** 파일 형식(드라이브 · 올린 파일) - 아이콘을 고르는 데만 쓴다 */
+  mime?: string;
+}
+
+/** 아이콘 · 이름 뒤 괄호에 쓰는 갈래 */
+export type RefType = 'wiki' | 'pdf' | 'hwp' | 'doc' | 'sheet' | 'slide' | 'image' | 'video' | 'archive' | 'folder' | 'link' | 'file';
+export const REF_TYPE_LABEL: Record<RefType, string> = {
+  wiki: '위키 문서', pdf: 'PDF', hwp: '한글', doc: '문서', sheet: '시트', slide: '슬라이드',
+  image: '이미지', video: '동영상', archive: '압축 파일', folder: '폴더', link: '링크', file: '파일',
+};
+
+export function refTypeOf(r: Pick<TaskRef, 'kind' | 'title' | 'target' | 'mime'>): RefType {
+  if (r.kind === 'wiki') return 'wiki';
+  const m = (r.mime ?? '').toLowerCase();
+  const name = `${r.title} ${r.target.split('?')[0]}`.toLowerCase();
+  if (m === 'application/pdf' || /\.pdf\b/.test(name)) return 'pdf';
+  if (/hwp|hancom/.test(m) || /\.hwpx?\b/.test(name)) return 'hwp';
+  if (m === 'application/vnd.google-apps.folder' || /drive\.google\.com\/drive\/(u\/\d+\/)?folders\//.test(r.target)) return 'folder';
+  if (/google-apps\.spreadsheet|spreadsheetml|ms-excel|text\/csv/.test(m) || /docs\.google\.com\/spreadsheets\//.test(r.target) || /\.(xlsx?|csv)\b/.test(name)) return 'sheet';
+  if (/google-apps\.presentation|presentationml|ms-powerpoint/.test(m) || /docs\.google\.com\/presentation\//.test(r.target) || /\.pptx?\b/.test(name)) return 'slide';
+  if (/google-apps\.document|wordprocessingml|msword|^text\//.test(m) || /docs\.google\.com\/document\//.test(r.target) || /\.(docx?|txt|md)\b/.test(name)) return 'doc';
+  if (m.startsWith('image/') || /\.(png|jpe?g|gif|webp|svg)\b/.test(name)) return 'image';
+  if (m.startsWith('video/') || /\.(mp4|mov|webm)\b/.test(name)) return 'video';
+  if (/zip|x-7z|x-rar|gzip/.test(m) || /\.(zip|7z|rar)\b/.test(name)) return 'archive';
+  return r.kind === 'link' ? 'link' : 'file';
+}
+
+/** 저장된 값(jsonb) → 참고자료 목록. 모양이 틀린 것은 버린다 */
+export function cleanRefs(raw: unknown): TaskRef[] {
+  if (!Array.isArray(raw)) return [];
+  const kinds: TaskRefKind[] = ['wiki', 'drive', 'file', 'link'];
+  return raw.flatMap((x): TaskRef[] => {
+    if (!x || typeof x !== 'object') return [];
+    const o = x as Record<string, unknown>;
+    const kind = kinds.find((k) => k === o.kind);
+    const target = typeof o.target === 'string' ? o.target.slice(0, 2000) : '';
+    if (!kind || !target) return [];
+    const title = typeof o.title === 'string' ? o.title.slice(0, 200) : '';
+    return [{ kind, title, target, ...(typeof o.mime === 'string' && o.mime ? { mime: o.mime.slice(0, 120) } : {}) }];
+  }).slice(0, 50);
+}
+
+/** 이 사람에게 보이는 작업인가 - 나만 보기 작업은 만든 사람에게만. 서버(RLS)도 막지만 브라우저 저장 모드 · 늦게 온 알림에도 지킨다 */
+export const visibleTo = (t: Task, me: string) => !t.private || t.owner === me;
 
 /* ── 상위 · 하위 업무 ── 고리(서로가 서로의 상위)는 화면과 DB(tm_tasks_guard)가 막지만, 두 사람이 동시에 고치면
    생길 수 있어 위아래로 따라갈 때는 늘 지나온 작업을 센다 */

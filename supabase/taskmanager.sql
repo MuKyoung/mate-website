@@ -87,6 +87,13 @@ alter table public.tm_tasks add constraint tm_tasks_domain_fkey
 -- 지운 직후 '실행 취소'로 되살리면 다시 이어지게 한다. 화면은 없는 작업을 가리키면 맨 위 업무로 본다.
 -- 자기 자신 · 자기 하위 업무를 상위로 두는 고리는 아래 tm_tasks_guard 가 막는다
 alter table public.tm_tasks add column if not exists parent_id uuid;
+-- 나만 보기(2026-11-20) - 참이면 만든 사람(created_by)만 본다(아래 tm_tasks_members). 주간보고 확정 · 통계에서도 뺀다
+alter table public.tm_tasks add column if not exists private boolean not null default false;
+-- 참고자료(2026-11-20) - [{kind: wiki|drive|file|link, title, target, mime?}] 위키 문서 id · 드라이브 주소 · tmfile: · 주소
+alter table public.tm_tasks add column if not exists refs jsonb not null default '[]'::jsonb;
+alter table public.tm_tasks drop constraint if exists tm_tasks_refs_check;
+alter table public.tm_tasks add constraint tm_tasks_refs_check
+  check (jsonb_typeof(refs) = 'array' and jsonb_array_length(refs) <= 50 and pg_column_size(refs) <= 65536);
 
 -- ── 문서 ─────────────────────────────────────────────────────
 create table if not exists public.tm_docs (
@@ -568,6 +575,20 @@ create trigger tm_tasks_touch before update on public.tm_tasks
 create or replace trigger tm_tasks_guard before insert or update of parent_id on public.tm_tasks
   for each row execute function public.tm_tasks_guard();
 
+-- 만든 사람(created_by)은 처음 값 그대로 - 남의 공개 작업을 내 것으로 바꿔 나만 보기로 숨기지 못하게
+create or replace function public.tm_tasks_keep_owner()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  new.created_by := old.created_by;
+  return new;
+end;
+$$;
+create or replace trigger tm_tasks_keep_owner before update of created_by on public.tm_tasks
+  for each row execute function public.tm_tasks_keep_owner();
+
 drop trigger if exists tm_docs_touch on public.tm_docs;
 create trigger tm_docs_touch before update on public.tm_docs
   for each row execute function public.tm_touch();
@@ -644,8 +665,8 @@ create policy tm_members_update on public.tm_members
 drop policy if exists tm_tasks_members on public.tm_tasks;
 create policy tm_tasks_members on public.tm_tasks
   for all to authenticated
-  using ((select public.tm_is_member()))
-  with check ((select public.tm_is_member()));
+  using ((select public.tm_is_member()) and (not private or created_by = (select auth.uid())))
+  with check ((select public.tm_is_member()) and (not private or created_by = (select auth.uid())));
 
 drop policy if exists tm_docs_members on public.tm_docs;
 create policy tm_docs_members on public.tm_docs
@@ -718,6 +739,7 @@ revoke execute on function public.tm_is_member(), public.tm_is_admin(), public.t
 grant execute on function public.tm_is_member(), public.tm_is_admin(), public.tm_reject_member(uuid) to authenticated;
 -- 작업 - 상위 업무 고리 막기는 트리거용이라 아무도 부르지 못하게
 revoke execute on function public.tm_tasks_guard() from public, anon, authenticated;
+revoke execute on function public.tm_tasks_keep_owner() from public, anon, authenticated;
 -- 위키 - 트리거용은 막고, 되돌리기 전에 지금 모습을 남기는 함수만 로그인한 사람에게(함수가 팀원인지 본다)
 revoke execute on function public.tm_docs_history(), public.tm_docs_guard(), public.tm_docs_stamp(), public.tm_doc_comments_guard(),
   public.tm_doc_snapshot(uuid) from public, anon, authenticated;
@@ -1044,17 +1066,17 @@ begin
     'at', now(),
     'today', kst,
     'numbers', jsonb_build_object(
-      'dueThisWeek', (select count(*) from public.tm_tasks t where t.due_date between mon and mon + 6),
-      'dueThisWeekDone', (select count(*) from public.tm_tasks t where t.due_date between mon and mon + 6 and t.status = 'done'),
-      'created', (select count(*) from public.tm_tasks t where (t.created_at at time zone 'Asia/Seoul')::date between mon and mon + 6),
-      'doing', (select count(*) from public.tm_tasks t where t.status in ('doing', 'review')),
-      'overdue', (select count(*) from public.tm_tasks t where t.status <> 'done' and t.due_date < kst)
+      'dueThisWeek', (select count(*) from public.tm_tasks t where not t.private and t.due_date between mon and mon + 6),
+      'dueThisWeekDone', (select count(*) from public.tm_tasks t where not t.private and t.due_date between mon and mon + 6 and t.status = 'done'),
+      'created', (select count(*) from public.tm_tasks t where not t.private and (t.created_at at time zone 'Asia/Seoul')::date between mon and mon + 6),
+      'doing', (select count(*) from public.tm_tasks t where not t.private and t.status in ('doing', 'review')),
+      'overdue', (select count(*) from public.tm_tasks t where not t.private and t.status <> 'done' and t.due_date < kst)
     ),
     'nextWeek', coalesce((
       select jsonb_agg(jsonb_build_object('id', t.id, 'key', 'MATE-' || t.num, 'title', t.title, 'due', t.due_date, 'assignee', t.assignee)
         order by t.due_date, t.num)
       from public.tm_tasks t
-      where t.status <> 'done' and t.due_date between mon + 7 and mon + 13
+      where not t.private and t.status <> 'done' and t.due_date between mon + 7 and mon + 13
     ), '[]'::jsonb),
     'people', coalesce((
       select jsonb_agg(jsonb_build_object('id', p.id, 'name', p.name) order by p.sort, p.name)

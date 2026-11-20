@@ -3,13 +3,15 @@
 import { Fragment, useEffect, useId, useMemo, useRef, useState } from 'react';
 import {
   PRIORITIES, STATUSES, ancestorsOf, descendantIds, localDay, statusLabel,
-  type DomainKey, type Priority, type Status, type Task,
+  type Doc, type DomainKey, type Priority, type Status, type Task, type TaskRef,
 } from './types';
+import { TaskRefs } from './TaskRefs';
+import { TaskTreeSelect } from './TaskTree';
 import { assignable, useMember, useMembers } from './members';
 import { useDomains } from './domainStore';
 import {
-  Avatar, DomainChip, IconClose, Modal, PriorityDot, STATUS_STYLE, SubCount,
-  tmBtn, tmBtnPrimary, tmCallout, tmFieldBase, tmGhostBtn, tmGhostDanger, tmIconBtn, tmIconBtnSm, tmInput, tmLabel, tmSelect, tmTextarea,
+  Avatar, DomainChip, IconClose, IconLock, Modal, PriorityDot, STATUS_STYLE, SubCount,
+  tmBtn, tmBtnPrimary, tmCallout, tmFieldBase, tmGhostBtn, tmGhostDanger, tmIconBtn, tmIconBtnSm, tmInput, tmLabel, tmSelect, tmTab, tmTextarea,
   useConfirm, useFocusTrap, type Confirm,
 } from './ui';
 
@@ -27,6 +29,10 @@ interface Draft {
   labels: string[];
   /** 상위 업무(Task.id) - 없으면 맨 위 업무 */
   parentId: string | null;
+  /** 나만 보기 - 만든 사람만 본다 */
+  private: boolean;
+  /** 참고자료 */
+  refs: TaskRef[];
 }
 
 const emptyDraft = (status: Status, domain: DomainKey): Draft => ({
@@ -40,7 +46,20 @@ const emptyDraft = (status: Status, domain: DomainKey): Draft => ({
   due: null,
   labels: [],
   parentId: null,
+  private: false,
+  refs: [],
 });
+
+/** 나만 보기 · 참고자료를 다루는 데 필요한 것 - 주지 않으면(Supabase 에 그 칸이 아직 없을 때) 그 칸들을 숨긴다 */
+export interface Extras {
+  /** 지금 쓰는 사람(Member.id) */
+  me: string;
+  /** 위키 문서 - 참고자료 고르기 · 지금 제목 */
+  docs: Doc[];
+  /** 위키 문서를 연다 */
+  onOpenDoc?(id: string): void;
+  onNotice?(text: string): void;
+}
 
 /** 상위 · 하위 업무를 다루는 데 필요한 것 - 주지 않으면(Supabase 에 상위 업무 칸이 아직 없을 때) 그 칸들을 숨긴다 */
 export interface Family {
@@ -54,41 +73,19 @@ export interface Family {
   create(title: string): void;
 }
 
-/** 작업 고르기 칸의 항목 - 영역별로 묶고, 영역 안에서는 최근에 만든 것부터 */
-function TaskOptions({ tasks }: { tasks: Task[] }) {
-  const domains = useDomains();
-  const groups = [...domains.map((d) => ({ id: d.id, label: d.label })), { id: '', label: '영역 없음' }]
-    .map((g) => ({
-      ...g,
-      items: tasks
-        .filter((t) => (g.id ? t.domain === g.id : !domains.some((d) => d.id === t.domain)))
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
-    }))
-    .filter((g) => g.items.length);
-  return (
-    <>
-      {groups.map((g) => (
-        <optgroup key={g.id || '-'} label={g.label}>
-          {g.items.map((t) => (
-            <option key={t.id} value={t.id}>{`${t.key} ${t.title || '제목 없음'}${t.status === 'done' ? ' (완료)' : ''}`}</option>
-          ))}
-        </optgroup>
-      ))}
-    </>
-  );
-}
-
 /* 날짜 칸에 연도를 치는 동안에는 0002-, 0020- 같은 값이 잠깐 들어온다 - 그때는 다른 날짜를 옮기지 않는다 */
 const settled = (v: string) => v >= '1000';
 
 /** 세종 관리자 수정 창의 칸 배치 - 두 줄씩, 좁은 화면에서는 한 줄 */
-function Fields({ draft, set, knownLabels = [], parents }: {
+function Fields({ draft, set, knownLabels = [], parents, privacy }: {
   draft: Draft;
   set: (p: Partial<Draft>) => void;
   /** 다른 작업에 이미 쓰인 라벨 - 라벨 칸의 추천 목록 */
   knownLabels?: string[];
   /** 상위 업무로 고를 수 있는 작업(자기 자신 · 자기 하위 업무는 뺀 것) - 주지 않으면 상위 업무 칸을 숨긴다 */
   parents?: Task[];
+  /** 공개 범위 칸 - 주지 않으면(그 칸이 없는 DB) 숨긴다. can 이 거짓이면(남이 만든 작업) 바꿀 수 없다 */
+  privacy?: { me: string; can: boolean };
 }) {
   const [labelInput, setLabelInput] = useState('');
   /** 거꾸로 된 기간을 막으려고 옮긴 쪽 */
@@ -133,6 +130,27 @@ function Fields({ draft, set, knownLabels = [], parents }: {
 
   return (
     <div className="grid grid-cols-2 gap-x-4 gap-y-[18px] max-[480px]:grid-cols-1">
+      {privacy && (
+        <div className="col-span-full">
+          <p className={tmLabel} id="tm-privacy-head">공개 범위</p>
+          <div role="group" aria-labelledby="tm-privacy-head" className="flex flex-wrap gap-1.5">
+            {([false, true] as const).map((v) => (
+              <button key={String(v)} type="button"
+                disabled={!privacy.can && draft.private !== v}
+                onClick={() => set(v ? { private: true, assignee: privacy.me } : { private: false })}
+                className={`${tmTab} inline-flex items-center gap-1.5 disabled:cursor-not-allowed disabled:opacity-50`} aria-pressed={draft.private === v}>
+                {v && <IconLock />}
+                {v ? '나만 보기' : '팀 공개'}
+              </button>
+            ))}
+          </div>
+          <p className="mt-1.5 text-[13px] leading-[1.5] text-tm-sub">
+            {draft.private
+              ? '나에게만 보입니다. 팀원 화면 · 캘린더 · 주간보고에는 나오지 않습니다.'
+              : privacy.can ? '팀원 모두가 봅니다. 혼자 기록할 개발 메모 같은 것은 나만 보기로 두세요.' : '나만 보기는 작업을 만든 사람만 바꿀 수 있습니다.'}
+          </p>
+        </div>
+      )}
       <div>
         <label className={tmLabel} htmlFor="tm-status">상태</label>
         <select id="tm-status" className={`${tmSelect} w-full`}
@@ -158,7 +176,8 @@ function Fields({ draft, set, knownLabels = [], parents }: {
       </div>
       <div>
         <label className={tmLabel} htmlFor="tm-assignee">담당</label>
-        <select id="tm-assignee" className={`${tmSelect} w-full`}
+        {/* 나만 보기 작업은 남이 볼 수 없어 담당도 나 */}
+        <select id="tm-assignee" className={`${tmSelect} w-full`} disabled={draft.private}
           value={draft.assignee ?? ''} onChange={(e) => set({ assignee: e.target.value || null })}>
           <option value="">미배정</option>
           {people.map((m) => <option key={m.id} value={m.id}>{m.role ? `${m.name} · ${m.role}` : m.name}</option>)}
@@ -223,12 +242,10 @@ function Fields({ draft, set, knownLabels = [], parents }: {
         <div className="col-span-full">
           <label className={tmLabel} htmlFor="tm-parent">상위 업무</label>
           {/* 지운 작업을 가리키고 있으면 '없음'으로 보인다 - 고르면 그 칸도 비운다 */}
-          <select id="tm-parent" className={`${tmSelect} w-full`}
-            value={draft.parentId && parents.some((t) => t.id === draft.parentId) ? draft.parentId : ''}
-            onChange={(e) => set({ parentId: e.target.value || null })}>
-            <option value="">없음 (맨 위 업무)</option>
-            <TaskOptions tasks={parents} />
-          </select>
+          <TaskTreeSelect id="tm-parent" tasks={parents}
+            value={draft.parentId && parents.some((t) => t.id === draft.parentId) ? draft.parentId : null}
+            onChange={(v) => set({ parentId: v })}
+            placeholder="없음 (맨 위 업무)" noneLabel="없음 (맨 위 업무)" />
         </div>
       )}
     </div>
@@ -238,10 +255,14 @@ function Fields({ draft, set, knownLabels = [], parents }: {
 /* ── 새 작업 ──────────────────────────────────────── */
 
 export function NewTaskDialog({
-  defaultStatus, defaultDomain, defaultDue, knownLabels, tasks, onCreate, onClose,
+  defaultStatus, defaultDomain, defaultAssignee = null, defaultDue, knownLabels, tasks, extras, onCreate, onClose,
 }: {
   defaultStatus: Status;
   defaultDomain: DomainKey;
+  /** 담당 처음 값 - 보통 나, 담당자로 걸러 보는 중이면 그 사람 */
+  defaultAssignee?: string | null;
+  /** 나만 보기 · 참고자료 - 주지 않으면 그 칸들을 숨긴다 */
+  extras?: Extras;
   /** 캘린더에서 날짜를 눌러 들어온 경우 미리 채운다 */
   defaultDue?: string | null;
   /** 이미 쓰인 라벨 - 라벨 칸 추천 목록 */
@@ -251,7 +272,9 @@ export function NewTaskDialog({
   onCreate(d: Draft): void;
   onClose(): void;
 }) {
-  const [draft, setDraft] = useState<Draft>(() => ({ ...emptyDraft(defaultStatus, defaultDomain), due: defaultDue ?? null }));
+  const [draft, setDraft] = useState<Draft>(() => ({
+    ...emptyDraft(defaultStatus, defaultDomain), assignee: defaultAssignee, due: defaultDue ?? null,
+  }));
   const titleRef = useRef<HTMLInputElement>(null);
   const formId = useId();
   const [confirm, confirmNode] = useConfirm();
@@ -266,7 +289,7 @@ export function NewTaskDialog({
 
   /* 적은 제목 · 설명이 있으면 묻고 닫는다. 미리 채운 상태 · 마감일은 적은 것으로 보지 않는다 */
   const tryClose = async () => {
-    if (!draft.title.trim() && !draft.description.trim()) return onClose();
+    if (!draft.title.trim() && !draft.description.trim() && !draft.refs.length) return onClose();
     const yes = await confirm({
       title: '작성 중인 작업을 버릴까요?',
       body: '지금까지 적은 내용이 지워집니다.',
@@ -313,7 +336,12 @@ export function NewTaskDialog({
               value={draft.description}
               onChange={(e) => setDraft({ ...draft, description: e.target.value })} />
           </div>
-          <Fields draft={draft} set={(p) => setDraft((d) => ({ ...d, ...p }))} knownLabels={knownLabels} parents={tasks} />
+          {extras && (
+            <TaskRefs idPrefix="tm-new-ref" refs={draft.refs} docs={extras.docs} onNotice={extras.onNotice}
+              onChange={(refs) => setDraft((d) => ({ ...d, refs }))} />
+          )}
+          <Fields draft={draft} set={(p) => setDraft((d) => ({ ...d, ...p }))} knownLabels={knownLabels} parents={tasks}
+            privacy={extras ? { me: extras.me, can: true } : undefined} />
         </form>
       </Modal>
       {confirmNode}
@@ -443,11 +471,9 @@ function Subtasks({ task, family, confirm }: { task: Task; family: Family; confi
       {linkable.length > 0 && (
         <div className="mt-2.5">
           <label className="sr-only" htmlFor="tm-sub-link">이미 있는 작업을 하위 업무로 잇기</label>
-          <select id="tm-sub-link" value="" className={`${tmSelect} w-full`}
-            onChange={(e) => { if (e.target.value) family.update(e.target.value, { parentId: task.id }); }}>
-            <option value="">이미 있는 작업을 하위 업무로 잇기</option>
-            <TaskOptions tasks={linkable} />
-          </select>
+          <TaskTreeSelect id="tm-sub-link" tasks={linkable} value={null}
+            onChange={(v) => { if (v) family.update(v, { parentId: task.id }); }}
+            placeholder="이미 있는 작업을 하위 업무로 잇기" />
         </div>
       )}
     </section>
@@ -459,7 +485,7 @@ function Subtasks({ task, family, confirm }: { task: Task; family: Family; confi
    머리 · 본문 · 바닥의 짜임은 세종 관리자의 수정 창과 같다. */
 
 export function TaskPanel({
-  task, knownLabels, unsaved, family, onUpdate, onRemove, onClose,
+  task, knownLabels, unsaved, family, extras, onUpdate, onRemove, onClose,
 }: {
   task: Task;
   /** 이미 쓰인 라벨 - 라벨 칸 추천 목록 */
@@ -468,6 +494,8 @@ export function TaskPanel({
   unsaved?: boolean;
   /** 상위 · 하위 업무 - 주지 않으면 그 칸들을 숨긴다 */
   family?: Family;
+  /** 나만 보기 · 참고자료 - 주지 않으면 그 칸들을 숨긴다 */
+  extras?: Extras;
   onUpdate(patch: Partial<Task>): void;
   onRemove(): void;
   onClose(): void;
@@ -549,6 +577,8 @@ export function TaskPanel({
     due: task.due,
     labels: task.labels,
     parentId: task.parentId ?? null,
+    private: !!task.private,
+    refs: task.refs ?? [],
   };
 
   return (
@@ -561,6 +591,11 @@ export function TaskPanel({
           <PriorityDot p={task.priority} />
           <span className="text-[16px] font-extrabold tabular-nums text-tm-deep">{task.key}</span>
           <DomainChip id={task.domain} />
+          {task.private && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-tm-bg px-2 py-0.5 text-[12.5px] font-bold text-tm-sub ring-1 ring-inset ring-tm-line">
+              <IconLock size={13} /> 나만 보기
+            </span>
+          )}
           {/* 하위 업무 칸은 아래에 있어 머리에서 알리고, 누르면 그리로 내려간다 */}
           {family && kidCount > 0 && (
             <button type="button" aria-label={`하위 업무 ${kidCount}개 중 ${kidDone}개 완료, 하위 업무 칸으로`}
@@ -616,7 +651,15 @@ export function TaskPanel({
             value={task.description}
             onChange={(e) => onUpdate({ description: e.target.value })} />
 
-          <Fields draft={draft} set={(p) => onUpdate(p as Partial<Task>)} knownLabels={knownLabels} parents={parents} />
+          {extras && (
+            <div className="mb-6">
+              <TaskRefs refs={task.refs ?? []} docs={extras.docs} onOpenDoc={extras.onOpenDoc} onNotice={extras.onNotice}
+                onChange={(refs) => onUpdate({ refs })} />
+            </div>
+          )}
+
+          <Fields draft={draft} set={(p) => onUpdate(p as Partial<Task>)} knownLabels={knownLabels} parents={parents}
+            privacy={extras ? { me: extras.me, can: task.owner === extras.me } : undefined} />
 
           {family && <Subtasks task={task} family={family} confirm={confirm} />}
 

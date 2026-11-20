@@ -241,6 +241,37 @@ export function IconSubtasks({ size = 14 }: { size?: number }) {
     </svg>
   );
 }
+/** 번호 곁 표시 - 나만 보기 자물쇠 · 참고자료 수. 없으면 그리지 않는다 */
+export function TaskMarks({ task }: { task: Task }) {
+  const n = task.refs?.length ?? 0;
+  if (!task.private && !n) return null;
+  return (
+    <span className="inline-flex flex-none items-center gap-1.5 text-tm-sub">
+      {task.private && (
+        <span title="나만 보기 - 나에게만 보입니다" className="inline-flex">
+          <IconLock size={13} /><span className="sr-only">나만 보기</span>
+        </span>
+      )}
+      {n > 0 && (
+        <span title={`참고자료 ${n}개`} className="inline-flex items-center gap-0.5 text-[12.5px] font-bold tabular-nums">
+          <svg viewBox="0 0 20 20" width={13} height={13} aria-hidden className="flex-none" {...svg}>
+            <path d="M14.5 9.5l-5.3 5.3a3.2 3.2 0 0 1-4.5-4.5l6-6a2.1 2.1 0 0 1 3 3l-6 6a1 1 0 0 1-1.5-1.5l5.3-5.3" />
+          </svg>
+          <span className="sr-only">참고자료</span>{n}
+        </span>
+      )}
+    </span>
+  );
+}
+
+/** 나만 보기 - 자물쇠 */
+export function IconLock({ size = 14 }: { size?: number }) {
+  return (
+    <svg viewBox="0 0 20 20" width={size} height={size} aria-hidden className="flex-none" {...svg}>
+      <rect x="4.5" y="9" width="11" height="8" rx="1.8" /><path d="M7 9V6.5a3 3 0 0 1 6 0V9" />
+    </svg>
+  );
+}
 export function IconCheck({ size = 16 }: { size?: number }) {
   return <svg viewBox="0 0 20 20" width={size} height={size} aria-hidden {...svg}><path d="M4.5 10.5l3.5 3.5 7.5-8" /></svg>;
 }
@@ -266,7 +297,7 @@ export function useMediaQuery(query: string): boolean {
 }
 
 /** 메뉴 아이콘 */
-export type NavIcon = 'board' | 'mine' | 'drive' | 'build' | 'wiki' | 'memo' | 'home' | 'menu' | 'phone' | 'monitor' | 'sidebar' | 'filter' | 'mindmap' | 'daily' | 'weekly' | 'org' | 'blog' | 'sun' | 'moon';
+export type NavIcon = 'star' | 'board' | 'mine' | 'drive' | 'build' | 'wiki' | 'memo' | 'home' | 'menu' | 'phone' | 'monitor' | 'sidebar' | 'filter' | 'mindmap' | 'daily' | 'weekly' | 'org' | 'blog' | 'sun' | 'moon';
 export function IconNav({ name, size = 20 }: { name: NavIcon; size?: number }) {
   const paths: Record<NavIcon, React.ReactNode> = {
     /* 모든 작업 - 보드의 칸 */
@@ -327,6 +358,8 @@ export function IconNav({ name, size = 20 }: { name: NavIcon; size?: number }) {
         <path d="M3 8.5h14M7 2.5v3.5M13 2.5v3.5M6.5 11.8h7M6.5 14.4h4.5" />
       </>
     ),
+    /* 즐겨찾기 - 별 */
+    star: <path d="M10 2.8l2.2 4.6 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5L2.8 8.1l5-.7z" />,
     /* 조직도 - 위 칸 하나에서 아래 두 칸으로 갈라지는 표 */
     org: (
       <>
@@ -1048,6 +1081,7 @@ export function TaskCard({ task, onOpen, onDragStart, onDragEnd, dragging, onMov
       <div className="mb-1.5 flex items-center gap-2">
         <PriorityDot p={task.priority} />
         <span className="whitespace-nowrap text-[13px] font-bold tabular-nums text-tm-sub">{task.key}</span>
+        <TaskMarks task={task} />
         <span className="ml-auto" />
         <StatusMenu task={task} onMove={onMove} />
       </div>

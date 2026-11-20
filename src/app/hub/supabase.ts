@@ -2,7 +2,7 @@
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import {
-  initialOf, isDomainColor, isTaskColor,
+  cleanRefs, initialOf, isDomainColor, isTaskColor,
   type ColorPick, type Doc, type DocComment, type DocVersion, type Domain, type DomainKey, type Member, type Memo, type Priority, type Status, type Task,
 } from './types';
 
@@ -78,6 +78,10 @@ export interface TaskRow {
   labels: string[] | null;
   /** 상위 업무 - SQL 로 뒤에 더한 칸이라 아직 없는 DB 에서는 오지 않는다 */
   parent_id?: string | null;
+  /** 나만 보기 · 참고자료 - SQL 로 뒤에 더한 칸이라 아직 없는 DB 에서는 오지 않는다 */
+  private?: boolean;
+  refs?: unknown;
+  created_by?: string | null;
   sort: number;
   created_at: string;
   updated_at: string;
@@ -187,6 +191,9 @@ export function taskFromRow(r: TaskRow): Task {
     due: r.due_date,
     labels: r.labels ?? [],
     parentId: r.parent_id ?? null,
+    private: r.private ?? false,
+    owner: r.created_by ?? null,
+    refs: cleanRefs(r.refs),
     order: r.sort,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
@@ -207,6 +214,9 @@ export function taskToRow(p: Partial<Task>): Partial<TaskRow> {
   if (p.due !== undefined) r.due_date = p.due;
   if (p.labels !== undefined) r.labels = p.labels;
   if (p.parentId !== undefined) r.parent_id = p.parentId;
+  // 만든 사람(created_by)은 DB 가 정한다(auth.uid()) - 보내지 않는다
+  if (p.private !== undefined) r.private = p.private;
+  if (p.refs !== undefined) r.refs = p.refs;
   if (p.order !== undefined) r.sort = p.order;
   return r;
 }

@@ -12,16 +12,16 @@ import { DomainsContext, defaultDomain, domainOf, useDomainStore, type DomainSto
 import { ColorsContext, useColorStore, type ColorStore } from './colorStore';
 import {
   COLOR_BYS, MEMBERS, PRIORITIES, STATUSES,
-  localISO, memberById, parentOf, priorityLabel,
+  localISO, memberById, parentOf, priorityLabel, visibleTo,
   type ColorBy, type DomainColor, type DomainKey, type Member, type Priority, type Status, type Task,
 } from './types';
 import {
   Avatar, DOMAIN_FILL, DomainChip, DueBadge, IconChevron, IconNav, IconPlus, IconSearch, Modal, ThemeCycle, ThemeSwitch,
-  PRIORITY_STYLE, PageHead, ParentLine, PriorityDot, STATUS_STYLE, StatusPill, SubCount, TaskCard, Toast,
+  PRIORITY_STYLE, PageHead, ParentLine, PriorityDot, STATUS_STYLE, StatusPill, SubCount, TaskCard, TaskMarks, Toast,
   tmBtn, tmBtnPrimary, tmCallout, tmCount, tmEditBtn, tmGhostBtn, tmIconBtnSm, tmInput, tmSelect, tmTab, tmTextBtn,
   useMediaQuery, type NavIcon,
 } from './ui';
-import { NewTaskDialog, TaskPanel, type Draft } from './TaskPanel';
+import { NewTaskDialog, TaskPanel, type Draft, type Extras } from './TaskPanel';
 import Timeline, { useToday } from './Timeline';
 import Calendar from './Calendar';
 import Roadmap from './Roadmap';
@@ -66,6 +66,7 @@ import { MembersContext, useMembers } from './members';
 import { LoadingScreen, LoginScreen, PendingScreen, TroubleScreen } from './Gate';
 import { TeamDialog } from './TeamDialog';
 import { DomainDialog } from './DomainDialog';
+import { AllDomainsDialog, useFavDomains } from './DomainFavorites';
 import { ColorDialog } from './ColorDialog';
 
 /*
@@ -106,7 +107,7 @@ const VIEWS: { id: View; label: string; key: string; hint: string }[] = [
   { id: 'board', label: '보드', key: 'b', hint: '카드를 끌어 다른 단계로 옮깁니다. 카드를 누르면 오른쪽에서 자세히 고칩니다.' },
   { id: 'list', label: '목록', key: 'l', hint: '열 이름을 누르면 그 순서로 줄을 세웁니다.' },
   { id: 'timeline', label: '타임라인', key: 't', hint: '시작일부터 마감일까지를 막대로 봅니다. 막대를 누르면 작업이 열립니다.' },
-  { id: 'calendar', label: '캘린더', key: 'c', hint: '빈 칸을 누르면 그날 마감인 작업을 만들고, 항목을 끌어 놓으면 마감일이 바뀝니다.' },
+  { id: 'calendar', label: '캘린더', key: 'c', hint: '시작일부터 마감일까지 막대로 이어집니다. 빈 칸을 누르면 그날 마감인 작업을 만들고, 막대를 끌어 놓으면 기간째 옮깁니다.' },
   { id: 'roadmap', label: '로드맵', key: 'r', hint: '마감일을 주 단위로 나눠 봅니다. 지난 일정은 이번 주에 모아 둡니다. 지난주까지 마감된 완료 작업은 올리지 않습니다.' },
 ];
 type Scope = { kind: 'all' } | { kind: 'mine' } | { kind: 'domain'; id: DomainKey };
@@ -135,6 +136,8 @@ type Prefs = {
   assignee: AssigneeFilter; colorBy: ColorBy;
   /** 넓은 화면의 왼쪽 메뉴를 아이콘 줄로 접었는지 */
   rail: boolean;
+  /** 상위 작업만(하위 업무를 숨김) */
+  topOnly: boolean;
 };
 
 function readPrefs(): Partial<Prefs> | null {
@@ -340,6 +343,8 @@ function Workspace({ account }: { account?: Account }) {
   const [query, setQuery] = useState('');
   const [priorityFilter, setPriorityFilter] = useState<Priority | 'all'>('all');
   const [hideDone, setHideDone] = useState(false);
+  /** 상위 작업만 - 다른 작업의 하위 업무는 숨긴다 */
+  const [topOnly, setTopOnly] = useState(false);
   const [assigneeFilter, setAssigneeFilter] = useState<AssigneeFilter>('all');
   /** 캘린더 · 타임라인에서 작업 바탕을 칠하는 기준 */
   const [colorBy, setColorBy] = useState<ColorBy>('member');
@@ -347,6 +352,11 @@ function Workspace({ account }: { account?: Account }) {
   /** 브라우저 저장 모드에서 고른 '나'. Supabase 모드에서는 로그인한 계정이 '나'다 */
   const [localMe, setLocalMe] = useState<string>('m7');
   const me = account ? account.me.id : localMe;
+  /* 나만 보기 작업은 만든 사람에게만 - Supabase 는 RLS 가 이미 빼고 주지만, 브라우저 저장 모드('나'를 바꿔 씀) · 늦은 알림에도 지킨다.
+     조직도 · 위키 · 블로그 · 보고처럼 팀이 함께 보는 화면에는 내 나만 보기 작업도 넘기지 않는다 */
+  const [favs, toggleFav] = useFavDomains(me);
+  const tasksAll = useMemo(() => store.tasks.filter((t) => visibleTo(t, me)), [store.tasks, me]);
+  const teamTasks = useMemo(() => tasksAll.filter((t) => !t.private), [tasksAll]);
 
   const [openId, setOpenId] = useState<string | null>(null);
   const [creating, setCreating] = useState<Status | null>(null);
@@ -371,6 +381,8 @@ function Workspace({ account }: { account?: Account }) {
   const [winOpen, setWinOpen] = useState(false);
   /** 영역 관리 창 */
   const [domainsOpen, setDomainsOpen] = useState(false);
+  /** 모든 영역(즐겨찾기 고르기) 창 */
+  const [allDomainsOpen, setAllDomainsOpen] = useState(false);
   const [leaving, setLeaving] = useState(false);
   /** Supabase 모드 - 이 브라우저에 남은 예전 데이터 */
   const [leftover, setLeftover] = useState<{ tasks: number; docs: number } | null>(null);
@@ -407,6 +419,7 @@ function Workspace({ account }: { account?: Account }) {
       if (p.scope) setScope(p.scope);
       if (p.priority) setPriorityFilter(p.priority);
       if (typeof p.hideDone === 'boolean') setHideDone(p.hideDone);
+      if (typeof p.topOnly === 'boolean') setTopOnly(p.topOnly);
       if (typeof p.assignee === 'string' && p.assignee) setAssigneeFilter(p.assignee);
       if (COLOR_BYS.some((c) => c.id === p.colorBy)) setColorBy(p.colorBy as ColorBy);
     }
@@ -430,9 +443,9 @@ function Workspace({ account }: { account?: Account }) {
     if (!prefsLoaded) return;
     try {
       window.localStorage.setItem(PREF_KEY, JSON.stringify(
-        { section, view, scope, priority: priorityFilter, hideDone, assignee: assigneeFilter, colorBy, rail } satisfies Prefs));
+        { section, view, scope, priority: priorityFilter, hideDone, assignee: assigneeFilter, colorBy, rail, topOnly } satisfies Prefs));
     } catch { /* noop */ }
-  }, [prefsLoaded, section, view, scope, priorityFilter, hideDone, assigneeFilter, colorBy, rail]);
+  }, [prefsLoaded, section, view, scope, priorityFilter, hideDone, assigneeFilter, colorBy, rail, topOnly]);
 
   const pickMe = (id: string) => {
     setLocalMe(id);
@@ -630,8 +643,11 @@ function Workspace({ account }: { account?: Account }) {
   /* ── 필터 ── */
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return store.tasks
+    // 상위 작업만 - 상위 업무 칸이 있을 때만. 지운 작업을 가리키는 하위는 맨 위 업무로 본다
+    const byId = topOnly && store.hierarchy ? new Map(tasksAll.map((t) => [t.id, t])) : null;
+    return tasksAll
       .filter((t) => {
+        if (byId && parentOf(t, byId)) return false;
         if (scope.kind === 'mine' && t.assignee !== me) return false;
         if (scope.kind === 'domain' && t.domain !== scope.id) return false;
         if (priorityFilter !== 'all' && t.priority !== priorityFilter) return false;
@@ -646,7 +662,7 @@ function Workspace({ account }: { account?: Account }) {
         return true;
       })
       .sort((a, b) => a.order - b.order);
-  }, [store.tasks, scope, me, priorityFilter, assigneeFilter, hideDone, query]);
+  }, [tasksAll, scope, me, priorityFilter, assigneeFilter, hideDone, query, topOnly, store.hierarchy]);
 
   /** 목록 보기 정렬 - 열 이름을 누르면 그 열 기준으로 선다 */
   const members = useMembers();
@@ -688,22 +704,22 @@ function Workspace({ account }: { account?: Account }) {
   }, [visible]);
 
   /** 아무도 손대지 않은 예시 작업 수 - 안내 띠를 띄울지 정한다 */
-  const sampleCount = useMemo(() => store.tasks.filter(isUntouchedSample).length, [store.tasks]);
+  const sampleCount = useMemo(() => tasksAll.filter(isUntouchedSample).length, [tasksAll]);
 
   /** 이미 쓰인 라벨 - 라벨 칸의 제안 목록 */
   const knownLabels = useMemo(
-    () => Array.from(new Set(store.tasks.flatMap((t) => t.labels))).sort((a, b) => a.localeCompare(b, 'ko')),
-    [store.tasks],
+    () => Array.from(new Set(tasksAll.flatMap((t) => t.labels))).sort((a, b) => a.localeCompare(b, 'ko')),
+    [tasksAll],
   );
 
   /* 상위 · 하위 업무 - Supabase 에 상위 업무 칸(SQL)이 아직 없으면 쓰지 않는다. 지운 작업을 가리키는 칸은 맨 위 업무로 본다.
      걸러 보기와 상관없이 모든 작업으로 센다(상위 업무가 걸러져도 하위 카드에 상위가 보이게) */
   const hierarchy = !!store.hierarchy;
   const kin = useMemo(() => {
-    const byId = new Map(store.tasks.map((t) => [t.id, t]));
+    const byId = new Map(tasksAll.map((t) => [t.id, t]));
     const sub = new Map<string, { done: number; total: number }>();
     if (hierarchy) {
-      store.tasks.forEach((t) => {
+      tasksAll.forEach((t) => {
         const p = parentOf(t, byId);
         if (!p) return;
         const s = sub.get(p.id) ?? { done: 0, total: 0 };
@@ -713,7 +729,7 @@ function Workspace({ account }: { account?: Account }) {
       });
     }
     return { byId, sub };
-  }, [store.tasks, hierarchy]);
+  }, [tasksAll, hierarchy]);
   const parentFor = (t: Task) => (hierarchy ? parentOf(t, kin.byId) : null);
   /** 목록 줄의 상위 업무 한 줄 · 하위 업무 진행 - 없으면 그리지 않는다 */
   const parentLine = (t: Task, className?: string) => {
@@ -730,14 +746,14 @@ function Workspace({ account }: { account?: Account }) {
   const counts = useMemo(() => {
     /* 왼쪽 메뉴의 숫자(모든 작업 · 내 작업 · 영역)는 기간이 지난 작업(마감일이 오늘보다 앞)을 빼고 센다. 오늘 마감은 센다 */
     const counted = (t: Task) => t.status !== 'done' && !(t.due && t.due < todayKey);
-    const mine = store.tasks.filter((t) => t.assignee === me && counted(t)).length;
+    const mine = tasksAll.filter((t) => t.assignee === me && counted(t)).length;
     const perDomain = new Map<DomainKey, number>();
-    store.tasks.forEach((t) => {
+    tasksAll.forEach((t) => {
       if (counted(t)) perDomain.set(t.domain, (perDomain.get(t.domain) ?? 0) + 1);
     });
-    const open = store.tasks.filter(counted).length;
-    return { mine, perDomain, open, total: store.tasks.length };
-  }, [store.tasks, me, todayKey]);
+    const open = tasksAll.filter(counted).length;
+    return { mine, perDomain, open, total: tasksAll.length };
+  }, [tasksAll, me, todayKey]);
 
   /* 보던 영역이 지워졌으면(다른 곳에서 지웠거나 저장해 둔 화면의 영역이 없어졌으면) 모든 작업으로 */
   const scopeGone = scope.kind === 'domain' && domainStore.ready && !domains.some((d) => d.id === scope.id);
@@ -745,7 +761,7 @@ function Workspace({ account }: { account?: Account }) {
     if (scopeGone) setScope({ kind: 'all' });
   }, [scopeGone]);
 
-  const open = openId ? store.tasks.find((t) => t.id === openId) ?? null : null;
+  const open = openId ? tasksAll.find((t) => t.id === openId) ?? null : null;
 
   /* 위젯에서 누른 작업(?task=<id>)을 연다 - 목록을 읽은 뒤 한 번만. ?task · ?view 는 주소에서 지워
      새로고침하거나 다른 보기로 옮겨도 다시 열리지 않게 한다 */
@@ -760,9 +776,9 @@ function Workspace({ account }: { account?: Account }) {
     url.searchParams.delete('view');
     window.history.replaceState(window.history.state, '', url);
     if (!id) return;
-    if (store.tasks.some((t) => t.id === id)) setOpenId(id);
+    if (tasksAll.some((t) => t.id === id)) setOpenId(id);
     else setToast({ text: '위젯에서 고른 작업을 찾지 못했습니다. 그사이 지워졌을 수 있습니다.', undo: false });
-  }, [store.ready, store.loadError, store.tasks]);
+  }, [store.ready, store.loadError, tasksAll]);
 
   /* 열어 둔 작업이 다른 곳에서 지워지면 창을 닫고 알린다. openId 도 비워 나중에 되살아나도 저절로 열리지 않게 한다 */
   const openMissing = !!openId && store.ready && !open;
@@ -790,11 +806,11 @@ function Workspace({ account }: { account?: Account }) {
   }, [refocus]);
 
   const handleCreate = useCallback((d: Draft) => {
-    const t = store.create(d);
+    const t = store.create({ ...d, owner: me });
     setCreating(null);
     setCreatingDue(null);
     setOpenId(t.id);
-  }, [store]);
+  }, [store, me]);
 
   /** 캘린더에서 날짜를 눌러 만들 때 - 그 날을 마감일로 미리 채운다 */
   const createAt = useCallback((dueISO: string) => {
@@ -804,19 +820,39 @@ function Workspace({ account }: { account?: Account }) {
 
   const newTask = () => { setCreatingDue(null); setCreating('todo'); };
 
+  /* 새 작업의 처음 값 - 보고 있는 영역, 담당은 나(담당자로 걸러 보는 중이면 그 사람, 미배정으로 걸러 보면 비움) */
+  const newDomain = scope.kind === 'domain' && domains.some((d) => d.id === scope.id) ? scope.id : defaultDomain(domains);
+  const newAssignee = scope.kind === 'mine' || assigneeFilter === 'all' ? me : assigneeFilter === 'none' ? null : assigneeFilter;
+
+  /** 나만 보기 · 참고자료 - Supabase 에 그 칸(SQL)이 아직 없으면 숨긴다 */
+  const taskExtras: Extras | undefined = store.extras ? {
+    me,
+    docs: docStore.docs,
+    onOpenDoc: (id) => {
+      // 위키는 열 때 주소의 ?doc= 를 읽는다
+      const url = new URL(window.location.href);
+      url.searchParams.set('doc', id);
+      window.history.replaceState(window.history.state, '', url);
+      setOpenId(null);
+      setSection('docs');
+    },
+    onNotice: (text) => setToast({ text, undo: false, tone: 'err' }),
+  } : undefined;
+
   /* 범위(왼쪽 메뉴)는 걸러 보기가 아니라 지금 있는 곳이라 초기화에 넣지 않는다 */
   const assigneeOn = scope.kind !== 'mine' && assigneeFilter !== 'all';
-  const filtersOn = query.trim() !== '' || priorityFilter !== 'all' || assigneeOn || hideDone;
+  const topOn = topOnly && !!store.hierarchy;
+  const filtersOn = query.trim() !== '' || priorityFilter !== 'all' || assigneeOn || hideDone || topOn;
   /** 휴대폰의 '걸러 보기' 단추에 적는 켜진 수(검색 말고 고르기 칸) */
-  const filterCount = Number(priorityFilter !== 'all') + Number(assigneeOn) + Number(hideDone);
+  const filterCount = Number(priorityFilter !== 'all') + Number(assigneeOn) + Number(hideDone) + Number(topOn);
   const clearFilters = () => {
-    setQuery(''); setPriorityFilter('all'); setAssigneeFilter('all'); setHideDone(false);
+    setQuery(''); setPriorityFilter('all'); setAssigneeFilter('all'); setHideDone(false); setTopOnly(false);
   };
 
   /** 담당자로 고를 수 있는 사람 - 승인된 팀원, 그리고 승인이 풀렸어도 작업을 맡고 있는 사람 */
   const people = useMemo(
-    () => members.filter((m) => m.active !== false || store.tasks.some((t) => t.assignee === m.id)),
-    [members, store.tasks],
+    () => members.filter((m) => m.active !== false || tasksAll.some((t) => t.assignee === m.id)),
+    [members, tasksAll],
   );
   /** 색 바꾸기 창 - Supabase 에 색 표가 아직 없으면 자동 색만 쓰고 단추를 숨긴다 */
   const editColors = colorStore.editable ? () => setColorsOpen(true) : undefined;
@@ -832,13 +868,13 @@ function Workspace({ account }: { account?: Account }) {
   const hiddenIn = useMemo(() => {
     const out = new Set<Status>();
     if (!filtersOn) return out;
-    store.tasks.forEach((t) => {
+    tasksAll.forEach((t) => {
       if (scope.kind === 'mine' && t.assignee !== me) return;
       if (scope.kind === 'domain' && t.domain !== scope.id) return;
       out.add(t.status);
     });
     return out;
-  }, [filtersOn, store.tasks, scope, me]);
+  }, [filtersOn, tasksAll, scope, me]);
 
   /* Supabase 모드 - 처음 목록을 읽지 못했으면 빈 보드 대신 그 까닭과 다시 시도를 보인다 */
   const slot: View | 'error' = store.loadError ? 'error' : view;
@@ -870,7 +906,7 @@ function Workspace({ account }: { account?: Account }) {
 
   /* 캘린더에서 끌어 마감일을 바꿀 때 - 시작일이 마감일보다 늦어지지 않게 기간째 같은 날수만큼 민다 */
   const reschedule = (id: string, due: string) => {
-    const t = store.tasks.find((x) => x.id === id);
+    const t = tasksAll.find((x) => x.id === id);
     if (!t || t.due === due) return;
     let start = t.start;
     // 'YYYY-MM-DD' 는 UTC 자정으로 읽히고 toISOString 으로 같은 날짜가 돌아온다 - 지역 시각 Date 를 섞지 않는다
@@ -922,13 +958,21 @@ function Workspace({ account }: { account?: Account }) {
       ],
     },
     {
-      label: '영역',
-      action: canEditDomains ? { text: '관리', label: '영역 관리', go: () => setDomainsOpen(true) } : undefined,
-      items: domains.map((d) => ({
-        key: d.id, label: d.label, dot: d.color, count: counts.perDomain.get(d.id) ?? 0,
-        active: section === 'tasks' && scope.kind === 'domain' && scope.id === d.id,
-        go: () => goTasks({ kind: 'domain', id: d.id }),
-      })),
+      // 즐겨찾는 영역만(처음엔 모두). 지금 보고 있는 영역은 즐겨찾기가 아니어도 잠깐 보인다. '전체'에서 모든 영역 · 별 · 관리
+      label: favs ? '즐겨찾기' : '영역',
+      action: { text: '전체', label: '모든 영역', go: () => setAllDomainsOpen(true) },
+      items: [
+        ...domains
+          .filter((d) => !favs || favs.includes(d.id) || (section === 'tasks' && scope.kind === 'domain' && scope.id === d.id))
+          .map((d): NavItem => ({
+            key: d.id, label: d.label, dot: d.color, count: counts.perDomain.get(d.id) ?? 0,
+            active: section === 'tasks' && scope.kind === 'domain' && scope.id === d.id,
+            go: () => goTasks({ kind: 'domain', id: d.id }),
+          })),
+        ...(favs && !domains.some((d) => favs.includes(d.id))
+          ? [{ key: 'fav-pick', label: '즐겨찾기 고르기', icon: 'star' as const, active: false, go: () => setAllDomainsOpen(true) }]
+          : []),
+      ],
     },
     {
       // 팀 구성 · 맡은 일 · 도구 · 담당 폴더 - 열 때 표를 읽으므로 숫자를 달지 않는다
@@ -1026,6 +1070,15 @@ function Workspace({ account }: { account?: Account }) {
             )}
           </button>
         ))}
+        {/* 접힌 메뉴에는 묶음 이름 옆 단추가 없어 '모든 영역'을 아이콘 칸으로 둔다 */}
+        {compact && g.action && !g.items.some((it) => it.key === 'fav-pick') && (
+          <button type="button" onClick={() => { after?.(); g.action?.go(); }} title={g.action.label} aria-label={g.action.label}
+            className="flex min-h-[54px] w-full flex-col items-center justify-center gap-1 rounded-tm-sm px-1 py-1.5 text-[12px] font-semibold leading-tight
+                       text-tm-sub transition-colors duration-150 hover:bg-tm-tint">
+            <IconNav name="star" />
+            {g.action.text}
+          </button>
+        )}
       </div>
     ));
 
@@ -1196,16 +1249,16 @@ function Workspace({ account }: { account?: Account }) {
             ) : section === 'builds' ? (
               <Builds me={me} admin={!!account && account.me.isAdmin === true} />
             ) : section === 'org' ? (
-              <Org me={me} tasks={store.tasks}
+              <Org me={me} tasks={teamTasks}
                 /* 소속 · 상위와 남의 카드는 관리자만(DB 도 그렇게 받는다). 브라우저 저장 모드는 계정이 없어 누구나 */
                 admin={!account || account.me.isAdmin === true}
                 onRole={account ? (id, role) => account.update(id, { role }) : undefined}
                 onTasks={(id) => setSection('tasks', () => { setScope({ kind: 'all' }); setAssigneeFilter(id); })}
                 onNotice={(text, tone) => setToast({ text, undo: false, tone: tone === 'err' ? 'err' : undefined })} />
             ) : section === 'docs' ? (
-              <Docs store={docStore} me={me} tasks={store.tasks}
+              <Docs store={docStore} me={me} tasks={tasksAll}
                 onTaskClick={(key) => {
-                  const hit = store.tasks.find((t) => t.key === key);
+                  const hit = tasksAll.find((t) => t.key === key);
                   if (hit) setSection('tasks', () => setOpenId(hit.id));
                   else setToast({ text: `${key} 작업을 찾을 수 없습니다`, undo: false });
                 }}
@@ -1213,7 +1266,7 @@ function Workspace({ account }: { account?: Account }) {
             ) : section === 'memos' ? (
               <Memos store={memoStore} me={me} />
             ) : section === 'blog' ? (
-              <Blog me={me} docs={docStore.docs} tasks={store.tasks}
+              <Blog me={me} docs={docStore.docs} tasks={teamTasks}
                 /* 공지 · 카테고리 · 남의 글 지우기는 관리자만(DB 도 그렇게 받는다). 브라우저 저장 모드는 계정이 없어 누구나 */
                 admin={!account || account.me.isAdmin === true}
                 onOpenDoc={(id) => {
@@ -1225,13 +1278,13 @@ function Workspace({ account }: { account?: Account }) {
                   setSection('docs');
                 }}
                 onTaskOpen={(key) => {
-                  const hit = store.tasks.find((t) => t.key === key);
+                  const hit = tasksAll.find((t) => t.key === key);
                   if (hit) setSection('tasks', () => setOpenId(hit.id));
                   else setToast({ text: `${key} 작업을 찾을 수 없습니다`, undo: false });
                 }}
                 onNotice={(text, tone) => setToast({ text, undo: false, tone: tone === 'err' ? 'err' : undefined })} />
             ) : section === 'daily' || section === 'weekly' ? (
-              <Reports kind={section} onKind={setSection} me={me} tasks={store.tasks} flushRef={reportsFlush} leaveRef={reportsLeave}
+              <Reports kind={section} onKind={setSection} me={me} tasks={teamTasks} flushRef={reportsFlush} leaveRef={reportsLeave}
                 /* 명단은 Supabase 모드에서 관리자만(DB 도 관리자 것만 받는다). 브라우저 저장 모드는 계정이 없어 누구나 */
                 canEditPeople={!account || account.me.isAdmin === true}
                 onTaskOpen={(id) => setSection('tasks', () => setOpenId(id))}
@@ -1314,6 +1367,12 @@ function Workspace({ account }: { account?: Account }) {
                   <button type="button" onClick={() => setHideDone(!hideDone)} aria-pressed={hideDone} className={tmTab}>
                     완료 숨기기
                   </button>
+                  {hierarchy && (
+                    <button type="button" onClick={() => setTopOnly(!topOnly)} aria-pressed={topOnly} className={tmTab}
+                      title="다른 작업의 하위 업무는 숨기고 상위 작업만 봅니다">
+                      상위 작업만
+                    </button>
+                  )}
                   </div>
 
                   {filtersOn && (
@@ -1524,6 +1583,7 @@ function Workspace({ account }: { account?: Account }) {
                             <td className="px-4 py-3.5">
                               <div className="flex min-w-0 items-center gap-2.5">
                                 <span className="flex-none text-[13px] font-bold tabular-nums text-tm-sub">{t.key}</span>
+                                <TaskMarks task={t} />
                                 <span className={`min-w-0 font-semibold ${t.status === 'done' ? 'text-tm-sub line-through' : 'text-tm-ink'}`}>
                                   {t.title}
                                 </span>
@@ -1583,7 +1643,7 @@ function Workspace({ account }: { account?: Account }) {
                               className="flex w-full flex-col gap-2 px-4 py-3.5 text-left transition-colors duration-150 hover:bg-tm-tint">
                               <span className="flex w-full min-w-0 items-start gap-3">
                                 <span className="min-w-0 flex-1">
-                                  <span className="block text-[13px] font-bold tabular-nums text-tm-sub">{t.key}</span>
+                                  <span className="flex items-center gap-2 text-[13px] font-bold tabular-nums text-tm-sub">{t.key}<TaskMarks task={t} /></span>
                                   <span className={`block text-[15px] font-semibold leading-[1.45] ${
                                     t.status === 'done' ? 'text-tm-sub line-through' : 'text-tm-ink'}`}>
                                     {t.title}
@@ -1636,12 +1696,19 @@ function Workspace({ account }: { account?: Account }) {
       {open && (
         <TaskPanel task={open} knownLabels={knownLabels} unsaved={sync === 'error'}
           family={hierarchy ? {
-            tasks: store.tasks,
+            tasks: tasksAll,
             open: setOpenId,
             update: (id, patch) => store.update(id, patch),
             // 새 하위 업무는 상위 업무의 영역으로, 할 일 칸에. 창은 상위 업무에 그대로 둬 이어서 여러 개를 적게 한다
-            create: (title) => { store.create({ title, parentId: open.id, domain: open.domain, status: 'todo' }); },
+            // 나만 보기 업무의 하위도 나만 보기(남에게 상위 없이 보이지 않게)
+            create: (title) => {
+              store.create({
+                title, parentId: open.id, domain: open.domain, status: 'todo', owner: me,
+                ...(open.private ? { private: true, assignee: me } : {}),
+              });
+            },
           } : undefined}
+          extras={taskExtras}
           onUpdate={(patch) => store.update(open.id, patch)}
           onRemove={() => { store.remove(open.id); setOpenId(null); }}
           onClose={() => setOpenId(null)} />
@@ -1659,8 +1726,9 @@ function Workspace({ account }: { account?: Account }) {
       )}
 
       {creating && (
-        <NewTaskDialog defaultStatus={creating} defaultDomain={defaultDomain(domains)} defaultDue={creatingDue} knownLabels={knownLabels}
-          tasks={hierarchy ? store.tasks : undefined}
+        <NewTaskDialog defaultStatus={creating} defaultDomain={newDomain} defaultAssignee={newAssignee}
+          defaultDue={creatingDue} knownLabels={knownLabels} extras={taskExtras}
+          tasks={hierarchy ? tasksAll : undefined}
           onCreate={handleCreate}
           onClose={() => { setCreating(null); setCreatingDue(null); }} />
       )}
@@ -1679,6 +1747,15 @@ function Workspace({ account }: { account?: Account }) {
       {colorsOpen && colorStore.editable && (
         <ColorDialog members={members.filter((m) => m.active !== false)} labels={knownLabels} picks={colorStore.picks}
           local={!isRemote} start={colorBy} onPick={colorStore.set} onClose={() => setColorsOpen(false)} />
+      )}
+
+      {allDomainsOpen && (
+        <AllDomainsDialog domains={domains} favs={favs} counts={counts.perDomain}
+          active={section === 'tasks' && scope.kind === 'domain' ? scope.id : null}
+          onToggle={toggleFav}
+          onGo={(id) => { setAllDomainsOpen(false); setMenu(false); goTasks({ kind: 'domain', id }); }}
+          onManage={canEditDomains ? () => { setAllDomainsOpen(false); setDomainsOpen(true); } : undefined}
+          onClose={() => setAllDomainsOpen(false)} />
       )}
 
       {/* 맡은 사람에서 빠지면(다른 창에서 바뀌면) 창도 닫힌다 */}
