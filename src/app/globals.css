@@ -582,17 +582,15 @@ body {
   position: absolute;
   inset: 0;
   z-index: 4;
-  padding: 1px;
   pointer-events: none;
-  background: linear-gradient(150deg,
+  /* 마스크 합성 대신 border-image 로 그린다 - 도는 3D 면 위의 마스크는 모바일 GPU 에서 번쩍일 수 있다 */
+  border: 1px solid transparent;
+  border-image: linear-gradient(150deg,
     rgba(255, 255, 255, 0.9) 0%,
     rgba(255, 255, 255, 0.32) 16%,
     rgba(255, 255, 255, 0.08) 42%,
     rgba(255, 255, 255, 0.05) 70%,
-    rgba(255, 255, 255, 0.3) 100%);
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+    rgba(255, 255, 255, 0.3) 100%) 1;
 }
 .cube-shell--front  { transform: translateZ(calc(var(--h) + var(--d))); }
 .cube-shell--right  { transform: rotateY(90deg) translateZ(calc(var(--h) + var(--d))); }
@@ -652,6 +650,14 @@ body {
     0 calc(var(--s) * 0.03) calc(var(--s) * 0.08) rgba(0, 0, 0, 0.32);
   -webkit-backdrop-filter: blur(calc(var(--s) * 0.03)) saturate(1.5);
   backdrop-filter: blur(calc(var(--s) * 0.03)) saturate(1.5);
+}
+/* 터치 기기에서는 흐림을 끈다. 3D 로 도는 면 위의 backdrop-filter 는 iOS 사파리 · 안드로이드 크롬에서
+   뒤 화면을 못 읽어 회전 중 검게 번쩍였다 (2026-11-20). 물빛만으로도 글자는 읽힌다 */
+@media (hover: none), (pointer: coarse) {
+  .cube-glass {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
 }
 .cube-tone--light .cube-glass { border-color: rgba(255, 255, 255, 0.6); }
 
