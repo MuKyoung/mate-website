@@ -1,5 +1,7 @@
 import { MetadataRoute } from 'next';
 import { projects } from '@/data/projects';
+import { landingDesigns } from '@/data/landingDesigns';
+import { LANDING_ORIGIN } from '@/lib/shell';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://devteammate.co.kr';
@@ -63,6 +65,23 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: currentDate,
       changeFrequency: 'monthly',
       priority: 0.7,
+    });
+  });
+
+  // 단일 랜딩페이지 제작 - 하위 도메인(landingpage.devteammate.co.kr)의 소개 · 갤러리와 스타일별 상세.
+  // 서치 콘솔 속성이 도메인 단위면 이 사이트맵으로 받는다. 주소 단위 속성이면 하위 도메인을 따로 등록해야 한다
+  routes.push({
+    url: `${LANDING_ORIGIN}/`,
+    lastModified: currentDate,
+    changeFrequency: 'monthly',
+    priority: 0.9,
+  });
+  landingDesigns.forEach((d) => {
+    routes.push({
+      url: `${LANDING_ORIGIN}/${d.id}/`,
+      lastModified: currentDate,
+      changeFrequency: 'monthly',
+      priority: 0.5,
     });
   });
 

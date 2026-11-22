@@ -1,0 +1,225 @@
+'use client';
+
+import { useMemo, useState } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { FiArrowUpRight, FiSearch } from 'react-icons/fi';
+import PageHeader from '@/components/PageHeader';
+import SectionHead from '@/components/ui/SectionHead';
+import { landingDesigns, landingFields, landingVocab } from '@/data/landingDesigns';
+import {
+  landingContactHref, landingHero, landingProcess, landingSampleNotes, landingScope, landingScopeNote,
+} from '@/data/landingService';
+import { fadeUp, inView, rowIn, staggerRows, staggerTight } from '@/lib/motion';
+import { arrowHover, btnLight, chip, container, numTile, radiusCard } from '@/lib/styles';
+
+type FilterKey = 'field' | 'purpose' | 'mood' | 'visual';
+const EMPTY: Record<FilterKey, string[]> = { field: [], purpose: [], mood: [], visual: [] };
+
+const groups: { key: FilterKey; label: string; items: [string, string][] }[] = [
+  { key: 'field', label: '업종', items: Object.entries(landingFields) },
+  { key: 'purpose', label: '목적', items: landingVocab.purposes.map((p): [string, string] => [p, p]) },
+  { key: 'mood', label: '분위기', items: landingVocab.moods.map((p): [string, string] => [p, p]) },
+  { key: 'visual', label: '표현', items: landingVocab.visualStyles.map((p): [string, string] => [p, p]) },
+];
+
+/** 외부 디자인 기반 샘플의 출처 - 같은 원본 파일은 한 줄로 묶는다 */
+const templateCredits = (() => {
+  const m = new Map<string, { text: string; sourceUrl: string; licenseUrl: string; ids: string[] }>();
+  for (const d of landingDesigns) {
+    if (d.kind !== 'template' || !d.credit) continue;
+    const key = d.credit.sourceUrl;
+    if (!m.has(key)) m.set(key, { text: d.credit.text, sourceUrl: d.credit.sourceUrl, licenseUrl: d.credit.licenseUrl, ids: [] });
+    m.get(key)!.ids.push(d.id);
+  }
+  return [...m.values()];
+})();
+const krds = landingDesigns.filter((d) => d.kind === 'mate' && d.credit);
+
+/**
+ * 단일 랜딩페이지 제작 - 서비스 소개와 스타일 갤러리.
+ * 갤러리 카드는 걸러질 때마다 다시 그려지므로 스크롤 등장 효과를 걸지 않는다(걸러진 뒤 안 보이는 일이 없게).
+ */
+export default function LandingClient() {
+  const [q, setQ] = useState('');
+  const [sel, setSel] = useState<Record<FilterKey, string[]>>(EMPTY);
+
+  const toggle = (k: FilterKey, v: string) =>
+    setSel((s) => ({ ...s, [k]: s[k].includes(v) ? s[k].filter((x) => x !== v) : [...s[k], v] }));
+  const reset = () => { setQ(''); setSel(EMPTY); };
+  const filtered = q.trim() !== '' || Object.values(sel).some((a) => a.length > 0);
+
+  const list = useMemo(() => {
+    const words = q.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    return landingDesigns.filter((d) => {
+      if (sel.field.length && !sel.field.includes(String(d.field))) return false;
+      if (sel.purpose.length && !d.purposes.some((p) => sel.purpose.includes(p))) return false;
+      if (sel.mood.length && !d.moods.some((p) => sel.mood.includes(p))) return false;
+      if (sel.visual.length && !d.visualStyles.some((p) => sel.visual.includes(p))) return false;
+      if (words.length) {
+        const hay = [d.id, d.title, d.summary, d.fieldLabel, ...d.industries, ...d.purposes, ...d.moods, ...d.visualStyles]
+          .join(' ').toLowerCase();
+        if (!words.every((w) => hay.includes(w))) return false;
+      }
+      return true;
+    });
+  }, [q, sel]);
+
+  return (
+    <>
+      {/* 하위 도메인(landingpage.devteammate.co.kr)에서 따로 여는 화면이라 본 사이트 사업영역 탭은 달지 않는다 */}
+      <PageHeader eyebrow="단일 랜딩페이지 제작" title={<>당신의 공간과 사람,<br /><b>제품이 보이는 한 페이지.</b></>}
+        desc={landingHero.sub} />
+
+      {/* 맡길 수 있는 일 */}
+      <section data-header="light" className="bg-gray-100 py-24 sm:py-32 xl:py-40">
+        <div className={container}>
+          <SectionHead eyebrow="Scope" title={<><b>필요한 만큼</b><br />맡기세요</>} desc={landingHero.desc} />
+          <motion.div {...inView} variants={staggerTight} className="mt-12 grid gap-4 sm:mt-16 sm:grid-cols-2 lg:grid-cols-4 lg:gap-5">
+            {landingScope.map((s) => (
+              <motion.article key={s.title} variants={fadeUp} className={`bg-white p-6 sm:p-8 ${radiusCard}`}>
+                <h3 className="text-[20px] font-bold text-ink sm:text-[22px]">{s.title}</h3>
+                <p className="mt-3 text-[15px] leading-[1.7] text-gray-500 sm:text-[16px]">{s.desc}</p>
+              </motion.article>
+            ))}
+          </motion.div>
+          <p className="mt-6 text-[15px] text-gray-500">{landingScopeNote}</p>
+        </div>
+      </section>
+
+      {/* 스타일 갤러리 */}
+      <section id="gallery" data-header="light" className="scroll-mt-24 bg-white py-24 sm:py-32 xl:py-40">
+        <div className={container}>
+          <SectionHead eyebrow="Gallery" title={<>스타일을 고르고<br /><b>번호로 문의하세요</b></>}
+            desc="업종, 목적, 분위기로 골라 보세요. 마음에 드는 디자인의 번호를 문의에 적어 주시면 그 스타일로 상담을 시작합니다." />
+
+          <div className="mt-10 grid gap-3 border-y border-gray-200 py-5 sm:mt-14">
+            <div className="flex flex-wrap items-center gap-3">
+              <label htmlFor="landing-q" className="flex min-w-0 flex-[1_1_260px] items-center gap-2 rounded-pill border border-gray-200 px-5 py-3">
+                <FiSearch aria-hidden className="shrink-0 text-gray-400" />
+                <span className="sr-only">검색</span>
+                <input id="landing-q" type="search" value={q} onChange={(e) => setQ(e.target.value)} autoComplete="off"
+                  placeholder="업종이나 분위기로 찾기 (예: 카페, 축제, 신뢰감)"
+                  className="w-full border-0 bg-transparent p-0 text-[16px] text-ink placeholder:text-gray-400 outline-none focus:ring-0" />
+              </label>
+              <p className="text-[15px] text-gray-500" aria-live="polite"><b className="text-ink">{list.length}</b>개 스타일</p>
+              {filtered && (
+                <button type="button" onClick={reset} className="text-[15px] font-bold text-point-200">필터 초기화</button>
+              )}
+            </div>
+            {groups.map((g) => (
+              <div key={g.key} className="flex min-w-0 items-center gap-3">
+                <span className="w-12 shrink-0 text-[14px] font-bold text-gray-500">{g.label}</span>
+                <div className="flex min-w-0 gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none]">
+                  {g.items.map(([value, label]) => {
+                    const on = sel[g.key].includes(value);
+                    return (
+                      <button key={value} type="button" aria-pressed={on} onClick={() => toggle(g.key, value)}
+                        className={`shrink-0 whitespace-nowrap rounded-pill border px-3.5 py-1.5 text-[14px] transition-colors ${
+                          on ? 'border-ink bg-ink text-white' : 'border-gray-200 bg-white text-gray-600 hover:border-point-200 hover:text-point-200'}`}>
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {list.length === 0 ? (
+            <p className="py-16 text-[16px] text-gray-500">조건에 맞는 스타일이 없습니다. 필터를 하나 풀어 보세요.</p>
+          ) : (
+            <ul className="mt-10 grid gap-x-5 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {list.map((d) => (
+                <li key={d.id}>
+                  {/* 상대 주소 - 하위 도메인에서는 /LP-001/, 본 사이트 경로에서는 /landing-page/LP-001/ 로 간다 */}
+                  <Link href={`${d.id}/`} className="group block">
+                    <div className="overflow-hidden rounded-[12px] border border-gray-200 bg-gray-100 transition-transform duration-300 group-hover:-translate-y-1">
+                      <Image src={d.thumb} alt={`${d.title} 첫 화면`} width={640} height={400}
+                        className="aspect-[16/10] w-full object-cover object-top" />
+                    </div>
+                    <div className="mt-3 flex items-center gap-2 text-[12px]">
+                      <span className="font-mono text-ink">{d.id}</span>
+                      <span className={chip}>{d.kind === 'template' ? '외부 디자인 기반' : 'MATE 시안'}</span>
+                    </div>
+                    <h3 className="mt-2 text-[16px] font-bold leading-snug text-ink group-hover:text-point-200">{d.title}</h3>
+                    <p className="mt-1 text-[13px] text-gray-500">
+                      {[d.fieldLabel, ...d.purposes.slice(0, 2), ...d.moods.slice(0, 2)].join(' · ')}
+                    </p>
+                    {d.kind === 'template' && d.credit && (
+                      <p className="mt-1 text-[12px] text-gray-400">원작 {d.credit.creator} · {d.credit.license}</p>
+                    )}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </section>
+
+      {/* 제작 과정 */}
+      <section data-header="light" className="bg-gray-100 py-24 sm:py-32 xl:py-40">
+        <div className={`${container} grid gap-12 lg:grid-cols-12 lg:gap-8`}>
+          <div className="lg:col-span-4">
+            <SectionHead eyebrow="Process" title={<>상담부터 공개까지<br /><b>여섯 단계</b></>} desc="필요한 단계만 고를 수 있습니다." />
+          </div>
+          <motion.ol {...inView} variants={staggerRows} className="border-t-2 border-ink lg:col-span-7 lg:col-start-6">
+            {landingProcess.map((p, i) => (
+              <motion.li key={p.title} variants={rowIn} className="flex items-start gap-5 border-b border-gray-200 py-6">
+                <span className={numTile}>{String(i + 1).padStart(2, '0')}</span>
+                <div className="min-w-0">
+                  <p className="flex flex-wrap items-center gap-2 text-[18px] font-bold text-ink">
+                    {p.title}
+                    {p.optional && <span className={chip}>필요할 때</span>}
+                  </p>
+                  <p className="mt-1 text-[15px] leading-[1.7] text-gray-500">{p.desc}</p>
+                </div>
+              </motion.li>
+            ))}
+          </motion.ol>
+        </div>
+      </section>
+
+      {/* 샘플과 출처 */}
+      <section data-header="light" className="bg-white py-20 sm:py-24">
+        <div className={container}>
+          <SectionHead eyebrow="Credits" title={<><b>샘플과 출처</b></>} />
+          <div className="mt-8 grid gap-3 text-[15px] leading-[1.7] text-gray-500">
+            {landingSampleNotes.map((n) => <p key={n}>{n}</p>)}
+          </div>
+          <ul className="mt-8 border-t border-gray-200 text-[13px] leading-[1.6] text-gray-500">
+            {templateCredits.map((c) => (
+              <li key={c.sourceUrl} className="border-b border-gray-200 py-3">
+                <span className="mr-2 font-mono text-ink">{c.ids.length > 1 ? `${c.ids[0]}~${c.ids[c.ids.length - 1]}` : c.ids[0]}</span>
+                {c.text}{' '}
+                <a href={c.sourceUrl} target="_blank" rel="noopener noreferrer" className="underline hover:text-point-200">원본</a>{' · '}
+                <a href={c.licenseUrl} target="_blank" rel="noopener noreferrer" className="underline hover:text-point-200">CC BY 4.0</a>
+              </li>
+            ))}
+            {krds.length > 0 && krds[0].credit && (
+              <li className="border-b border-gray-200 py-3">
+                <span className="mr-2 font-mono text-ink">{krds[0].id}~{krds[krds.length - 1].id}</span>
+                {krds[0].credit.text}
+              </li>
+            )}
+          </ul>
+        </div>
+      </section>
+
+      {/* 문의 */}
+      <section data-header="dark" className="night-grid on-night py-20 sm:py-28">
+        <div className={`${container} flex flex-col items-start gap-8 lg:flex-row lg:items-center lg:justify-between`}>
+          <div>
+            <p className="eyebrow">Contact</p>
+            <h2 className="mt-3 text-[28px] font-bold leading-tight text-white sm:text-[40px]">고른 스타일이 없어도 괜찮습니다</h2>
+            <p className="mt-3 text-[16px] text-gray-300">업종과 가진 자료를 알려 주시면 맞는 스타일부터 함께 찾습니다.</p>
+          </div>
+          <Link href={landingContactHref()} className={btnLight}>
+            제작 문의하기 <FiArrowUpRight className={arrowHover} />
+          </Link>
+        </div>
+      </section>
+    </>
+  );
+}

@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiClipboard, FiChevronUp } from 'react-icons/fi';
 
-import { isToolScreen } from '@/lib/shell';
+import { isLandingScreen, isToolScreen, MAIN_ORIGIN } from '@/lib/shell';
 /**
  * 오른쪽 아래 동그란 버튼 둘 - 로고 파랑 '문의하기'와 흰 '맨 위로' (Figma Key Results 화면).
  * 맨 위로는 조금 내려온 뒤에 나타난다.
@@ -32,7 +32,7 @@ export default function FloatingContactButton() {
       {!isContact && (
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 0.32, ease: [0.2, 0.6, 0.25, 1] }}>
-          <Link href="/contact"
+          <Link href={isLandingScreen(pathname) ? `${MAIN_ORIGIN}/contact/?domain=web` : '/contact'}
             className={`${circle} flex-col gap-0.5 bg-point-200 text-white shadow-float-lg transition-colors duration-200 hover:bg-point-300`}>
             <FiClipboard size={20} />
             <span className="text-[11px] font-bold leading-none sm:text-[12px]">문의하기</span>

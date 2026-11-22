@@ -35,10 +35,19 @@ export default function ContactPage() {
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  /* 랜딩페이지 갤러리에서 고른 디자인 번호(LP-001 꼴) - 제목을 채우고 메일에 함께 보낸다 */
+  const [design, setDesign] = useState('');
+
   useEffect(() => {
-    const q = new URLSearchParams(window.location.search).get('domain');
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get('domain');
     if (q && domains.some((d) => d.key === q)) {
       setFormData((prev) => ({ ...prev, domain: q }));
+    }
+    const pick = params.get('design');
+    if (pick && /^LP-\d{3}$/.test(pick)) {
+      setDesign(pick);
+      setFormData((prev) => ({ ...prev, subject: prev.subject || `랜딩페이지 제작 문의 · ${pick}` }));
     }
   }, []);
 
@@ -55,6 +64,7 @@ export default function ContactPage() {
     const subject = `[문의] ${formData.subject || '프로젝트 문의'}`;
     const body = [
       `문의 영역: ${domainLabel}`,
+      ...(design ? [`고른 디자인: ${design}`] : []),
       `이름: ${formData.name}`,
       `회신 이메일: ${formData.email}`,
       '',
@@ -77,7 +87,7 @@ export default function ContactPage() {
       const res = await fetch('/api/contact/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, website }),
+        body: JSON.stringify({ ...formData, website, design }),
       });
 
       // 메일 전송이 아직 설정되지 않았으면 메일 초안으로 넘긴다 (src/app/api/contact/route.ts)
@@ -89,6 +99,7 @@ export default function ContactPage() {
 
       setSubmitStatus('success');
       setFormData({ domain: '', name: '', email: '', subject: '', message: '' });
+      setDesign('');
       setTimeout(() => setSubmitStatus('idle'), 5000);
     } catch (err) {
       console.error(err);

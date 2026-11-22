@@ -9,7 +9,7 @@ import { FiMenu, FiX, FiPhone, FiMail, FiChevronDown, FiArrowUpRight } from 'rea
 import { navItems, type NavItem } from '@/data/navigation';
 import { CONTACT_EMAIL, CONTACT_PHONE, btnPoint, container } from '@/lib/styles';
 
-import { isToolScreen } from '@/lib/shell';
+import { isToolScreen, siteHref } from '@/lib/shell';
 /** '/web/' 처럼 끝에 붙는 빗금을 떼고 해시를 버린다 */
 const norm = (p: string) => (p.split('#')[0].replace(/\/$/, '') || '/');
 
@@ -78,6 +78,8 @@ export default function Header() {
   if (isToolScreen(pathname)) return null;
 
   const current = norm(pathname);
+  // 랜딩페이지 제작 하위 도메인에서는 메뉴가 본 사이트로 간다
+  const to = (href: string) => siteHref(pathname, href);
   const isActive = (item: NavItem) =>
     current === norm(item.href) ||
     current.startsWith(`${norm(item.href)}/`) ||
@@ -97,7 +99,7 @@ export default function Header() {
       style={{ transform: hidden && !open ? 'translateY(-100%)' : 'translateY(0)' }}
     >
       <nav className={`${container} grid h-[72px] grid-cols-[1fr_auto] items-center lg:h-20 lg:grid-cols-[1fr_auto_1fr]`}>
-        <Link href="/" aria-label="MATE 홈" className="inline-flex w-fit items-center transition-opacity hover:opacity-75">
+        <Link href={to('/')} aria-label="MATE 홈" className="inline-flex w-fit items-center transition-opacity hover:opacity-75">
           <Image src="/images/logo.png" alt="MATE" width={1991} height={493} priority
             className={`h-6 w-auto transition-[filter] duration-300 lg:h-7 ${dark ? 'brightness-0 invert' : ''}`} />
         </Link>
@@ -108,7 +110,7 @@ export default function Header() {
             const on = isActive(item);
             return (
               <li key={item.href} className="group relative">
-                <Link href={item.href}
+                <Link href={to(item.href)}
                   className={`relative block py-7 text-[16px] font-bold transition-colors duration-200 xl:text-[18px] ${
                     on ? (dark ? 'text-white' : 'text-point-200') : `${text} ${dark ? 'hover:text-white/70' : 'hover:text-point-200'}`
                   }`}>
@@ -120,7 +122,7 @@ export default function Header() {
                     <ul className="min-w-[152px] rounded-card bg-white py-3.5 shadow-float-lg ring-1 ring-line">
                       {item.children.map((c) => (
                         <li key={c.href}>
-                          <Link href={c.href}
+                          <Link href={to(c.href)}
                             className={`block whitespace-nowrap px-6 py-2 text-[15px] transition-colors ${
                               norm(c.href) === current && !c.href.includes('#') ? 'font-bold text-ink' : 'text-gray-400 hover:text-ink'
                             }`}>
@@ -177,7 +179,7 @@ export default function Header() {
                 return (
                   <li key={item.href} className="border-b border-line">
                     <div className="flex items-center justify-between">
-                      <Link href={item.href}
+                      <Link href={to(item.href)}
                         className={`flex-1 py-5 text-[20px] font-bold ${isActive(item) ? 'text-point-200' : 'text-ink'}`}>
                         {item.label}
                       </Link>
@@ -200,7 +202,7 @@ export default function Header() {
                         >
                           {item.children.map((c) => (
                             <li key={c.href}>
-                              <Link href={c.href} onClick={() => setOpen(false)}
+                              <Link href={to(c.href)} onClick={() => setOpen(false)}
                                 className="block py-2.5 pl-1 text-[16px] text-gray-500">
                                 {c.label}
                               </Link>
@@ -219,7 +221,7 @@ export default function Header() {
                 <a href={`tel:${CONTACT_PHONE}`} className="inline-flex items-center gap-2 py-1"><FiPhone size={16} />{CONTACT_PHONE}</a>
                 <a href={`mailto:${CONTACT_EMAIL}`} className="inline-flex items-center gap-2 py-1"><FiMail size={16} />{CONTACT_EMAIL}</a>
               </div>
-              <Link href="/contact" onClick={() => setOpen(false)} className={`${btnPoint} mt-6 w-full`}>
+              <Link href={to('/contact')} onClick={() => setOpen(false)} className={`${btnPoint} mt-6 w-full`}>
                 프로젝트 문의하기
                 <FiArrowUpRight size={16} />
               </Link>

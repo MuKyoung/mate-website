@@ -11,7 +11,7 @@ import { navItems } from '@/data/navigation';
 import { fadeUp, stagger, inView } from '@/lib/motion';
 import { arrowHover, container, CONTACT_EMAIL, CONTACT_PHONE, KAKAO_OPEN_CHAT_URL } from '@/lib/styles';
 
-import { isToolScreen } from '@/lib/shell';
+import { isLandingScreen, isToolScreen, MAIN_ORIGIN, siteHref } from '@/lib/shell';
 /**
  * 모든 페이지의 마지막 화면.
  * 위에는 왼쪽 문의 문구(페이지마다 src/data/cta.ts) + 오른쪽 연락 창구 목록(문의 양식 · 전화 · 메일 · 카카오톡),
@@ -28,9 +28,11 @@ export default function Footer() {
 
   // 문의 페이지에서는 문의 칸을 다시 띄우지 않는다
   const isContact = /^\/contact\/?$/.test(pathname);
-  const cta = ctaFor(pathname);
+  // 랜딩페이지 제작 하위 도메인은 브라우저 주소가 '/' 라서 경로 대신 고정 값으로 문구를 고른다. 문의는 본 사이트 양식으로 보낸다
+  const landing = isLandingScreen(pathname);
+  const cta = ctaFor(landing ? '/landing-page' : pathname);
   const channels = [
-    { label: '문의 양식', value: cta.button.join(' '), href: cta.href, primary: true },
+    { label: '문의 양식', value: cta.button.join(' '), href: landing ? `${MAIN_ORIGIN}/contact/?domain=web` : cta.href, primary: true },
     { label: '전화', value: CONTACT_PHONE, href: `tel:${CONTACT_PHONE}` },
     { label: '메일', value: CONTACT_EMAIL, href: `mailto:${CONTACT_EMAIL}` },
     { label: '카카오톡', value: '오픈채팅', href: KAKAO_OPEN_CHAT_URL, external: true },
@@ -102,13 +104,13 @@ export default function Footer() {
 
           {/* 로고 + 바로가기 한 줄 */}
           <div className="mt-10 flex flex-col gap-6 sm:mt-12 lg:flex-row lg:items-center lg:justify-between">
-            <Link href="/" aria-label="MATE 홈" className="w-fit transition-opacity hover:opacity-75">
+            <Link href={siteHref(pathname, '/')} aria-label="MATE 홈" className="w-fit transition-opacity hover:opacity-75">
               <Image src="/images/logo.png" alt="MATE" width={1991} height={493} className="h-6 w-auto brightness-0 invert lg:h-7" />
             </Link>
             <nav aria-label="바로가기">
               <ul className="flex flex-wrap gap-x-8 gap-y-3 text-[15px] font-bold text-gray-200 sm:gap-x-10">
                 {navItems.map((n) => (
-                  <li key={n.href}><Link href={n.href} className="transition-colors hover:text-white">{n.label}</Link></li>
+                  <li key={n.href}><Link href={siteHref(pathname, n.href)} className="transition-colors hover:text-white">{n.label}</Link></li>
                 ))}
               </ul>
             </nav>

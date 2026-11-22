@@ -82,3 +82,34 @@ export interface DomainMeta {
   /** 취급 범위 요약 태그 */
   tags: string[];
 }
+
+/** 단일 랜딩페이지 제작 - 갤러리 디자인의 출처 표시(외부 디자인 기반 · KRDS 기반) */
+export interface LandingCredit {
+  text: string;
+  creator: string;
+  sourceUrl: string;
+  license: string;
+  licenseUrl: string;
+}
+
+/** 단일 랜딩페이지 제작 - 갤러리 디자인 하나 (src/data/landingDesigns.ts) */
+export interface LandingDesign {
+  /** 'LP-001' 꼴 */
+  id: string;
+  title: string;
+  /** 업종 묶음 번호 1~10 */
+  field: number;
+  fieldLabel: string;
+  industries: string[];
+  purposes: string[];
+  moods: string[];
+  visualStyles: string[];
+  /** template = 외부 디자인 기반 제작 스타일 샘플, mate = MATE 시안 */
+  kind: 'template' | 'mate';
+  kindLabel: string;
+  summary: string;
+  thumb: string;
+  desktop: string;
+  mobile: string;
+  credit: LandingCredit | null;
+}

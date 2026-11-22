@@ -58,8 +58,12 @@ export async function POST(req: Request) {
   // 제목 줄에는 줄바꿈이 들어가지 않게 한다
   const subject = `[MATE 문의] ${domainLabel === '미지정' ? '' : `${domainLabel} | `}${v.subject}`.replace(/[\r\n]+/g, ' ');
 
+  // 랜딩페이지 갤러리에서 고른 디자인 번호 - 형식이 맞을 때만 싣는다
+  const design = typeof body.design === 'string' && /^LP-\d{3}$/.test(body.design) ? body.design : '';
+
   const rows: [string, string][] = [
     ['문의 영역', domainLabel],
+    ...(design ? [['고른 디자인', `${design} · https://devteammate.co.kr/landing-page/${design}/`] as [string, string]] : []),
     ['이름', v.name],
     ['회신 이메일', v.email],
     ['제목', v.subject],
