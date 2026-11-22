@@ -35,7 +35,7 @@ export default function ContactPage() {
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  /* 랜딩페이지 갤러리에서 고른 디자인 번호(LP-001 꼴) - 제목을 채우고 메일에 함께 보낸다 */
+  /* 랜딩페이지 갤러리(LP-001 꼴) · 디자인 템플릿 갤러리(PT-01 꼴)에서 고른 번호 - 제목을 채우고 메일에 함께 보낸다 */
   const [design, setDesign] = useState('');
 
   useEffect(() => {
@@ -45,9 +45,10 @@ export default function ContactPage() {
       setFormData((prev) => ({ ...prev, domain: q }));
     }
     const pick = params.get('design');
-    if (pick && /^LP-\d{3}$/.test(pick)) {
+    if (pick && /^(LP-\d{3}|[A-Z]{2}-\d{2})$/.test(pick)) {
       setDesign(pick);
-      setFormData((prev) => ({ ...prev, subject: prev.subject || `랜딩페이지 제작 문의 · ${pick}` }));
+      const kind = pick.startsWith('LP-') ? '랜딩페이지' : '디자인 템플릿';
+      setFormData((prev) => ({ ...prev, subject: prev.subject || `${kind} 제작 문의 · ${pick}` }));
     }
   }, []);
 

@@ -44,3 +44,24 @@ export const landingSampleNotes = [
  */
 export const landingContactHref = (id?: string) =>
   `${MAIN_ORIGIN}/contact/?domain=web${id ? `&design=${id}` : ''}`;
+
+/**
+ * 디자인 템플릿 라이브러리 (/landing-page/templates, 하위 도메인에서는 /templates/).
+ * 원본과 생성기는 template-library/. 가격 · 제작 기간 · 수정 횟수는 정해지기 전까지 적지 않는다.
+ */
+export const templateHero = {
+  desc: '프레젠테이션, 카드뉴스, 상세페이지, 로고, 영상, 인쇄물까지 15가지 종류의 스타일 샘플입니다. 마음에 드는 번호를 골라 문의하면 내용과 사진을 바꿔 제작합니다.',
+};
+
+/** 템플릿 갤러리 아래 안내 - 샘플과 실제 고객 사례를 구별하고 사진 출처를 밝힌다 */
+export const templateSampleNotes = [
+  '이 갤러리의 디자인은 MATE가 구성한 제작 스타일 샘플입니다. 고객 납품 사례가 아니며 상호·이름·가격·일정·수치는 모두 예시입니다.',
+  '사진은 Unsplash의 무료 사진(Unsplash License)이고 템플릿마다 사진가를 적었습니다. 사진 속 인물·상표·장소는 샘플과 관계가 없으며, 제작할 때는 주신 사진이나 촬영한 사진으로 바꿉니다.',
+  '글꼴은 상업 이용이 허용된 공개 글꼴(OFL)을 썼습니다.',
+];
+
+/**
+ * 랜딩페이지 디자인과 디자인 템플릿 두 갤러리를 오가는 탭.
+ * 상대 주소라 하위 도메인(/ · /templates/)과 본 사이트 경로(/landing-page/ · /landing-page/templates/) 양쪽에서 맞다
+ */
+export const landingTabs = { here: './', templates: 'templates/', landing: '../' };

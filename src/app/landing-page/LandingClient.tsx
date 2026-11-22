@@ -9,7 +9,7 @@ import PageHeader from '@/components/PageHeader';
 import SectionHead from '@/components/ui/SectionHead';
 import { landingDesigns, landingFields, landingVocab } from '@/data/landingDesigns';
 import {
-  landingContactHref, landingHero, landingProcess, landingSampleNotes, landingScope, landingScopeNote,
+  landingContactHref, landingHero, landingProcess, landingSampleNotes, landingScope, landingScopeNote, landingTabs,
 } from '@/data/landingService';
 import { fadeUp, inView, rowIn, staggerRows, staggerTight } from '@/lib/motion';
 import { arrowHover, btnLight, chip, container, numTile, radiusCard } from '@/lib/styles';
@@ -68,9 +68,11 @@ export default function LandingClient() {
 
   return (
     <>
-      {/* 하위 도메인(landingpage.devteammate.co.kr)에서 따로 여는 화면이라 본 사이트 사업영역 탭은 달지 않는다 */}
+      {/* 하위 도메인(landingpage.devteammate.co.kr)에서 따로 여는 화면이라 본 사이트 사업영역 탭은 달지 않고, 같은 하위 도메인의 디자인 템플릿 갤러리로 가는 탭만 둔다 */}
       <PageHeader eyebrow="단일 랜딩페이지 제작" title={<>당신의 공간과 사람,<br /><b>제품이 보이는 한 페이지.</b></>}
-        desc={landingHero.sub} />
+        desc={landingHero.sub}
+        tabs={[{ href: landingTabs.here, label: '랜딩페이지 디자인' }, { href: landingTabs.templates, label: '디자인 템플릿' }]}
+        active={landingTabs.here} />
 
       {/* 맡길 수 있는 일 */}
       <section data-header="light" className="bg-gray-100 py-24 sm:py-32 xl:py-40">

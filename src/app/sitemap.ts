@@ -1,6 +1,7 @@
 import { MetadataRoute } from 'next';
 import { projects } from '@/data/projects';
 import { landingDesigns } from '@/data/landingDesigns';
+import { templates } from '@/data/templateLibrary';
 import { LANDING_ORIGIN } from '@/lib/shell';
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -82,6 +83,22 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: currentDate,
       changeFrequency: 'monthly',
       priority: 0.5,
+    });
+  });
+
+  // 디자인 템플릿 라이브러리 - 같은 하위 도메인의 /templates/ 와 템플릿별 상세
+  routes.push({
+    url: `${LANDING_ORIGIN}/templates/`,
+    lastModified: currentDate,
+    changeFrequency: 'monthly',
+    priority: 0.8,
+  });
+  templates.forEach((t) => {
+    routes.push({
+      url: `${LANDING_ORIGIN}/templates/${t.id}/`,
+      lastModified: currentDate,
+      changeFrequency: 'monthly',
+      priority: 0.4,
     });
   });
 

@@ -5,13 +5,15 @@
 // 단일 랜딩페이지 제작(src/app/landing-page)은 하위 도메인에서 따로 연다. 호스트 값은 src/lib/shell.ts 의 LANDING_HOST 와 같다.
 //   landingpage.devteammate.co.kr/        -> /landing-page/
 //   landingpage.devteammate.co.kr/LP-001/ -> /landing-page/LP-001/
+//   landingpage.devteammate.co.kr/templates/       -> /landing-page/templates/        (디자인 템플릿 라이브러리)
+//   landingpage.devteammate.co.kr/templates/PT-01/ -> /landing-page/templates/PT-01/
 // 하위 도메인의 그 밖의 경로(상단 바 · 푸터의 본 사이트 메뉴 등)는 본 사이트로 보내고,
 // 본 사이트의 /landing-page/ 로 들어오면 하위 도메인 주소로 보낸다. 미리보기 배포 · 로컬은 호스트가 달라 그대로 열린다
 const LANDING_ORIGIN = 'https://landingpage.devteammate.co.kr'
 const onLanding = [{ type: 'host', value: 'landingpage\\.devteammate\\.co\\.kr' }]
 const onSite = [{ type: 'host', value: '(?:www\\.|landingpage\\.)?devteammate\\.co\\.kr' }]
-// 하위 도메인에서 그대로 내보낼 것 - 상세(LP-000) · 빌드 파일 · Vercel 분석 · 그림 · 아이콘 · robots · 사이트맵 (첫 화면 / 은 .+ 에 걸리지 않는다)
-const LANDING_KEEP = '_next/|_vercel/|landing-gallery/|images/|icon\\.png|apple-icon\\.png|favicon\\.ico|robots\\.txt|sitemap\\.xml|LP-\\d{3}/?$'
+// 하위 도메인에서 그대로 내보낼 것 - 상세(LP-000) · 템플릿(templates/ · templates/PT-01) · 빌드 파일 · Vercel 분석 · 그림 · 아이콘 · robots · 사이트맵 (첫 화면 / 은 .+ 에 걸리지 않는다)
+const LANDING_KEEP = '_next/|_vercel/|landing-gallery/|template-gallery/|images/|icon\\.png|apple-icon\\.png|favicon\\.ico|robots\\.txt|sitemap\\.xml|LP-\\d{3}/?$|templates/?$|templates/[A-Z]{2}-\\d{2}/?$'
 
 const nextConfig = {
   images: {
@@ -40,6 +42,8 @@ const nextConfig = {
         },
         { source: '/', has: onLanding, destination: '/landing-page/' },
         { source: '/:id(LP-\\d{3})', has: onLanding, destination: '/landing-page/:id/' },
+        { source: '/templates', has: onLanding, destination: '/landing-page/templates/' },
+        { source: '/templates/:id([A-Z]{2}-\\d{2})', has: onLanding, destination: '/landing-page/templates/:id/' },
       ],
     }
   },

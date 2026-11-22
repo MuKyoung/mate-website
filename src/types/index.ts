@@ -92,6 +92,44 @@ export interface LandingCredit {
   licenseUrl: string;
 }
 
+/** 디자인 템플릿 사진 출처 - Unsplash 사진가 */
+export interface TemplateCredit {
+  name: string;
+  /** 사진가 프로필 */
+  url: string;
+  /** 사진 페이지 */
+  photoUrl: string;
+}
+
+/** 디자인 템플릿 라이브러리 - 템플릿 하나 (src/data/templateLibrary.ts) */
+export interface TemplateItem {
+  /** 'PT-01' 꼴 */
+  id: string;
+  title: string;
+  summary: string;
+  /** 종류 열쇠 (pt · cn · dc ...) */
+  format: string;
+  formatLabel: string;
+  spec: string;
+  /** 업종 묶음 번호 1~10 */
+  field: number;
+  fieldLabel: string;
+  genre: string;
+  genreLabel: string;
+  /** 쓰임 (예: 카페 가맹 안내서) */
+  business: string;
+  /** 쪽마다 원래 크기 [너비, 높이] px */
+  pages: number[][];
+  /** 영상 길이(초). 영상이 아니면 0 */
+  video: number;
+  /** 바꿔 넣는 것 */
+  swap: string;
+  fonts: string[];
+  /** 샘플이 갖춘 파일 형식 */
+  outputs: string[];
+  credits: TemplateCredit[];
+}
+
 /** 단일 랜딩페이지 제작 - 갤러리 디자인 하나 (src/data/landingDesigns.ts) */
 export interface LandingDesign {
   /** 'LP-001' 꼴 */
