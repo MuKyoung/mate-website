@@ -20,6 +20,11 @@ const nextConfig = {
     unoptimized: true,
   },
   trailingSlash: true,
+  // AI 학습에 쓰지 말라는 표시(src/app/robots.ts 의 학습 로봇 차단과 같은 뜻). 이미지 수집 도구(img2dataset 등)가 읽는다.
+  // 구글 · 네이버 검색은 모르는 값이라 무시하므로 검색 노출에는 영향이 없다
+  async headers() {
+    return [{ source: '/:path*', headers: [{ key: 'X-Robots-Tag', value: 'noai, noimageai' }] }]
+  },
   // 사내 도구는 2026-11-16 에 /taskmanager 에서 /hub 로 이름을 바꿨다. 예전 주소(즐겨찾기 · 위젯 앱 · 비밀번호 재설정 메일)는
   // 물음표 뒤(?doc= · ?task=)를 그대로 실어 넘긴다. 다시 바꿀 수 있게 영구(308)가 아닌 307 로 둔다
   async redirects() {
