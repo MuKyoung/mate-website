@@ -1,13 +1,17 @@
 'use client';
 
-import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { FiArrowUpRight } from 'react-icons/fi';
 import SectionHead from '@/components/ui/SectionHead';
+import LogoMarquee from '@/components/motion/LogoMarquee';
 import { partners } from '@/data/partners';
 import { awards, counts, teamCapabilities } from '@/data/teamCapabilities';
-import { fadeUp, staggerTight, staggerRows, rowIn, inView } from '@/lib/motion';
-import { arrowHover, container, radiusCard } from '@/lib/styles';
+import { fadeUp, staggerTight, inView } from '@/lib/motion';
+import { container, radiusCard } from '@/lib/styles';
+
+/* 함께하는 곳을 두 줄로 나눈다 */
+const half = Math.ceil(partners.length / 2);
+const rowA = partners.slice(0, half);
+const rowB = partners.slice(half);
 
 const capOf = (id: string) => teamCapabilities.capabilities.find((c) => c.id === id)?.projects ?? 0;
 const years = awards.map((a) => a.year);
@@ -30,7 +34,7 @@ const cardBg = (glowX: string) => ({
 });
 
 /**
- * 숫자 - 왼쪽에 제목과 함께한 곳, 오른쪽에 숫자 카드 셋을 큰 칸 하나 + 작은 칸 둘로 엇갈려 놓는다.
+ * 숫자 - 왼쪽에 제목과 함께하는 곳(로고 흐름 두 줄), 오른쪽에 숫자 카드 셋을 큰 칸 하나 + 작은 칸 둘로 엇갈려 놓는다.
  */
 export default function KeyNumbers() {
   const since = teamCapabilities.stats.since;
@@ -41,28 +45,12 @@ export default function KeyNumbers() {
           <SectionHead eyebrow="Key Results"
             title={<><b>{since}년</b>부터 쌓아 온 일을<br /><b>숫자로</b> 정리했습니다</>} />
 
-          <p className="type-b2 mt-12 text-ink">함께한 곳</p>
-          <motion.ul {...inView} variants={staggerRows}
-            className="mt-4 grid grid-cols-2 border-l border-t border-line bg-white">
-            {partners.map((p) => (
-              <motion.li key={p.name} variants={rowIn}
-                className="flex min-h-[84px] flex-col justify-center gap-1 border-b border-r border-line px-4 py-3">
-                <span className="text-[14px] font-bold leading-[1.35] text-ink sm:text-[15px]">{p.name}</span>
-                <span className="text-[12px] text-gray-500">{p.role}</span>
-              </motion.li>
-            ))}
-            {partners.length % 2 === 1 && (
-              <motion.li variants={rowIn} className="border-b border-r border-line">
-                <Link href="/contact" className="group flex h-full min-h-[84px] flex-col justify-center gap-1 bg-point-100 px-4 py-3 transition-colors hover:bg-point-200">
-                  <span className="inline-flex items-center gap-1 text-[14px] font-bold text-point-200 group-hover:text-white sm:text-[15px]">
-                    함께할 프로젝트 문의
-                    <FiArrowUpRight size={14} className={arrowHover} />
-                  </span>
-                  <span className="text-[12px] text-gray-500 group-hover:text-white/80">아이디어 단계여도 됩니다</span>
-                </Link>
-              </motion.li>
-            )}
-          </motion.ul>
+          <p className="type-b2 mt-12 text-ink">함께하는 곳</p>
+          {/* 첫 화면 아래 로고 띠와 같은 곳들 - 여기서는 이름을 붙인 칸으로, 두 줄이 서로 반대로 흐른다 */}
+          <motion.div {...inView} variants={fadeUp} className="mt-4 grid gap-3 [--logo:30px]">
+            <LogoMarquee items={rowA} card repeat={2} seconds={40} fade="from-gray-100" />
+            <LogoMarquee items={rowB} card repeat={2} seconds={40} reverse fade="from-gray-100" />
+          </motion.div>
         </div>
 
         <motion.div {...inView} variants={staggerTight}

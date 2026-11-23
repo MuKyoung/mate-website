@@ -1,25 +1,26 @@
-import { affiliations } from '@/data/teamCapabilities';
-
 /**
- * 함께한 곳 - 홈의 Partners 칸.
+ * 함께하는 곳 - 홈 첫 화면 아래 로고 띠(PartnersBand)와 숫자 칸(KeyNumbers)의 로고 흐름.
  *
- * 로고 이미지가 없어 이름과 관계만 글자로 적는다. 사이트에 이미 공개된 사실에서만 가져온다.
- *   고객 · 강의처 - 포트폴리오(projects.ts)와 진행 중인 일(ongoing.ts)
- *   소속          - teamCapabilities.ts 의 affiliations
- * 상과 전시를 주관한 기관은 넣지 않는다. 함께 일한 곳이 아니다.
+ * 목록과 순서는 2026-11-23 사용자가 정했다. 로고는 각 곳의 공식 홈페이지 머리 로고를 받아 여백만 잘랐다
+ * (세종호이스트크레인 · 우화는 MATE 가 만든 사이트의 로고). 그림은 public/images/partners/.
+ * w · h 는 그림의 원래 크기 - 로고마다 다른 가로세로 비율로 크기를 맞추는 데 쓴다.
  */
 
 export interface Partner {
   name: string;
-  /** 무엇을 함께 했는지 */
-  role: string;
+  logo: string;
+  w: number;
+  h: number;
 }
 
-// 세종호이스트크레인은 2026-11-03 사용자 요청으로 사이트 어디에도 적지 않는다
 export const partners: Partner[] = [
-  { name: '우화', role: '웹사이트 제작' },
-  { name: '미래산업과학고등학교', role: '정규 수업' },
-  { name: '동일공업고등학교', role: '게임개발 강의' },
-  { name: '성남시학교밖청소년복지센터', role: '게임개발 강의' },
-  ...affiliations.map((a) => ({ name: a.name, role: a.role })),
+  { name: '(주)세종호이스트크레인', logo: '/images/partners/sejong.webp', w: 355, h: 95 },
+  { name: '(주)세코닉스', logo: '/images/partners/sekonix.svg', w: 510, h: 223 },
+  { name: '한국인공지능게임협회', logo: '/images/partners/kaiga.webp', w: 512, h: 160 },
+  { name: '플리더스', logo: '/images/partners/plithus.svg', w: 72, h: 18 },
+  { name: '우화', logo: '/images/partners/woohwa.webp', w: 226, h: 160 },
+  { name: '명지전문대학', logo: '/images/partners/mjc.webp', w: 285, h: 66 },
+  { name: 'XSTAGE', logo: '/images/partners/xstage.webp', w: 833, h: 101 },
+  { name: '댄스트럭트', logo: '/images/partners/danstruct.webp', w: 858, h: 103 },
+  { name: '인디크래프트', logo: '/images/partners/indiecraft.webp', w: 380, h: 160 },
 ];
