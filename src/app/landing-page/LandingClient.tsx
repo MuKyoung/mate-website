@@ -12,7 +12,7 @@ import type { LandingDesign } from '@/types';
 import { landingDesigns, landingFields, landingVocab } from '@/data/landingDesigns';
 import {
   landingContactHref, landingHero, landingMotion, landingProcess, landingScope, landingScopeNote, landingTabs,
-  landingViewQuery, readLandingView, saveLandingView, type LandingView,
+  landingViewQuery, readLandingView, rightsNotice, saveLandingView, type LandingView,
 } from '@/data/landingService';
 import { fadeUp, inView, rowIn, staggerRows, staggerTight } from '@/lib/motion';
 import { arrowHover, btnLight, chip, container, numTile, radiusCard } from '@/lib/styles';
@@ -114,7 +114,7 @@ export default function LandingClient() {
       <PageHeader eyebrow="단일 랜딩페이지 제작" title={<>당신의 공간과 사람,<br /><b>제품이 보이는 한 페이지.</b></>}
         desc={landingHero.sub}
         tabs={[{ href: landingTabs.here, label: '랜딩페이지 디자인' }, { href: landingTabs.templates, label: '디자인 템플릿' }]}
-        active={landingTabs.here} />
+        active={landingTabs.here} note={rightsNotice.site} />
       <PartnersBand />
 
       {/* 맡길 수 있는 일 */}

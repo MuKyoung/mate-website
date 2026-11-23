@@ -8,7 +8,7 @@ import PageHeader from '@/components/PageHeader';
 import SectionHead from '@/components/ui/SectionHead';
 import PartnersBand from '@/components/home/PartnersBand';
 import {
-  landingContactHref, landingTabs, landingViewQuery, readLandingView, saveLandingView, templateHero, type LandingView,
+  landingContactHref, landingTabs, landingViewQuery, readLandingView, rightsNotice, saveLandingView, templateHero, type LandingView,
 } from '@/data/landingService';
 import {
   templateFields, templateFormats, templateGenres, templateMobileThumb, templateThumb, templates,
@@ -70,7 +70,7 @@ export default function TemplatesClient() {
       <PageHeader eyebrow="디자인 템플릿" title={<>발표 자료부터 현수막까지,<br /><b>고르고 바꿔서 만듭니다.</b></>}
         desc={templateHero.desc}
         tabs={[{ href: landingTabs.landing, label: '랜딩페이지 디자인' }, { href: landingTabs.here, label: '디자인 템플릿' }]}
-        active={landingTabs.here} />
+        active={landingTabs.here} note={rightsNotice.site} />
       <PartnersBand />
 
       {/* 템플릿 갤러리 */}

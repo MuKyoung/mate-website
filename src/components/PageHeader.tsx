@@ -18,13 +18,15 @@ interface PageHeaderProps {
   active?: string;
   /** 깔 사진. 없으면 남색 격자 면 */
   image?: { src: string; position?: string };
+  /** 맨 아래 작은 한 줄 - 랜딩 · 템플릿 갤러리의 저작권 표시 */
+  note?: string;
 }
 
 /**
  * 하위 페이지 머리 - 사진 위에 남색을 80% 깔고 가운데 제목, 아래에 알약 탭.
  * Figma 사업영역 · 회사소개 머리와 같은 구성이다. 헤더는 이 위에서 흰 글자가 된다.
  */
-export default function PageHeader({ eyebrow, title, desc, tabs, active, image }: PageHeaderProps) {
+export default function PageHeader({ eyebrow, title, desc, tabs, active, image, note }: PageHeaderProps) {
   return (
     <section data-header="dark"
       className={`relative isolate flex min-h-[440px] items-center overflow-hidden pb-14 pt-32 sm:min-h-[520px] lg:min-h-[600px] ${image ? 'bg-night' : 'night-grid'}`}>
@@ -49,6 +51,9 @@ export default function PageHeader({ eyebrow, title, desc, tabs, active, image }
           <motion.div variants={fadeUp} className="mt-10 sm:mt-14">
             <PillTabs tabs={tabs.map((t) => ({ key: t.href, label: t.label, href: t.href }))} active={active ?? ''} />
           </motion.div>
+        )}
+        {note && (
+          <motion.p variants={fadeUp} className="mt-8 text-[13px] text-gray-300 sm:mt-10">{note}</motion.p>
         )}
       </motion.div>
     </section>
