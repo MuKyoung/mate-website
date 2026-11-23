@@ -83,7 +83,8 @@ export const landingDesigns: LandingDesign[] = [
       "sourceUrl": "https://www.figma.com/community/file/1638381785075377576",
       "license": "CC BY 4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
-    }
+    },
+    "photoCredits": []
   },
   {
     "id": "LP-002",
@@ -118,7 +119,49 @@ export const landingDesigns: LandingDesign[] = [
       "sourceUrl": "https://www.figma.com/community/file/1433089452383535100",
       "license": "CC BY 4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
-    }
+    },
+    "photoCredits": [
+      {
+        "name": "AMONWAT DUMKRUT",
+        "url": "https://unsplash.com/@amonwatdumkrut",
+        "photoUrl": "https://unsplash.com/photos/CfsjW_F9J6s"
+      },
+      {
+        "name": "Alexandre Pellaes",
+        "url": "https://unsplash.com/@apellaes",
+        "photoUrl": "https://unsplash.com/photos/6vAjp0pscX0"
+      },
+      {
+        "name": "Kevin Gonzalez",
+        "url": "https://unsplash.com/@typegon",
+        "photoUrl": "https://unsplash.com/photos/-NXNaE9lu6w"
+      },
+      {
+        "name": "Kane Reinholdtsen",
+        "url": "https://unsplash.com/@kanereinholdtsen",
+        "photoUrl": "https://unsplash.com/photos/LETdkk7wHQk"
+      },
+      {
+        "name": "Product School",
+        "url": "https://unsplash.com/@productschool",
+        "photoUrl": "https://unsplash.com/photos/dJICd7b_LlE"
+      },
+      {
+        "name": "Olena Kholina",
+        "url": "https://unsplash.com/@sixtynice",
+        "photoUrl": "https://unsplash.com/photos/OsuDfn4vtLA"
+      },
+      {
+        "name": "Zac Bowling",
+        "url": "https://unsplash.com/@zbowling",
+        "photoUrl": "https://unsplash.com/photos/Gi-HOiLMx7o"
+      },
+      {
+        "name": "SR Engineers and Consultants",
+        "url": "https://unsplash.com/@sr_engineersandconsultants",
+        "photoUrl": "https://unsplash.com/photos/S3Qh6mNZbLc"
+      }
+    ]
   },
   {
     "id": "LP-003",
@@ -152,7 +195,59 @@ export const landingDesigns: LandingDesign[] = [
       "sourceUrl": "https://www.figma.com/community/file/1448238939856956662",
       "license": "CC BY 4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
-    }
+    },
+    "photoCredits": [
+      {
+        "name": "Natallia Photo",
+        "url": "https://unsplash.com/@natallia_jpeg",
+        "photoUrl": "https://unsplash.com/photos/58BQs83uClo"
+      },
+      {
+        "name": "CRYSTALWEED cannabis",
+        "url": "https://unsplash.com/@crystalweed",
+        "photoUrl": "https://unsplash.com/photos/w1an547rkxo"
+      },
+      {
+        "name": "GLOBENCER",
+        "url": "https://unsplash.com/@globencer",
+        "photoUrl": "https://unsplash.com/photos/DiJKOYIiNmQ"
+      },
+      {
+        "name": "Ela De Pure",
+        "url": "https://unsplash.com/@eladepure",
+        "photoUrl": "https://unsplash.com/photos/RJgh0UW0HbU"
+      },
+      {
+        "name": "Rafly Alfaridzy",
+        "url": "https://unsplash.com/@raphiella",
+        "photoUrl": "https://unsplash.com/photos/D44p6Ubx-9E"
+      },
+      {
+        "name": "Laura Jaeger",
+        "url": "https://unsplash.com/@lvjart",
+        "photoUrl": "https://unsplash.com/photos/yUF0J8UMEQg"
+      },
+      {
+        "name": "Filip Knezevic",
+        "url": "https://unsplash.com/@knezevic",
+        "photoUrl": "https://unsplash.com/photos/fVXe4UXX5RI"
+      },
+      {
+        "name": "Birgith Roosipuu",
+        "url": "https://unsplash.com/@msbirgith",
+        "photoUrl": "https://unsplash.com/photos/gUZv1Fdkfgw"
+      },
+      {
+        "name": "Point Normal",
+        "url": "https://unsplash.com/@normals",
+        "photoUrl": "https://unsplash.com/photos/GjJZ5HBl2qQ"
+      },
+      {
+        "name": "Mathilde Langevin",
+        "url": "https://unsplash.com/@mathildelangevin",
+        "photoUrl": "https://unsplash.com/photos/FDRaYqiTY1k"
+      }
+    ]
   },
   {
     "id": "LP-004",
@@ -186,7 +281,34 @@ export const landingDesigns: LandingDesign[] = [
       "sourceUrl": "https://www.figma.com/community/file/1357235266228589543",
       "license": "CC BY 4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
-    }
+    },
+    "photoCredits": [
+      {
+        "name": "Lyubomyr Reverchuk",
+        "url": "https://unsplash.com/@lreverchuk",
+        "photoUrl": "https://unsplash.com/photos/rtD_lcsN6_U"
+      },
+      {
+        "name": "Mushvig Niftaliyev",
+        "url": "https://unsplash.com/@mushvig95",
+        "photoUrl": "https://unsplash.com/photos/CQTbmzuat5c"
+      },
+      {
+        "name": "Philipp Katzenberger",
+        "url": "https://unsplash.com/@fantasyflip",
+        "photoUrl": "https://unsplash.com/photos/iIJrUoeRoCQ"
+      },
+      {
+        "name": "Abu Saeid",
+        "url": "https://unsplash.com/@abusaeid01",
+        "photoUrl": "https://unsplash.com/photos/fdGTi4IcaJc"
+      },
+      {
+        "name": "Paper Textures",
+        "url": "https://unsplash.com/@inthemakingstudio",
+        "photoUrl": "https://unsplash.com/photos/Vq1FQ_uNppw"
+      }
+    ]
   },
   {
     "id": "LP-005",
@@ -220,7 +342,34 @@ export const landingDesigns: LandingDesign[] = [
       "sourceUrl": "https://www.figma.com/community/file/1357235266228589543",
       "license": "CC BY 4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
-    }
+    },
+    "photoCredits": [
+      {
+        "name": "Cherrydeck",
+        "url": "https://unsplash.com/@cherrydeck",
+        "photoUrl": "https://unsplash.com/photos/05gac-Qn0k4"
+      },
+      {
+        "name": "Amélie Mourichon",
+        "url": "https://unsplash.com/@amayli",
+        "photoUrl": "https://unsplash.com/photos/sv8oOQaUb-o"
+      },
+      {
+        "name": "Danial Igdery",
+        "url": "https://unsplash.com/@ricaros",
+        "photoUrl": "https://unsplash.com/photos/FCHlYvR5gJI"
+      },
+      {
+        "name": "Luis Villasmil",
+        "url": "https://unsplash.com/@luisviol",
+        "photoUrl": "https://unsplash.com/photos/4V8uMZx8FYA"
+      },
+      {
+        "name": "charlesdeluvio",
+        "url": "https://unsplash.com/@charlesdeluvio",
+        "photoUrl": "https://unsplash.com/photos/6OF-Ly-5oJY"
+      }
+    ]
   },
   {
     "id": "LP-006",
@@ -254,7 +403,74 @@ export const landingDesigns: LandingDesign[] = [
       "sourceUrl": "https://www.figma.com/community/file/1357235266228589543",
       "license": "CC BY 4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
-    }
+    },
+    "photoCredits": [
+      {
+        "name": "Vitaly Gariev",
+        "url": "https://unsplash.com/@silverkblack",
+        "photoUrl": "https://unsplash.com/photos/kp7qkHTgSKc"
+      },
+      {
+        "name": "Thought Catalog",
+        "url": "https://unsplash.com/@thoughtcatalog",
+        "photoUrl": "https://unsplash.com/photos/BlGmdY18CFQ"
+      },
+      {
+        "name": "John",
+        "url": "https://unsplash.com/@johnishappysometimes",
+        "photoUrl": "https://unsplash.com/photos/yFbyvpEGHFQ"
+      },
+      {
+        "name": "Quilia",
+        "url": "https://unsplash.com/@heyquilia",
+        "photoUrl": "https://unsplash.com/photos/1-aA2Fadydc"
+      },
+      {
+        "name": "Jeswin Thomas",
+        "url": "https://unsplash.com/@jeswinthomas",
+        "photoUrl": "https://unsplash.com/photos/-hgJu2ykh4E"
+      },
+      {
+        "name": "ThisisEngineering",
+        "url": "https://unsplash.com/@thisisengineering",
+        "photoUrl": "https://unsplash.com/photos/TXxiFuQLBKQ"
+      },
+      {
+        "name": "Anastassia Anufrieva",
+        "url": "https://unsplash.com/@antoie",
+        "photoUrl": "https://unsplash.com/photos/-JUlfa5fAIg"
+      },
+      {
+        "name": "Dom Fou",
+        "url": "https://unsplash.com/@domlafou",
+        "photoUrl": "https://unsplash.com/photos/YRMWVcdyhmI"
+      },
+      {
+        "name": "Ashutosh Gupta",
+        "url": "https://unsplash.com/@ashu_3101",
+        "photoUrl": "https://unsplash.com/photos/NASjMHJ9OhI"
+      },
+      {
+        "name": "Ernest Flowers",
+        "url": "https://unsplash.com/@ernestflowerss",
+        "photoUrl": "https://unsplash.com/photos/jW_8iexQbhw"
+      },
+      {
+        "name": "Timur Shakerzianov",
+        "url": "https://unsplash.com/@shaker_jpg",
+        "photoUrl": "https://unsplash.com/photos/DEDF2zaZvUg"
+      },
+      {
+        "name": "Christin Hume",
+        "url": "https://unsplash.com/@christinhumephoto",
+        "photoUrl": "https://unsplash.com/photos/Hcfwew744z4"
+      },
+      {
+        "name": "Joshua Hoehne",
+        "url": "https://unsplash.com/@joshua_hoehne",
+        "photoUrl": "https://unsplash.com/photos/iggWDxHTAUQ"
+      }
+    ]
   },
   {
     "id": "LP-007",
@@ -288,7 +504,29 @@ export const landingDesigns: LandingDesign[] = [
       "sourceUrl": "https://www.figma.com/community/file/1357235266228589543",
       "license": "CC BY 4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
-    }
+    },
+    "photoCredits": [
+      {
+        "name": "Snapmaker 3D Printer",
+        "url": "https://unsplash.com/@snapmaker_official",
+        "photoUrl": "https://unsplash.com/photos/qvRFRFJpXA4"
+      },
+      {
+        "name": "Onkar Mehta",
+        "url": "https://unsplash.com/@onkar_",
+        "photoUrl": "https://unsplash.com/photos/eVpZxkNY3bw"
+      },
+      {
+        "name": "Tai Bui",
+        "url": "https://unsplash.com/@agforl24",
+        "photoUrl": "https://unsplash.com/photos/NLXJjsuKBh0"
+      },
+      {
+        "name": "Andy Brown",
+        "url": "https://unsplash.com/@basallt",
+        "photoUrl": "https://unsplash.com/photos/8dgFq8Vbelo"
+      }
+    ]
   },
   {
     "id": "LP-008",
@@ -322,7 +560,69 @@ export const landingDesigns: LandingDesign[] = [
       "sourceUrl": "https://www.figma.com/community/file/1357235266228589543",
       "license": "CC BY 4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
-    }
+    },
+    "photoCredits": [
+      {
+        "name": "Steven Lelham",
+        "url": "https://unsplash.com/@slelham",
+        "photoUrl": "https://unsplash.com/photos/atSaEOeE8Nk"
+      },
+      {
+        "name": "Shan A. Rajpoot",
+        "url": "https://unsplash.com/@shanalirajpoot",
+        "photoUrl": "https://unsplash.com/photos/QkK7NtsPrJM"
+      },
+      {
+        "name": "James Lee",
+        "url": "https://unsplash.com/@jbl12761",
+        "photoUrl": "https://unsplash.com/photos/_QvszySFByg"
+      },
+      {
+        "name": "Alexander Red",
+        "url": "https://unsplash.com/@alexandered7",
+        "photoUrl": "https://unsplash.com/photos/d3bYmnZ0ank"
+      },
+      {
+        "name": "Christopher Campbell",
+        "url": "https://unsplash.com/@chrisjoelcampbell",
+        "photoUrl": "https://unsplash.com/photos/kFCdfLbu6zA"
+      },
+      {
+        "name": "Isaac Wendland",
+        "url": "https://unsplash.com/@isaacwendland",
+        "photoUrl": "https://unsplash.com/photos/7DCZgKyp8vw"
+      },
+      {
+        "name": "Oleksii S",
+        "url": "https://unsplash.com/@wonderland8",
+        "photoUrl": "https://unsplash.com/photos/O2kqxbix4Mw"
+      },
+      {
+        "name": "Viktor Bystrov",
+        "url": "https://unsplash.com/@xokvictor",
+        "photoUrl": "https://unsplash.com/photos/Gi0OMNguFaw"
+      },
+      {
+        "name": "Danielle Cerullo",
+        "url": "https://unsplash.com/@dncerullo",
+        "photoUrl": "https://unsplash.com/photos/CQfNt66ttZM"
+      },
+      {
+        "name": "Wesley Tingey",
+        "url": "https://unsplash.com/@wesleyphotography",
+        "photoUrl": "https://unsplash.com/photos/dKCKiC0BQtU"
+      },
+      {
+        "name": "John Fornander",
+        "url": "https://unsplash.com/@johnfo",
+        "photoUrl": "https://unsplash.com/photos/4R9CcBdQTEg"
+      },
+      {
+        "name": "Joshua Tsu",
+        "url": "https://unsplash.com/@joshdatsu",
+        "photoUrl": "https://unsplash.com/photos/k27fjLXCuuo"
+      }
+    ]
   },
   {
     "id": "LP-009",
@@ -356,7 +656,49 @@ export const landingDesigns: LandingDesign[] = [
       "sourceUrl": "https://www.figma.com/community/file/1357235266228589543",
       "license": "CC BY 4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
-    }
+    },
+    "photoCredits": [
+      {
+        "name": "Gayatri Malhotra",
+        "url": "https://unsplash.com/@gmalhotra",
+        "photoUrl": "https://unsplash.com/photos/O1uVXHc2tl4"
+      },
+      {
+        "name": "Dogfluence.com",
+        "url": "https://unsplash.com/@dogfluence",
+        "photoUrl": "https://unsplash.com/photos/ENqs0WEM3nY"
+      },
+      {
+        "name": "Mohammad Reza",
+        "url": "https://unsplash.com/@razee48",
+        "photoUrl": "https://unsplash.com/photos/qYlabBENQNQ"
+      },
+      {
+        "name": "龙 赵",
+        "url": "https://unsplash.com/@zhaolong",
+        "photoUrl": "https://unsplash.com/photos/V-b68_mY2Ws"
+      },
+      {
+        "name": "Taylor Kopel",
+        "url": "https://unsplash.com/@taylorkopel",
+        "photoUrl": "https://unsplash.com/photos/WX4i1Jq_o0Y"
+      },
+      {
+        "name": "Zoë Gayah Jonker",
+        "url": "https://unsplash.com/@zoegayah",
+        "photoUrl": "https://unsplash.com/photos/G7kUPmzi80E"
+      },
+      {
+        "name": "Xingchen Yan",
+        "url": "https://unsplash.com/@xingchenyan",
+        "photoUrl": "https://unsplash.com/photos/MZYuAp-nIqM"
+      },
+      {
+        "name": "Ludek Pytloun",
+        "url": "https://unsplash.com/@ludvar31",
+        "photoUrl": "https://unsplash.com/photos/JtbE42YVp0s"
+      }
+    ]
   },
   {
     "id": "LP-010",
@@ -390,7 +732,14 @@ export const landingDesigns: LandingDesign[] = [
       "sourceUrl": "https://www.figma.com/community/file/1357235266228589543",
       "license": "CC BY 4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
-    }
+    },
+    "photoCredits": [
+      {
+        "name": "Vitaly Gariev",
+        "url": "https://unsplash.com/@silverkblack",
+        "photoUrl": "https://unsplash.com/photos/WrevB3gLLBs"
+      }
+    ]
   },
   {
     "id": "LP-011",
@@ -424,7 +773,49 @@ export const landingDesigns: LandingDesign[] = [
       "sourceUrl": "https://www.figma.com/community/file/1357235266228589543",
       "license": "CC BY 4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
-    }
+    },
+    "photoCredits": [
+      {
+        "name": "Ash Amplifies",
+        "url": "https://unsplash.com/@ashamplifies",
+        "photoUrl": "https://unsplash.com/photos/NQ6Lh81BTRs"
+      },
+      {
+        "name": "Ela De Pure",
+        "url": "https://unsplash.com/@eladepure",
+        "photoUrl": "https://unsplash.com/photos/XW9IR7pucEo"
+      },
+      {
+        "name": "Look Studio",
+        "url": "https://unsplash.com/@lookphoto",
+        "photoUrl": "https://unsplash.com/photos/FJuO9YRnYcQ"
+      },
+      {
+        "name": "Elsa Olofsson",
+        "url": "https://unsplash.com/@elsaolofsson",
+        "photoUrl": "https://unsplash.com/photos/Pm0K9Y3EPUc"
+      },
+      {
+        "name": "Maria Lupan",
+        "url": "https://unsplash.com/@luandmario",
+        "photoUrl": "https://unsplash.com/photos/BlcA2-o-7IM"
+      },
+      {
+        "name": "CRYSTALWEED cannabis",
+        "url": "https://unsplash.com/@crystalweed",
+        "photoUrl": "https://unsplash.com/photos/87v3-xW2MnQ"
+      },
+      {
+        "name": "mansi yadav",
+        "url": "https://unsplash.com/@mansiyadav0308",
+        "photoUrl": "https://unsplash.com/photos/lHjr4nmDiQM"
+      },
+      {
+        "name": "Mohamed hamdi",
+        "url": "https://unsplash.com/@amdshutter",
+        "photoUrl": "https://unsplash.com/photos/_Yca73BgigE"
+      }
+    ]
   },
   {
     "id": "LP-012",
@@ -458,7 +849,44 @@ export const landingDesigns: LandingDesign[] = [
       "sourceUrl": "https://www.figma.com/community/file/1357235266228589543",
       "license": "CC BY 4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
-    }
+    },
+    "photoCredits": [
+      {
+        "name": "Wei Huang",
+        "url": "https://unsplash.com/@wei0411",
+        "photoUrl": "https://unsplash.com/photos/t3fiFqm5mGA"
+      },
+      {
+        "name": "Daria K",
+        "url": "https://unsplash.com/@amberfoxfilm",
+        "photoUrl": "https://unsplash.com/photos/wAD3Ow8x1w4"
+      },
+      {
+        "name": "Scott Webb",
+        "url": "https://unsplash.com/@scottwebb",
+        "photoUrl": "https://unsplash.com/photos/z-byiqHM1ZM"
+      },
+      {
+        "name": "Noyo creatif",
+        "url": "https://unsplash.com/@noyocreatif",
+        "photoUrl": "https://unsplash.com/photos/gzu-etcMXKw"
+      },
+      {
+        "name": "Natalie Kovach",
+        "url": "https://unsplash.com/@natkingkov",
+        "photoUrl": "https://unsplash.com/photos/ph7QQq63lCs"
+      },
+      {
+        "name": "lan deng",
+        "url": "https://unsplash.com/@landall",
+        "photoUrl": "https://unsplash.com/photos/CFKwL570ZSc"
+      },
+      {
+        "name": "Prudence Earl",
+        "url": "https://unsplash.com/@prudenceearl",
+        "photoUrl": "https://unsplash.com/photos/NwBx723XaHw"
+      }
+    ]
   },
   {
     "id": "LP-013",
@@ -492,7 +920,44 @@ export const landingDesigns: LandingDesign[] = [
       "sourceUrl": "https://www.figma.com/community/file/1357235266228589543",
       "license": "CC BY 4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
-    }
+    },
+    "photoCredits": [
+      {
+        "name": "Mike Swigunski",
+        "url": "https://unsplash.com/@mike_swigunski",
+        "photoUrl": "https://unsplash.com/photos/k9Zeq6EH_bk"
+      },
+      {
+        "name": "Adam Juman",
+        "url": "https://unsplash.com/@jumanjiphotos",
+        "photoUrl": "https://unsplash.com/photos/GRNQr9O0FBo"
+      },
+      {
+        "name": "Travis Fish",
+        "url": "https://unsplash.com/@travisfishl",
+        "photoUrl": "https://unsplash.com/photos/8Tr_d66NbQM"
+      },
+      {
+        "name": "Aravind Sreekumar Nair",
+        "url": "https://unsplash.com/@aravindu62",
+        "photoUrl": "https://unsplash.com/photos/g9HRrjOu0Fc"
+      },
+      {
+        "name": "Hana El Zohiry",
+        "url": "https://unsplash.com/@hana_elzohiry",
+        "photoUrl": "https://unsplash.com/photos/wEkp5JAAS7E"
+      },
+      {
+        "name": "Shing",
+        "url": "https://unsplash.com/@imshing",
+        "photoUrl": "https://unsplash.com/photos/I26mw3wrvdA"
+      },
+      {
+        "name": "Eugene Chystiakov",
+        "url": "https://unsplash.com/@eugenechystiakov",
+        "photoUrl": "https://unsplash.com/photos/bt-AYttMuww"
+      }
+    ]
   },
   {
     "id": "LP-014",
@@ -527,7 +992,54 @@ export const landingDesigns: LandingDesign[] = [
       "sourceUrl": "https://www.figma.com/community/file/1229610063156797225",
       "license": "CC BY 4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
-    }
+    },
+    "photoCredits": [
+      {
+        "name": "gabbiistudios",
+        "url": "https://unsplash.com/@gabrielonodegba",
+        "photoUrl": "https://unsplash.com/photos/0cuGLRYbQsk"
+      },
+      {
+        "name": "Junseong Lee",
+        "url": "https://unsplash.com/@bearsnap",
+        "photoUrl": "https://unsplash.com/photos/AX8cf6mkCzw"
+      },
+      {
+        "name": "Jared Rice",
+        "url": "https://unsplash.com/@jareddrice",
+        "photoUrl": "https://unsplash.com/photos/NTyBbu66_SI"
+      },
+      {
+        "name": "kike vega",
+        "url": "https://unsplash.com/@kikekiks",
+        "photoUrl": "https://unsplash.com/photos/F2qh3yjz6Jk"
+      },
+      {
+        "name": "Vitaly Gariev",
+        "url": "https://unsplash.com/@silverkblack",
+        "photoUrl": "https://unsplash.com/photos/az_3xzrPNtg"
+      },
+      {
+        "name": "Marea Wellness",
+        "url": "https://unsplash.com/@mareawellness",
+        "photoUrl": "https://unsplash.com/photos/IvtDTZQM8tQ"
+      },
+      {
+        "name": "ROXANA POPOVICI",
+        "url": "https://unsplash.com/@roxanarxx",
+        "photoUrl": "https://unsplash.com/photos/cZ0WYsBFHhs"
+      },
+      {
+        "name": "Jaspinder Singh",
+        "url": "https://unsplash.com/@jaspindersingh",
+        "photoUrl": "https://unsplash.com/photos/vpVE1Xk1eR4"
+      },
+      {
+        "name": "JD  Mason",
+        "url": "https://unsplash.com/@jmason",
+        "photoUrl": "https://unsplash.com/photos/xCPdjitY5sQ"
+      }
+    ]
   },
   {
     "id": "LP-015",
@@ -562,7 +1074,54 @@ export const landingDesigns: LandingDesign[] = [
       "sourceUrl": "https://www.figma.com/community/file/1374427178022270099",
       "license": "CC BY 4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
-    }
+    },
+    "photoCredits": [
+      {
+        "name": "Vitaly Gariev",
+        "url": "https://unsplash.com/@silverkblack",
+        "photoUrl": "https://unsplash.com/photos/NGdaKKVt4w0"
+      },
+      {
+        "name": "Eyoel Kahssay",
+        "url": "https://unsplash.com/@eyoelkahssay",
+        "photoUrl": "https://unsplash.com/photos/FyCjvyPG9Pg"
+      },
+      {
+        "name": "Marlis Trio Akbar",
+        "url": "https://unsplash.com/@marlis_akbar",
+        "photoUrl": "https://unsplash.com/photos/eMB60hNHFL8"
+      },
+      {
+        "name": "Joel Muniz",
+        "url": "https://unsplash.com/@jmuniz",
+        "photoUrl": "https://unsplash.com/photos/3k3l2brxmwQ"
+      },
+      {
+        "name": "Ries Bosch",
+        "url": "https://unsplash.com/@ries_bosch",
+        "photoUrl": "https://unsplash.com/photos/5gXPybgcM5M"
+      },
+      {
+        "name": "Avesta",
+        "url": "https://unsplash.com/@avesta1",
+        "photoUrl": "https://unsplash.com/photos/nhxN9_O7xZY"
+      },
+      {
+        "name": "Quilia",
+        "url": "https://unsplash.com/@heyquilia",
+        "photoUrl": "https://unsplash.com/photos/AvcBDbR-LWc"
+      },
+      {
+        "name": "Nguyễn Tân",
+        "url": "https://unsplash.com/@tannht",
+        "photoUrl": "https://unsplash.com/photos/6yIJ8PY9rzs"
+      },
+      {
+        "name": "Aaron Burden",
+        "url": "https://unsplash.com/@aaronburden",
+        "photoUrl": "https://unsplash.com/photos/6jYoil2GhVk"
+      }
+    ]
   },
   {
     "id": "LP-016",
@@ -596,7 +1155,24 @@ export const landingDesigns: LandingDesign[] = [
       "sourceUrl": "https://www.figma.com/community/file/1306098395559253476",
       "license": "CC BY 4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
-    }
+    },
+    "photoCredits": [
+      {
+        "name": "Tony Litvyak",
+        "url": "https://unsplash.com/@justatony",
+        "photoUrl": "https://unsplash.com/photos/5Dv52kcKZLc"
+      },
+      {
+        "name": "Shakib Uzzaman",
+        "url": "https://unsplash.com/@shakib2777",
+        "photoUrl": "https://unsplash.com/photos/GacPgtEzTpU"
+      },
+      {
+        "name": "Ruben Caldera",
+        "url": "https://unsplash.com/@scdone123",
+        "photoUrl": "https://unsplash.com/photos/hAHzIx8EBdM"
+      }
+    ]
   },
   {
     "id": "LP-017",
@@ -631,7 +1207,109 @@ export const landingDesigns: LandingDesign[] = [
       "sourceUrl": "https://www.figma.com/community/file/1318227406178520862",
       "license": "CC BY 4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
-    }
+    },
+    "photoCredits": [
+      {
+        "name": "micheile henderson",
+        "url": "https://unsplash.com/@micheile",
+        "photoUrl": "https://unsplash.com/photos/7iGNwuxjBY8"
+      },
+      {
+        "name": "Moonstarious Project",
+        "url": "https://unsplash.com/@moonstariousproject",
+        "photoUrl": "https://unsplash.com/photos/wl2TODALiAY"
+      },
+      {
+        "name": "Joan Tran",
+        "url": "https://unsplash.com/@joanofarts",
+        "photoUrl": "https://unsplash.com/photos/reEySFadyJQ"
+      },
+      {
+        "name": "Harold Hisona",
+        "url": "https://unsplash.com/@harold_angus",
+        "photoUrl": "https://unsplash.com/photos/VCC5Vc0X2F8"
+      },
+      {
+        "name": "Clay Banks",
+        "url": "https://unsplash.com/@claybanks",
+        "photoUrl": "https://unsplash.com/photos/rLQwcbZjrcU"
+      },
+      {
+        "name": "Heather Ford",
+        "url": "https://unsplash.com/@the_modern_life_mrs",
+        "photoUrl": "https://unsplash.com/photos/FbrDS0jY_Hw"
+      },
+      {
+        "name": "cool guy jon",
+        "url": "https://unsplash.com/@cool_guy_jon",
+        "photoUrl": "https://unsplash.com/photos/EIFJ8YlxsDY"
+      },
+      {
+        "name": "Katy Anne",
+        "url": "https://unsplash.com/@katy_anne",
+        "photoUrl": "https://unsplash.com/photos/LX1qE-yF_Zs"
+      },
+      {
+        "name": "ZACHARY STAINES",
+        "url": "https://unsplash.com/@zaccastravels",
+        "photoUrl": "https://unsplash.com/photos/0kvS01RVKQI"
+      },
+      {
+        "name": "Yulia Khlebnikova",
+        "url": "https://unsplash.com/@khlebnikovayulia",
+        "photoUrl": "https://unsplash.com/photos/dwgizUdeQZ4"
+      },
+      {
+        "name": "insung yoon",
+        "url": "https://unsplash.com/@insungpandora",
+        "photoUrl": "https://unsplash.com/photos/RCWIK0fsETc"
+      },
+      {
+        "name": "Jack Cole",
+        "url": "https://unsplash.com/@thisisjackcole",
+        "photoUrl": "https://unsplash.com/photos/UlPIZi9hONI"
+      },
+      {
+        "name": "Romain Water",
+        "url": "https://unsplash.com/@romain_water_oneee",
+        "photoUrl": "https://unsplash.com/photos/oJPPcg6s-ec"
+      },
+      {
+        "name": "runda choo",
+        "url": "https://unsplash.com/@rundachoo",
+        "photoUrl": "https://unsplash.com/photos/hl0aLqt1iuk"
+      },
+      {
+        "name": "Andrew Valdivia",
+        "url": "https://unsplash.com/@donovan_valdivia",
+        "photoUrl": "https://unsplash.com/photos/4Aw5FeBo2aA"
+      },
+      {
+        "name": "Annie Spratt",
+        "url": "https://unsplash.com/@anniespratt",
+        "photoUrl": "https://unsplash.com/photos/n42ogaQn32o"
+      },
+      {
+        "name": "Ian Talmacs",
+        "url": "https://unsplash.com/@iantalmacs",
+        "photoUrl": "https://unsplash.com/photos/C5Z2m8Eaf8Y"
+      },
+      {
+        "name": "Far Chinberdiev",
+        "url": "https://unsplash.com/@fardevio",
+        "photoUrl": "https://unsplash.com/photos/N0Cit1c5wwI"
+      },
+      {
+        "name": "Kendal",
+        "url": "https://unsplash.com/@hikendal",
+        "photoUrl": "https://unsplash.com/photos/hnysCJrPpkc"
+      },
+      {
+        "name": "Pierre Borthiry - Peiobty",
+        "url": "https://unsplash.com/@peiobty",
+        "photoUrl": "https://unsplash.com/photos/P7JEpmkUzCg"
+      }
+    ]
   },
   {
     "id": "LP-018",
@@ -666,7 +1344,59 @@ export const landingDesigns: LandingDesign[] = [
       "sourceUrl": "https://www.figma.com/community/file/1306098100611718626",
       "license": "CC BY 4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
-    }
+    },
+    "photoCredits": [
+      {
+        "name": "nameless 3791",
+        "url": "https://unsplash.com/@unidentifieduser",
+        "photoUrl": "https://unsplash.com/photos/5nYLHK68TLM"
+      },
+      {
+        "name": "Nathan Dumlao",
+        "url": "https://unsplash.com/@nate_dumlao",
+        "photoUrl": "https://unsplash.com/photos/Y3AqmbmtLQI"
+      },
+      {
+        "name": "Colin redwood",
+        "url": "https://unsplash.com/@credwood",
+        "photoUrl": "https://unsplash.com/photos/WmCOwYlJT1A"
+      },
+      {
+        "name": "Nadia Valko",
+        "url": "https://unsplash.com/@nadiavalko",
+        "photoUrl": "https://unsplash.com/photos/7QlJ79Cj43w"
+      },
+      {
+        "name": "Hümâ H. Yardım",
+        "url": "https://unsplash.com/@humayardim",
+        "photoUrl": "https://unsplash.com/photos/7w82p5jkhD0"
+      },
+      {
+        "name": "Brooke Cagle",
+        "url": "https://unsplash.com/@brookecagle",
+        "photoUrl": "https://unsplash.com/photos/X4RJG4aNi8o"
+      },
+      {
+        "name": "Tina Guina",
+        "url": "https://unsplash.com/@kittinskie",
+        "photoUrl": "https://unsplash.com/photos/obV_LM0KjxY"
+      },
+      {
+        "name": "Quang Nguyen Vinh",
+        "url": "https://unsplash.com/@quangpraha",
+        "photoUrl": "https://unsplash.com/photos/OE1zLjHsfm0"
+      },
+      {
+        "name": "Tim Mossholder",
+        "url": "https://unsplash.com/@timmossholder",
+        "photoUrl": "https://unsplash.com/photos/YC6RVdoTtIk"
+      },
+      {
+        "name": "Vitaly Gariev",
+        "url": "https://unsplash.com/@silverkblack",
+        "photoUrl": "https://unsplash.com/photos/U53SkA9ds7E"
+      }
+    ]
   },
   {
     "id": "LP-019",
@@ -700,7 +1430,94 @@ export const landingDesigns: LandingDesign[] = [
       "sourceUrl": "https://www.figma.com/community/file/1306098233587105251",
       "license": "CC BY 4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
-    }
+    },
+    "photoCredits": [
+      {
+        "name": "Stanislav Rozhkov",
+        "url": "https://unsplash.com/@stas_r",
+        "photoUrl": "https://unsplash.com/photos/VzroC_tx5uM"
+      },
+      {
+        "name": "Jess Bailey",
+        "url": "https://unsplash.com/@jessbaileydesigns",
+        "photoUrl": "https://unsplash.com/photos/f94JPVrDbnY"
+      },
+      {
+        "name": "Carina Maria",
+        "url": "https://unsplash.com/@carinamariah",
+        "photoUrl": "https://unsplash.com/photos/R5tmKp6tg0U"
+      },
+      {
+        "name": "freestocks",
+        "url": "https://unsplash.com/@freestocks",
+        "photoUrl": "https://unsplash.com/photos/PxM8aeJbzvk"
+      },
+      {
+        "name": "Sixteen Miles Out",
+        "url": "https://unsplash.com/@sixteenmilesout",
+        "photoUrl": "https://unsplash.com/photos/CRKIgU6FecU"
+      },
+      {
+        "name": "Morgane Le Breton",
+        "url": "https://unsplash.com/@morgane_lb",
+        "photoUrl": "https://unsplash.com/photos/Ym4my-Xj8EY"
+      },
+      {
+        "name": "sammy swae",
+        "url": "https://unsplash.com/@sammyswae",
+        "photoUrl": "https://unsplash.com/photos/ewXhW0Eb1xw"
+      },
+      {
+        "name": "khampha phimmachak",
+        "url": "https://unsplash.com/@incept_u",
+        "photoUrl": "https://unsplash.com/photos/vdkAt1S7fCc"
+      },
+      {
+        "name": "Charlie Wollborg",
+        "url": "https://unsplash.com/@charlie_wollborg",
+        "photoUrl": "https://unsplash.com/photos/nZk6pTo6v_0"
+      },
+      {
+        "name": "Mariana B.",
+        "url": "https://unsplash.com/@mariana42",
+        "photoUrl": "https://unsplash.com/photos/iKHXbvNHXPQ"
+      },
+      {
+        "name": "Jennifer Burk",
+        "url": "https://unsplash.com/@jenandjoon",
+        "photoUrl": "https://unsplash.com/photos/CpY1O3_5bUk"
+      },
+      {
+        "name": "Mike Cox",
+        "url": "https://unsplash.com/@iprefermike",
+        "photoUrl": "https://unsplash.com/photos/udz171daS6k"
+      },
+      {
+        "name": "Myriam Zilles",
+        "url": "https://unsplash.com/@myriamzilles",
+        "photoUrl": "https://unsplash.com/photos/iEtzja4_4aU"
+      },
+      {
+        "name": "Casey Chae",
+        "url": "https://unsplash.com/@chaseycasey",
+        "photoUrl": "https://unsplash.com/photos/3DrCZblTGoQ"
+      },
+      {
+        "name": "Jamie Street",
+        "url": "https://unsplash.com/@jamie452",
+        "photoUrl": "https://unsplash.com/photos/G6aNLWPUlcY"
+      },
+      {
+        "name": "Markus Spiske",
+        "url": "https://unsplash.com/@markusspiske",
+        "photoUrl": "https://unsplash.com/photos/TymR-rSAMnI"
+      },
+      {
+        "name": "Anne Drotleff",
+        "url": "https://unsplash.com/@annedrotleff",
+        "photoUrl": "https://unsplash.com/photos/tKjAPP-vi5I"
+      }
+    ]
   },
   {
     "id": "LP-020",
@@ -735,7 +1552,69 @@ export const landingDesigns: LandingDesign[] = [
       "sourceUrl": "https://www.figma.com/community/file/1379119736954724263",
       "license": "CC BY 4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
-    }
+    },
+    "photoCredits": [
+      {
+        "name": "Eric Stoynov",
+        "url": "https://unsplash.com/@ericstoynov",
+        "photoUrl": "https://unsplash.com/photos/I_6NimmgInQ"
+      },
+      {
+        "name": "Ярослав Алексеенко",
+        "url": "https://unsplash.com/@webaliser",
+        "photoUrl": "https://unsplash.com/photos/_TPTXZd9mOo"
+      },
+      {
+        "name": "JEMM Builders",
+        "url": "https://unsplash.com/@jemmbuilders",
+        "photoUrl": "https://unsplash.com/photos/_UwO7vkWkE0"
+      },
+      {
+        "name": "Polina Kuzovkova",
+        "url": "https://unsplash.com/@p_kuzovkova",
+        "photoUrl": "https://unsplash.com/photos/JSezq0Td59k"
+      },
+      {
+        "name": "Maverick Frame",
+        "url": "https://unsplash.com/@maverickframe",
+        "photoUrl": "https://unsplash.com/photos/7s8ab4twHcI"
+      },
+      {
+        "name": "Amsterdam City Archives",
+        "url": "https://unsplash.com/@amsterdamcityarchives",
+        "photoUrl": "https://unsplash.com/photos/9tmKEDz03uw"
+      },
+      {
+        "name": "Troy Mortier",
+        "url": "https://unsplash.com/@troyscanon",
+        "photoUrl": "https://unsplash.com/photos/nCiRDhiVeP8"
+      },
+      {
+        "name": "Minh Pham",
+        "url": "https://unsplash.com/@minhphamdesign",
+        "photoUrl": "https://unsplash.com/photos/OtXADkUh3-I"
+      },
+      {
+        "name": "Tierra Mallorca",
+        "url": "https://unsplash.com/@tierramallorca",
+        "photoUrl": "https://unsplash.com/photos/rgJ1J8SDEAY"
+      },
+      {
+        "name": "Amir Hosseini",
+        "url": "https://unsplash.com/@mmpixz",
+        "photoUrl": "https://unsplash.com/photos/3cl6impBd_8"
+      },
+      {
+        "name": "snap wander",
+        "url": "https://unsplash.com/@passimage",
+        "photoUrl": "https://unsplash.com/photos/PpMXLSQj1K0"
+      },
+      {
+        "name": "Randy Fath",
+        "url": "https://unsplash.com/@randyfath",
+        "photoUrl": "https://unsplash.com/photos/csK5XPO87lI"
+      }
+    ]
   },
   {
     "id": "LP-021",
@@ -770,7 +1649,34 @@ export const landingDesigns: LandingDesign[] = [
       "sourceUrl": "https://www.figma.com/community/file/1085677230028305615",
       "license": "CC BY 4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
-    }
+    },
+    "photoCredits": [
+      {
+        "name": "Magic Fan",
+        "url": "https://unsplash.com/@magicunsplash",
+        "photoUrl": "https://unsplash.com/photos/0y2FXSJ70sc"
+      },
+      {
+        "name": "Leon Seibert",
+        "url": "https://unsplash.com/@yapics",
+        "photoUrl": "https://unsplash.com/photos/9i5eqBarv-k"
+      },
+      {
+        "name": "Anthony Aird",
+        "url": "https://unsplash.com/@anthonyaird",
+        "photoUrl": "https://unsplash.com/photos/zwp8SRLHo4A"
+      },
+      {
+        "name": "Sasun Bughdaryan",
+        "url": "https://unsplash.com/@sasun1990",
+        "photoUrl": "https://unsplash.com/photos/FaTLrG5-ViE"
+      },
+      {
+        "name": "Enes Gundogdu",
+        "url": "https://unsplash.com/@egundogdu",
+        "photoUrl": "https://unsplash.com/photos/d9RN-_GOhhM"
+      }
+    ]
   },
   {
     "id": "LP-022",
@@ -804,7 +1710,8 @@ export const landingDesigns: LandingDesign[] = [
       "sourceUrl": "https://www.figma.com/community/file/1685698519894048991",
       "license": "CC BY 4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
-    }
+    },
+    "photoCredits": []
   },
   {
     "id": "LP-023",
@@ -838,7 +1745,29 @@ export const landingDesigns: LandingDesign[] = [
       "sourceUrl": "https://www.figma.com/community/file/1244357573623602317",
       "license": "CC BY 4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
-    }
+    },
+    "photoCredits": [
+      {
+        "name": "Katarzyna Zygnerska",
+        "url": "https://unsplash.com/@katasha",
+        "photoUrl": "https://unsplash.com/photos/44jaETSVX2I"
+      },
+      {
+        "name": "Jonathan Borba",
+        "url": "https://unsplash.com/@jonathanborba",
+        "photoUrl": "https://unsplash.com/photos/hl6uG9cHW5A"
+      },
+      {
+        "name": "Sergio Guardiola Herrador",
+        "url": "https://unsplash.com/@guardiola86",
+        "photoUrl": "https://unsplash.com/photos/I_tiqvkfVq8"
+      },
+      {
+        "name": "Martha Dominguez de Gouveia",
+        "url": "https://unsplash.com/@m_dominguez_marketing",
+        "photoUrl": "https://unsplash.com/photos/nMyM7fxpokE"
+      }
+    ]
   },
   {
     "id": "LP-024",
@@ -873,7 +1802,14 @@ export const landingDesigns: LandingDesign[] = [
       "sourceUrl": "https://www.krds.go.kr",
       "license": "공공누리 제1유형",
       "licenseUrl": "https://www.krds.go.kr/html/site/utility/utility_06.html"
-    }
+    },
+    "photoCredits": [
+      {
+        "name": "FORTYTWO",
+        "url": "https://unsplash.com/@byfortytwo",
+        "photoUrl": "https://unsplash.com/photos/4ZmIiGyrMyo"
+      }
+    ]
   },
   {
     "id": "LP-025",
@@ -907,7 +1843,8 @@ export const landingDesigns: LandingDesign[] = [
       "sourceUrl": "https://www.krds.go.kr",
       "license": "공공누리 제1유형",
       "licenseUrl": "https://www.krds.go.kr/html/site/utility/utility_06.html"
-    }
+    },
+    "photoCredits": []
   },
   {
     "id": "LP-026",
@@ -942,7 +1879,54 @@ export const landingDesigns: LandingDesign[] = [
       "sourceUrl": "https://www.krds.go.kr",
       "license": "공공누리 제1유형",
       "licenseUrl": "https://www.krds.go.kr/html/site/utility/utility_06.html"
-    }
+    },
+    "photoCredits": [
+      {
+        "name": "Denise Bugg",
+        "url": "https://unsplash.com/@burybugs",
+        "photoUrl": "https://unsplash.com/photos/sY_rP7qRPqQ"
+      },
+      {
+        "name": "Endstarky",
+        "url": "https://unsplash.com/@endstarky",
+        "photoUrl": "https://unsplash.com/photos/y3qLsem5RdQ"
+      },
+      {
+        "name": "Darya Min",
+        "url": "https://unsplash.com/@darmink",
+        "photoUrl": "https://unsplash.com/photos/Gp6JX-hJUCw"
+      },
+      {
+        "name": "Evgeniy Beloshytskiy",
+        "url": "https://unsplash.com/@eugeniqa",
+        "photoUrl": "https://unsplash.com/photos/Vd26ICXwhYk"
+      },
+      {
+        "name": "Jakub Arbet",
+        "url": "https://unsplash.com/@jakubarbet",
+        "photoUrl": "https://unsplash.com/photos/nrnqvfkUWnA"
+      },
+      {
+        "name": "Tony Phan",
+        "url": "https://unsplash.com/@phanchutoan",
+        "photoUrl": "https://unsplash.com/photos/Syo79otHBUw"
+      },
+      {
+        "name": "Rosalind Chang",
+        "url": "https://unsplash.com/@rosalindjchang",
+        "photoUrl": "https://unsplash.com/photos/HVoXZIKCJ6I"
+      },
+      {
+        "name": "Ranurte",
+        "url": "https://unsplash.com/@ranurte",
+        "photoUrl": "https://unsplash.com/photos/OVmwKilhg9w"
+      },
+      {
+        "name": "Tofan Teodor",
+        "url": "https://unsplash.com/@tofanteo",
+        "photoUrl": "https://unsplash.com/photos/C56DHLS1ysE"
+      }
+    ]
   },
   {
     "id": "LP-027",
@@ -977,7 +1961,14 @@ export const landingDesigns: LandingDesign[] = [
       "sourceUrl": "https://www.krds.go.kr",
       "license": "공공누리 제1유형",
       "licenseUrl": "https://www.krds.go.kr/html/site/utility/utility_06.html"
-    }
+    },
+    "photoCredits": [
+      {
+        "name": "Prabu Panji",
+        "url": "https://unsplash.com/@prabuuuuu",
+        "photoUrl": "https://unsplash.com/photos/8vF5Kikv3RI"
+      }
+    ]
   },
   {
     "id": "LP-028",
@@ -1011,7 +2002,19 @@ export const landingDesigns: LandingDesign[] = [
       "sourceUrl": "https://www.krds.go.kr",
       "license": "공공누리 제1유형",
       "licenseUrl": "https://www.krds.go.kr/html/site/utility/utility_06.html"
-    }
+    },
+    "photoCredits": [
+      {
+        "name": "Sokha Michael",
+        "url": "https://unsplash.com/@sokha9",
+        "photoUrl": "https://unsplash.com/photos/1ckoSPQqlwI"
+      },
+      {
+        "name": "Power Lai",
+        "url": "https://unsplash.com/@welipower",
+        "photoUrl": "https://unsplash.com/photos/E0BmfKjeQrw"
+      }
+    ]
   },
   {
     "id": "LP-029",
@@ -1045,7 +2048,29 @@ export const landingDesigns: LandingDesign[] = [
       "sourceUrl": "https://www.krds.go.kr",
       "license": "공공누리 제1유형",
       "licenseUrl": "https://www.krds.go.kr/html/site/utility/utility_06.html"
-    }
+    },
+    "photoCredits": [
+      {
+        "name": "Vitaly Gariev",
+        "url": "https://unsplash.com/@silverkblack",
+        "photoUrl": "https://unsplash.com/photos/4M7HLn1r6ss"
+      },
+      {
+        "name": "Gilles Lambert",
+        "url": "https://unsplash.com/@gilleslambert",
+        "photoUrl": "https://unsplash.com/photos/pb_lF8VWaPU"
+      },
+      {
+        "name": "Maximilian Bungart",
+        "url": "https://unsplash.com/@hypernature",
+        "photoUrl": "https://unsplash.com/photos/qmIMiFsxnGw"
+      },
+      {
+        "name": "volant",
+        "url": "https://unsplash.com/@volantaroma",
+        "photoUrl": "https://unsplash.com/photos/OIkhvh2vY10"
+      }
+    ]
   },
   {
     "id": "LP-030",
@@ -1079,7 +2104,8 @@ export const landingDesigns: LandingDesign[] = [
       "sourceUrl": "https://www.krds.go.kr",
       "license": "공공누리 제1유형",
       "licenseUrl": "https://www.krds.go.kr/html/site/utility/utility_06.html"
-    }
+    },
+    "photoCredits": []
   },
   {
     "id": "LP-031",
@@ -1112,7 +2138,14 @@ export const landingDesigns: LandingDesign[] = [
       "sourceUrl": "https://www.krds.go.kr",
       "license": "공공누리 제1유형",
       "licenseUrl": "https://www.krds.go.kr/html/site/utility/utility_06.html"
-    }
+    },
+    "photoCredits": [
+      {
+        "name": "Vitaly Gariev",
+        "url": "https://unsplash.com/@silverkblack",
+        "photoUrl": "https://unsplash.com/photos/XcHGzdXaLX0"
+      }
+    ]
   },
   {
     "id": "LP-032",
@@ -1146,7 +2179,34 @@ export const landingDesigns: LandingDesign[] = [
       "sourceUrl": "https://www.krds.go.kr",
       "license": "공공누리 제1유형",
       "licenseUrl": "https://www.krds.go.kr/html/site/utility/utility_06.html"
-    }
+    },
+    "photoCredits": [
+      {
+        "name": "Vitaly Gariev",
+        "url": "https://unsplash.com/@silverkblack",
+        "photoUrl": "https://unsplash.com/photos/EvOvokXGUCg"
+      },
+      {
+        "name": "Illia Bondar",
+        "url": "https://unsplash.com/@viktoriiailliaphotography",
+        "photoUrl": "https://unsplash.com/photos/7QpNKarIO2k"
+      },
+      {
+        "name": "Age Cymru",
+        "url": "https://unsplash.com/@agecymru",
+        "photoUrl": "https://unsplash.com/photos/bSXk1lOp8T0"
+      },
+      {
+        "name": "micheile henderson",
+        "url": "https://unsplash.com/@micheile",
+        "photoUrl": "https://unsplash.com/photos/PpZasS086os"
+      },
+      {
+        "name": "LinkedIn Sales Solutions",
+        "url": "https://unsplash.com/@linkedinsalesnavigator",
+        "photoUrl": "https://unsplash.com/photos/qbDiSp5IqxA"
+      }
+    ]
   },
   {
     "id": "LP-033",
@@ -1181,7 +2241,44 @@ export const landingDesigns: LandingDesign[] = [
       "sourceUrl": "https://www.krds.go.kr",
       "license": "공공누리 제1유형",
       "licenseUrl": "https://www.krds.go.kr/html/site/utility/utility_06.html"
-    }
+    },
+    "photoCredits": [
+      {
+        "name": "Jacob Thomas",
+        "url": "https://unsplash.com/@jacob225",
+        "photoUrl": "https://unsplash.com/photos/yfh5vKEHrJ8"
+      },
+      {
+        "name": "Erwan Hesry",
+        "url": "https://unsplash.com/@erwanhesry",
+        "photoUrl": "https://unsplash.com/photos/1q75BReKpms"
+      },
+      {
+        "name": "Hoseung Han",
+        "url": "https://unsplash.com/@dhs4590",
+        "photoUrl": "https://unsplash.com/photos/yDHeNGy6r6Y"
+      },
+      {
+        "name": "Vitaly Gariev",
+        "url": "https://unsplash.com/@silverkblack",
+        "photoUrl": "https://unsplash.com/photos/mS5SxesPFKU"
+      },
+      {
+        "name": "Nick Fewings",
+        "url": "https://unsplash.com/@jannerboy62",
+        "photoUrl": "https://unsplash.com/photos/YP1Lz5B4nOk"
+      },
+      {
+        "name": "Kier in Sight Archives",
+        "url": "https://unsplash.com/@kierinsightarchives",
+        "photoUrl": "https://unsplash.com/photos/0Mn__AjRHCo"
+      },
+      {
+        "name": "Jonathan Borba",
+        "url": "https://unsplash.com/@jonathanborba",
+        "photoUrl": "https://unsplash.com/photos/8ji7mgL1P0M"
+      }
+    ]
   },
   {
     "id": "LP-034",
@@ -1210,7 +2307,34 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-034/thumb.jpg",
     "desktop": "/landing-gallery/LP-034/desktop.jpg",
     "mobile": "/landing-gallery/LP-034/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Aurora Song",
+        "url": "https://unsplash.com/@auroras13",
+        "photoUrl": "https://unsplash.com/photos/tfP5ZSz1rhg"
+      },
+      {
+        "name": "YU Carla",
+        "url": "https://unsplash.com/@carlayuuu",
+        "photoUrl": "https://unsplash.com/photos/Or3zn5zbgzE"
+      },
+      {
+        "name": "Kyle Yen",
+        "url": "https://unsplash.com/@yenkyle",
+        "photoUrl": "https://unsplash.com/photos/vyjAN9rHt4M"
+      },
+      {
+        "name": "Tarah Dane",
+        "url": "https://unsplash.com/@danesvg",
+        "photoUrl": "https://unsplash.com/photos/xudcDDtjY2c"
+      },
+      {
+        "name": "ObjectType RAW",
+        "url": "https://unsplash.com/@objecttyperaw",
+        "photoUrl": "https://unsplash.com/photos/MSUXmdgq8nc"
+      }
+    ]
   },
   {
     "id": "LP-035",
@@ -1238,7 +2362,8 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-035/thumb.jpg",
     "desktop": "/landing-gallery/LP-035/desktop.jpg",
     "mobile": "/landing-gallery/LP-035/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": []
   },
   {
     "id": "LP-036",
@@ -1266,7 +2391,19 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-036/thumb.jpg",
     "desktop": "/landing-gallery/LP-036/desktop.jpg",
     "mobile": "/landing-gallery/LP-036/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "ThisisEngineering",
+        "url": "https://unsplash.com/@thisisengineering",
+        "photoUrl": "https://unsplash.com/photos/8yS04veb1TQ"
+      },
+      {
+        "name": "Trnava University",
+        "url": "https://unsplash.com/@trnavskauni",
+        "photoUrl": "https://unsplash.com/photos/_9xRHrMOjeg"
+      }
+    ]
   },
   {
     "id": "LP-037",
@@ -1294,7 +2431,14 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-037/thumb.jpg",
     "desktop": "/landing-gallery/LP-037/desktop.jpg",
     "mobile": "/landing-gallery/LP-037/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Mapbox",
+        "url": "https://unsplash.com/@mapbox",
+        "photoUrl": "https://unsplash.com/photos/ZT5v0puBjZI"
+      }
+    ]
   },
   {
     "id": "LP-038",
@@ -1322,7 +2466,8 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-038/thumb.jpg",
     "desktop": "/landing-gallery/LP-038/desktop.jpg",
     "mobile": "/landing-gallery/LP-038/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": []
   },
   {
     "id": "LP-039",
@@ -1350,7 +2495,39 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-039/thumb.jpg",
     "desktop": "/landing-gallery/LP-039/desktop.jpg",
     "mobile": "/landing-gallery/LP-039/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Picsea",
+        "url": "https://unsplash.com/@picsea",
+        "photoUrl": "https://unsplash.com/photos/EQlTyDZRx7U"
+      },
+      {
+        "name": "Adam Winger",
+        "url": "https://unsplash.com/@awcreativeut",
+        "photoUrl": "https://unsplash.com/photos/7fF0iei80AQ"
+      },
+      {
+        "name": "Bill Ringer",
+        "url": "https://unsplash.com/@iamsimplybill",
+        "photoUrl": "https://unsplash.com/photos/7C2JUQRJ5hE"
+      },
+      {
+        "name": "Clem Onojeghuo",
+        "url": "https://unsplash.com/@clemono",
+        "photoUrl": "https://unsplash.com/photos/O5J1LgmoGeI"
+      },
+      {
+        "name": "jason hu",
+        "url": "https://unsplash.com/@hujason",
+        "photoUrl": "https://unsplash.com/photos/EP8lBWLFLkg"
+      },
+      {
+        "name": "Drahomír Hugo Posteby-Mach",
+        "url": "https://unsplash.com/@postebymach",
+        "photoUrl": "https://unsplash.com/photos/n4y3eiQSIoc"
+      }
+    ]
   },
   {
     "id": "LP-040",
@@ -1379,7 +2556,49 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-040/thumb.jpg",
     "desktop": "/landing-gallery/LP-040/desktop.jpg",
     "mobile": "/landing-gallery/LP-040/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Adrien Olichon",
+        "url": "https://unsplash.com/@adrienolichon",
+        "photoUrl": "https://unsplash.com/photos/JsWgPa_JW5s"
+      },
+      {
+        "name": "Jametlene Reskp",
+        "url": "https://unsplash.com/@reskp",
+        "photoUrl": "https://unsplash.com/photos/Aebsnylk2PI"
+      },
+      {
+        "name": "Aysegul Aytören",
+        "url": "https://unsplash.com/@oldsoulframes",
+        "photoUrl": "https://unsplash.com/photos/UQ4vZSvHN74"
+      },
+      {
+        "name": "HsinKai Tai",
+        "url": "https://unsplash.com/@able527",
+        "photoUrl": "https://unsplash.com/photos/xK_kGsqaTxo"
+      },
+      {
+        "name": "tommao wang",
+        "url": "https://unsplash.com/@tommaomaoer",
+        "photoUrl": "https://unsplash.com/photos/8XmuKjtd6rc"
+      },
+      {
+        "name": "LISK OBE",
+        "url": "https://unsplash.com/@summerobelisk",
+        "photoUrl": "https://unsplash.com/photos/akkOcTiDkfo"
+      },
+      {
+        "name": "Jason Leung",
+        "url": "https://unsplash.com/@ninjason",
+        "photoUrl": "https://unsplash.com/photos/7Ly8Isj_x0k"
+      },
+      {
+        "name": "Duong Ngan",
+        "url": "https://unsplash.com/@nganduong93",
+        "photoUrl": "https://unsplash.com/photos/w39pcTyZPGI"
+      }
+    ]
   },
   {
     "id": "LP-041",
@@ -1407,7 +2626,8 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-041/thumb.jpg",
     "desktop": "/landing-gallery/LP-041/desktop.jpg",
     "mobile": "/landing-gallery/LP-041/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": []
   },
   {
     "id": "LP-042",
@@ -1435,7 +2655,8 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-042/thumb.jpg",
     "desktop": "/landing-gallery/LP-042/desktop.jpg",
     "mobile": "/landing-gallery/LP-042/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": []
   },
   {
     "id": "LP-043",
@@ -1463,7 +2684,14 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-043/thumb.jpg",
     "desktop": "/landing-gallery/LP-043/desktop.jpg",
     "mobile": "/landing-gallery/LP-043/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Navy Medicine",
+        "url": "https://unsplash.com/@navymedicine",
+        "photoUrl": "https://unsplash.com/photos/3fx-mGg8Dzg"
+      }
+    ]
   },
   {
     "id": "LP-044",
@@ -1493,7 +2721,34 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-044/thumb.jpg",
     "desktop": "/landing-gallery/LP-044/desktop.jpg",
     "mobile": "/landing-gallery/LP-044/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Clay Banks",
+        "url": "https://unsplash.com/@claybanks",
+        "photoUrl": "https://unsplash.com/photos/QnYqq6tlVq8"
+      },
+      {
+        "name": "Nadya Spetnitskaya",
+        "url": "https://unsplash.com/@kiboka",
+        "photoUrl": "https://unsplash.com/photos/tOYiQxF9-Ys"
+      },
+      {
+        "name": "Vitaly Gariev",
+        "url": "https://unsplash.com/@silverkblack",
+        "photoUrl": "https://unsplash.com/photos/a0xqXaRXFrA"
+      },
+      {
+        "name": "Maddie Kuchenmeister",
+        "url": "https://unsplash.com/@maddiekuchen",
+        "photoUrl": "https://unsplash.com/photos/flYDQfYfwyg"
+      },
+      {
+        "name": "Rohit Bhusan",
+        "url": "https://unsplash.com/@rohitbhusan",
+        "photoUrl": "https://unsplash.com/photos/XT6a2xiNPLM"
+      }
+    ]
   },
   {
     "id": "LP-045",
@@ -1521,7 +2776,19 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-045/thumb.jpg",
     "desktop": "/landing-gallery/LP-045/desktop.jpg",
     "mobile": "/landing-gallery/LP-045/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Lesia and Serhii Artymovych",
+        "url": "https://unsplash.com/@lesiart",
+        "photoUrl": "https://unsplash.com/photos/gx3CR7UabgM"
+      },
+      {
+        "name": "Samiul Haque Bhuyan",
+        "url": "https://unsplash.com/@samiulhaquebhuyan",
+        "photoUrl": "https://unsplash.com/photos/g6yprmEQt0w"
+      }
+    ]
   },
   {
     "id": "LP-046",
@@ -1549,7 +2816,29 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-046/thumb.jpg",
     "desktop": "/landing-gallery/LP-046/desktop.jpg",
     "mobile": "/landing-gallery/LP-046/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Gabriel Weyand",
+        "url": "https://unsplash.com/@werealproduction",
+        "photoUrl": "https://unsplash.com/photos/aaciLRh5rkI"
+      },
+      {
+        "name": "Towfiqu barbhuiya",
+        "url": "https://unsplash.com/@towfiqu999999",
+        "photoUrl": "https://unsplash.com/photos/ARvWBP4o1F0"
+      },
+      {
+        "name": "Orgalux",
+        "url": "https://unsplash.com/@orgalux",
+        "photoUrl": "https://unsplash.com/photos/uHIWJfkNwts"
+      },
+      {
+        "name": "Peter Wilkinson",
+        "url": "https://unsplash.com/@pjw_33",
+        "photoUrl": "https://unsplash.com/photos/tl62sT_8Oho"
+      }
+    ]
   },
   {
     "id": "LP-047",
@@ -1577,7 +2866,8 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-047/thumb.jpg",
     "desktop": "/landing-gallery/LP-047/desktop.jpg",
     "mobile": "/landing-gallery/LP-047/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": []
   },
   {
     "id": "LP-048",
@@ -1606,7 +2896,29 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-048/thumb.jpg",
     "desktop": "/landing-gallery/LP-048/desktop.jpg",
     "mobile": "/landing-gallery/LP-048/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Marcus Neto",
+        "url": "https://unsplash.com/@marcusneto",
+        "photoUrl": "https://unsplash.com/photos/gioH4gHo0-g"
+      },
+      {
+        "name": "Niko Caelis",
+        "url": "https://unsplash.com/@nikocaelis",
+        "photoUrl": "https://unsplash.com/photos/PmYiOnUMJMg"
+      },
+      {
+        "name": "Jakob Rosen",
+        "url": "https://unsplash.com/@jakobnoahrosen",
+        "photoUrl": "https://unsplash.com/photos/KA1WM_yQGF8"
+      },
+      {
+        "name": "Ivett M",
+        "url": "https://unsplash.com/@ivett_m",
+        "photoUrl": "https://unsplash.com/photos/qtEKkcrupbs"
+      }
+    ]
   },
   {
     "id": "LP-049",
@@ -1634,7 +2946,29 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-049/thumb.jpg",
     "desktop": "/landing-gallery/LP-049/desktop.jpg",
     "mobile": "/landing-gallery/LP-049/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Haberdoedas",
+        "url": "https://unsplash.com/@haberdoedas",
+        "photoUrl": "https://unsplash.com/photos/W99azfs9OAk"
+      },
+      {
+        "name": "Brett Jordan",
+        "url": "https://unsplash.com/@brett_jordan",
+        "photoUrl": "https://unsplash.com/photos/ZRdb5UnJx_o"
+      },
+      {
+        "name": "engin akyurt",
+        "url": "https://unsplash.com/@enginakyurt",
+        "photoUrl": "https://unsplash.com/photos/cXV9hZV3y5c"
+      },
+      {
+        "name": "Andrey Matveev",
+        "url": "https://unsplash.com/@zelebb",
+        "photoUrl": "https://unsplash.com/photos/AKEMh3y86dE"
+      }
+    ]
   },
   {
     "id": "LP-050",
@@ -1663,7 +2997,64 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-050/thumb.jpg",
     "desktop": "/landing-gallery/LP-050/desktop.jpg",
     "mobile": "/landing-gallery/LP-050/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Tuan Nguyen",
+        "url": "https://unsplash.com/@tuan0_12",
+        "photoUrl": "https://unsplash.com/photos/_g41T51ECR4"
+      },
+      {
+        "name": "Jessie Maxwell",
+        "url": "https://unsplash.com/@jessiemaxwellphotography",
+        "photoUrl": "https://unsplash.com/photos/bZqKUYZlEIY"
+      },
+      {
+        "name": "Brecht Corbeel",
+        "url": "https://unsplash.com/@brechtcorbeel",
+        "photoUrl": "https://unsplash.com/photos/r_FSzdmrKAo"
+      },
+      {
+        "name": "Caden Norcott",
+        "url": "https://unsplash.com/@cadennorcott",
+        "photoUrl": "https://unsplash.com/photos/aCIVzfV05pM"
+      },
+      {
+        "name": "Jocelyn Morales",
+        "url": "https://unsplash.com/@molnj",
+        "photoUrl": "https://unsplash.com/photos/FXdpfV9TBRs"
+      },
+      {
+        "name": "Kasia Sikorska",
+        "url": "https://unsplash.com/@kasiasikorska",
+        "photoUrl": "https://unsplash.com/photos/UMtUTbxLmL0"
+      },
+      {
+        "name": "Diana Light",
+        "url": "https://unsplash.com/@dreamcatchlight",
+        "photoUrl": "https://unsplash.com/photos/u_jt9A7FADk"
+      },
+      {
+        "name": "五玄土 ORIENTO",
+        "url": "https://unsplash.com/@oriento",
+        "photoUrl": "https://unsplash.com/photos/l0ah3UBLppo"
+      },
+      {
+        "name": "Taylor Heery",
+        "url": "https://unsplash.com/@taylorheeryphoto",
+        "photoUrl": "https://unsplash.com/photos/ZSgWcW70cTs"
+      },
+      {
+        "name": "Laura Tommasina",
+        "url": "https://unsplash.com/@lauratommphoto",
+        "photoUrl": "https://unsplash.com/photos/5fO9grtkVYo"
+      },
+      {
+        "name": "Grant Durr",
+        "url": "https://unsplash.com/@grant_durr",
+        "photoUrl": "https://unsplash.com/photos/GjpUt15XbPE"
+      }
+    ]
   },
   {
     "id": "LP-051",
@@ -1690,7 +3081,8 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-051/thumb.jpg",
     "desktop": "/landing-gallery/LP-051/desktop.jpg",
     "mobile": "/landing-gallery/LP-051/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": []
   },
   {
     "id": "LP-052",
@@ -1718,7 +3110,24 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-052/thumb.jpg",
     "desktop": "/landing-gallery/LP-052/desktop.jpg",
     "mobile": "/landing-gallery/LP-052/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Muhammad-Taha Ibrahim",
+        "url": "https://unsplash.com/@planeteelevene",
+        "photoUrl": "https://unsplash.com/photos/RR1ZtQxyUQc"
+      },
+      {
+        "name": "Hamish Kale",
+        "url": "https://unsplash.com/@hamishkale_",
+        "photoUrl": "https://unsplash.com/photos/oj0gsj-Zt_w"
+      },
+      {
+        "name": "Jesus Loves Austin",
+        "url": "https://unsplash.com/@jesuslovesaustin",
+        "photoUrl": "https://unsplash.com/photos/LYUXl1NNXHM"
+      }
+    ]
   },
   {
     "id": "LP-053",
@@ -1747,7 +3156,8 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-053/thumb.jpg",
     "desktop": "/landing-gallery/LP-053/desktop.jpg",
     "mobile": "/landing-gallery/LP-053/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": []
   },
   {
     "id": "LP-054",
@@ -1775,7 +3185,34 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-054/thumb.jpg",
     "desktop": "/landing-gallery/LP-054/desktop.jpg",
     "mobile": "/landing-gallery/LP-054/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Sam Moghadam",
+        "url": "https://unsplash.com/@sammoghadam",
+        "photoUrl": "https://unsplash.com/photos/bN_aaTKfwM0"
+      },
+      {
+        "name": "Mastars",
+        "url": "https://unsplash.com/@mastars",
+        "photoUrl": "https://unsplash.com/photos/cJpvBX_gNrg"
+      },
+      {
+        "name": "Isis França",
+        "url": "https://unsplash.com/@isisfra",
+        "photoUrl": "https://unsplash.com/photos/hsPFuudRg5I"
+      },
+      {
+        "name": "Sufyan",
+        "url": "https://unsplash.com/@blenderdesigner",
+        "photoUrl": "https://unsplash.com/photos/JUJzjthZnYU"
+      },
+      {
+        "name": "ThisisEngineering",
+        "url": "https://unsplash.com/@thisisengineering",
+        "photoUrl": "https://unsplash.com/photos/-RFVw0jMyM4"
+      }
+    ]
   },
   {
     "id": "LP-055",
@@ -1803,7 +3240,14 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-055/thumb.jpg",
     "desktop": "/landing-gallery/LP-055/desktop.jpg",
     "mobile": "/landing-gallery/LP-055/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Defrino Maasy",
+        "url": "https://unsplash.com/@defrino",
+        "photoUrl": "https://unsplash.com/photos/GYRA3E1hOuE"
+      }
+    ]
   },
   {
     "id": "LP-056",
@@ -1831,7 +3275,8 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-056/thumb.jpg",
     "desktop": "/landing-gallery/LP-056/desktop.jpg",
     "mobile": "/landing-gallery/LP-056/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": []
   },
   {
     "id": "LP-057",
@@ -1860,7 +3305,24 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-057/thumb.jpg",
     "desktop": "/landing-gallery/LP-057/desktop.jpg",
     "mobile": "/landing-gallery/LP-057/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Jacques Dillies",
+        "url": "https://unsplash.com/@jacques_dillies",
+        "photoUrl": "https://unsplash.com/photos/jcav1COVvOc"
+      },
+      {
+        "name": "Kat von Wood",
+        "url": "https://unsplash.com/@kat_von_wood",
+        "photoUrl": "https://unsplash.com/photos/XL4ElC_KhPk"
+      },
+      {
+        "name": "Alexander Simonsen",
+        "url": "https://unsplash.com/@circlz",
+        "photoUrl": "https://unsplash.com/photos/44al1GlFVxo"
+      }
+    ]
   },
   {
     "id": "LP-058",
@@ -1889,7 +3351,14 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-058/thumb.jpg",
     "desktop": "/landing-gallery/LP-058/desktop.jpg",
     "mobile": "/landing-gallery/LP-058/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Kaleidico",
+        "url": "https://unsplash.com/@kaleidico",
+        "photoUrl": "https://unsplash.com/photos/26MJGnCM0Wc"
+      }
+    ]
   },
   {
     "id": "LP-059",
@@ -1917,7 +3386,19 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-059/thumb.jpg",
     "desktop": "/landing-gallery/LP-059/desktop.jpg",
     "mobile": "/landing-gallery/LP-059/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Aditi Toys",
+        "url": "https://unsplash.com/@adititoys",
+        "photoUrl": "https://unsplash.com/photos/J5DO_DiE3IY"
+      },
+      {
+        "name": "Alberto Rodríguez",
+        "url": "https://unsplash.com/@albertorodriguez",
+        "photoUrl": "https://unsplash.com/photos/qVpGF1mlaM8"
+      }
+    ]
   },
   {
     "id": "LP-060",
@@ -1946,7 +3427,24 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-060/thumb.jpg",
     "desktop": "/landing-gallery/LP-060/desktop.jpg",
     "mobile": "/landing-gallery/LP-060/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Cherrydeck",
+        "url": "https://unsplash.com/@cherrydeck",
+        "photoUrl": "https://unsplash.com/photos/Qx7A7SChpnI"
+      },
+      {
+        "name": "Vitaly Gariev",
+        "url": "https://unsplash.com/@silverkblack",
+        "photoUrl": "https://unsplash.com/photos/AixitSFNrBc"
+      },
+      {
+        "name": "ThisisEngineering",
+        "url": "https://unsplash.com/@thisisengineering",
+        "photoUrl": "https://unsplash.com/photos/uOhBxB23Wao"
+      }
+    ]
   },
   {
     "id": "LP-061",
@@ -1975,7 +3473,14 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-061/thumb.jpg",
     "desktop": "/landing-gallery/LP-061/desktop.jpg",
     "mobile": "/landing-gallery/LP-061/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Victor Rodríguez Iglesias",
+        "url": "https://unsplash.com/@victorrdez",
+        "photoUrl": "https://unsplash.com/photos/zTG8dSz10tQ"
+      }
+    ]
   },
   {
     "id": "LP-062",
@@ -2003,7 +3508,34 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-062/thumb.jpg",
     "desktop": "/landing-gallery/LP-062/desktop.jpg",
     "mobile": "/landing-gallery/LP-062/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Jacob Stone",
+        "url": "https://unsplash.com/@thejacobstone",
+        "photoUrl": "https://unsplash.com/photos/yXs_U82T1fY"
+      },
+      {
+        "name": "Hoseung Han",
+        "url": "https://unsplash.com/@dhs4590",
+        "photoUrl": "https://unsplash.com/photos/d7PKMmEQn5g"
+      },
+      {
+        "name": "Chulho Choi",
+        "url": "https://unsplash.com/@chulho",
+        "photoUrl": "https://unsplash.com/photos/-o9inSGgeFg"
+      },
+      {
+        "name": "Arthur Tseng",
+        "url": "https://unsplash.com/@arthur3607",
+        "photoUrl": "https://unsplash.com/photos/AuKM_oK3Mro"
+      },
+      {
+        "name": "Jéan Béller",
+        "url": "https://unsplash.com/@worldtravelwithjean",
+        "photoUrl": "https://unsplash.com/photos/FMYXBdbxOHo"
+      }
+    ]
   },
   {
     "id": "LP-063",
@@ -2032,7 +3564,29 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-063/thumb.jpg",
     "desktop": "/landing-gallery/LP-063/desktop.jpg",
     "mobile": "/landing-gallery/LP-063/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Brent Gorwin",
+        "url": "https://unsplash.com/@brentg",
+        "photoUrl": "https://unsplash.com/photos/vhQUnmnOLys"
+      },
+      {
+        "name": "Ceba Solutions",
+        "url": "https://unsplash.com/@professional_photos_online",
+        "photoUrl": "https://unsplash.com/photos/SJ3V9ep9fEA"
+      },
+      {
+        "name": "Eugeniya Belova",
+        "url": "https://unsplash.com/@evgeeeenchik",
+        "photoUrl": "https://unsplash.com/photos/14JQozSYEng"
+      },
+      {
+        "name": "Julian Christian Anderson",
+        "url": "https://unsplash.com/@juliancanderson",
+        "photoUrl": "https://unsplash.com/photos/bnzJEspmedQ"
+      }
+    ]
   },
   {
     "id": "LP-064",
@@ -2061,7 +3615,29 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-064/thumb.jpg",
     "desktop": "/landing-gallery/LP-064/desktop.jpg",
     "mobile": "/landing-gallery/LP-064/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Marcin Skalij",
+        "url": "https://unsplash.com/@m_skalij",
+        "photoUrl": "https://unsplash.com/photos/w_2vlvTgk7E"
+      },
+      {
+        "name": "Filippo Faruffini",
+        "url": "https://unsplash.com/@heyfil",
+        "photoUrl": "https://unsplash.com/photos/M1M9PVArnlE"
+      },
+      {
+        "name": "Jay",
+        "url": "https://unsplash.com/@ja024",
+        "photoUrl": "https://unsplash.com/photos/ErSmnThoeJI"
+      },
+      {
+        "name": "lee seunghyub",
+        "url": "https://unsplash.com/@sobalc",
+        "photoUrl": "https://unsplash.com/photos/HuFL7Kq-1Ow"
+      }
+    ]
   },
   {
     "id": "LP-065",
@@ -2089,7 +3665,34 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-065/thumb.jpg",
     "desktop": "/landing-gallery/LP-065/desktop.jpg",
     "mobile": "/landing-gallery/LP-065/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "jessie daniella",
+        "url": "https://unsplash.com/@jessiedaniella",
+        "photoUrl": "https://unsplash.com/photos/aiNU4cA4UzQ"
+      },
+      {
+        "name": "shche_ team",
+        "url": "https://unsplash.com/@shche_",
+        "photoUrl": "https://unsplash.com/photos/hY6mzHREM8I"
+      },
+      {
+        "name": "Annie Spratt",
+        "url": "https://unsplash.com/@anniespratt",
+        "photoUrl": "https://unsplash.com/photos/KQ6sO8m1ZDE"
+      },
+      {
+        "name": "Markus Clemens",
+        "url": "https://unsplash.com/@markusclemens",
+        "photoUrl": "https://unsplash.com/photos/mibjbNoS1XA"
+      },
+      {
+        "name": "insung yoon",
+        "url": "https://unsplash.com/@insungpandora",
+        "photoUrl": "https://unsplash.com/photos/Vxm213warDA"
+      }
+    ]
   },
   {
     "id": "LP-066",
@@ -2117,7 +3720,29 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-066/thumb.jpg",
     "desktop": "/landing-gallery/LP-066/desktop.jpg",
     "mobile": "/landing-gallery/LP-066/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Daily Food Shot",
+        "url": "https://unsplash.com/@dailyfoodshot",
+        "photoUrl": "https://unsplash.com/photos/Rrnz4gDBo3s"
+      },
+      {
+        "name": "Ivan Wong",
+        "url": "https://unsplash.com/@yitmeng_w",
+        "photoUrl": "https://unsplash.com/photos/gmLe2fuOI1I"
+      },
+      {
+        "name": "Markus Winkler",
+        "url": "https://unsplash.com/@markuswinkler",
+        "photoUrl": "https://unsplash.com/photos/tEPkM2uFYPQ"
+      },
+      {
+        "name": "Compagnons",
+        "url": "https://unsplash.com/@sigmund",
+        "photoUrl": "https://unsplash.com/photos/v5afgIby-08"
+      }
+    ]
   },
   {
     "id": "LP-067",
@@ -2146,7 +3771,29 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-067/thumb.jpg",
     "desktop": "/landing-gallery/LP-067/desktop.jpg",
     "mobile": "/landing-gallery/LP-067/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Orion Stephens",
+        "url": "https://unsplash.com/@dropspike_orion55",
+        "photoUrl": "https://unsplash.com/photos/OroGI4DFNX0"
+      },
+      {
+        "name": "Haberdoedas",
+        "url": "https://unsplash.com/@haberdoedas",
+        "photoUrl": "https://unsplash.com/photos/6PzPt2-nieU"
+      },
+      {
+        "name": "Gaku Suyama",
+        "url": "https://unsplash.com/@gakusuyama",
+        "photoUrl": "https://unsplash.com/photos/dBQjKFvqmp4"
+      },
+      {
+        "name": "Aliona Gumeniuk",
+        "url": "https://unsplash.com/@agumeniuk",
+        "photoUrl": "https://unsplash.com/photos/jeAjT87nbjM"
+      }
+    ]
   },
   {
     "id": "LP-068",
@@ -2174,7 +3821,24 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-068/thumb.jpg",
     "desktop": "/landing-gallery/LP-068/desktop.jpg",
     "mobile": "/landing-gallery/LP-068/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Vinicius \"amnx\" Amano",
+        "url": "https://unsplash.com/@viniciusamano",
+        "photoUrl": "https://unsplash.com/photos/FmM6iJWBd3o"
+      },
+      {
+        "name": "Farhad Ibrahimzade",
+        "url": "https://unsplash.com/@ferhadd",
+        "photoUrl": "https://unsplash.com/photos/V2HDOQTJh3o"
+      },
+      {
+        "name": "SumUp",
+        "url": "https://unsplash.com/@sumup",
+        "photoUrl": "https://unsplash.com/photos/5xFEY6ZEE8g"
+      }
+    ]
   },
   {
     "id": "LP-069",
@@ -2203,7 +3867,14 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-069/thumb.jpg",
     "desktop": "/landing-gallery/LP-069/desktop.jpg",
     "mobile": "/landing-gallery/LP-069/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "ROXANA POPOVICI",
+        "url": "https://unsplash.com/@roxanarxx",
+        "photoUrl": "https://unsplash.com/photos/aY5uOJ2o96g"
+      }
+    ]
   },
   {
     "id": "LP-070",
@@ -2233,7 +3904,29 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-070/thumb.jpg",
     "desktop": "/landing-gallery/LP-070/desktop.jpg",
     "mobile": "/landing-gallery/LP-070/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Sergio Kian",
+        "url": "https://unsplash.com/@sergiokian",
+        "photoUrl": "https://unsplash.com/photos/G6svDyPVRrc"
+      },
+      {
+        "name": "Victor Freitas",
+        "url": "https://unsplash.com/@victorfreitas",
+        "photoUrl": "https://unsplash.com/photos/WvDYdXDzkhs"
+      },
+      {
+        "name": "Geert Pieters",
+        "url": "https://unsplash.com/@shotsbywolf",
+        "photoUrl": "https://unsplash.com/photos/3RnkZpDqsEI"
+      },
+      {
+        "name": "Ambitious Studio* | Rick Barrett",
+        "url": "https://unsplash.com/@weareambitious",
+        "photoUrl": "https://unsplash.com/photos/1RNQ11ZODJM"
+      }
+    ]
   },
   {
     "id": "LP-071",
@@ -2261,7 +3954,19 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-071/thumb.jpg",
     "desktop": "/landing-gallery/LP-071/desktop.jpg",
     "mobile": "/landing-gallery/LP-071/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Vitaly Gariev",
+        "url": "https://unsplash.com/@silverkblack",
+        "photoUrl": "https://unsplash.com/photos/iyeUwItlIPk"
+      },
+      {
+        "name": "Jun Ren",
+        "url": "https://unsplash.com/@renjunn",
+        "photoUrl": "https://unsplash.com/photos/KnvVNQ1bAl4"
+      }
+    ]
   },
   {
     "id": "LP-072",
@@ -2289,7 +3994,14 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-072/thumb.jpg",
     "desktop": "/landing-gallery/LP-072/desktop.jpg",
     "mobile": "/landing-gallery/LP-072/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Lisa Hobbs",
+        "url": "https://unsplash.com/@lisahobbs",
+        "photoUrl": "https://unsplash.com/photos/mRaNok_Ld6s"
+      }
+    ]
   },
   {
     "id": "LP-073",
@@ -2317,7 +4029,34 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-073/thumb.jpg",
     "desktop": "/landing-gallery/LP-073/desktop.jpg",
     "mobile": "/landing-gallery/LP-073/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Ellie Eshaghi",
+        "url": "https://unsplash.com/@eliiesh",
+        "photoUrl": "https://unsplash.com/photos/0J-cxuGLbhc"
+      },
+      {
+        "name": "de Aura",
+        "url": "https://unsplash.com/@deaura2026",
+        "photoUrl": "https://unsplash.com/photos/6RHzDK61LDw"
+      },
+      {
+        "name": "Chelson Tamares",
+        "url": "https://unsplash.com/@jd_chon",
+        "photoUrl": "https://unsplash.com/photos/vtQHwU4F13s"
+      },
+      {
+        "name": "Margarita Yutsaytis",
+        "url": "https://unsplash.com/@marsnails",
+        "photoUrl": "https://unsplash.com/photos/v3-AHQ63Wws"
+      },
+      {
+        "name": "Giorgio Trovato",
+        "url": "https://unsplash.com/@giorgiotrovato",
+        "photoUrl": "https://unsplash.com/photos/gb6gtiTZKB8"
+      }
+    ]
   },
   {
     "id": "LP-074",
@@ -2345,7 +4084,8 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-074/thumb.jpg",
     "desktop": "/landing-gallery/LP-074/desktop.jpg",
     "mobile": "/landing-gallery/LP-074/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": []
   },
   {
     "id": "LP-075",
@@ -2373,7 +4113,14 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-075/thumb.jpg",
     "desktop": "/landing-gallery/LP-075/desktop.jpg",
     "mobile": "/landing-gallery/LP-075/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Michał Parzuchowski",
+        "url": "https://unsplash.com/@mparzuchowski",
+        "photoUrl": "https://unsplash.com/photos/BPXSTl_HBhk"
+      }
+    ]
   },
   {
     "id": "LP-076",
@@ -2402,7 +4149,14 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-076/thumb.jpg",
     "desktop": "/landing-gallery/LP-076/desktop.jpg",
     "mobile": "/landing-gallery/LP-076/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Jakub Żerdzicki",
+        "url": "https://unsplash.com/@jakubzerdzicki",
+        "photoUrl": "https://unsplash.com/photos/n3ba57RKVNs"
+      }
+    ]
   },
   {
     "id": "LP-077",
@@ -2431,7 +4185,14 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-077/thumb.jpg",
     "desktop": "/landing-gallery/LP-077/desktop.jpg",
     "mobile": "/landing-gallery/LP-077/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Justin Morgan",
+        "url": "https://unsplash.com/@justin_morgan",
+        "photoUrl": "https://unsplash.com/photos/Hx-4TbpsoIw"
+      }
+    ]
   },
   {
     "id": "LP-078",
@@ -2460,7 +4221,24 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-078/thumb.jpg",
     "desktop": "/landing-gallery/LP-078/desktop.jpg",
     "mobile": "/landing-gallery/LP-078/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Artem Korolev",
+        "url": "https://unsplash.com/@artemisss666",
+        "photoUrl": "https://unsplash.com/photos/q-4TMKhwIm8"
+      },
+      {
+        "name": "Julia Taubitz",
+        "url": "https://unsplash.com/@justmejuliee",
+        "photoUrl": "https://unsplash.com/photos/LLCzbAEC7uE"
+      },
+      {
+        "name": "Art Institute of Chicago",
+        "url": "https://unsplash.com/@artchicago",
+        "photoUrl": "https://unsplash.com/photos/HB-w3Dzz5Pk"
+      }
+    ]
   },
   {
     "id": "LP-079",
@@ -2488,7 +4266,14 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-079/thumb.jpg",
     "desktop": "/landing-gallery/LP-079/desktop.jpg",
     "mobile": "/landing-gallery/LP-079/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "tommao wang",
+        "url": "https://unsplash.com/@tommaomaoer",
+        "photoUrl": "https://unsplash.com/photos/BFQSV68qESs"
+      }
+    ]
   },
   {
     "id": "LP-080",
@@ -2516,7 +4301,14 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-080/thumb.jpg",
     "desktop": "/landing-gallery/LP-080/desktop.jpg",
     "mobile": "/landing-gallery/LP-080/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Vitaly Gariev",
+        "url": "https://unsplash.com/@silverkblack",
+        "photoUrl": "https://unsplash.com/photos/IeysFCmBbHY"
+      }
+    ]
   },
   {
     "id": "LP-081",
@@ -2544,7 +4336,14 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-081/thumb.jpg",
     "desktop": "/landing-gallery/LP-081/desktop.jpg",
     "mobile": "/landing-gallery/LP-081/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Nathan Cima",
+        "url": "https://unsplash.com/@nathan_cima",
+        "photoUrl": "https://unsplash.com/photos/Qw6wa96IvvQ"
+      }
+    ]
   },
   {
     "id": "LP-082",
@@ -2573,7 +4372,34 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-082/thumb.jpg",
     "desktop": "/landing-gallery/LP-082/desktop.jpg",
     "mobile": "/landing-gallery/LP-082/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Bailey Alexander",
+        "url": "https://unsplash.com/@baileyal3xander",
+        "photoUrl": "https://unsplash.com/photos/PE4pFgcYzoQ"
+      },
+      {
+        "name": "Pipcke",
+        "url": "https://unsplash.com/@pipcke",
+        "photoUrl": "https://unsplash.com/photos/g_5UyVBIX_k"
+      },
+      {
+        "name": "Clifford",
+        "url": "https://unsplash.com/@cyzx",
+        "photoUrl": "https://unsplash.com/photos/VobvKmG-StA"
+      },
+      {
+        "name": "Jason Briscoe",
+        "url": "https://unsplash.com/@jsnbrsc",
+        "photoUrl": "https://unsplash.com/photos/GliaHAJ3_5A"
+      },
+      {
+        "name": "john renzzel",
+        "url": "https://unsplash.com/@johnrenzzel",
+        "photoUrl": "https://unsplash.com/photos/rr12y4qEbps"
+      }
+    ]
   },
   {
     "id": "LP-083",
@@ -2601,7 +4427,8 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-083/thumb.jpg",
     "desktop": "/landing-gallery/LP-083/desktop.jpg",
     "mobile": "/landing-gallery/LP-083/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": []
   },
   {
     "id": "LP-084",
@@ -2629,7 +4456,29 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-084/thumb.jpg",
     "desktop": "/landing-gallery/LP-084/desktop.jpg",
     "mobile": "/landing-gallery/LP-084/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Ryoji Iwata",
+        "url": "https://unsplash.com/@ryoji__iwata",
+        "photoUrl": "https://unsplash.com/photos/Fusx3dlbqpw"
+      },
+      {
+        "name": "Vitaly Gariev",
+        "url": "https://unsplash.com/@silverkblack",
+        "photoUrl": "https://unsplash.com/photos/RRet2T_Ct90"
+      },
+      {
+        "name": "Christian Lue",
+        "url": "https://unsplash.com/@christianlue",
+        "photoUrl": "https://unsplash.com/photos/4YhNRgL59Fc"
+      },
+      {
+        "name": "Laura Ohlman",
+        "url": "https://unsplash.com/@ohlmanphotography",
+        "photoUrl": "https://unsplash.com/photos/Je6tljZPtGM"
+      }
+    ]
   },
   {
     "id": "LP-085",
@@ -2657,7 +4506,24 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-085/thumb.jpg",
     "desktop": "/landing-gallery/LP-085/desktop.jpg",
     "mobile": "/landing-gallery/LP-085/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Ali Pazani",
+        "url": "https://unsplash.com/@alipzn",
+        "photoUrl": "https://unsplash.com/photos/BSQZvVtoRCw"
+      },
+      {
+        "name": "Michael G",
+        "url": "https://unsplash.com/@escape_your_mind",
+        "photoUrl": "https://unsplash.com/photos/BtwFA_v1xg4"
+      },
+      {
+        "name": "Madeline Liu",
+        "url": "https://unsplash.com/@madeline_sd",
+        "photoUrl": "https://unsplash.com/photos/cuvIg3vw_Ik"
+      }
+    ]
   },
   {
     "id": "LP-086",
@@ -2686,7 +4552,14 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-086/thumb.jpg",
     "desktop": "/landing-gallery/LP-086/desktop.jpg",
     "mobile": "/landing-gallery/LP-086/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Mustafa Sheikhmouss",
+        "url": "https://unsplash.com/@xalo_mustafa",
+        "photoUrl": "https://unsplash.com/photos/cl1M5WBCF8c"
+      }
+    ]
   },
   {
     "id": "LP-087",
@@ -2714,7 +4587,8 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-087/thumb.jpg",
     "desktop": "/landing-gallery/LP-087/desktop.jpg",
     "mobile": "/landing-gallery/LP-087/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": []
   },
   {
     "id": "LP-088",
@@ -2742,7 +4616,19 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-088/thumb.jpg",
     "desktop": "/landing-gallery/LP-088/desktop.jpg",
     "mobile": "/landing-gallery/LP-088/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Annie Spratt",
+        "url": "https://unsplash.com/@anniespratt",
+        "photoUrl": "https://unsplash.com/photos/hzdgFPz1V24"
+      },
+      {
+        "name": "Bozhin Karaivanov",
+        "url": "https://unsplash.com/@bkaraivanov",
+        "photoUrl": "https://unsplash.com/photos/wiwhYQtjWQE"
+      }
+    ]
   },
   {
     "id": "LP-089",
@@ -2770,7 +4656,34 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-089/thumb.jpg",
     "desktop": "/landing-gallery/LP-089/desktop.jpg",
     "mobile": "/landing-gallery/LP-089/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Jacinto",
+        "url": "https://unsplash.com/@longlivehaas",
+        "photoUrl": "https://unsplash.com/photos/LDRXZSIKIoU"
+      },
+      {
+        "name": "Nikita Khowala",
+        "url": "https://unsplash.com/@nikitakhowala",
+        "photoUrl": "https://unsplash.com/photos/ua_qOi2M_80"
+      },
+      {
+        "name": "Kate Mishchankova",
+        "url": "https://unsplash.com/@katemi",
+        "photoUrl": "https://unsplash.com/photos/ibFvdszg748"
+      },
+      {
+        "name": "Uliana Kopanytsia",
+        "url": "https://unsplash.com/@ulian_ka",
+        "photoUrl": "https://unsplash.com/photos/Y-u2ZcaCKO4"
+      },
+      {
+        "name": "Yasin Onus",
+        "url": "https://unsplash.com/@yasinonus",
+        "photoUrl": "https://unsplash.com/photos/z5Zrrui_COc"
+      }
+    ]
   },
   {
     "id": "LP-090",
@@ -2798,7 +4711,39 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-090/thumb.jpg",
     "desktop": "/landing-gallery/LP-090/desktop.jpg",
     "mobile": "/landing-gallery/LP-090/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Steven Ungermann",
+        "url": "https://unsplash.com/@steveungermann",
+        "photoUrl": "https://unsplash.com/photos/ioazSWHfmzY"
+      },
+      {
+        "name": "Spruce Refillable Cleaning",
+        "url": "https://unsplash.com/@wearespruce",
+        "photoUrl": "https://unsplash.com/photos/OxdnFg-I3Lc"
+      },
+      {
+        "name": "Priscilla Du Preez 🇨🇦",
+        "url": "https://unsplash.com/@priscilladupreez",
+        "photoUrl": "https://unsplash.com/photos/00l8o8UJI_Y"
+      },
+      {
+        "name": "Vít Luštinec",
+        "url": "https://unsplash.com/@vitlustinec",
+        "photoUrl": "https://unsplash.com/photos/--k6f3rtC1I"
+      },
+      {
+        "name": "GoGoNano",
+        "url": "https://unsplash.com/@gogonano",
+        "photoUrl": "https://unsplash.com/photos/gqP96iagklM"
+      },
+      {
+        "name": "With Mahdy",
+        "url": "https://unsplash.com/@withmahdy",
+        "photoUrl": "https://unsplash.com/photos/wizWrRZJXSg"
+      }
+    ]
   },
   {
     "id": "LP-091",
@@ -2827,7 +4772,44 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-091/thumb.jpg",
     "desktop": "/landing-gallery/LP-091/desktop.jpg",
     "mobile": "/landing-gallery/LP-091/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Franco Debartolo",
+        "url": "https://unsplash.com/@francotheshooter",
+        "photoUrl": "https://unsplash.com/photos/tTAS_B7mxI8"
+      },
+      {
+        "name": "Geon George",
+        "url": "https://unsplash.com/@geongeorge",
+        "photoUrl": "https://unsplash.com/photos/HlgGDRhTgCQ"
+      },
+      {
+        "name": "Clay Banks",
+        "url": "https://unsplash.com/@claybanks",
+        "photoUrl": "https://unsplash.com/photos/7pvC_d2iXSE"
+      },
+      {
+        "name": "Esra Afşar",
+        "url": "https://unsplash.com/@esraafsar",
+        "photoUrl": "https://unsplash.com/photos/vAXn-LXUQa8"
+      },
+      {
+        "name": "simon",
+        "url": "https://unsplash.com/@simon_berger",
+        "photoUrl": "https://unsplash.com/photos/JH_R66BihvA"
+      },
+      {
+        "name": "The Cleveland Museum of Art",
+        "url": "https://unsplash.com/@clevelandart",
+        "photoUrl": "https://unsplash.com/photos/AD8nr59mr5c"
+      },
+      {
+        "name": "Joshua Bartell",
+        "url": "https://unsplash.com/@jjbart7",
+        "photoUrl": "https://unsplash.com/photos/6vvIBTvL90A"
+      }
+    ]
   },
   {
     "id": "LP-092",
@@ -2855,7 +4837,34 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-092/thumb.jpg",
     "desktop": "/landing-gallery/LP-092/desktop.jpg",
     "mobile": "/landing-gallery/LP-092/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Ryan Arnst",
+        "url": "https://unsplash.com/@ryanarnst",
+        "photoUrl": "https://unsplash.com/photos/jN7egxv2K3M"
+      },
+      {
+        "name": "Jake Kemman",
+        "url": "https://unsplash.com/@jckemman",
+        "photoUrl": "https://unsplash.com/photos/A_tKbuAwLcs"
+      },
+      {
+        "name": "Terra Slaybaugh",
+        "url": "https://unsplash.com/@terras",
+        "photoUrl": "https://unsplash.com/photos/LCDYCLEJlEo"
+      },
+      {
+        "name": "tommao wang",
+        "url": "https://unsplash.com/@tommaomaoer",
+        "photoUrl": "https://unsplash.com/photos/7QKH1X6tleI"
+      },
+      {
+        "name": "Anna Maria Gnadl",
+        "url": "https://unsplash.com/@aenniways",
+        "photoUrl": "https://unsplash.com/photos/-UDgUw3IoRA"
+      }
+    ]
   },
   {
     "id": "LP-093",
@@ -2885,7 +4894,34 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-093/thumb.jpg",
     "desktop": "/landing-gallery/LP-093/desktop.jpg",
     "mobile": "/landing-gallery/LP-093/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Zhen Yao",
+        "url": "https://unsplash.com/@rex_filmer",
+        "photoUrl": "https://unsplash.com/photos/KMSlIuYXbUw"
+      },
+      {
+        "name": "Laura Mitulla",
+        "url": "https://unsplash.com/@luamtla",
+        "photoUrl": "https://unsplash.com/photos/7Zlds3gm7NU"
+      },
+      {
+        "name": "Vinn Koonyosying",
+        "url": "https://unsplash.com/@mggbox",
+        "photoUrl": "https://unsplash.com/photos/zXNC_lBBVGE"
+      },
+      {
+        "name": "Fenghua",
+        "url": "https://unsplash.com/@fenghua1975",
+        "photoUrl": "https://unsplash.com/photos/g6hSdTrUSC8"
+      },
+      {
+        "name": "Dmitry Rodionov",
+        "url": "https://unsplash.com/@knuckles_echidna",
+        "photoUrl": "https://unsplash.com/photos/AGAj6dhVgPw"
+      }
+    ]
   },
   {
     "id": "LP-094",
@@ -2913,7 +4949,44 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-094/thumb.jpg",
     "desktop": "/landing-gallery/LP-094/desktop.jpg",
     "mobile": "/landing-gallery/LP-094/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "seongjin Kim",
+        "url": "https://unsplash.com/@makimesa",
+        "photoUrl": "https://unsplash.com/photos/b5OOpRblTpU"
+      },
+      {
+        "name": "Finn",
+        "url": "https://unsplash.com/@finn_staygold",
+        "photoUrl": "https://unsplash.com/photos/RAPatsLTaJ0"
+      },
+      {
+        "name": "J Shim",
+        "url": "https://unsplash.com/@uncertainthink",
+        "photoUrl": "https://unsplash.com/photos/hoTW8weCnOg"
+      },
+      {
+        "name": "john ko",
+        "url": "https://unsplash.com/@jko001",
+        "photoUrl": "https://unsplash.com/photos/OkJnM-pq2_o"
+      },
+      {
+        "name": "Fidel Fernando",
+        "url": "https://unsplash.com/@fifernando",
+        "photoUrl": "https://unsplash.com/photos/X7NzByz9bdI"
+      },
+      {
+        "name": "Perry Merrity II",
+        "url": "https://unsplash.com/@prince_perry",
+        "photoUrl": "https://unsplash.com/photos/9i7tnsd7csc"
+      },
+      {
+        "name": "Hakam magdea fardana ansie",
+        "url": "https://unsplash.com/@hakammagdea",
+        "photoUrl": "https://unsplash.com/photos/Fdi7VNM7uSQ"
+      }
+    ]
   },
   {
     "id": "LP-095",
@@ -2941,7 +5014,29 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-095/thumb.jpg",
     "desktop": "/landing-gallery/LP-095/desktop.jpg",
     "mobile": "/landing-gallery/LP-095/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Matt Whitacre",
+        "url": "https://unsplash.com/@mattwhitacre",
+        "photoUrl": "https://unsplash.com/photos/F4GGnyJ8aiI"
+      },
+      {
+        "name": "Mahyar Yeganeh",
+        "url": "https://unsplash.com/@nvamahyar",
+        "photoUrl": "https://unsplash.com/photos/4AjsolUEVhE"
+      },
+      {
+        "name": "Regi Munandar",
+        "url": "https://unsplash.com/@regimunandar",
+        "photoUrl": "https://unsplash.com/photos/QAQiH_u1y6Q"
+      },
+      {
+        "name": "Jonathan Adams",
+        "url": "https://unsplash.com/@jonathanadamsphoto",
+        "photoUrl": "https://unsplash.com/photos/oV7tFzLnTks"
+      }
+    ]
   },
   {
     "id": "LP-096",
@@ -2969,7 +5064,19 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-096/thumb.jpg",
     "desktop": "/landing-gallery/LP-096/desktop.jpg",
     "mobile": "/landing-gallery/LP-096/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Zongnan Bao",
+        "url": "https://unsplash.com/@zbao",
+        "photoUrl": "https://unsplash.com/photos/Y0dShCjjkWE"
+      },
+      {
+        "name": "James Garman",
+        "url": "https://unsplash.com/@jamesgarmandotcom",
+        "photoUrl": "https://unsplash.com/photos/g0gHGCAMclI"
+      }
+    ]
   },
   {
     "id": "LP-097",
@@ -2997,7 +5104,14 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-097/thumb.jpg",
     "desktop": "/landing-gallery/LP-097/desktop.jpg",
     "mobile": "/landing-gallery/LP-097/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Zara Photo",
+        "url": "https://unsplash.com/@zara_photo",
+        "photoUrl": "https://unsplash.com/photos/ZOeVIjScKpY"
+      }
+    ]
   },
   {
     "id": "LP-098",
@@ -3025,7 +5139,29 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-098/thumb.jpg",
     "desktop": "/landing-gallery/LP-098/desktop.jpg",
     "mobile": "/landing-gallery/LP-098/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "12photostory",
+        "url": "https://unsplash.com/@12photography",
+        "photoUrl": "https://unsplash.com/photos/QSoYOsSiiQA"
+      },
+      {
+        "name": "Zemos",
+        "url": "https://unsplash.com/@zemos",
+        "photoUrl": "https://unsplash.com/photos/qHo65Xyzcvo"
+      },
+      {
+        "name": "Jonatan Bustos",
+        "url": "https://unsplash.com/@jonatanbustos25",
+        "photoUrl": "https://unsplash.com/photos/P1Ku27zZJDs"
+      },
+      {
+        "name": "Mathias Reding",
+        "url": "https://unsplash.com/@matreding",
+        "photoUrl": "https://unsplash.com/photos/_FDgN0zjaPI"
+      }
+    ]
   },
   {
     "id": "LP-099",
@@ -3055,7 +5191,29 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-099/thumb.jpg",
     "desktop": "/landing-gallery/LP-099/desktop.jpg",
     "mobile": "/landing-gallery/LP-099/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Volodymyr Lymariev",
+        "url": "https://unsplash.com/@vlmrv",
+        "photoUrl": "https://unsplash.com/photos/qSWpTzl0too"
+      },
+      {
+        "name": "Alexander Mass",
+        "url": "https://unsplash.com/@alexandermassph",
+        "photoUrl": "https://unsplash.com/photos/JyAMGd2WYZk"
+      },
+      {
+        "name": "Haberdoedas",
+        "url": "https://unsplash.com/@haberdoedas",
+        "photoUrl": "https://unsplash.com/photos/taoCQhiWv1E"
+      },
+      {
+        "name": "Grace Anne Bobadilla",
+        "url": "https://unsplash.com/@graceannefully",
+        "photoUrl": "https://unsplash.com/photos/ldWazd-vWI0"
+      }
+    ]
   },
   {
     "id": "LP-100",
@@ -3083,7 +5241,34 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-100/thumb.jpg",
     "desktop": "/landing-gallery/LP-100/desktop.jpg",
     "mobile": "/landing-gallery/LP-100/mobile.jpg",
-    "credit": null
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Lindsey Elsey",
+        "url": "https://unsplash.com/@artsmarts",
+        "photoUrl": "https://unsplash.com/photos/fmuykMXH-dY"
+      },
+      {
+        "name": "Laura Tommasina",
+        "url": "https://unsplash.com/@lauratommphoto",
+        "photoUrl": "https://unsplash.com/photos/Wksd6I6mSkw"
+      },
+      {
+        "name": "Igor Rodrigues",
+        "url": "https://unsplash.com/@igorrodrigues",
+        "photoUrl": "https://unsplash.com/photos/0xw9_4toZck"
+      },
+      {
+        "name": "Jelleke Vanooteghem",
+        "url": "https://unsplash.com/@ilumire",
+        "photoUrl": "https://unsplash.com/photos/8Arw-cEpt-Q"
+      },
+      {
+        "name": "Junseong Lee",
+        "url": "https://unsplash.com/@bearsnap",
+        "photoUrl": "https://unsplash.com/photos/G9H5edUL0T8"
+      }
+    ]
   }
 ];
 

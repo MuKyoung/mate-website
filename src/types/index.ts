@@ -150,4 +150,6 @@ export interface LandingDesign {
   desktop: string;
   mobile: string;
   credit: LandingCredit | null;
+  /** 사진 자리에 예시로 넣은 Unsplash 사진의 사진가 (없으면 빈 배열) */
+  photoCredits: TemplateCredit[];
 }

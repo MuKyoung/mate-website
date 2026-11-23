@@ -98,6 +98,17 @@ export default function DesignDetailClient({ design: d, prev, next }: Props) {
                 <><b className="text-ink">MATE 시안</b><span>MATE가 구성한 시안입니다.</span></>
               )}
               <span>제작 스타일 샘플입니다. 상호·수치·후기·일정은 예시이고, 사진 자리는 실제 촬영으로 채웁니다.</span>
+              {d.photoCredits.length > 0 && (
+                <span>
+                  지금 들어 있는 사진은 예시입니다. 사진: Unsplash의{' '}
+                  {d.photoCredits.map((c, i) => (
+                    <span key={c.photoUrl}>
+                      {i > 0 && ', '}
+                      <a href={c.photoUrl} target="_blank" rel="noopener noreferrer" className="underline hover:text-point-200">{c.name}</a>
+                    </span>
+                  ))}
+                </span>
+              )}
             </div>
 
             <div className="grid gap-3">
