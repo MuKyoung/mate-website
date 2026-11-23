@@ -480,6 +480,13 @@ body {
   inset: -8% -26% 0;
 }
 .cube-face img { -webkit-user-drag: none; pointer-events: none; }
+/* 공개 사이트의 이미지 보호(ImageGuard 가 허브 · 핀볼 밖에서만 붙인다). 아이폰 길게 누르기 미리보기 · 공유 시트, 끌기, 고르기를 막는다 */
+.img-guard :is(img, picture, video, canvas) {
+  -webkit-touch-callout: none;
+  -webkit-user-drag: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
 @media (min-width: 768px) {
   .cube-wrap { --s: clamp(240px, min(30vw, 44vh), 440px); }
 }
