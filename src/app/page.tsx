@@ -5,6 +5,7 @@ import KeyNumbers from '@/components/home/KeyNumbers';
 import FeaturedWork from '@/components/home/FeaturedWork';
 import WhyStairs from '@/components/home/WhyStairs';
 import NowList from '@/components/home/NowList';
+import NoticePopup from '@/components/home/NoticePopup';
 
 /**
  * 홈.
@@ -25,6 +26,7 @@ export default function Home() {
       <FeaturedWork />
       <WhyStairs />
       <NowList />
+      <NoticePopup />
     </>
   );
 }
