@@ -1,11 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { FiArrowLeft, FiArrowRight, FiArrowUpRight } from 'react-icons/fi';
 import type { LandingDesign } from '@/types';
-import { landingContactHref } from '@/data/landingService';
+import {
+  landingContactHref, landingViewQuery, readLandingView, saveLandingView, type LandingView,
+} from '@/data/landingService';
 import { arrowHover, btnLine, btnPoint, chip, chipLine, container } from '@/lib/styles';
 
 interface Props {
@@ -19,7 +21,13 @@ interface Props {
  * 문의 버튼은 /contact 로 design 번호를 넘긴다(문의 제목이 채워진다).
  */
 export default function DesignDetailClient({ design: d, prev, next }: Props) {
-  const [view, setView] = useState<'pc' | 'mobile'>('pc');
+  /* 갤러리에서 고른 화면(?view=mobile 또는 저장해 둔 값)으로 연다. 서버 그림과 같게 PC 로 시작한다 */
+  const [view, setView] = useState<LandingView>('pc');
+  useEffect(() => {
+    const v = readLandingView();
+    if (v) setView(v);
+  }, []);
+  const pickView = (v: LandingView) => { setView(v); saveLandingView(v); };
   const rows: [string, string][] = [
     ['업종', [d.fieldLabel, ...d.industries].join(' · ')],
     ['목적', d.purposes.join(' · ')],
@@ -50,7 +58,7 @@ export default function DesignDetailClient({ design: d, prev, next }: Props) {
             <div className="flex items-center justify-between gap-3">
               <div role="group" aria-label="미리보기 화면" className="inline-flex rounded-pill border border-gray-200 p-1">
                 {(['pc', 'mobile'] as const).map((v) => (
-                  <button key={v} type="button" aria-pressed={view === v} onClick={() => setView(v)}
+                  <button key={v} type="button" aria-pressed={view === v} onClick={() => pickView(v)}
                     className={`rounded-pill px-5 py-2 text-[14px] font-bold transition-colors ${view === v ? 'bg-ink text-white' : 'text-gray-500 hover:text-ink'}`}>
                     {v === 'pc' ? 'PC' : '모바일'}
                   </button>
@@ -122,12 +130,12 @@ export default function DesignDetailClient({ design: d, prev, next }: Props) {
 
         <nav aria-label="이전 · 다음 디자인" className="mt-16 flex flex-wrap justify-between gap-4 border-t border-gray-200 pt-8">
           {prev ? (
-            <Link href={`../${prev.id}/`} className="group flex items-center gap-3 text-[15px] text-gray-500 hover:text-point-200">
+            <Link href={`../${prev.id}/${landingViewQuery(view)}`} className="group flex items-center gap-3 text-[15px] text-gray-500 hover:text-point-200">
               <FiArrowLeft aria-hidden /> <span className="font-mono">{prev.id}</span> {prev.title}
             </Link>
           ) : <span />}
           {next && (
-            <Link href={`../${next.id}/`} className="group flex items-center gap-3 text-[15px] text-gray-500 hover:text-point-200">
+            <Link href={`../${next.id}/${landingViewQuery(view)}`} className="group flex items-center gap-3 text-[15px] text-gray-500 hover:text-point-200">
               <span className="font-mono">{next.id}</span> {next.title} <FiArrowRight aria-hidden />
             </Link>
           )}

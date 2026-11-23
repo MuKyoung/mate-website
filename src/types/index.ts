@@ -149,6 +149,8 @@ export interface LandingDesign {
   thumb: string;
   desktop: string;
   mobile: string;
+  /** 모바일 첫 화면(390×844 비율) - 갤러리를 모바일로 볼 때 카드 그림 */
+  mobileThumb: string;
   credit: LandingCredit | null;
   /** 사진 자리에 예시로 넣은 Unsplash 사진의 사진가 (없으면 빈 배열) */
   photoCredits: TemplateCredit[];

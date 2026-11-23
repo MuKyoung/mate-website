@@ -65,3 +65,30 @@ export const templateSampleNotes = [
  * 상대 주소라 하위 도메인(/ · /templates/)과 본 사이트 경로(/landing-page/ · /landing-page/templates/) 양쪽에서 맞다
  */
 export const landingTabs = { here: './', templates: 'templates/', landing: '../' };
+
+/** 랜딩페이지 갤러리 · 상세에서 고르는 미리보기 화면 */
+export type LandingView = 'pc' | 'mobile';
+/** 고른 화면을 상세 · 갤러리를 오가는 동안 이어 쓰려고 sessionStorage 에 두는 열쇠 */
+export const LANDING_VIEW_KEY = 'mate-landing-view';
+/** 상세로 갈 때 고른 화면을 주소에 싣는다 (PC 는 기본이라 붙이지 않는다) */
+export const landingViewQuery = (view: LandingView) => (view === 'mobile' ? '?view=mobile' : '');
+
+/** 주소(?view=) → 저장해 둔 값 순서로 고른 화면을 읽는다. 브라우저에서만 부른다 */
+export function readLandingView(): LandingView | null {
+  const q = new URLSearchParams(window.location.search).get('view');
+  if (q === 'pc' || q === 'mobile') return q;
+  try {
+    const saved = sessionStorage.getItem(LANDING_VIEW_KEY);
+    return saved === 'pc' || saved === 'mobile' ? saved : null;
+  } catch {
+    return null; // 저장소를 막아 둔 브라우저
+  }
+}
+
+export function saveLandingView(view: LandingView) {
+  try {
+    sessionStorage.setItem(LANDING_VIEW_KEY, view);
+  } catch {
+    // 저장소를 막아 둔 브라우저 - 이번 화면에서만 바뀐다
+  }
+}

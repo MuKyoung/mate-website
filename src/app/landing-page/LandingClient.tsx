@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -10,6 +10,7 @@ import SectionHead from '@/components/ui/SectionHead';
 import { landingDesigns, landingFields, landingVocab } from '@/data/landingDesigns';
 import {
   landingContactHref, landingHero, landingProcess, landingSampleNotes, landingScope, landingScopeNote, landingTabs,
+  landingViewQuery, readLandingView, saveLandingView, type LandingView,
 } from '@/data/landingService';
 import { fadeUp, inView, rowIn, staggerRows, staggerTight } from '@/lib/motion';
 import { arrowHover, btnLight, chip, container, numTile, radiusCard } from '@/lib/styles';
@@ -44,6 +45,13 @@ const krds = landingDesigns.filter((d) => d.kind === 'mate' && d.credit);
 export default function LandingClient() {
   const [q, setQ] = useState('');
   const [sel, setSel] = useState<Record<FilterKey, string[]>>(EMPTY);
+  /* 미리보기 화면 - 서버 그림과 같게 PC 로 시작하고, 상세에서 돌아오면 고른 화면을 되살린다 */
+  const [view, setView] = useState<LandingView>('pc');
+  useEffect(() => {
+    const v = readLandingView();
+    if (v) setView(v);
+  }, []);
+  const pickView = (v: LandingView) => { setView(v); saveLandingView(v); };
 
   const toggle = (k: FilterKey, v: string) =>
     setSel((s) => ({ ...s, [k]: s[k].includes(v) ? s[k].filter((x) => x !== v) : [...s[k], v] }));
@@ -105,6 +113,14 @@ export default function LandingClient() {
                   placeholder="업종이나 분위기로 찾기 (예: 카페, 축제, 신뢰감)"
                   className="w-full border-0 bg-transparent p-0 text-[16px] text-ink placeholder:text-gray-400 outline-none focus:ring-0" />
               </label>
+              <div role="group" aria-label="미리보기 화면" className="inline-flex shrink-0 rounded-pill border border-gray-200 p-1">
+                {(['pc', 'mobile'] as const).map((v) => (
+                  <button key={v} type="button" aria-pressed={view === v} onClick={() => pickView(v)}
+                    className={`rounded-pill px-4 py-1.5 text-[14px] font-bold transition-colors ${view === v ? 'bg-ink text-white' : 'text-gray-500 hover:text-ink'}`}>
+                    {v === 'pc' ? 'PC' : '모바일'}
+                  </button>
+                ))}
+              </div>
               <p className="text-[15px] text-gray-500" aria-live="polite"><b className="text-ink">{list.length}</b>개 스타일</p>
               {filtered && (
                 <button type="button" onClick={reset} className="text-[15px] font-bold text-point-200">필터 초기화</button>
@@ -132,15 +148,24 @@ export default function LandingClient() {
           {list.length === 0 ? (
             <p className="py-16 text-[16px] text-gray-500">조건에 맞는 스타일이 없습니다. 필터를 하나 풀어 보세요.</p>
           ) : (
-            <ul className="mt-10 grid gap-x-5 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <ul className={view === 'pc'
+              ? 'mt-10 grid gap-x-5 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
+              : 'mt-10 grid grid-cols-2 gap-x-4 gap-y-10 sm:grid-cols-3 sm:gap-x-5 lg:grid-cols-4 xl:grid-cols-5'}>
               {list.map((d) => (
-                <li key={d.id}>
-                  {/* 상대 주소 - 하위 도메인에서는 /LP-001/, 본 사이트 경로에서는 /landing-page/LP-001/ 로 간다 */}
-                  <Link href={`${d.id}/`} className="group block">
-                    <div className="overflow-hidden rounded-[12px] border border-gray-200 bg-gray-100 transition-transform duration-300 group-hover:-translate-y-1">
-                      <Image src={d.thumb} alt={`${d.title} 첫 화면`} width={640} height={400}
-                        className="aspect-[16/10] w-full object-cover object-top" />
-                    </div>
+                <li key={d.id} className="min-w-0">
+                  {/* 상대 주소 - 하위 도메인에서는 /LP-001/, 본 사이트 경로에서는 /landing-page/LP-001/ 로 간다. 모바일로 보고 있으면 상세도 모바일로 연다 */}
+                  <Link href={`${d.id}/${landingViewQuery(view)}`} className="group block">
+                    {view === 'pc' ? (
+                      <div className="overflow-hidden rounded-[12px] border border-gray-200 bg-gray-100 transition-transform duration-300 group-hover:-translate-y-1">
+                        <Image src={d.thumb} alt={`${d.title} PC 첫 화면`} width={640} height={400}
+                          className="aspect-[16/10] w-full object-cover object-top" />
+                      </div>
+                    ) : (
+                      <div className="overflow-hidden rounded-[20px] border-[5px] border-ink bg-white transition-transform duration-300 group-hover:-translate-y-1">
+                        <Image src={d.mobileThumb} alt={`${d.title} 모바일 첫 화면`} width={360} height={779}
+                          className="aspect-[390/844] w-full object-cover object-top" />
+                      </div>
+                    )}
                     <div className="mt-3 flex items-center gap-2 text-[12px]">
                       <span className="font-mono text-ink">{d.id}</span>
                       <span className={chip}>{d.kind === 'template' ? '외부 디자인 기반' : 'MATE 시안'}</span>

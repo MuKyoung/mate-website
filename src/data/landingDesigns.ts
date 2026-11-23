@@ -77,6 +77,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-001/thumb.jpg",
     "desktop": "/landing-gallery/LP-001/desktop.jpg",
     "mobile": "/landing-gallery/LP-001/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-001/mobile-thumb.jpg",
     "credit": {
       "text": "디자인 원작: \"Oceanside Restaurant Free Website Template\" by CCasalme (Figma Community) · CC BY 4.0 · MATE가 사진·글꼴·문구를 바꿔 다시 구성",
       "creator": "CCasalme",
@@ -113,6 +114,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-002/thumb.jpg",
     "desktop": "/landing-gallery/LP-002/desktop.jpg",
     "mobile": "/landing-gallery/LP-002/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-002/mobile-thumb.jpg",
     "credit": {
       "text": "디자인 원작: \"Responsive Landing Page Design | Webinar Event Website UI Design | Free Figma Template\" by Publish Ninja (Figma Community) · CC BY 4.0 · MATE가 사진·글꼴·문구를 바꿔 다시 구성",
       "creator": "Publish Ninja",
@@ -189,6 +191,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-003/thumb.jpg",
     "desktop": "/landing-gallery/LP-003/desktop.jpg",
     "mobile": "/landing-gallery/LP-003/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-003/mobile-thumb.jpg",
     "credit": {
       "text": "디자인 원작: \"Free Skincare E-Commerce Landing Page (Web and Mobile Responsiveness)\" by Abiola Babatunde (Figma Community) · CC BY 4.0 · MATE가 사진·글꼴·문구를 바꿔 다시 구성",
       "creator": "Abiola Babatunde",
@@ -275,6 +278,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-004/thumb.jpg",
     "desktop": "/landing-gallery/LP-004/desktop.jpg",
     "mobile": "/landing-gallery/LP-004/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-004/mobile-thumb.jpg",
     "credit": {
       "text": "디자인 원작: \"10 Landing pages | Responsive | Web, Tab, Mobile | Ui/Ux Design · #1\" by Ashraf Sabri (Figma Community) · CC BY 4.0 · MATE가 사진·글꼴·문구를 바꿔 다시 구성",
       "creator": "Ashraf Sabri",
@@ -336,6 +340,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-005/thumb.jpg",
     "desktop": "/landing-gallery/LP-005/desktop.jpg",
     "mobile": "/landing-gallery/LP-005/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-005/mobile-thumb.jpg",
     "credit": {
       "text": "디자인 원작: \"10 Landing pages | Responsive | Web, Tab, Mobile | Ui/Ux Design · #2\" by Ashraf Sabri (Figma Community) · CC BY 4.0 · MATE가 사진·글꼴·문구를 바꿔 다시 구성",
       "creator": "Ashraf Sabri",
@@ -397,6 +402,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-006/thumb.jpg",
     "desktop": "/landing-gallery/LP-006/desktop.jpg",
     "mobile": "/landing-gallery/LP-006/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-006/mobile-thumb.jpg",
     "credit": {
       "text": "디자인 원작: \"10 Landing pages | Responsive | Web, Tab, Mobile | Ui/Ux Design · #3\" by Ashraf Sabri (Figma Community) · CC BY 4.0 · MATE가 사진·글꼴·문구를 바꿔 다시 구성",
       "creator": "Ashraf Sabri",
@@ -498,6 +504,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-007/thumb.jpg",
     "desktop": "/landing-gallery/LP-007/desktop.jpg",
     "mobile": "/landing-gallery/LP-007/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-007/mobile-thumb.jpg",
     "credit": {
       "text": "디자인 원작: \"10 Landing pages | Responsive | Web, Tab, Mobile | Ui/Ux Design · #4\" by Ashraf Sabri (Figma Community) · CC BY 4.0 · MATE가 사진·글꼴·문구를 바꿔 다시 구성",
       "creator": "Ashraf Sabri",
@@ -554,6 +561,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-008/thumb.jpg",
     "desktop": "/landing-gallery/LP-008/desktop.jpg",
     "mobile": "/landing-gallery/LP-008/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-008/mobile-thumb.jpg",
     "credit": {
       "text": "디자인 원작: \"10 Landing pages | Responsive | Web, Tab, Mobile | Ui/Ux Design · #5\" by Ashraf Sabri (Figma Community) · CC BY 4.0 · MATE가 사진·글꼴·문구를 바꿔 다시 구성",
       "creator": "Ashraf Sabri",
@@ -650,6 +658,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-009/thumb.jpg",
     "desktop": "/landing-gallery/LP-009/desktop.jpg",
     "mobile": "/landing-gallery/LP-009/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-009/mobile-thumb.jpg",
     "credit": {
       "text": "디자인 원작: \"10 Landing pages | Responsive | Web, Tab, Mobile | Ui/Ux Design · #6\" by Ashraf Sabri (Figma Community) · CC BY 4.0 · MATE가 사진·글꼴·문구를 바꿔 다시 구성",
       "creator": "Ashraf Sabri",
@@ -726,6 +735,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-010/thumb.jpg",
     "desktop": "/landing-gallery/LP-010/desktop.jpg",
     "mobile": "/landing-gallery/LP-010/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-010/mobile-thumb.jpg",
     "credit": {
       "text": "디자인 원작: \"10 Landing pages | Responsive | Web, Tab, Mobile | Ui/Ux Design · #7\" by Ashraf Sabri (Figma Community) · CC BY 4.0 · MATE가 사진·글꼴·문구를 바꿔 다시 구성",
       "creator": "Ashraf Sabri",
@@ -767,6 +777,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-011/thumb.jpg",
     "desktop": "/landing-gallery/LP-011/desktop.jpg",
     "mobile": "/landing-gallery/LP-011/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-011/mobile-thumb.jpg",
     "credit": {
       "text": "디자인 원작: \"10 Landing pages | Responsive | Web, Tab, Mobile | Ui/Ux Design · #8\" by Ashraf Sabri (Figma Community) · CC BY 4.0 · MATE가 사진·글꼴·문구를 바꿔 다시 구성",
       "creator": "Ashraf Sabri",
@@ -843,6 +854,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-012/thumb.jpg",
     "desktop": "/landing-gallery/LP-012/desktop.jpg",
     "mobile": "/landing-gallery/LP-012/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-012/mobile-thumb.jpg",
     "credit": {
       "text": "디자인 원작: \"10 Landing pages | Responsive | Web, Tab, Mobile | Ui/Ux Design · #9\" by Ashraf Sabri (Figma Community) · CC BY 4.0 · MATE가 사진·글꼴·문구를 바꿔 다시 구성",
       "creator": "Ashraf Sabri",
@@ -914,6 +926,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-013/thumb.jpg",
     "desktop": "/landing-gallery/LP-013/desktop.jpg",
     "mobile": "/landing-gallery/LP-013/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-013/mobile-thumb.jpg",
     "credit": {
       "text": "디자인 원작: \"10 Landing pages | Responsive | Web, Tab, Mobile | Ui/Ux Design · #10\" by Ashraf Sabri (Figma Community) · CC BY 4.0 · MATE가 사진·글꼴·문구를 바꿔 다시 구성",
       "creator": "Ashraf Sabri",
@@ -986,6 +999,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-014/thumb.jpg",
     "desktop": "/landing-gallery/LP-014/desktop.jpg",
     "mobile": "/landing-gallery/LP-014/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-014/mobile-thumb.jpg",
     "credit": {
       "text": "디자인 원작: \"Figma design - Responsive yoga website\" by young kim (Figma Community) · CC BY 4.0 · MATE가 사진·글꼴·문구를 바꿔 다시 구성",
       "creator": "young kim",
@@ -1068,6 +1082,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-015/thumb.jpg",
     "desktop": "/landing-gallery/LP-015/desktop.jpg",
     "mobile": "/landing-gallery/LP-015/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-015/mobile-thumb.jpg",
     "credit": {
       "text": "디자인 원작: \"Charity- Responsive Website Design\" by Joou Designs (Figma Community) · CC BY 4.0 · MATE가 사진·글꼴·문구를 바꿔 다시 구성",
       "creator": "Joou Designs",
@@ -1149,6 +1164,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-016/thumb.jpg",
     "desktop": "/landing-gallery/LP-016/desktop.jpg",
     "mobile": "/landing-gallery/LP-016/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-016/mobile-thumb.jpg",
     "credit": {
       "text": "디자인 원작: \"Design in Figma - Responsive watches website\" by young kim (Figma Community) · CC BY 4.0 · MATE가 사진·글꼴·문구를 바꿔 다시 구성",
       "creator": "young kim",
@@ -1201,6 +1217,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-017/thumb.jpg",
     "desktop": "/landing-gallery/LP-017/desktop.jpg",
     "mobile": "/landing-gallery/LP-017/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-017/mobile-thumb.jpg",
     "credit": {
       "text": "디자인 원작: \"ECO Shop - Eco Friendly Store Responsive Website\" by Bima Agustian Wanaputra (Figma Community) · CC BY 4.0 · MATE가 사진·글꼴·문구를 바꿔 다시 구성",
       "creator": "Bima Agustian Wanaputra",
@@ -1338,6 +1355,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-018/thumb.jpg",
     "desktop": "/landing-gallery/LP-018/desktop.jpg",
     "mobile": "/landing-gallery/LP-018/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-018/mobile-thumb.jpg",
     "credit": {
       "text": "디자인 원작: \"Figma Design - Responsive coffee website\" by young kim (Figma Community) · CC BY 4.0 · MATE가 사진·글꼴·문구를 바꿔 다시 구성",
       "creator": "young kim",
@@ -1424,6 +1442,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-019/thumb.jpg",
     "desktop": "/landing-gallery/LP-019/desktop.jpg",
     "mobile": "/landing-gallery/LP-019/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-019/mobile-thumb.jpg",
     "credit": {
       "text": "디자인 원작: \"Design in Figma - Responsive christmas website\" by young kim (Figma Community) · CC BY 4.0 · MATE가 사진·글꼴·문구를 바꿔 다시 구성",
       "creator": "young kim",
@@ -1546,6 +1565,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-020/thumb.jpg",
     "desktop": "/landing-gallery/LP-020/desktop.jpg",
     "mobile": "/landing-gallery/LP-020/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-020/mobile-thumb.jpg",
     "credit": {
       "text": "디자인 원작: \"Real Estate Landing Page\" by Sergei Evdokimov (Figma Community) · CC BY 4.0 · MATE가 사진·글꼴·문구를 바꿔 다시 구성",
       "creator": "Sergei Evdokimov",
@@ -1643,6 +1663,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-021/thumb.jpg",
     "desktop": "/landing-gallery/LP-021/desktop.jpg",
     "mobile": "/landing-gallery/LP-021/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-021/mobile-thumb.jpg",
     "credit": {
       "text": "디자인 원작: \"Diseño Web Abogados / Web Design Lawyers\" by Matias Gomez (Figma Community) · CC BY 4.0 · MATE가 사진·글꼴·문구를 바꿔 다시 구성",
       "creator": "Matias Gomez",
@@ -1704,6 +1725,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-022/thumb.jpg",
     "desktop": "/landing-gallery/LP-022/desktop.jpg",
     "mobile": "/landing-gallery/LP-022/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-022/mobile-thumb.jpg",
     "credit": {
       "text": "디자인 원작: \"Home Services Website & Booking Flow — Desktop + Mobile\" by Keshley Nitz Martinez (Figma Community) · CC BY 4.0 · MATE가 사진·글꼴·문구를 바꿔 다시 구성",
       "creator": "Keshley Nitz Martinez",
@@ -1739,6 +1761,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-023/thumb.jpg",
     "desktop": "/landing-gallery/LP-023/desktop.jpg",
     "mobile": "/landing-gallery/LP-023/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-023/mobile-thumb.jpg",
     "credit": {
       "text": "디자인 원작: \"Landing Page For Dentist with Mobile Version | Landing Page para Dentistas con Version Movil\" by Matias Gomez (Figma Community) · CC BY 4.0 · MATE가 사진·글꼴·문구를 바꿔 다시 구성",
       "creator": "Matias Gomez",
@@ -1796,6 +1819,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-024/thumb.jpg",
     "desktop": "/landing-gallery/LP-024/desktop.jpg",
     "mobile": "/landing-gallery/LP-024/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-024/mobile-thumb.jpg",
     "credit": {
       "text": "본 시안은 행정안전부에서 2024년 작성하여 공공누리 제1유형으로 개방한 범정부 UI/UX 디자인시스템(KRDS)을 이용하였으며, 해당 저작물은 KRDS 디자인시스템 홈페이지(www.krds.go.kr)에서 무료로 받을 수 있습니다.",
       "creator": "행정안전부 KRDS",
@@ -1837,6 +1861,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-025/thumb.jpg",
     "desktop": "/landing-gallery/LP-025/desktop.jpg",
     "mobile": "/landing-gallery/LP-025/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-025/mobile-thumb.jpg",
     "credit": {
       "text": "본 시안은 행정안전부에서 2024년 작성하여 공공누리 제1유형으로 개방한 범정부 UI/UX 디자인시스템(KRDS)을 이용하였으며, 해당 저작물은 KRDS 디자인시스템 홈페이지(www.krds.go.kr)에서 무료로 받을 수 있습니다.",
       "creator": "행정안전부 KRDS",
@@ -1873,6 +1898,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-026/thumb.jpg",
     "desktop": "/landing-gallery/LP-026/desktop.jpg",
     "mobile": "/landing-gallery/LP-026/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-026/mobile-thumb.jpg",
     "credit": {
       "text": "본 시안은 행정안전부에서 2024년 작성하여 공공누리 제1유형으로 개방한 범정부 UI/UX 디자인시스템(KRDS)을 이용하였으며, 해당 저작물은 KRDS 디자인시스템 홈페이지(www.krds.go.kr)에서 무료로 받을 수 있습니다.",
       "creator": "행정안전부 KRDS",
@@ -1955,6 +1981,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-027/thumb.jpg",
     "desktop": "/landing-gallery/LP-027/desktop.jpg",
     "mobile": "/landing-gallery/LP-027/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-027/mobile-thumb.jpg",
     "credit": {
       "text": "본 시안은 행정안전부에서 2024년 작성하여 공공누리 제1유형으로 개방한 범정부 UI/UX 디자인시스템(KRDS)을 이용하였으며, 해당 저작물은 KRDS 디자인시스템 홈페이지(www.krds.go.kr)에서 무료로 받을 수 있습니다.",
       "creator": "행정안전부 KRDS",
@@ -1996,6 +2023,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-028/thumb.jpg",
     "desktop": "/landing-gallery/LP-028/desktop.jpg",
     "mobile": "/landing-gallery/LP-028/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-028/mobile-thumb.jpg",
     "credit": {
       "text": "본 시안은 행정안전부에서 2024년 작성하여 공공누리 제1유형으로 개방한 범정부 UI/UX 디자인시스템(KRDS)을 이용하였으며, 해당 저작물은 KRDS 디자인시스템 홈페이지(www.krds.go.kr)에서 무료로 받을 수 있습니다.",
       "creator": "행정안전부 KRDS",
@@ -2042,6 +2070,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-029/thumb.jpg",
     "desktop": "/landing-gallery/LP-029/desktop.jpg",
     "mobile": "/landing-gallery/LP-029/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-029/mobile-thumb.jpg",
     "credit": {
       "text": "본 시안은 행정안전부에서 2024년 작성하여 공공누리 제1유형으로 개방한 범정부 UI/UX 디자인시스템(KRDS)을 이용하였으며, 해당 저작물은 KRDS 디자인시스템 홈페이지(www.krds.go.kr)에서 무료로 받을 수 있습니다.",
       "creator": "행정안전부 KRDS",
@@ -2098,6 +2127,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-030/thumb.jpg",
     "desktop": "/landing-gallery/LP-030/desktop.jpg",
     "mobile": "/landing-gallery/LP-030/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-030/mobile-thumb.jpg",
     "credit": {
       "text": "본 시안은 행정안전부에서 2024년 작성하여 공공누리 제1유형으로 개방한 범정부 UI/UX 디자인시스템(KRDS)을 이용하였으며, 해당 저작물은 KRDS 디자인시스템 홈페이지(www.krds.go.kr)에서 무료로 받을 수 있습니다.",
       "creator": "행정안전부 KRDS",
@@ -2132,6 +2162,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-031/thumb.jpg",
     "desktop": "/landing-gallery/LP-031/desktop.jpg",
     "mobile": "/landing-gallery/LP-031/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-031/mobile-thumb.jpg",
     "credit": {
       "text": "본 시안은 행정안전부에서 2024년 작성하여 공공누리 제1유형으로 개방한 범정부 UI/UX 디자인시스템(KRDS)을 이용하였으며, 해당 저작물은 KRDS 디자인시스템 홈페이지(www.krds.go.kr)에서 무료로 받을 수 있습니다.",
       "creator": "행정안전부 KRDS",
@@ -2173,6 +2204,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-032/thumb.jpg",
     "desktop": "/landing-gallery/LP-032/desktop.jpg",
     "mobile": "/landing-gallery/LP-032/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-032/mobile-thumb.jpg",
     "credit": {
       "text": "본 시안은 행정안전부에서 2024년 작성하여 공공누리 제1유형으로 개방한 범정부 UI/UX 디자인시스템(KRDS)을 이용하였으며, 해당 저작물은 KRDS 디자인시스템 홈페이지(www.krds.go.kr)에서 무료로 받을 수 있습니다.",
       "creator": "행정안전부 KRDS",
@@ -2235,6 +2267,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-033/thumb.jpg",
     "desktop": "/landing-gallery/LP-033/desktop.jpg",
     "mobile": "/landing-gallery/LP-033/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-033/mobile-thumb.jpg",
     "credit": {
       "text": "본 시안은 행정안전부에서 2024년 작성하여 공공누리 제1유형으로 개방한 범정부 UI/UX 디자인시스템(KRDS)을 이용하였으며, 해당 저작물은 KRDS 디자인시스템 홈페이지(www.krds.go.kr)에서 무료로 받을 수 있습니다.",
       "creator": "행정안전부 KRDS",
@@ -2307,6 +2340,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-034/thumb.jpg",
     "desktop": "/landing-gallery/LP-034/desktop.jpg",
     "mobile": "/landing-gallery/LP-034/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-034/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -2362,6 +2396,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-035/thumb.jpg",
     "desktop": "/landing-gallery/LP-035/desktop.jpg",
     "mobile": "/landing-gallery/LP-035/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-035/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": []
   },
@@ -2391,6 +2426,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-036/thumb.jpg",
     "desktop": "/landing-gallery/LP-036/desktop.jpg",
     "mobile": "/landing-gallery/LP-036/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-036/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -2431,6 +2467,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-037/thumb.jpg",
     "desktop": "/landing-gallery/LP-037/desktop.jpg",
     "mobile": "/landing-gallery/LP-037/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-037/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -2466,6 +2503,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-038/thumb.jpg",
     "desktop": "/landing-gallery/LP-038/desktop.jpg",
     "mobile": "/landing-gallery/LP-038/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-038/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": []
   },
@@ -2495,6 +2533,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-039/thumb.jpg",
     "desktop": "/landing-gallery/LP-039/desktop.jpg",
     "mobile": "/landing-gallery/LP-039/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-039/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -2556,6 +2595,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-040/thumb.jpg",
     "desktop": "/landing-gallery/LP-040/desktop.jpg",
     "mobile": "/landing-gallery/LP-040/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-040/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -2626,6 +2666,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-041/thumb.jpg",
     "desktop": "/landing-gallery/LP-041/desktop.jpg",
     "mobile": "/landing-gallery/LP-041/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-041/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": []
   },
@@ -2655,6 +2696,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-042/thumb.jpg",
     "desktop": "/landing-gallery/LP-042/desktop.jpg",
     "mobile": "/landing-gallery/LP-042/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-042/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": []
   },
@@ -2684,6 +2726,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-043/thumb.jpg",
     "desktop": "/landing-gallery/LP-043/desktop.jpg",
     "mobile": "/landing-gallery/LP-043/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-043/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -2721,6 +2764,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-044/thumb.jpg",
     "desktop": "/landing-gallery/LP-044/desktop.jpg",
     "mobile": "/landing-gallery/LP-044/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-044/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -2776,6 +2820,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-045/thumb.jpg",
     "desktop": "/landing-gallery/LP-045/desktop.jpg",
     "mobile": "/landing-gallery/LP-045/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-045/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -2816,6 +2861,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-046/thumb.jpg",
     "desktop": "/landing-gallery/LP-046/desktop.jpg",
     "mobile": "/landing-gallery/LP-046/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-046/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -2866,6 +2912,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-047/thumb.jpg",
     "desktop": "/landing-gallery/LP-047/desktop.jpg",
     "mobile": "/landing-gallery/LP-047/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-047/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": []
   },
@@ -2896,6 +2943,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-048/thumb.jpg",
     "desktop": "/landing-gallery/LP-048/desktop.jpg",
     "mobile": "/landing-gallery/LP-048/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-048/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -2946,6 +2994,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-049/thumb.jpg",
     "desktop": "/landing-gallery/LP-049/desktop.jpg",
     "mobile": "/landing-gallery/LP-049/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-049/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -2997,6 +3046,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-050/thumb.jpg",
     "desktop": "/landing-gallery/LP-050/desktop.jpg",
     "mobile": "/landing-gallery/LP-050/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-050/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -3081,6 +3131,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-051/thumb.jpg",
     "desktop": "/landing-gallery/LP-051/desktop.jpg",
     "mobile": "/landing-gallery/LP-051/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-051/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": []
   },
@@ -3110,6 +3161,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-052/thumb.jpg",
     "desktop": "/landing-gallery/LP-052/desktop.jpg",
     "mobile": "/landing-gallery/LP-052/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-052/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -3156,6 +3208,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-053/thumb.jpg",
     "desktop": "/landing-gallery/LP-053/desktop.jpg",
     "mobile": "/landing-gallery/LP-053/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-053/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": []
   },
@@ -3185,6 +3238,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-054/thumb.jpg",
     "desktop": "/landing-gallery/LP-054/desktop.jpg",
     "mobile": "/landing-gallery/LP-054/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-054/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -3240,6 +3294,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-055/thumb.jpg",
     "desktop": "/landing-gallery/LP-055/desktop.jpg",
     "mobile": "/landing-gallery/LP-055/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-055/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -3275,6 +3330,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-056/thumb.jpg",
     "desktop": "/landing-gallery/LP-056/desktop.jpg",
     "mobile": "/landing-gallery/LP-056/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-056/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": []
   },
@@ -3305,6 +3361,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-057/thumb.jpg",
     "desktop": "/landing-gallery/LP-057/desktop.jpg",
     "mobile": "/landing-gallery/LP-057/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-057/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -3351,6 +3408,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-058/thumb.jpg",
     "desktop": "/landing-gallery/LP-058/desktop.jpg",
     "mobile": "/landing-gallery/LP-058/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-058/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -3386,6 +3444,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-059/thumb.jpg",
     "desktop": "/landing-gallery/LP-059/desktop.jpg",
     "mobile": "/landing-gallery/LP-059/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-059/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -3427,6 +3486,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-060/thumb.jpg",
     "desktop": "/landing-gallery/LP-060/desktop.jpg",
     "mobile": "/landing-gallery/LP-060/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-060/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -3473,6 +3533,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-061/thumb.jpg",
     "desktop": "/landing-gallery/LP-061/desktop.jpg",
     "mobile": "/landing-gallery/LP-061/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-061/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -3508,6 +3569,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-062/thumb.jpg",
     "desktop": "/landing-gallery/LP-062/desktop.jpg",
     "mobile": "/landing-gallery/LP-062/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-062/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -3564,6 +3626,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-063/thumb.jpg",
     "desktop": "/landing-gallery/LP-063/desktop.jpg",
     "mobile": "/landing-gallery/LP-063/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-063/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -3615,6 +3678,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-064/thumb.jpg",
     "desktop": "/landing-gallery/LP-064/desktop.jpg",
     "mobile": "/landing-gallery/LP-064/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-064/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -3665,6 +3729,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-065/thumb.jpg",
     "desktop": "/landing-gallery/LP-065/desktop.jpg",
     "mobile": "/landing-gallery/LP-065/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-065/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -3720,6 +3785,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-066/thumb.jpg",
     "desktop": "/landing-gallery/LP-066/desktop.jpg",
     "mobile": "/landing-gallery/LP-066/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-066/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -3771,6 +3837,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-067/thumb.jpg",
     "desktop": "/landing-gallery/LP-067/desktop.jpg",
     "mobile": "/landing-gallery/LP-067/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-067/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -3821,6 +3888,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-068/thumb.jpg",
     "desktop": "/landing-gallery/LP-068/desktop.jpg",
     "mobile": "/landing-gallery/LP-068/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-068/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -3867,6 +3935,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-069/thumb.jpg",
     "desktop": "/landing-gallery/LP-069/desktop.jpg",
     "mobile": "/landing-gallery/LP-069/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-069/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -3904,6 +3973,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-070/thumb.jpg",
     "desktop": "/landing-gallery/LP-070/desktop.jpg",
     "mobile": "/landing-gallery/LP-070/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-070/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -3954,6 +4024,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-071/thumb.jpg",
     "desktop": "/landing-gallery/LP-071/desktop.jpg",
     "mobile": "/landing-gallery/LP-071/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-071/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -3994,6 +4065,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-072/thumb.jpg",
     "desktop": "/landing-gallery/LP-072/desktop.jpg",
     "mobile": "/landing-gallery/LP-072/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-072/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -4029,6 +4101,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-073/thumb.jpg",
     "desktop": "/landing-gallery/LP-073/desktop.jpg",
     "mobile": "/landing-gallery/LP-073/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-073/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -4084,6 +4157,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-074/thumb.jpg",
     "desktop": "/landing-gallery/LP-074/desktop.jpg",
     "mobile": "/landing-gallery/LP-074/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-074/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": []
   },
@@ -4113,6 +4187,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-075/thumb.jpg",
     "desktop": "/landing-gallery/LP-075/desktop.jpg",
     "mobile": "/landing-gallery/LP-075/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-075/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -4149,6 +4224,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-076/thumb.jpg",
     "desktop": "/landing-gallery/LP-076/desktop.jpg",
     "mobile": "/landing-gallery/LP-076/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-076/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -4185,6 +4261,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-077/thumb.jpg",
     "desktop": "/landing-gallery/LP-077/desktop.jpg",
     "mobile": "/landing-gallery/LP-077/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-077/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -4221,6 +4298,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-078/thumb.jpg",
     "desktop": "/landing-gallery/LP-078/desktop.jpg",
     "mobile": "/landing-gallery/LP-078/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-078/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -4266,6 +4344,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-079/thumb.jpg",
     "desktop": "/landing-gallery/LP-079/desktop.jpg",
     "mobile": "/landing-gallery/LP-079/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-079/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -4301,6 +4380,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-080/thumb.jpg",
     "desktop": "/landing-gallery/LP-080/desktop.jpg",
     "mobile": "/landing-gallery/LP-080/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-080/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -4336,6 +4416,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-081/thumb.jpg",
     "desktop": "/landing-gallery/LP-081/desktop.jpg",
     "mobile": "/landing-gallery/LP-081/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-081/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -4372,6 +4453,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-082/thumb.jpg",
     "desktop": "/landing-gallery/LP-082/desktop.jpg",
     "mobile": "/landing-gallery/LP-082/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-082/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -4427,6 +4509,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-083/thumb.jpg",
     "desktop": "/landing-gallery/LP-083/desktop.jpg",
     "mobile": "/landing-gallery/LP-083/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-083/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": []
   },
@@ -4456,6 +4539,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-084/thumb.jpg",
     "desktop": "/landing-gallery/LP-084/desktop.jpg",
     "mobile": "/landing-gallery/LP-084/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-084/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -4506,6 +4590,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-085/thumb.jpg",
     "desktop": "/landing-gallery/LP-085/desktop.jpg",
     "mobile": "/landing-gallery/LP-085/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-085/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -4552,6 +4637,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-086/thumb.jpg",
     "desktop": "/landing-gallery/LP-086/desktop.jpg",
     "mobile": "/landing-gallery/LP-086/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-086/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -4587,6 +4673,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-087/thumb.jpg",
     "desktop": "/landing-gallery/LP-087/desktop.jpg",
     "mobile": "/landing-gallery/LP-087/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-087/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": []
   },
@@ -4616,6 +4703,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-088/thumb.jpg",
     "desktop": "/landing-gallery/LP-088/desktop.jpg",
     "mobile": "/landing-gallery/LP-088/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-088/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -4656,6 +4744,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-089/thumb.jpg",
     "desktop": "/landing-gallery/LP-089/desktop.jpg",
     "mobile": "/landing-gallery/LP-089/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-089/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -4711,6 +4800,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-090/thumb.jpg",
     "desktop": "/landing-gallery/LP-090/desktop.jpg",
     "mobile": "/landing-gallery/LP-090/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-090/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -4772,6 +4862,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-091/thumb.jpg",
     "desktop": "/landing-gallery/LP-091/desktop.jpg",
     "mobile": "/landing-gallery/LP-091/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-091/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -4837,6 +4928,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-092/thumb.jpg",
     "desktop": "/landing-gallery/LP-092/desktop.jpg",
     "mobile": "/landing-gallery/LP-092/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-092/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -4894,6 +4986,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-093/thumb.jpg",
     "desktop": "/landing-gallery/LP-093/desktop.jpg",
     "mobile": "/landing-gallery/LP-093/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-093/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -4949,6 +5042,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-094/thumb.jpg",
     "desktop": "/landing-gallery/LP-094/desktop.jpg",
     "mobile": "/landing-gallery/LP-094/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-094/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -5014,6 +5108,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-095/thumb.jpg",
     "desktop": "/landing-gallery/LP-095/desktop.jpg",
     "mobile": "/landing-gallery/LP-095/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-095/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -5064,6 +5159,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-096/thumb.jpg",
     "desktop": "/landing-gallery/LP-096/desktop.jpg",
     "mobile": "/landing-gallery/LP-096/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-096/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -5104,6 +5200,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-097/thumb.jpg",
     "desktop": "/landing-gallery/LP-097/desktop.jpg",
     "mobile": "/landing-gallery/LP-097/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-097/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -5139,6 +5236,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-098/thumb.jpg",
     "desktop": "/landing-gallery/LP-098/desktop.jpg",
     "mobile": "/landing-gallery/LP-098/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-098/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -5191,6 +5289,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-099/thumb.jpg",
     "desktop": "/landing-gallery/LP-099/desktop.jpg",
     "mobile": "/landing-gallery/LP-099/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-099/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
@@ -5241,6 +5340,7 @@ export const landingDesigns: LandingDesign[] = [
     "thumb": "/landing-gallery/LP-100/thumb.jpg",
     "desktop": "/landing-gallery/LP-100/desktop.jpg",
     "mobile": "/landing-gallery/LP-100/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-100/mobile-thumb.jpg",
     "credit": null,
     "photoCredits": [
       {
