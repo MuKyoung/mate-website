@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import { FiArrowUpRight, FiSearch } from 'react-icons/fi';
 import PageHeader from '@/components/PageHeader';
 import SectionHead from '@/components/ui/SectionHead';
+import PartnersBand from '@/components/home/PartnersBand';
 import { landingDesigns, landingFields, landingVocab } from '@/data/landingDesigns';
 import {
   landingContactHref, landingHero, landingProcess, landingSampleNotes, landingScope, landingScopeNote, landingTabs,
@@ -81,6 +82,7 @@ export default function LandingClient() {
         desc={landingHero.sub}
         tabs={[{ href: landingTabs.here, label: '랜딩페이지 디자인' }, { href: landingTabs.templates, label: '디자인 템플릿' }]}
         active={landingTabs.here} />
+      <PartnersBand />
 
       {/* 맡길 수 있는 일 */}
       <section data-header="light" className="bg-gray-100 py-24 sm:py-32 xl:py-40">

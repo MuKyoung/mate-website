@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { FiArrowUpRight, FiPlay, FiSearch } from 'react-icons/fi';
 import PageHeader from '@/components/PageHeader';
 import SectionHead from '@/components/ui/SectionHead';
+import PartnersBand from '@/components/home/PartnersBand';
 import { landingContactHref, landingTabs, templateHero, templateSampleNotes } from '@/data/landingService';
 import { templateFields, templateFormats, templateGenres, templateThumb, templates } from '@/data/templateLibrary';
 import { arrowHover, btnLight, chip, container } from '@/lib/styles';
@@ -56,6 +57,7 @@ export default function TemplatesClient() {
         desc={templateHero.desc}
         tabs={[{ href: landingTabs.landing, label: '랜딩페이지 디자인' }, { href: landingTabs.here, label: '디자인 템플릿' }]}
         active={landingTabs.here} />
+      <PartnersBand />
 
       {/* 템플릿 갤러리 */}
       <section id="gallery" data-header="light" className="scroll-mt-24 bg-white py-24 sm:py-32 xl:py-40">
