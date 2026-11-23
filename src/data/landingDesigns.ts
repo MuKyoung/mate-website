@@ -5783,6 +5783,760 @@ export const landingDesigns: LandingDesign[] = [
       "마우스를 올리면 기우는 입장권",
       "미끄러지는 날짜 탭과 남은 날 시계, 길을 달리는 셔틀버스"
     ]
+  },
+  {
+    "id": "LP-111",
+    "title": "동네 빵집 · 옆으로 흐르는 빵 사진",
+    "field": 1,
+    "fieldLabel": "음식·카페·매장",
+    "industries": [
+      "베이커리",
+      "동네 빵집",
+      "디저트 카페"
+    ],
+    "purposes": [
+      "소개",
+      "예약",
+      "구매"
+    ],
+    "moods": [
+      "따뜻한",
+      "내추럴"
+    ],
+    "visualStyles": [
+      "사진 중심",
+      "모션 그래픽"
+    ],
+    "kind": "mate",
+    "kindLabel": "MATE 시안 · 움직이는 페이지",
+    "summary": "반죽을 빚는 손 사진이 천천히 다가오며 제목이 드러나고, 스크롤을 내리면 오늘 나오는 빵 사진이 옆으로 흘러가는 동네 빵집 페이지.",
+    "thumb": "/landing-gallery/LP-111/thumb.jpg",
+    "desktop": "/landing-gallery/LP-111/desktop.jpg",
+    "mobile": "/landing-gallery/LP-111/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-111/mobile-thumb.jpg",
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Skyler Ewing",
+        "url": "https://unsplash.com/@skylerewing",
+        "photoUrl": "https://unsplash.com/photos/8Fled6qer2Q"
+      },
+      {
+        "name": "Nicholas Doyle",
+        "url": "https://unsplash.com/@nsdoyle",
+        "photoUrl": "https://unsplash.com/photos/t7jTtJ9iyUE"
+      },
+      {
+        "name": "With Mahdy",
+        "url": "https://unsplash.com/@withmahdy",
+        "photoUrl": "https://unsplash.com/photos/ePh7mI8y_bA"
+      },
+      {
+        "name": "arh Lee",
+        "url": "https://unsplash.com/@arhlee_00",
+        "photoUrl": "https://unsplash.com/photos/UTxe9bNv_R4"
+      },
+      {
+        "name": "Kris Tian",
+        "url": "https://unsplash.com/@kris_tian",
+        "photoUrl": "https://unsplash.com/photos/jeHTgSM6Ujc"
+      },
+      {
+        "name": "atelierbyvineeth ...",
+        "url": "https://unsplash.com/@atelierbyvineeth",
+        "photoUrl": "https://unsplash.com/photos/W1EQVH99VHI"
+      }
+    ],
+    "demo": "/landing-motion/LP-111.html",
+    "motions": [
+      "첫 화면 사진이 천천히 다가오고 제목이 아래에서 밀려 올라와 드러남",
+      "스크롤에 맞춰 빵 사진이 옆으로 흘러가는 고정 구간",
+      "메뉴 줄에 마우스를 올리면 커서를 따라오는 빵 사진",
+      "스크롤로 차오르는 굽는 시간표와 다음에 나올 빵 표시",
+      "아래에서 위로 잘려 드러나는 진열장 사진"
+    ]
+  },
+  {
+    "id": "LP-112",
+    "title": "스킨케어 숍 · 아치 창 속 사진",
+    "field": 2,
+    "fieldLabel": "뷰티·건강·의료",
+    "industries": [
+      "스킨케어 숍",
+      "에스테틱",
+      "피부 관리실"
+    ],
+    "purposes": [
+      "소개",
+      "예약"
+    ],
+    "moods": [
+      "프리미엄",
+      "내추럴"
+    ],
+    "visualStyles": [
+      "사진 중심",
+      "모션 그래픽"
+    ],
+    "kind": "mate",
+    "kindLabel": "MATE 시안 · 움직이는 페이지",
+    "summary": "아치 모양 창 안에서 사진이 서로 다른 속도로 움직이고, 관리 순서를 따라 내려가면 둥근 창의 사진이 바뀌는 예약제 스킨케어 숍 페이지.",
+    "thumb": "/landing-gallery/LP-112/thumb.jpg",
+    "desktop": "/landing-gallery/LP-112/desktop.jpg",
+    "mobile": "/landing-gallery/LP-112/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-112/mobile-thumb.jpg",
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Anju Ravindranath",
+        "url": "https://unsplash.com/@anjurnath",
+        "photoUrl": "https://unsplash.com/photos/InjcU6s_l44"
+      },
+      {
+        "name": "sam limon",
+        "url": "https://unsplash.com/@limone",
+        "photoUrl": "https://unsplash.com/photos/apuJlRzdcDo"
+      },
+      {
+        "name": "Ana azuria",
+        "url": "https://unsplash.com/@ana_azuria",
+        "photoUrl": "https://unsplash.com/photos/LclE8PqL9qw"
+      },
+      {
+        "name": "ibnu ihza",
+        "url": "https://unsplash.com/@mahendra_10",
+        "photoUrl": "https://unsplash.com/photos/g6q3lFAe3kA"
+      },
+      {
+        "name": "A.Rahmat MN",
+        "url": "https://unsplash.com/@alir4hmatmn",
+        "photoUrl": "https://unsplash.com/photos/JysmtN0YPHM"
+      },
+      {
+        "name": "Cosmin Ursea",
+        "url": "https://unsplash.com/@cosminursea",
+        "photoUrl": "https://unsplash.com/photos/IjcQV4wxPXU"
+      },
+      {
+        "name": "Declan Sun",
+        "url": "https://unsplash.com/@declansun",
+        "photoUrl": "https://unsplash.com/photos/6OfQw-we6Ps"
+      }
+    ],
+    "demo": "/landing-motion/LP-112.html",
+    "motions": [
+      "아치 창 세 개 안에서 사진이 서로 다른 속도로 움직임",
+      "커튼처럼 옆으로 열리며 드러나는 사진",
+      "관리 순서에 따라 둥근 창의 사진이 바뀌고 둘레의 고리가 차오름",
+      "메뉴 탭 아래에서 미끄러지는 밑줄",
+      "낱말 단위로 떠오르는 제목"
+    ]
+  },
+  {
+    "id": "LP-113",
+    "title": "도예 공방 수업 · 한 장씩 넘어가는 사진",
+    "field": 3,
+    "fieldLabel": "교육·강의·코칭",
+    "industries": [
+      "도예 공방",
+      "원데이 클래스",
+      "공예 수업"
+    ],
+    "purposes": [
+      "소개",
+      "신청",
+      "모집"
+    ],
+    "moods": [
+      "따뜻한",
+      "내추럴"
+    ],
+    "visualStyles": [
+      "사진 중심",
+      "모션 그래픽"
+    ],
+    "kind": "mate",
+    "kindLabel": "MATE 시안 · 움직이는 페이지",
+    "summary": "흙을 치대는 것부터 구워서 받기까지, 스크롤을 내리면 수업 순서대로 사진 카드가 한 장씩 넘어가는 도예 공방 하루 수업 페이지.",
+    "thumb": "/landing-gallery/LP-113/thumb.jpg",
+    "desktop": "/landing-gallery/LP-113/desktop.jpg",
+    "mobile": "/landing-gallery/LP-113/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-113/mobile-thumb.jpg",
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Vitaly Gariev",
+        "url": "https://unsplash.com/@silverkblack",
+        "photoUrl": "https://unsplash.com/photos/tRdMXNgFBVY"
+      },
+      {
+        "name": "Alex Jones",
+        "url": "https://unsplash.com/@alexjones",
+        "photoUrl": "https://unsplash.com/photos/Tq4YjCa2BSc"
+      },
+      {
+        "name": "Earl Wilcox",
+        "url": "https://unsplash.com/@earl_plannerzone",
+        "photoUrl": "https://unsplash.com/photos/iUbsw_VOkbM"
+      },
+      {
+        "name": "Aedrian Salazar",
+        "url": "https://unsplash.com/@aedrian",
+        "photoUrl": "https://unsplash.com/photos/wrEHW8QaeYw"
+      },
+      {
+        "name": "Kazuo ota",
+        "url": "https://unsplash.com/@kazuo513",
+        "photoUrl": "https://unsplash.com/photos/7aEICAa-JK8"
+      },
+      {
+        "name": "cafeconcetto",
+        "url": "https://unsplash.com/@cafeconcetto",
+        "photoUrl": "https://unsplash.com/photos/NENc84l109g"
+      },
+      {
+        "name": "Jason Leung",
+        "url": "https://unsplash.com/@ninjason",
+        "photoUrl": "https://unsplash.com/photos/_p2LIblOlWY"
+      }
+    ],
+    "demo": "/landing-motion/LP-113.html",
+    "motions": [
+      "첫 화면 사진이 옆에서 잘려 드러나고 물레처럼 도는 고리",
+      "수업 순서대로 사진 카드가 한 장씩 넘어가는 고정 구간",
+      "수업 시간 · 인원 숫자가 올라감",
+      "요일 탭 사이를 미끄러지는 표시와 남은 자리 점",
+      "준비물 목록의 체크 표시가 그려짐"
+    ]
+  },
+  {
+    "id": "LP-114",
+    "title": "인테리어 시공 · 손잡이로 견주는 설계와 완성",
+    "field": 4,
+    "fieldLabel": "전문·생활 서비스",
+    "industries": [
+      "인테리어 시공",
+      "주거 리모델링",
+      "주방 · 거실 공사"
+    ],
+    "purposes": [
+      "소개",
+      "문의",
+      "예약"
+    ],
+    "moods": [
+      "프리미엄",
+      "따뜻한"
+    ],
+    "visualStyles": [
+      "사진 중심",
+      "모션 그래픽"
+    ],
+    "kind": "mate",
+    "kindLabel": "MATE 시안 · 움직이는 페이지",
+    "summary": "식당 사진 한 장을 손잡이로 좌우로 끌어 선으로 본 설계와 완성된 모습을 견주고, 공간 사진이 잘려 드러나며 공정 선이 스크롤에 맞춰 차오르는 인테리어 시공 페이지.",
+    "thumb": "/landing-gallery/LP-114/thumb.jpg",
+    "desktop": "/landing-gallery/LP-114/desktop.jpg",
+    "mobile": "/landing-gallery/LP-114/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-114/mobile-thumb.jpg",
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Puscas Adryan",
+        "url": "https://unsplash.com/@adryan_studio",
+        "photoUrl": "https://unsplash.com/photos/JXFnfu15SgI"
+      },
+      {
+        "name": "Aalo Lens",
+        "url": "https://unsplash.com/@aalolens",
+        "photoUrl": "https://unsplash.com/photos/u7apeDIhIaI"
+      },
+      {
+        "name": "Franco Debartolo",
+        "url": "https://unsplash.com/@francotheshooter",
+        "photoUrl": "https://unsplash.com/photos/xCAMk7wFZC4"
+      },
+      {
+        "name": "GoodLifeConstruction",
+        "url": "https://unsplash.com/@goodlifeconstruction",
+        "photoUrl": "https://unsplash.com/photos/pQVP5QmskxM"
+      },
+      {
+        "name": "Ishan Sharma",
+        "url": "https://unsplash.com/@itslunar",
+        "photoUrl": "https://unsplash.com/photos/DjaSE8vgUXg"
+      },
+      {
+        "name": "Declan Sun",
+        "url": "https://unsplash.com/@declansun",
+        "photoUrl": "https://unsplash.com/photos/2ZjSja_2EX4"
+      }
+    ],
+    "demo": "/landing-motion/LP-114.html",
+    "motions": [
+      "손잡이를 끌어 선으로 본 설계와 완성을 견주는 사진",
+      "잘려 드러나고 올리면 다가오는 공간 사진 격자",
+      "스크롤에 맞춰 차오르며 단계가 켜지는 공정 선",
+      "첫 화면에서 천천히 다가오는 거실 사진과 한 글자씩 오르는 제목",
+      "화면에 들어오면 올라가는 숫자"
+    ]
+  },
+  {
+    "id": "LP-115",
+    "title": "생활 도자기 룩북 · 옆으로 넘기는 그릇 선반",
+    "field": 5,
+    "fieldLabel": "쇼핑·제품·브랜드",
+    "industries": [
+      "생활 도자기",
+      "핸드메이드 소품",
+      "공방 브랜드"
+    ],
+    "purposes": [
+      "소개",
+      "구매",
+      "예약"
+    ],
+    "moods": [
+      "내추럴",
+      "미니멀",
+      "따뜻한"
+    ],
+    "visualStyles": [
+      "사진 중심",
+      "모션 그래픽"
+    ],
+    "kind": "mate",
+    "kindLabel": "MATE 시안 · 움직이는 페이지",
+    "summary": "첫 화면 사진이 스크롤에 맞춰 액자처럼 줄어들고, 그릇 네 점이 옆으로 넘어가는 룩북과 스크롤로 커지는 사진, 커서를 따라오는 미리보기가 이어지는 생활 도자기 브랜드 페이지.",
+    "thumb": "/landing-gallery/LP-115/thumb.jpg",
+    "desktop": "/landing-gallery/LP-115/desktop.jpg",
+    "mobile": "/landing-gallery/LP-115/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-115/mobile-thumb.jpg",
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Raymond Petrik",
+        "url": "https://unsplash.com/@raymondpetrik",
+        "photoUrl": "https://unsplash.com/photos/525wpkeJSwg"
+      },
+      {
+        "name": "Sixteen Miles Out",
+        "url": "https://unsplash.com/@sixteenmilesout",
+        "photoUrl": "https://unsplash.com/photos/aFvxASlms2A"
+      },
+      {
+        "name": "Tom Crew",
+        "url": "https://unsplash.com/@tomcrewceramics",
+        "photoUrl": "https://unsplash.com/photos/Mz__0nr1AM8"
+      },
+      {
+        "name": "John Vid",
+        "url": "https://unsplash.com/@vanvid",
+        "photoUrl": "https://unsplash.com/photos/YOQ0QeTpMfo"
+      },
+      {
+        "name": "cafeconcetto",
+        "url": "https://unsplash.com/@cafeconcetto",
+        "photoUrl": "https://unsplash.com/photos/4fXPCj0_828"
+      },
+      {
+        "name": "Ionela Mat",
+        "url": "https://unsplash.com/@ionelaaaaa",
+        "photoUrl": "https://unsplash.com/photos/CgnrIDsBrY0"
+      },
+      {
+        "name": "Annie Spratt",
+        "url": "https://unsplash.com/@anniespratt",
+        "photoUrl": "https://unsplash.com/photos/nV8XhbS7wCo"
+      }
+    ],
+    "demo": "/landing-motion/LP-115.html",
+    "motions": [
+      "스크롤에 따라 옆으로 넘어가는 그릇 룩북(고정 구간)",
+      "스크롤하면 액자처럼 줄어드는 첫 화면 사진",
+      "화면에 들어오며 커지는 그릇 사진",
+      "목록에 올리면 커서를 따라오는 사진 미리보기",
+      "낱말씩 떠오르는 소개 글과 시차로 움직이는 작업실 사진"
+    ]
+  },
+  {
+    "id": "LP-116",
+    "title": "공장 · 물류 자동화 설비 · 둥근 창에서 열리는 라인",
+    "field": 6,
+    "fieldLabel": "IT·B2B·제조",
+    "industries": [
+      "물류 자동화",
+      "스마트 공장 설비",
+      "컨베이어 · 로봇"
+    ],
+    "purposes": [
+      "소개",
+      "문의"
+    ],
+    "moods": [
+      "신뢰감 있는",
+      "대담한"
+    ],
+    "visualStyles": [
+      "사진 중심",
+      "모션 그래픽"
+    ],
+    "kind": "mate",
+    "kindLabel": "MATE 시안 · 움직이는 페이지",
+    "summary": "작은 둥근 창으로 보이던 분류 라인 사진이 스크롤에 맞춰 화면 가득 열리고, 생산 라인 사진 위에서 글이 단계별로 바뀌는 공장 · 물류 자동화 설비 회사 페이지.",
+    "thumb": "/landing-gallery/LP-116/thumb.jpg",
+    "desktop": "/landing-gallery/LP-116/desktop.jpg",
+    "mobile": "/landing-gallery/LP-116/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-116/mobile-thumb.jpg",
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "CHUTTERSNAP",
+        "url": "https://unsplash.com/@chuttersnap",
+        "photoUrl": "https://unsplash.com/photos/BNBA1h-NgdY"
+      },
+      {
+        "name": "Alberto Rodríguez",
+        "url": "https://unsplash.com/@albertorodriguez",
+        "photoUrl": "https://unsplash.com/photos/xoSw4kQMgbk"
+      },
+      {
+        "name": "Salvador Escalante",
+        "url": "https://unsplash.com/@salvador_86",
+        "photoUrl": "https://unsplash.com/photos/GG02YTZl0GM"
+      },
+      {
+        "name": "nik biziuk",
+        "url": "https://unsplash.com/@nikbizuk",
+        "photoUrl": "https://unsplash.com/photos/hJ4JxDJkRUw"
+      },
+      {
+        "name": "Akshat Sharma",
+        "url": "https://unsplash.com/@asphotographypics",
+        "photoUrl": "https://unsplash.com/photos/Au8NdOftMaI"
+      },
+      {
+        "name": "Mina Rad",
+        "url": "https://unsplash.com/@miinrad",
+        "photoUrl": "https://unsplash.com/photos/GiuvVfcNFzY"
+      }
+    ],
+    "demo": "/landing-motion/LP-116.html",
+    "motions": [
+      "작은 둥근 창이 스크롤에 맞춰 화면 가득으로 열리는 분류 라인 사진(고정 구간)",
+      "화면 가득한 사진 위에 고정돼 단계별로 바뀌는 글",
+      "서로 다른 속도로 움직이는 가공 · 로봇 사진",
+      "첫 화면에서 천천히 다가오는 창고 사진과 위아래로 지나가는 점검 선",
+      "화면에 들어오면 올라가는 숫자와 잘려 드러나는 사진"
+    ]
+  },
+  {
+    "id": "LP-117",
+    "title": "농촌 한 달 살기 모집 · 맞춰지는 사진 조각",
+    "field": 7,
+    "fieldLabel": "정부·정책·모집",
+    "industries": [
+      "지자체 모집 공고",
+      "귀농 · 귀촌 체험",
+      "농촌 살아 보기"
+    ],
+    "purposes": [
+      "모집",
+      "신청",
+      "소개"
+    ],
+    "moods": [
+      "따뜻한",
+      "내추럴"
+    ],
+    "visualStyles": [
+      "사진 중심",
+      "모션 그래픽"
+    ],
+    "kind": "mate",
+    "kindLabel": "MATE 시안 · 움직이는 페이지",
+    "summary": "황금빛 논 사진으로 열고, 스크롤을 내리면 흩어져 있던 농촌 사진 여섯 장이 한 장의 모음으로 맞춰지는 농촌 한 달 살기 참가자 모집 페이지.",
+    "thumb": "/landing-gallery/LP-117/thumb.jpg",
+    "desktop": "/landing-gallery/LP-117/desktop.jpg",
+    "mobile": "/landing-gallery/LP-117/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-117/mobile-thumb.jpg",
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Winston Chen",
+        "url": "https://unsplash.com/@winstonchen",
+        "photoUrl": "https://unsplash.com/photos/FxGYroqWfb4"
+      },
+      {
+        "name": "Claudia Pop",
+        "url": "https://unsplash.com/@p_claudia_",
+        "photoUrl": "https://unsplash.com/photos/QoIuMEBrkfE"
+      },
+      {
+        "name": "Aleksandrs Karevs",
+        "url": "https://unsplash.com/@ohmycamera",
+        "photoUrl": "https://unsplash.com/photos/sLXFgGW9xTw"
+      },
+      {
+        "name": "Sandie Clarke",
+        "url": "https://unsplash.com/@honeypoppet",
+        "photoUrl": "https://unsplash.com/photos/q13Zq1Jufks"
+      },
+      {
+        "name": "KS KYUNG",
+        "url": "https://unsplash.com/@mygallery",
+        "photoUrl": "https://unsplash.com/photos/FwMOXyz93po"
+      },
+      {
+        "name": "Tho Nguyen Huu",
+        "url": "https://unsplash.com/@suryatravel",
+        "photoUrl": "https://unsplash.com/photos/HdEjmywhC08"
+      },
+      {
+        "name": "Alfi Hilman",
+        "url": "https://unsplash.com/@alfihilmaan",
+        "photoUrl": "https://unsplash.com/photos/4_0G_pobG8M"
+      }
+    ],
+    "demo": "/landing-motion/LP-117.html",
+    "motions": [
+      "흩어진 사진 여섯 장이 스크롤에 따라 한 장의 모음으로 맞춰지는 고정 구간",
+      "첫 화면 논 사진이 천천히 다가오고 제목이 한 글자씩 올라옴",
+      "옆으로 흐르는 사진 띠",
+      "모집 마감까지 남은 시간과 올라가는 지원 숫자",
+      "스크롤에 맞춰 차오르는 하루 일과 선"
+    ]
+  },
+  {
+    "id": "LP-118",
+    "title": "시립도서관 새 단장 · 층마다 바뀌는 사진",
+    "field": 8,
+    "fieldLabel": "공공기관·대학·협회",
+    "industries": [
+      "공공 도서관",
+      "문화 시설",
+      "재개관 안내"
+    ],
+    "purposes": [
+      "소개",
+      "행사",
+      "신청"
+    ],
+    "moods": [
+      "신뢰감 있는",
+      "따뜻한"
+    ],
+    "visualStyles": [
+      "사진 중심",
+      "타이포 중심",
+      "모션 그래픽"
+    ],
+    "kind": "mate",
+    "kindLabel": "MATE 시안 · 움직이는 페이지",
+    "summary": "새 단장을 마친 도서관을 한 층씩 올라가듯, 글 단락을 따라 한쪽에 고정된 사진이 바뀌는 시립도서관 재개관 안내 페이지.",
+    "thumb": "/landing-gallery/LP-118/thumb.jpg",
+    "desktop": "/landing-gallery/LP-118/desktop.jpg",
+    "mobile": "/landing-gallery/LP-118/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-118/mobile-thumb.jpg",
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Brett Wharton",
+        "url": "https://unsplash.com/@brettwharton",
+        "photoUrl": "https://unsplash.com/photos/XaVW0jy1hd4"
+      },
+      {
+        "name": "Tat Linh Nguyen",
+        "url": "https://unsplash.com/@niko_nguyen_10",
+        "photoUrl": "https://unsplash.com/photos/iCy0QOTGzKE"
+      },
+      {
+        "name": "Zoshua Colah",
+        "url": "https://unsplash.com/@zoshuacolah",
+        "photoUrl": "https://unsplash.com/photos/ii3PT1ihWXM"
+      },
+      {
+        "name": "Chang Ye",
+        "url": "https://unsplash.com/@yooceii",
+        "photoUrl": "https://unsplash.com/photos/HazMIZroH2E"
+      },
+      {
+        "name": "Chengrui Lin",
+        "url": "https://unsplash.com/@chengrui",
+        "photoUrl": "https://unsplash.com/photos/IcnO9pYPBdY"
+      },
+      {
+        "name": "Dong Xu",
+        "url": "https://unsplash.com/@tdx_104",
+        "photoUrl": "https://unsplash.com/photos/hIygfQ-JHI4"
+      }
+    ],
+    "demo": "/landing-motion/LP-118.html",
+    "motions": [
+      "글 단락에 맞춰 한쪽에 고정된 사진이 겹쳐 바뀌는 층별 안내",
+      "첫 화면과 자료실 사진이 가장자리부터 잘려 드러남",
+      "프로그램 탭 아래를 미끄러지는 밑줄",
+      "한 획씩 그려지는 펼친 책과 등",
+      "올라가는 숫자와 사진 시차"
+    ]
+  },
+  {
+    "id": "LP-119",
+    "title": "사진작가 포트폴리오 · 잘리며 넘어가는 사진",
+    "field": 9,
+    "fieldLabel": "크리에이터·아티스트",
+    "industries": [
+      "사진작가",
+      "풍경 · 건축 사진",
+      "촬영 의뢰"
+    ],
+    "purposes": [
+      "소개",
+      "문의"
+    ],
+    "moods": [
+      "프리미엄",
+      "미니멀"
+    ],
+    "visualStyles": [
+      "사진 중심",
+      "모션 그래픽"
+    ],
+    "kind": "mate",
+    "kindLabel": "MATE 시안 · 움직이는 페이지",
+    "summary": "화면을 가득 채운 사진이 한쪽부터 잘리며 다음 장으로 넘어가고, 필름 띠를 끌어 넘기다 한 장을 눌러 크게 보는 어둡고 조용한 사진작가 포트폴리오.",
+    "thumb": "/landing-gallery/LP-119/thumb.jpg",
+    "desktop": "/landing-gallery/LP-119/desktop.jpg",
+    "mobile": "/landing-gallery/LP-119/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-119/mobile-thumb.jpg",
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Nathan Anderson",
+        "url": "https://unsplash.com/@nathananderson",
+        "photoUrl": "https://unsplash.com/photos/FAA_bYB7VTg"
+      },
+      {
+        "name": "Alexandra",
+        "url": "https://unsplash.com/@alexandra_p_d",
+        "photoUrl": "https://unsplash.com/photos/_nnSWTXvQAM"
+      },
+      {
+        "name": "yujeong Huh",
+        "url": "https://unsplash.com/@yujeongh",
+        "photoUrl": "https://unsplash.com/photos/77kgRKMUyHg"
+      },
+      {
+        "name": "Oleksii Rozanov",
+        "url": "https://unsplash.com/@rozanovz",
+        "photoUrl": "https://unsplash.com/photos/MzERmV-F2N8"
+      },
+      {
+        "name": "Jonathan Marchal",
+        "url": "https://unsplash.com/@jomarcha",
+        "photoUrl": "https://unsplash.com/photos/5f7feBxJGyY"
+      },
+      {
+        "name": "Anders Jildén",
+        "url": "https://unsplash.com/@andersjilden",
+        "photoUrl": "https://unsplash.com/photos/Sc5RKXLBjGg"
+      },
+      {
+        "name": "Silas Baisch",
+        "url": "https://unsplash.com/@silasbaisch",
+        "photoUrl": "https://unsplash.com/photos/-3vU48G830k"
+      },
+      {
+        "name": "Drew Bae",
+        "url": "https://unsplash.com/@drewbae0505",
+        "photoUrl": "https://unsplash.com/photos/xnP_MyCK2To"
+      }
+    ],
+    "demo": "/landing-motion/LP-119.html",
+    "motions": [
+      "화면 가득한 사진이 한쪽부터 잘리며 넘어가는 슬라이드(자동 · 화살표 · 점)",
+      "끌었다 놓으면 미끄러지는 필름 띠",
+      "사진을 누르면 커지고 좌우로 넘기는 크게 보기",
+      "작업 분야에 올리면 옆 사진이 겹쳐 바뀜",
+      "한 낱말씩 떠오르는 작가의 말"
+    ]
+  },
+  {
+    "id": "LP-120",
+    "title": "한옥 스테이 · 액자로 줄어드는 첫 사진",
+    "field": 10,
+    "fieldLabel": "관광·행사·문화",
+    "industries": [
+      "한옥 스테이",
+      "독채 숙소",
+      "전통 숙박"
+    ],
+    "purposes": [
+      "소개",
+      "예약"
+    ],
+    "moods": [
+      "프리미엄",
+      "내추럴",
+      "따뜻한"
+    ],
+    "visualStyles": [
+      "사진 중심",
+      "모션 그래픽"
+    ],
+    "kind": "mate",
+    "kindLabel": "MATE 시안 · 움직이는 페이지",
+    "summary": "화면을 가득 채운 한옥 마당 사진이 스크롤을 내리면 액자 크기로 줄어들고, 그 뒤에서 제목이 드러나는 한옥 스테이 페이지.",
+    "thumb": "/landing-gallery/LP-120/thumb.jpg",
+    "desktop": "/landing-gallery/LP-120/desktop.jpg",
+    "mobile": "/landing-gallery/LP-120/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-120/mobile-thumb.jpg",
+    "credit": null,
+    "photoCredits": [
+      {
+        "name": "Hazel J",
+        "url": "https://unsplash.com/@hhj8861",
+        "photoUrl": "https://unsplash.com/photos/EG2ASvE4GZU"
+      },
+      {
+        "name": "Rachael Kim",
+        "url": "https://unsplash.com/@rachaelkim7",
+        "photoUrl": "https://unsplash.com/photos/PaGVwwdup9Y"
+      },
+      {
+        "name": "Susann Schuster",
+        "url": "https://unsplash.com/@susannschuster",
+        "photoUrl": "https://unsplash.com/photos/v5tEPII1stk"
+      },
+      {
+        "name": "PJH",
+        "url": "https://unsplash.com/@dokae",
+        "photoUrl": "https://unsplash.com/photos/XzuDOv79Ut0"
+      },
+      {
+        "name": "eun kim",
+        "url": "https://unsplash.com/@calmstore",
+        "photoUrl": "https://unsplash.com/photos/edNGpzKKbmQ"
+      },
+      {
+        "name": "franci ee",
+        "url": "https://unsplash.com/@ee_franci",
+        "photoUrl": "https://unsplash.com/photos/oGxr7DbE0nE"
+      },
+      {
+        "name": "Kristian Angelo",
+        "url": "https://unsplash.com/@kgadia87",
+        "photoUrl": "https://unsplash.com/photos/lWnlcBz6gW4"
+      }
+    ],
+    "demo": "/landing-motion/LP-120.html",
+    "motions": [
+      "화면 가득한 첫 사진이 스크롤에 따라 액자 크기로 줄어들고 제목이 드러나는 고정 구간",
+      "기와지붕 풍경이 스크롤과 다른 속도로 움직임",
+      "마우스를 따라 기우는 객실 카드",
+      "둥글게 잘려 드러나는 차와 아침상 사진",
+      "역에서 대문까지 그려지는 오는 길"
+    ]
   }
 ];
 
