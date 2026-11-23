@@ -48,7 +48,9 @@ export default function ContactPage() {
     if (pick && /^(LP-\d{3}|[A-Z]{2}-\d{2})$/.test(pick)) {
       setDesign(pick);
       const kind = pick.startsWith('LP-') ? '랜딩페이지' : '디자인 템플릿';
-      setFormData((prev) => ({ ...prev, subject: prev.subject || `${kind} 제작 문의 · ${pick}` }));
+      // 랜딩페이지 번호는 손님에게 보이지 않는다(2026-11-24) - 갤러리가 넘긴 디자인 이름(dt)으로 제목을 채우고, 번호는 메일에만 싣는다
+      const name = (params.get('dt') || '').replace(/[\u0000-\u001f]/g, '').trim().slice(0, 60);
+      setFormData((prev) => ({ ...prev, subject: prev.subject || `${kind} 제작 문의 · ${name || pick}` }));
     }
   }, []);
 

@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { FiArrowLeft, FiArrowRight, FiArrowUpRight, FiExternalLink, FiRotateCw } from 'react-icons/fi';
 import type { LandingDesign } from '@/types';
 import {
-  landingContactHref, landingMotion, landingViewQuery, readLandingView, rightsNotice, saveLandingView, type LandingView,
+  landingContactHref, landingMotion, landingViewQuery, readLandingView, rightsNotice, saveLandingView, LANDING_DEFAULT_VIEW, type LandingView,
 } from '@/data/landingService';
 import { arrowHover, btnLine, btnPoint, chip, chipLine, container } from '@/lib/styles';
 import MotionFrame from '../MotionFrame';
@@ -20,17 +20,15 @@ interface Props {
 /**
  * 갤러리 디자인 상세 - 왼쪽은 PC · 모바일 전체 길이 미리보기(전환), 오른쪽은 분류 · 출처 · 문의.
  * 움직이는 페이지(d.demo)는 그림 대신 실제 샘플 페이지를 PC · 모바일 화면 크기로 띄워 그 자리에서 움직여 보게 한다.
- * 문의 버튼은 /contact 로 design 번호를 넘긴다(문의 제목이 채워진다).
+ * 문의 버튼은 /contact 로 design 번호와 이름을 넘긴다(문의 제목은 이름으로 채워지고, 번호는 메일에만 실린다).
  */
 export default function DesignDetailClient({ design: d, prev, next }: Props) {
-  /* 갤러리에서 고른 화면(?view=mobile 또는 저장해 둔 값)으로 연다. 서버 그림과 같게 PC 로 시작한다 */
-  const [view, setView] = useState<LandingView>('pc');
+  /* 갤러리에서 고른 화면(?view=pc 또는 저장해 둔 값)으로 연다. 기본은 모바일 */
+  const [view, setView] = useState<LandingView>(LANDING_DEFAULT_VIEW);
   useEffect(() => {
     const v = readLandingView();
     if (v) setView(v);
-    // 움직이는 페이지를 휴대폰에서 열면 줄여 놓은 PC 화면은 만지기 어렵다. 고른 화면이 없으면 모바일로 연다
-    else if (d.demo && window.innerWidth < 640) setView('mobile');
-  }, [d.demo]);
+  }, []);
   const pickView = (v: LandingView) => { setView(v); saveLandingView(v); };
   /* 움직이는 페이지를 처음부터 다시 돌릴 때 올리는 수 */
   const [run, setRun] = useState(0);
@@ -51,7 +49,6 @@ export default function DesignDetailClient({ design: d, prev, next }: Props) {
 
         <header className="mt-8 max-w-[880px]">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="font-mono text-[14px] text-ink">{d.id}</span>
             <span className={d.kind === 'template' ? chip : chipLine}>{d.kindLabel}</span>
           </div>
           <h1 className="mt-4 text-[30px] font-bold leading-tight text-ink sm:text-[44px]">{d.title}</h1>
@@ -174,7 +171,7 @@ export default function DesignDetailClient({ design: d, prev, next }: Props) {
             </div>
 
             <div className="grid gap-3">
-              <Link href={landingContactHref(d.id)} className={btnPoint}>
+              <Link href={landingContactHref(d.id, d.title)} className={btnPoint}>
                 이 스타일로 제작 문의 <FiArrowUpRight className={arrowHover} />
               </Link>
               <Link href="../#gallery" className={btnLine}>다른 스타일 보기</Link>
@@ -185,12 +182,12 @@ export default function DesignDetailClient({ design: d, prev, next }: Props) {
         <nav aria-label="이전 · 다음 디자인" className="mt-16 flex flex-wrap justify-between gap-4 border-t border-gray-200 pt-8">
           {prev ? (
             <Link href={`../${prev.id}/${landingViewQuery(view)}`} className="group flex items-center gap-3 text-[15px] text-gray-500 hover:text-point-200">
-              <FiArrowLeft aria-hidden /> <span className="font-mono">{prev.id}</span> {prev.title}
+              <FiArrowLeft aria-hidden /> {prev.title}
             </Link>
           ) : <span />}
           {next && (
             <Link href={`../${next.id}/${landingViewQuery(view)}`} className="group flex items-center gap-3 text-[15px] text-gray-500 hover:text-point-200">
-              <span className="font-mono">{next.id}</span> {next.title} <FiArrowRight aria-hidden />
+              {next.title} <FiArrowRight aria-hidden />
             </Link>
           )}
         </nav>

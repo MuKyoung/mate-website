@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import type { TemplateItem } from '@/types';
 import Image from 'next/image';
 import Link from 'next/link';
 import { FiArrowUpRight, FiPlay, FiSearch } from 'react-icons/fi';
@@ -8,7 +9,7 @@ import PageHeader from '@/components/PageHeader';
 import SectionHead from '@/components/ui/SectionHead';
 import PartnersBand from '@/components/home/PartnersBand';
 import {
-  landingContactHref, landingTabs, landingViewQuery, readLandingView, rightsNotice, saveLandingView, templateHero, type LandingView,
+  landingContactHref, landingTabs, landingViewQuery, readLandingView, rightsNotice, saveLandingView, templateHero, LANDING_DEFAULT_VIEW, type LandingView,
 } from '@/data/landingService';
 import { templateFields, templateFormats, templateGenres, templateThumb, templates } from '@/data/templateLibrary';
 import { arrowHover, btnLight, chip, chipLine, container } from '@/lib/styles';
@@ -28,16 +29,16 @@ const mobileFormats = templateFormats.filter((f) => templates.some((t) => t.form
 
 /**
  * 디자인 템플릿 라이브러리 - 종류 · 업종 · 장르로 고르는 갤러리.
- * PC · 모바일 고르기: 모바일을 고르면 휴대폰에서 보는 종류만 남기고 휴대폰 틀에 넣어 보여 준다
- * (상세페이지는 따로 짠 모바일판, 카드뉴스 · 인스타그램 피드 · 릴스는 같은 그림이 휴대폰에 뜬 모습.
- * 인쇄물 · 발표 자료처럼 휴대폰으로 보지 않는 종류는 빠진다). 고른 화면은 상세까지 이어진다.
+ * PC · 모바일 고르기(기본은 모바일): 모바일이면 휴대폰에서 보는 종류를 휴대폰 틀에 넣어 먼저 보여 주고
+ * (상세페이지는 따로 짠 모바일판, 카드뉴스 · 인스타그램 피드 · 릴스는 같은 그림이 휴대폰에 뜬 모습),
+ * 휴대폰 화면이 없는 종류(발표 자료 · 인쇄물 등)는 그 아래에 원래 모양으로 보여 준다. 고른 화면은 상세까지 이어진다.
  * 카드는 걸러질 때마다 다시 그려지므로 스크롤 등장 효과를 걸지 않는다(걸러진 뒤 안 보이는 일이 없게).
  */
 export default function TemplatesClient() {
   const [q, setQ] = useState('');
   const [sel, setSel] = useState<Record<FilterKey, string[]>>(EMPTY);
-  /* 미리보기 화면 - 서버 그림과 같게 PC 로 시작하고, 상세에서 돌아오면 고른 화면을 되살린다 */
-  const [view, setView] = useState<LandingView>('pc');
+  /* 미리보기 화면 - 모바일로 시작하고(서버 그림도 모바일), 상세에서 돌아오면 고른 화면을 되살린다 */
+  const [view, setView] = useState<LandingView>(LANDING_DEFAULT_VIEW);
   useEffect(() => {
     const v = readLandingView();
     if (v) setView(v);
@@ -52,7 +53,6 @@ export default function TemplatesClient() {
   const list = useMemo(() => {
     const words = q.trim().toLowerCase().split(/\s+/).filter(Boolean);
     return templates.filter((t) => {
-      if (view === 'mobile' && !hasPhoneView(t)) return false;
       if (sel.format.length && !sel.format.includes(t.format)) return false;
       if (sel.field.length && !sel.field.includes(String(t.field))) return false;
       if (sel.genre.length && !sel.genre.includes(t.genre)) return false;
@@ -62,7 +62,44 @@ export default function TemplatesClient() {
       }
       return true;
     });
-  }, [q, sel, view]);
+  }, [q, sel]);
+  /* 모바일이면 휴대폰 화면이 있는 것과 없는 것을 나눠 두 칸으로 보여 준다 */
+  const phoneList = view === 'mobile' ? list.filter(hasPhoneView) : [];
+  const restList = view === 'mobile' ? list.filter((t) => !hasPhoneView(t)) : list;
+  const gridPc = 'mt-10 grid grid-cols-2 gap-x-4 gap-y-9 sm:gap-x-5 sm:gap-y-10 lg:grid-cols-3 xl:grid-cols-4';
+  const gridPhone = 'mt-10 grid grid-cols-2 gap-x-4 gap-y-10 sm:grid-cols-3 sm:gap-x-5 lg:grid-cols-4 xl:grid-cols-5';
+
+  const card = (t: TemplateItem, phone: boolean) => (
+    <li key={t.id} className="min-w-0">
+      {/* 상대 주소 - 하위 도메인에서는 /templates/PT-01/, 본 사이트 경로에서는 /landing-page/templates/PT-01/ 로 간다 */}
+      <Link href={`${t.id}/${landingViewQuery(view)}`} className="group block">
+        {phone ? (
+          /* 휴대폰 틀 - 상세페이지는 모바일판 첫 화면, SNS 종류는 글이 뜬 모습 */
+          <div className="overflow-hidden rounded-[20px] border-[5px] border-ink bg-white transition-transform duration-300 group-hover:-translate-y-1">
+            <PhoneScreen t={t} mode="card" />
+          </div>
+        ) : (
+        /* 종류마다 비율이 달라(16:9 · 9:16 · 현수막 ...) 같은 크기 칸 안에 통째로 넣는다 */
+        <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-[12px] border border-gray-200 bg-gray-100 p-3 transition-transform duration-300 group-hover:-translate-y-1 sm:p-5">
+          <Image src={templateThumb(t.id)} alt={`${t.title} 미리보기`} width={640} height={480}
+            className="h-full w-full object-contain drop-shadow-[0_6px_14px_rgba(0,0,0,0.16)]" />
+          {t.video > 0 && (
+            <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-pill bg-ink/85 px-2.5 py-1 text-[12px] font-bold text-white">
+              <FiPlay aria-hidden /> 영상
+            </span>
+          )}
+        </div>
+        )}
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-[12px]">
+          <span className="font-mono text-ink">{t.id}</span>
+          <span className={chip}>{t.formatLabel}</span>
+          {t.mobile && <span className={chipLine}>PC · 모바일</span>}
+        </div>
+        <h3 className="mt-2 text-[15px] font-bold leading-snug text-ink group-hover:text-point-200 sm:text-[16px]">{t.title}</h3>
+        <p className="mt-1 text-[13px] text-gray-500">{[t.fieldLabel, t.genreLabel].join(' · ')}</p>
+      </Link>
+    </li>
+  );
 
   return (
     <>
@@ -105,7 +142,7 @@ export default function TemplatesClient() {
             </div>
             {view === 'mobile' && (
               <p className="text-[14px] text-gray-500">
-                휴대폰에서 보는 {mobileFormats.join(' · ')} 템플릿만 휴대폰 화면으로 보여 줍니다. 인쇄물과 발표 자료는 PC에서 보세요.
+                휴대폰에서 보는 {mobileFormats.join(' · ')} 템플릿을 휴대폰 화면으로 먼저 보여 주고, 나머지는 그 아래에 원래 모양으로 보여 줍니다.
               </p>
             )}
             {groups.map((g) => (
@@ -129,48 +166,26 @@ export default function TemplatesClient() {
 
           {list.length === 0 ? (
             <p className="py-16 text-[16px] text-gray-500">
-              조건에 맞는 템플릿이 없습니다. {view === 'mobile' ? '필터를 풀거나 PC로 바꿔 보세요.' : '필터를 하나 풀어 보세요.'}
+              조건에 맞는 템플릿이 없습니다. 필터를 하나 풀어 보세요.
             </p>
           ) : (
-            <ul className={view === 'pc'
-              ? 'mt-10 grid grid-cols-2 gap-x-4 gap-y-9 sm:gap-x-5 sm:gap-y-10 lg:grid-cols-3 xl:grid-cols-4'
-              : 'mt-10 grid grid-cols-2 gap-x-4 gap-y-10 sm:grid-cols-3 sm:gap-x-5 lg:grid-cols-4 xl:grid-cols-5'}>
-              {list.map((t) => (
-                <li key={t.id} className="min-w-0">
-                  {/* 상대 주소 - 하위 도메인에서는 /templates/PT-01/, 본 사이트 경로에서는 /landing-page/templates/PT-01/ 로 간다 */}
-                  <Link href={`${t.id}/${landingViewQuery(view)}`} className="group block">
-                    {view === 'mobile' ? (
-                      /* 휴대폰 틀 - 상세페이지는 모바일판 첫 화면, SNS 종류는 글이 뜬 모습 */
-                      <div className="overflow-hidden rounded-[20px] border-[5px] border-ink bg-white transition-transform duration-300 group-hover:-translate-y-1">
-                        <PhoneScreen t={t} mode="card" />
-                      </div>
-                    ) : (
-                    /* 종류마다 비율이 달라(16:9 · 9:16 · 현수막 ...) 같은 크기 칸 안에 통째로 넣는다 */
-                    <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-[12px] border border-gray-200 bg-gray-100 p-3 transition-transform duration-300 group-hover:-translate-y-1 sm:p-5">
-                      <Image src={templateThumb(t.id)} alt={`${t.title} 미리보기`} width={640} height={480}
-                        className="h-full w-full object-contain drop-shadow-[0_6px_14px_rgba(0,0,0,0.16)]" />
-                      {t.video > 0 && (
-                        <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-pill bg-ink/85 px-2.5 py-1 text-[12px] font-bold text-white">
-                          <FiPlay aria-hidden /> 영상
-                        </span>
-                      )}
-                    </div>
-                    )}
-                    <div className="mt-3 flex flex-wrap items-center gap-2 text-[12px]">
-                      <span className="font-mono text-ink">{t.id}</span>
-                      <span className={chip}>{t.formatLabel}</span>
-                      {t.mobile && <span className={chipLine}>PC · 모바일</span>}
-                    </div>
-                    <h3 className="mt-2 text-[15px] font-bold leading-snug text-ink group-hover:text-point-200 sm:text-[16px]">{t.title}</h3>
-                    <p className="mt-1 text-[13px] text-gray-500">{[t.fieldLabel, t.genreLabel].join(' · ')}</p>
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <>
+              {phoneList.length > 0 && <ul className={gridPhone}>{phoneList.map((t) => card(t, true))}</ul>}
+              {restList.length > 0 && (
+                <div className={phoneList.length > 0 ? 'mt-20 border-t border-gray-200 pt-12' : ''}>
+                  {view === 'mobile' && (
+                    <>
+                      <h3 className="text-[20px] font-bold text-ink sm:text-[24px]">휴대폰 화면이 없는 템플릿 <span className="text-gray-400">{restList.length}</span></h3>
+                      <p className="mt-2 text-[14px] text-gray-500">발표 자료 · 문서 · 로고 · 유튜브 · 인쇄물은 원래 모양으로 보여 줍니다.</p>
+                    </>
+                  )}
+                  <ul className={gridPc}>{restList.map((t) => card(t, false))}</ul>
+                </div>
+              )}
+            </>
           )}
         </div>
       </section>
-
       {/* 샘플 안내 · 사진 출처 · 권리 표시는 본 사이트의 /credits/ 에 둔다(푸터 링크). 템플릿마다의 사진가는 상세 화면에 있다 */}
       {/* 문의 */}
       <section data-header="dark" className="night-grid on-night py-20 sm:py-28">

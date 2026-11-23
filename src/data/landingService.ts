@@ -23,7 +23,7 @@ export const landingScopeNote = '네 가지 일을 따로 나눠 맡을 수 있�
 
 /** 제작 과정 - optional 은 필요할 때만 하는 단계 */
 export const landingProcess = [
-  { title: '스타일 고르기', desc: '갤러리에서 디자인 번호를 골라 문의합니다.' },
+  { title: '스타일 고르기', desc: '갤러리에서 마음에 드는 디자인을 골라 문의합니다.' },
   { title: '상담', desc: '업종과 목적, 가진 사진·문구를 듣고 맡길 범위를 정합니다.' },
   { title: '촬영', desc: '필요한 장면을 정해 매장·사람·제품을 찍습니다.', optional: true },
   { title: '시안', desc: 'PC·모바일 시안을 보며 함께 고칩니다.' },
@@ -75,8 +75,18 @@ export const landingMotion = {
  * 문의로 넘어갈 때 쓰는 주소 - 본 사이트의 /contact 가 design 값을 읽어 제목을 채운다.
  * 이 화면은 하위 도메인(landingpage.devteammate.co.kr)에서 열리므로 본 사이트 절대 주소로 보낸다
  */
-export const landingContactHref = (id?: string) =>
-  `${MAIN_ORIGIN}/contact/?domain=web${id ? `&design=${id}` : ''}`;
+export const landingContactHref = (id?: string, title?: string) =>
+  `${MAIN_ORIGIN}/contact/?domain=web${id ? `&design=${id}` : ''}${title ? `&dt=${encodeURIComponent(title)}` : ''}`;
+// 랜딩페이지 번호(LP-000)는 손님에게 보이지 않는다(2026-11-24 사용자 요청). title 을 주면 문의 제목을 번호 대신 디자인 이름으로 채우고,
+// 번호는 문의 메일에만 실린다(src/app/contact/page.tsx · src/app/api/contact/route.ts)
+
+/**
+ * 랜딩페이지 갤러리 · 움직이는 페이지 · 이전/다음의 순서 - 사진이 들어간 디자인을 먼저 보여 준다(2026-11-24 사용자 요청).
+ * 같은 무리 안에서는 원래 순서를 지킨다
+ */
+export function landingOrder<T extends { photoCredits: unknown[] }>(list: T[]): T[] {
+  return [...list.filter((d) => d.photoCredits.length > 0), ...list.filter((d) => d.photoCredits.length === 0)];
+}
 
 /**
  * 디자인 템플릿 라이브러리 (/landing-page/templates, 하위 도메인에서는 /templates/).
@@ -104,8 +114,10 @@ export const landingTabs = { here: './', templates: 'templates/', landing: '../'
 export type LandingView = 'pc' | 'mobile';
 /** 고른 화면을 상세 · 갤러리를 오가는 동안 이어 쓰려고 sessionStorage 에 두는 열쇠 */
 export const LANDING_VIEW_KEY = 'mate-landing-view';
-/** 상세로 갈 때 고른 화면을 주소에 싣는다 (PC 는 기본이라 붙이지 않는다) */
-export const landingViewQuery = (view: LandingView) => (view === 'mobile' ? '?view=mobile' : '');
+/** 처음 보여 줄 화면 - 모바일(2026-11-24 사용자 요청). 서버가 그리는 첫 화면도 이것이라 바뀌며 깜박이지 않는다 */
+export const LANDING_DEFAULT_VIEW: LandingView = 'mobile';
+/** 상세로 갈 때 고른 화면을 주소에 싣는다 (기본인 모바일은 붙이지 않는다) */
+export const landingViewQuery = (view: LandingView) => (view === LANDING_DEFAULT_VIEW ? '' : `?view=${view}`);
 
 /** 주소(?view=) → 저장해 둔 값 순서로 고른 화면을 읽는다. 브라우저에서만 부른다 */
 export function readLandingView(): LandingView | null {

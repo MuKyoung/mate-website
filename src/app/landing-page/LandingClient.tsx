@@ -12,7 +12,7 @@ import type { LandingDesign } from '@/types';
 import { landingDesigns, landingFields, landingVocab } from '@/data/landingDesigns';
 import {
   landingContactHref, landingHero, landingMotion, landingProcess, landingScope, landingScopeNote, landingTabs,
-  landingViewQuery, readLandingView, rightsNotice, saveLandingView, type LandingView,
+  landingViewQuery, readLandingView, rightsNotice, saveLandingView, landingOrder, LANDING_DEFAULT_VIEW, type LandingView,
 } from '@/data/landingService';
 import { fadeUp, inView, rowIn, staggerRows, staggerTight } from '@/lib/motion';
 import { arrowHover, btnLight, chip, container, numTile, radiusCard } from '@/lib/styles';
@@ -29,7 +29,9 @@ const groups: { key: FilterKey; label: string; items: [string, string][] }[] = [
 ];
 
 /** 움직이는 페이지(모션 그래픽 포함) - 그림 대신 실제로 열리는 샘플이 있는 디자인 */
-const motionDesigns = landingDesigns.filter((d) => d.demo);
+const motionDesigns = landingOrder(landingDesigns.filter((d) => d.demo));
+/** 갤러리 순서 - 사진이 들어간 디자인을 먼저 */
+const ordered = landingOrder(landingDesigns);
 
 /** 카드 그림 위의 '체험' 표시 */
 const motionBadge = 'absolute bottom-2.5 left-2.5 inline-flex items-center gap-1 rounded-pill bg-ink/85 px-2.5 py-1 text-[12px] font-bold text-white';
@@ -65,8 +67,7 @@ function MotionCard({ d, view }: { d: LandingDesign; view: LandingView }) {
         )}
         <span className={motionBadge}><FiPlay aria-hidden /> 체험</span>
       </div>
-      <p className="mt-3 font-mono text-[12px] text-gray-300">{d.id}</p>
-      <h3 className="mt-1.5 text-[16px] font-bold leading-snug text-white group-hover:text-point-light">{d.title}</h3>
+      <h3 className="mt-3 text-[16px] font-bold leading-snug text-white group-hover:text-point-light">{d.title}</h3>
       <p className="mt-1 text-[13px] text-gray-300">{d.fieldLabel}</p>
     </Link>
   );
@@ -79,8 +80,8 @@ function MotionCard({ d, view }: { d: LandingDesign; view: LandingView }) {
 export default function LandingClient() {
   const [q, setQ] = useState('');
   const [sel, setSel] = useState<Record<FilterKey, string[]>>(EMPTY);
-  /* 미리보기 화면 - 서버 그림과 같게 PC 로 시작하고, 상세에서 돌아오면 고른 화면을 되살린다 */
-  const [view, setView] = useState<LandingView>('pc');
+  /* 미리보기 화면 - 모바일로 시작하고(서버 그림도 모바일), 상세에서 돌아오면 고른 화면을 되살린다 */
+  const [view, setView] = useState<LandingView>(LANDING_DEFAULT_VIEW);
   useEffect(() => {
     const v = readLandingView();
     if (v) setView(v);
@@ -94,7 +95,7 @@ export default function LandingClient() {
 
   const list = useMemo(() => {
     const words = q.trim().toLowerCase().split(/\s+/).filter(Boolean);
-    return landingDesigns.filter((d) => {
+    return ordered.filter((d) => {
       if (sel.field.length && !sel.field.includes(String(d.field))) return false;
       if (sel.purpose.length && !d.purposes.some((p) => sel.purpose.includes(p))) return false;
       if (sel.mood.length && !d.moods.some((p) => sel.mood.includes(p))) return false;
@@ -133,7 +134,7 @@ export default function LandingClient() {
         </div>
       </section>
 
-      {/* 움직이는 페이지 - 그림이 아니라 실제로 열리는 샘플. 아래 갤러리에도 같은 번호로 들어 있다(표현 > 모션 그래픽) */}
+      {/* 움직이는 페이지 - 그림이 아니라 실제로 열리는 샘플. 아래 갤러리에도 들어 있다(표현 > 모션 그래픽) */}
       {motionDesigns.length > 0 && (
         <section id="motion" data-header="dark" className="night-grid on-night scroll-mt-24 py-24 sm:py-32 xl:py-40">
           <div className={container}>
@@ -153,8 +154,8 @@ export default function LandingClient() {
       {/* 스타일 갤러리 */}
       <section id="gallery" data-header="light" className="scroll-mt-24 bg-white py-24 sm:py-32 xl:py-40">
         <div className={container}>
-          <SectionHead eyebrow="Gallery" title={<>스타일을 고르고<br /><b>번호로 문의하세요</b></>}
-            desc="업종, 목적, 분위기로 골라 보세요. 마음에 드는 디자인의 번호를 문의에 적어 주시면 그 스타일로 상담을 시작합니다." />
+          <SectionHead eyebrow="Gallery" title={<>스타일을 고르고<br /><b>바로 문의하세요</b></>}
+            desc="업종, 목적, 분위기로 골라 보세요. 마음에 드는 디자인에서 제작 문의를 누르면 고른 스타일이 문의에 함께 담겨, 그 스타일로 상담을 시작합니다." />
 
           <div className="mt-10 grid gap-3 border-y border-gray-200 py-5 sm:mt-14">
             <div className="flex flex-wrap items-center gap-3">
@@ -221,7 +222,6 @@ export default function LandingClient() {
                       </div>
                     )}
                     <div className="mt-3 flex items-center gap-2 text-[12px]">
-                      <span className="font-mono text-ink">{d.id}</span>
                       <span className={chip}>{d.demo ? '움직이는 페이지' : d.kind === 'template' ? '외부 디자인 기반' : 'MATE 시안'}</span>
                     </div>
                     <h3 className="mt-2 text-[16px] font-bold leading-snug text-ink group-hover:text-point-200">{d.title}</h3>

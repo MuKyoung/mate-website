@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { FiArrowLeft, FiArrowRight, FiArrowUpRight } from 'react-icons/fi';
 import type { TemplateItem } from '@/types';
 import {
-  landingContactHref, landingViewQuery, readLandingView, rightsNotice, saveLandingView, type LandingView,
+  landingContactHref, landingViewQuery, readLandingView, rightsNotice, saveLandingView, LANDING_DEFAULT_VIEW, type LandingView,
 } from '@/data/landingService';
 import { templateMobile, templatePage, templateVideo } from '@/data/templateLibrary';
 import { arrowHover, btnLine, btnPoint, chip, chipLine, container } from '@/lib/styles';
@@ -37,8 +37,8 @@ function previewWidth(t: TemplateItem): string {
  */
 export default function TemplateDetailClient({ template: t, prev, next }: Props) {
   const isVideo = t.video > 0;
-  /* 갤러리에서 고른 화면(?view=mobile 또는 저장해 둔 값)으로 연다. 서버 그림과 같게 PC 로 시작한다 */
-  const [view, setView] = useState<LandingView>('pc');
+  /* 갤러리에서 고른 화면(?view=mobile 또는 저장해 둔 값)으로 연다. 기본은 모바일(휴대폰 화면이 없는 템플릿은 PC 판을 보여 준다) */
+  const [view, setView] = useState<LandingView>(LANDING_DEFAULT_VIEW);
   useEffect(() => {
     const v = readLandingView();
     if (v) setView(v);
