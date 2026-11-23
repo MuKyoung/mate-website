@@ -3,12 +3,13 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { FiArrowLeft, FiArrowRight, FiArrowUpRight } from 'react-icons/fi';
+import { FiArrowLeft, FiArrowRight, FiArrowUpRight, FiExternalLink, FiRotateCw } from 'react-icons/fi';
 import type { LandingDesign } from '@/types';
 import {
-  landingContactHref, landingViewQuery, readLandingView, rightsNotice, saveLandingView, type LandingView,
+  landingContactHref, landingMotion, landingViewQuery, readLandingView, rightsNotice, saveLandingView, type LandingView,
 } from '@/data/landingService';
 import { arrowHover, btnLine, btnPoint, chip, chipLine, container } from '@/lib/styles';
+import MotionFrame from '../MotionFrame';
 
 interface Props {
   design: LandingDesign;
@@ -18,6 +19,7 @@ interface Props {
 
 /**
  * 갤러리 디자인 상세 - 왼쪽은 PC · 모바일 전체 길이 미리보기(전환), 오른쪽은 분류 · 출처 · 문의.
+ * 움직이는 페이지(d.demo)는 그림 대신 실제 샘플 페이지를 PC · 모바일 화면 크기로 띄워 그 자리에서 움직여 보게 한다.
  * 문의 버튼은 /contact 로 design 번호를 넘긴다(문의 제목이 채워진다).
  */
 export default function DesignDetailClient({ design: d, prev, next }: Props) {
@@ -26,8 +28,12 @@ export default function DesignDetailClient({ design: d, prev, next }: Props) {
   useEffect(() => {
     const v = readLandingView();
     if (v) setView(v);
-  }, []);
+    // 움직이는 페이지를 휴대폰에서 열면 줄여 놓은 PC 화면은 만지기 어렵다. 고른 화면이 없으면 모바일로 연다
+    else if (d.demo && window.innerWidth < 640) setView('mobile');
+  }, [d.demo]);
   const pickView = (v: LandingView) => { setView(v); saveLandingView(v); };
+  /* 움직이는 페이지를 처음부터 다시 돌릴 때 올리는 수 */
+  const [run, setRun] = useState(0);
   const rows: [string, string][] = [
     ['업종', [d.fieldLabel, ...d.industries].join(' · ')],
     ['목적', d.purposes.join(' · ')],
@@ -64,8 +70,36 @@ export default function DesignDetailClient({ design: d, prev, next }: Props) {
                   </button>
                 ))}
               </div>
-              <span className="text-[13px] text-gray-400">전체 길이 미리보기</span>
+              {d.demo ? (
+                <div className="flex items-center gap-1.5">
+                  <button type="button" onClick={() => setRun((n) => n + 1)}
+                    className="inline-flex items-center gap-1.5 rounded-pill border border-gray-200 px-3.5 py-2 text-[13px] font-bold text-gray-500 transition-colors hover:border-point-200 hover:text-point-200">
+                    <FiRotateCw aria-hidden /> 처음부터
+                  </button>
+                  <a href={d.demo} target="_blank" rel="noopener"
+                    className="inline-flex items-center gap-1.5 rounded-pill bg-ink px-3.5 py-2 text-[13px] font-bold text-white transition-colors hover:bg-point-200">
+                    <FiExternalLink aria-hidden /> 새 창에서 열기
+                  </a>
+                </div>
+              ) : (
+                <span className="text-[13px] text-gray-400">전체 길이 미리보기</span>
+              )}
             </div>
+            {d.demo ? (
+              <>
+                <div className="mt-4 rounded-[12px] border border-gray-200 bg-gray-100 p-3 sm:p-5">
+                  {view === 'pc' ? (
+                    <MotionFrame key={`pc-${run}`} src={d.demo} title={`${d.title} PC 화면`} w={1440} h={900}
+                      className="rounded-[6px] bg-white shadow-[0_10px_28px_-14px_rgba(0,0,0,0.35)]" />
+                  ) : (
+                    <div className="mx-auto w-full max-w-[402px] overflow-hidden rounded-[26px] border-[6px] border-ink bg-white">
+                      <MotionFrame key={`mobile-${run}`} src={d.demo} title={`${d.title} 모바일 화면`} w={390} h={780} />
+                    </div>
+                  )}
+                </div>
+                <p className="mt-3 text-[13px] text-gray-500">{landingMotion.hint}</p>
+              </>
+            ) : (
             <div className="mt-4 max-h-[78vh] overflow-auto rounded-[12px] border border-gray-200 bg-gray-100 p-4 sm:p-6">
               {view === 'pc' ? (
                 <Image key="pc" src={d.desktop} alt={`${d.title} PC 전체 화면`} width={900} height={3000}
@@ -75,6 +109,7 @@ export default function DesignDetailClient({ design: d, prev, next }: Props) {
                   className="mx-auto h-auto w-full max-w-[360px] rounded-[22px] border-[6px] border-ink" />
               )}
             </div>
+            )}
           </div>
 
           {/* 분류 · 출처 · 문의 */}
@@ -87,6 +122,17 @@ export default function DesignDetailClient({ design: d, prev, next }: Props) {
                 </div>
               ))}
             </dl>
+
+            {d.motions && d.motions.length > 0 && (
+              <div className="grid gap-2 rounded-[12px] bg-gray-100 p-5 text-[13px] leading-[1.7] text-gray-500">
+                <b className="text-ink">들어 있는 움직임</b>
+                <ul className="grid gap-1">
+                  {d.motions.map((m) => (
+                    <li key={m} className="flex gap-2"><span aria-hidden className="mt-[9px] h-1 w-1 shrink-0 rounded-full bg-point-200" />{m}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             <div className="grid gap-2 rounded-[12px] bg-gray-100 p-5 text-[13px] leading-[1.7] text-gray-500">
               {d.kind === 'template' ? (
@@ -113,7 +159,7 @@ export default function DesignDetailClient({ design: d, prev, next }: Props) {
                 </>
               )}
               {d.kind === 'mate' && <span>{d.credit ? rightsNotice.krds : rightsNotice.mate}</span>}
-              <span>제작 스타일 샘플입니다. 상호·수치·후기·일정은 예시이고, 사진 자리는 실제 촬영으로 채웁니다.</span>
+              <span>{d.demo ? landingMotion.note : '제작 스타일 샘플입니다. 상호·수치·후기·일정은 예시이고, 사진 자리는 실제 촬영으로 채웁니다.'}</span>
               {d.photoCredits.length > 0 && (
                 <span>
                   지금 들어 있는 사진은 예시입니다. 사진: Unsplash의{' '}

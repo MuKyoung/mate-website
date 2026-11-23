@@ -43,7 +43,8 @@ export const landingVocab = {
   "visualStyles": [
     "사진 중심",
     "타이포 중심",
-    "일러스트 중심"
+    "일러스트 중심",
+    "모션 그래픽"
   ]
 } as const;
 
@@ -5368,6 +5369,419 @@ export const landingDesigns: LandingDesign[] = [
         "url": "https://unsplash.com/@bearsnap",
         "photoUrl": "https://unsplash.com/photos/G9H5edUL0T8"
       }
+    ]
+  },
+  {
+    "id": "LP-101",
+    "title": "로스터리 카페 · 내려지는 커피",
+    "field": 1,
+    "fieldLabel": "음식·카페·매장",
+    "industries": [
+      "로스터리 카페",
+      "원두 판매",
+      "동네 카페"
+    ],
+    "purposes": [
+      "소개",
+      "예약",
+      "구매"
+    ],
+    "moods": [
+      "따뜻한",
+      "프리미엄"
+    ],
+    "visualStyles": [
+      "일러스트 중심",
+      "타이포 중심",
+      "모션 그래픽"
+    ],
+    "kind": "mate",
+    "kindLabel": "MATE 시안 · 움직이는 페이지",
+    "summary": "첫 화면에서 커피가 내려지고, 스크롤을 내리면 연둣빛 생두가 볶이고 갈려 한 잔이 되는 과정을 따라가는 로스터리 카페 페이지.",
+    "thumb": "/landing-gallery/LP-101/thumb.jpg",
+    "desktop": "/landing-gallery/LP-101/desktop.jpg",
+    "mobile": "/landing-gallery/LP-101/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-101/mobile-thumb.jpg",
+    "credit": null,
+    "photoCredits": [],
+    "demo": "/landing-motion/LP-101.html",
+    "motions": [
+      "첫 화면에서 물줄기가 흐르고 커피가 차오르는 그림",
+      "스크롤에 맞춰 생두가 익고 갈리고 내려지는 고정 구간",
+      "원두 목록의 볶음 정도 점이 차례로 켜짐",
+      "메뉴 탭 사이를 미끄러지는 표시",
+      "지금 시각을 가리키는 시계와 그려지는 약도"
+    ]
+  },
+  {
+    "id": "LP-102",
+    "title": "필라테스 스튜디오 · 숨 쉬는 곡선",
+    "field": 2,
+    "fieldLabel": "뷰티·건강·의료",
+    "industries": [
+      "필라테스",
+      "요가 · 스트레칭",
+      "소그룹 운동"
+    ],
+    "purposes": [
+      "소개",
+      "예약",
+      "신청"
+    ],
+    "moods": [
+      "내추럴",
+      "따뜻한"
+    ],
+    "visualStyles": [
+      "일러스트 중심",
+      "타이포 중심",
+      "모션 그래픽"
+    ],
+    "kind": "mate",
+    "kindLabel": "MATE 시안 · 움직이는 페이지",
+    "summary": "첫 화면의 둥근 덩어리가 숨 쉬듯 모양을 바꾸며 들숨과 날숨을 안내하고, 스크롤을 따라 곡선이 내려오며 수업을 차례로 소개하는 필라테스 스튜디오 페이지.",
+    "thumb": "/landing-gallery/LP-102/thumb.jpg",
+    "desktop": "/landing-gallery/LP-102/desktop.jpg",
+    "mobile": "/landing-gallery/LP-102/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-102/mobile-thumb.jpg",
+    "credit": null,
+    "photoCredits": [],
+    "demo": "/landing-motion/LP-102.html",
+    "motions": [
+      "숨 쉬듯 모양이 바뀌는 곡선 덩어리",
+      "4초마다 들숨 · 날숨을 안내하며 커졌다 작아지는 원",
+      "스크롤을 내리는 만큼 드러나는 곡선과 수업 소개",
+      "요일 탭 아래를 미끄러지는 밑줄과 차례로 뜨는 시간표",
+      "마우스를 따라 기우는 수강권 카드와 흐르는 물결 선"
+    ]
+  },
+  {
+    "id": "LP-103",
+    "title": "코딩 부트캠프 · 타이핑되는 터미널",
+    "field": 3,
+    "fieldLabel": "교육·강의·코칭",
+    "industries": [
+      "코딩 부트캠프",
+      "온라인 강의",
+      "직무 교육"
+    ],
+    "purposes": [
+      "모집",
+      "신청",
+      "소개"
+    ],
+    "moods": [
+      "대담한"
+    ],
+    "visualStyles": [
+      "타이포 중심",
+      "모션 그래픽"
+    ],
+    "kind": "mate",
+    "kindLabel": "MATE 시안 · 움직이는 페이지",
+    "summary": "첫 화면의 터미널에 명령어가 한 글자씩 쳐지고, 스크롤을 내리면 16주 진도 선이 차오르며 달마다 배우는 것이 바뀌는 코딩 부트캠프 모집 페이지.",
+    "thumb": "/landing-gallery/LP-103/thumb.jpg",
+    "desktop": "/landing-gallery/LP-103/desktop.jpg",
+    "mobile": "/landing-gallery/LP-103/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-103/mobile-thumb.jpg",
+    "credit": null,
+    "photoCredits": [],
+    "demo": "/landing-motion/LP-103.html",
+    "motions": [
+      "명령어가 한 글자씩 쳐지고 결과가 뜨는 터미널",
+      "스크롤에 맞춰 진도 선이 차오르고 마디가 켜지는 16주 커리큘럼",
+      "화면에 들어오면 아래에서 자라는 막대 그래프와 올라가는 숫자",
+      "마우스를 따라 움직이는 빛과 접히는 질문",
+      "초 단위로 줄어드는 모집 마감 시계"
+    ]
+  },
+  {
+    "id": "LP-104",
+    "title": "세무 · 회계 사무실 · 정리되는 영수증",
+    "field": 4,
+    "fieldLabel": "전문·생활 서비스",
+    "industries": [
+      "세무 · 회계 사무실",
+      "노무 · 법무 사무실",
+      "사업자 지원 서비스"
+    ],
+    "purposes": [
+      "소개",
+      "문의",
+      "예약"
+    ],
+    "moods": [
+      "신뢰감 있는",
+      "미니멀"
+    ],
+    "visualStyles": [
+      "일러스트 중심",
+      "타이포 중심",
+      "모션 그래픽"
+    ],
+    "kind": "mate",
+    "kindLabel": "MATE 시안 · 움직이는 페이지",
+    "summary": "스크롤을 내리면 흩어져 있던 영수증 일곱 장이 날짜순으로 줄을 서고 계정 과목과 합계가 붙어 장부 한 장이 되는 세무 · 회계 사무실 페이지.",
+    "thumb": "/landing-gallery/LP-104/thumb.jpg",
+    "desktop": "/landing-gallery/LP-104/desktop.jpg",
+    "mobile": "/landing-gallery/LP-104/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-104/mobile-thumb.jpg",
+    "credit": null,
+    "photoCredits": [],
+    "demo": "/landing-motion/LP-104.html",
+    "motions": [
+      "스크롤에 맞춰 흩어진 영수증이 장부 줄로 정리되고 합계가 올라가는 고정 구간",
+      "화면에 들어오면 원과 체크 표시가 차례로 그려지는 점검 목록",
+      "스크롤한 만큼 자라는 단계 선과 켜지는 마디",
+      "손잡이를 움직이면 숫자가 따라 바뀌는 기장료 가늠 슬라이더",
+      "월간 보고 카드의 올라가는 숫자와 자라는 막대, 흐르는 신고 달력"
+    ]
+  },
+  {
+    "id": "LP-105",
+    "title": "탄산음료 출시 · 돌아가는 캔과 맛 고르기",
+    "field": 5,
+    "fieldLabel": "쇼핑·제품·브랜드",
+    "industries": [
+      "음료 브랜드",
+      "신제품 출시",
+      "식품 D2C"
+    ],
+    "purposes": [
+      "소개",
+      "구매"
+    ],
+    "moods": [
+      "대담한",
+      "발랄한"
+    ],
+    "visualStyles": [
+      "일러스트 중심",
+      "타이포 중심",
+      "모션 그래픽"
+    ],
+    "kind": "mate",
+    "kindLabel": "MATE 시안 · 움직이는 페이지",
+    "summary": "라벨이 돌아가는 캔을 가운데 두고, 맛을 고르면 누른 자리에서 색이 번지며 화면 전체가 그 맛으로 바뀌는 탄산음료 출시 페이지.",
+    "thumb": "/landing-gallery/LP-105/thumb.jpg",
+    "desktop": "/landing-gallery/LP-105/desktop.jpg",
+    "mobile": "/landing-gallery/LP-105/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-105/mobile-thumb.jpg",
+    "credit": null,
+    "photoCredits": [],
+    "demo": "/landing-motion/LP-105.html",
+    "motions": [
+      "라벨이 옆으로 흘러 캔이 도는 것처럼 보이는 첫 화면",
+      "맛을 고르면 누른 자리에서 원으로 번지는 배경색 전환",
+      "바닥에서 올라오는 기포",
+      "스크롤에 맞춰 도는 과일 조각과 올라가는 성분 숫자",
+      "상자 크기를 고르면 캔 개수 점이 차례로 켜지고 가격이 바뀜"
+    ]
+  },
+  {
+    "id": "LP-106",
+    "title": "주문 · 재고 관리 서비스 · 그려지는 대시보드",
+    "field": 6,
+    "fieldLabel": "IT·B2B·제조",
+    "industries": [
+      "업무용 SaaS",
+      "재고 · 주문 관리",
+      "B2B 서비스"
+    ],
+    "purposes": [
+      "소개",
+      "신청",
+      "문의"
+    ],
+    "moods": [
+      "신뢰감 있는",
+      "미니멀"
+    ],
+    "visualStyles": [
+      "일러스트 중심",
+      "모션 그래픽"
+    ],
+    "kind": "mate",
+    "kindLabel": "MATE 시안 · 움직이는 페이지",
+    "summary": "첫 화면의 대시보드에서 그래프가 그려지고 숫자가 올라가며, 스크롤을 내리면 주문 모으기 · 재고 맞추기 · 발주 알림 화면이 차례로 바뀌는 업무용 서비스 페이지.",
+    "thumb": "/landing-gallery/LP-106/thumb.jpg",
+    "desktop": "/landing-gallery/LP-106/desktop.jpg",
+    "mobile": "/landing-gallery/LP-106/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-106/mobile-thumb.jpg",
+    "credit": null,
+    "photoCredits": [],
+    "demo": "/landing-motion/LP-106.html",
+    "motions": [
+      "선 그래프가 그려지고 막대가 자라며 숫자가 올라가는 대시보드",
+      "스크롤에 맞춰 세 가지 기능 화면이 바뀌는 고정 구간",
+      "가운데에서 여섯 서비스로 선이 이어지고 점이 오가는 연동 그림",
+      "월 · 연 결제를 바꾸면 미끄러지는 단추와 바뀌는 금액",
+      "마무리 문장에서 낱말이 타자로 바뀜"
+    ]
+  },
+  {
+    "id": "LP-107",
+    "title": "청년 창업 지원사업 모집 · 포스터 같은 큰 글자",
+    "field": 7,
+    "fieldLabel": "정부·정책·모집",
+    "industries": [
+      "지원사업 모집",
+      "지자체 · 재단",
+      "창업 지원"
+    ],
+    "purposes": [
+      "모집",
+      "신청"
+    ],
+    "moods": [
+      "대담한",
+      "신뢰감 있는"
+    ],
+    "visualStyles": [
+      "타이포 중심",
+      "모션 그래픽"
+    ],
+    "kind": "mate",
+    "kindLabel": "MATE 시안 · 움직이는 페이지",
+    "summary": "화면을 채우는 큰 글자와 마감까지 남은 시간으로 시작해, 자격 항목을 눌러 신청할 수 있는지 바로 확인하는 지원사업 모집 페이지.",
+    "thumb": "/landing-gallery/LP-107/thumb.jpg",
+    "desktop": "/landing-gallery/LP-107/desktop.jpg",
+    "mobile": "/landing-gallery/LP-107/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-107/mobile-thumb.jpg",
+    "credit": null,
+    "photoCredits": [],
+    "demo": "/landing-motion/LP-107.html",
+    "motions": [
+      "한 글자씩 올라오는 포스터 크기 제목과 떠다니는 도형",
+      "초 단위로 줄어드는 마감까지 남은 시간",
+      "화면에 들어오면 올라가는 지원 금액 숫자",
+      "자격 항목을 누르면 채워지는 원과 바뀌는 결과",
+      "스크롤에 맞춰 차오르는 진행 단계 선"
+    ]
+  },
+  {
+    "id": "LP-108",
+    "title": "대학 오픈 캠퍼스 · 따라 걷는 지도",
+    "field": 8,
+    "fieldLabel": "공공기관·대학·협회",
+    "industries": [
+      "대학 입학처",
+      "입학 설명회",
+      "오픈 캠퍼스"
+    ],
+    "purposes": [
+      "행사",
+      "신청",
+      "소개"
+    ],
+    "moods": [
+      "신뢰감 있는",
+      "프리미엄"
+    ],
+    "visualStyles": [
+      "일러스트 중심",
+      "타이포 중심",
+      "모션 그래픽"
+    ],
+    "kind": "mate",
+    "kindLabel": "MATE 시안 · 움직이는 페이지",
+    "summary": "본관이 선으로 그려지며 열리고, 스크롤을 내리면 정문에서 운동장까지 길이 이어지면서 건물이 하나씩 켜지는 대학 오픈 캠퍼스 안내 페이지.",
+    "thumb": "/landing-gallery/LP-108/thumb.jpg",
+    "desktop": "/landing-gallery/LP-108/desktop.jpg",
+    "mobile": "/landing-gallery/LP-108/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-108/mobile-thumb.jpg",
+    "credit": null,
+    "photoCredits": [],
+    "demo": "/landing-motion/LP-108.html",
+    "motions": [
+      "첫 화면에서 본관이 한 획씩 그려짐",
+      "스크롤에 맞춰 길이 그려지고 건물이 차례로 켜지는 캠퍼스 지도",
+      "숫자가 올라가는 안내 띠",
+      "밑줄이 미끄러지는 날짜 탭과 차례로 나타나는 일정",
+      "누르면 뒤집혀 전공이 보이는 계열 카드"
+    ]
+  },
+  {
+    "id": "LP-109",
+    "title": "일러스트레이터 포트폴리오 · 잡아 던지는 스티커",
+    "field": 9,
+    "fieldLabel": "크리에이터·아티스트",
+    "industries": [
+      "일러스트레이터",
+      "그림 작가",
+      "프리랜서 디자이너"
+    ],
+    "purposes": [
+      "소개",
+      "문의"
+    ],
+    "moods": [
+      "발랄한",
+      "대담한"
+    ],
+    "visualStyles": [
+      "일러스트 중심",
+      "타이포 중심",
+      "모션 그래픽"
+    ],
+    "kind": "mate",
+    "kindLabel": "MATE 시안 · 움직이는 페이지",
+    "summary": "첫 화면의 스티커 도형을 손으로 잡아 던질 수 있고, 작품 타일을 누를 때마다 새 그림이 그려지는 일러스트레이터 포트폴리오 페이지.",
+    "thumb": "/landing-gallery/LP-109/thumb.jpg",
+    "desktop": "/landing-gallery/LP-109/desktop.jpg",
+    "mobile": "/landing-gallery/LP-109/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-109/mobile-thumb.jpg",
+    "credit": null,
+    "photoCredits": [],
+    "demo": "/landing-motion/LP-109.html",
+    "motions": [
+      "끌어서 던지면 벽에 튕기는 스티커 도형",
+      "서로 반대로 흐르는 큰 글자 띠",
+      "누를 때마다 도형이 튀어나오며 새로 그려지는 작품 타일",
+      "마우스를 올리면 기우는 카드와 물결 밑줄 그리기",
+      "커서를 따라 움직이는 눈동자"
+    ]
+  },
+  {
+    "id": "LP-110",
+    "title": "여름밤 음악 축제 · 누르면 터지는 불꽃",
+    "field": 10,
+    "fieldLabel": "관광·행사·문화",
+    "industries": [
+      "음악 축제",
+      "지역 축제",
+      "야외 공연"
+    ],
+    "purposes": [
+      "행사",
+      "예약",
+      "소개"
+    ],
+    "moods": [
+      "대담한",
+      "발랄한"
+    ],
+    "visualStyles": [
+      "일러스트 중심",
+      "타이포 중심",
+      "모션 그래픽"
+    ],
+    "kind": "mate",
+    "kindLabel": "MATE 시안 · 움직이는 페이지",
+    "summary": "별이 반짝이는 밤하늘을 누르면 불꽃이 터지고, 스크롤을 내리면 산과 무대, 관객이 서로 다른 속도로 움직이는 여름밤 음악 축제 페이지.",
+    "thumb": "/landing-gallery/LP-110/thumb.jpg",
+    "desktop": "/landing-gallery/LP-110/desktop.jpg",
+    "mobile": "/landing-gallery/LP-110/mobile.jpg",
+    "mobileThumb": "/landing-gallery/LP-110/mobile-thumb.jpg",
+    "credit": null,
+    "photoCredits": [],
+    "demo": "/landing-motion/LP-110.html",
+    "motions": [
+      "별이 반짝이고 누르는 곳마다 불꽃이 터지는 밤하늘",
+      "스크롤에 따라 산 · 무대 · 관객이 다른 속도로 움직이는 겹겹의 실루엣",
+      "서로 반대로 흐르는 출연진 글자 띠",
+      "마우스를 올리면 기우는 입장권",
+      "미끄러지는 날짜 탭과 남은 날 시계, 길을 달리는 셔틀버스"
     ]
   }
 ];

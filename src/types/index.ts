@@ -128,6 +128,8 @@ export interface TemplateItem {
   /** 샘플이 갖춘 파일 형식 */
   outputs: string[];
   credits: TemplateCredit[];
+  /** 모바일판이 따로 있는 종류(상세페이지)면 그 그림의 [너비, 높이] px */
+  mobile?: number[];
 }
 
 /** 단일 랜딩페이지 제작 - 갤러리 디자인 하나 (src/data/landingDesigns.ts) */
@@ -154,4 +156,8 @@ export interface LandingDesign {
   credit: LandingCredit | null;
   /** 사진 자리에 예시로 넣은 Unsplash 사진의 사진가 (없으면 빈 배열) */
   photoCredits: TemplateCredit[];
+  /** 움직이는 페이지(모션 그래픽 포함)면 실제로 열리는 샘플 주소 - /landing-motion/LP-101.html. 그림 대신 이 페이지를 띄운다 */
+  demo?: string;
+  /** 그 페이지에 들어 있는 움직임 */
+  motions?: string[];
 }

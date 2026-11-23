@@ -30,7 +30,7 @@ export const templateFormats: { key: string; name: string; group: string; spec: 
     "key": "dp",
     "name": "상세페이지",
     "group": "문서 · 발표",
-    "spec": "폭 860px · 세로 자유"
+    "spec": "PC 폭 860px · 모바일 폭 390px · 세로 자유"
   },
   {
     "key": "lg",
@@ -1645,7 +1645,7 @@ export const templates: TemplateItem[] = [
     "summary": "음식 사진을 크게 열고 크림색 바탕에 바탕체 제목, 재료 이야기와 먹는 법, 상품 정보 표를 차례로 둔 식품 상세페이지.",
     "format": "dp",
     "formatLabel": "상세페이지",
-    "spec": "폭 860px · 세로 자유",
+    "spec": "PC 폭 860px · 모바일 폭 390px · 세로 자유",
     "field": 1,
     "fieldLabel": "음식·카페·매장",
     "genre": "warm",
@@ -1656,6 +1656,10 @@ export const templates: TemplateItem[] = [
         860,
         4778
       ]
+    ],
+    "mobile": [
+      780,
+      4985
     ],
     "video": 0,
     "swap": "사진 3장, 상품 이름, 특징 3가지, 재료 글, 먹는 법 3줄, 상품 정보 표",
@@ -1692,7 +1696,7 @@ export const templates: TemplateItem[] = [
     "summary": "풀빛 바탕에 둥근 제품 사진과 돋움 제목, 성분 세 줄과 바르는 순서, 권하는 분 목록을 둔 화장품 상세페이지.",
     "format": "dp",
     "formatLabel": "상세페이지",
-    "spec": "폭 860px · 세로 자유",
+    "spec": "PC 폭 860px · 모바일 폭 390px · 세로 자유",
     "field": 2,
     "fieldLabel": "뷰티·건강·의료",
     "genre": "natural",
@@ -1703,6 +1707,10 @@ export const templates: TemplateItem[] = [
         860,
         5392
       ]
+    ],
+    "mobile": [
+      780,
+      5651
     ],
     "video": 0,
     "swap": "사진 3장, 제품 이름, 성분 3가지, 사용 순서 3단계, 권하는 분 4줄, 제품 정보 표",
@@ -1738,7 +1746,7 @@ export const templates: TemplateItem[] = [
     "summary": "검은 바탕에 노란 굵은 글자와 강사 사진, 대상 세 칸과 번호 붙은 목차, 수강 안내 띠를 둔 온라인 강의 상세페이지.",
     "format": "dp",
     "formatLabel": "상세페이지",
-    "spec": "폭 860px · 세로 자유",
+    "spec": "PC 폭 860px · 모바일 폭 390px · 세로 자유",
     "field": 3,
     "fieldLabel": "교육·강의·코칭",
     "genre": "bold",
@@ -1749,6 +1757,10 @@ export const templates: TemplateItem[] = [
         860,
         4729
       ]
+    ],
+    "mobile": [
+      780,
+      4969
     ],
     "video": 0,
     "swap": "사진 2장, 강의 이름, 대상 3가지, 목차 5장, 강사 소개, 수강료 · 기간",
@@ -1780,7 +1792,7 @@ export const templates: TemplateItem[] = [
     "summary": "큰 인물 사진으로 열고 요금 세 칸, 진행 네 단계, 결과 사진 두 장, 예약 안내를 둔 서비스 상세페이지.",
     "format": "dp",
     "formatLabel": "상세페이지",
-    "spec": "폭 860px · 세로 자유",
+    "spec": "PC 폭 860px · 모바일 폭 390px · 세로 자유",
     "field": 4,
     "fieldLabel": "전문·생활 서비스",
     "genre": "modern",
@@ -1791,6 +1803,10 @@ export const templates: TemplateItem[] = [
         860,
         4293
       ]
+    ],
+    "mobile": [
+      780,
+      4622
     ],
     "video": 0,
     "swap": "사진 3장, 서비스 이름, 요금 3종(구성 · 가격), 진행 4단계, 위치 · 예약 방법",
@@ -1826,7 +1842,7 @@ export const templates: TemplateItem[] = [
     "summary": "큰 착용 사진과 넓은 흰 여백, 가는 제목과 짧은 설명, 사이즈 표와 세탁 안내만 둔 의류 상세페이지.",
     "format": "dp",
     "formatLabel": "상세페이지",
-    "spec": "폭 860px · 세로 자유",
+    "spec": "PC 폭 860px · 모바일 폭 390px · 세로 자유",
     "field": 5,
     "fieldLabel": "쇼핑·제품·브랜드",
     "genre": "minimal",
@@ -1837,6 +1853,10 @@ export const templates: TemplateItem[] = [
         860,
         4521
       ]
+    ],
+    "mobile": [
+      780,
+      4476
     ],
     "video": 0,
     "swap": "사진 3장, 상품 이름 · 가격, 설명 글, 소재 · 색상, 사이즈 표, 세탁 안내",
@@ -1871,7 +1891,7 @@ export const templates: TemplateItem[] = [
     "summary": "검은 바탕에 제품 사진과 금빛 가는 글자, 큰 숫자 세 칸과 기능 사진, 사양 표를 둔 전자 기기 상세페이지.",
     "format": "dp",
     "formatLabel": "상세페이지",
-    "spec": "폭 860px · 세로 자유",
+    "spec": "PC 폭 860px · 모바일 폭 390px · 세로 자유",
     "field": 6,
     "fieldLabel": "IT·B2B·제조",
     "genre": "premium",
@@ -1882,6 +1902,10 @@ export const templates: TemplateItem[] = [
         860,
         4507
       ]
+    ],
+    "mobile": [
+      780,
+      4541
     ],
     "video": 0,
     "swap": "사진 3장, 제품 이름, 숫자 3칸, 기능 2가지(제목 · 설명), 사양 표",
@@ -1919,7 +1943,7 @@ export const templates: TemplateItem[] = [
     "summary": "파란 머리에 둥근 글자 제목과 원형 사진, 대상 · 내용 · 방법 카드와 신청 순서, 자주 묻는 질문을 둔 정책 안내 상세페이지.",
     "format": "dp",
     "formatLabel": "상세페이지",
-    "spec": "폭 860px · 세로 자유",
+    "spec": "PC 폭 860px · 모바일 폭 390px · 세로 자유",
     "field": 7,
     "fieldLabel": "정부·정책·모집",
     "genre": "playful",
@@ -1930,6 +1954,10 @@ export const templates: TemplateItem[] = [
         860,
         4539
       ]
+    ],
+    "mobile": [
+      780,
+      4801
     ],
     "video": 0,
     "swap": "사진 2장, 사업 이름, 대상 · 내용 · 기간 카드, 신청 4단계, 질문 3개, 문의처",
@@ -1960,7 +1988,7 @@ export const templates: TemplateItem[] = [
     "summary": "수업 사진으로 열고 남색 줄 제목, 강좌 표와 수강 안내 네 칸, 신청 순서를 정돈해 둔 교육 프로그램 상세페이지.",
     "format": "dp",
     "formatLabel": "상세페이지",
-    "spec": "폭 860px · 세로 자유",
+    "spec": "PC 폭 860px · 모바일 폭 390px · 세로 자유",
     "field": 8,
     "fieldLabel": "공공기관·대학·협회",
     "genre": "modern",
@@ -1971,6 +1999,10 @@ export const templates: TemplateItem[] = [
         860,
         3845
       ]
+    ],
+    "mobile": [
+      780,
+      4214
     ],
     "video": 0,
     "swap": "사진 2장, 기관 · 학기, 강좌 6줄(요일 · 시간 · 수강료), 안내 4칸, 신청 방법",
@@ -2000,7 +2032,7 @@ export const templates: TemplateItem[] = [
     "summary": "크림색 바탕에 옛 인쇄물 같은 글자와 테두리 사진, 구성 세 칸과 도장 모양 안내, 배송 표를 둔 굿즈 상세페이지.",
     "format": "dp",
     "formatLabel": "상세페이지",
-    "spec": "폭 860px · 세로 자유",
+    "spec": "PC 폭 860px · 모바일 폭 390px · 세로 자유",
     "field": 9,
     "fieldLabel": "크리에이터·아티스트",
     "genre": "retro",
@@ -2011,6 +2043,10 @@ export const templates: TemplateItem[] = [
         860,
         4708
       ]
+    ],
+    "mobile": [
+      780,
+      4997
     ],
     "video": 0,
     "swap": "사진 3장, 상품 이름, 소개 글, 구성 3가지, 사양 · 배송 표",
@@ -2047,7 +2083,7 @@ export const templates: TemplateItem[] = [
     "summary": "풍경 사진으로 크게 열고 흙빛 바탕에 바탕체 제목, 객실 소개와 시설 목록, 이용 안내 표를 둔 숙소 상세페이지.",
     "format": "dp",
     "formatLabel": "상세페이지",
-    "spec": "폭 860px · 세로 자유",
+    "spec": "PC 폭 860px · 모바일 폭 390px · 세로 자유",
     "field": 10,
     "fieldLabel": "관광·행사·문화",
     "genre": "natural",
@@ -2058,6 +2094,10 @@ export const templates: TemplateItem[] = [
         860,
         4958
       ]
+    ],
+    "mobile": [
+      780,
+      4956
     ],
     "video": 0,
     "swap": "사진 3장, 숙소 이름, 소개 글, 객실 2종(인원 · 요금), 시설 6가지, 이용 안내 표",
@@ -6540,3 +6580,6 @@ export const templateById = (id: string) => templates.find((t) => t.id === id);
 export const templateThumb = (id: string) => `/template-gallery/${id}/t.jpg`;
 export const templatePage = (id: string, n: number) => `/template-gallery/${id}/p${n}.jpg`;
 export const templateVideo = (id: string) => `/template-gallery/${id}/video.mp4`;
+/** 모바일판(mobile 이 있는 템플릿만) - 전체 길이 그림과 첫 화면 그림 */
+export const templateMobile = (id: string) => `/template-gallery/${id}/m1.jpg`;
+export const templateMobileThumb = (id: string) => `/template-gallery/${id}/mt.jpg`;

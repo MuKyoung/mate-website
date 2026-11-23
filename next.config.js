@@ -12,8 +12,8 @@
 const LANDING_ORIGIN = 'https://landingpage.devteammate.co.kr'
 const onLanding = [{ type: 'host', value: 'landingpage\\.devteammate\\.co\\.kr' }]
 const onSite = [{ type: 'host', value: '(?:www\\.|landingpage\\.)?devteammate\\.co\\.kr' }]
-// 하위 도메인에서 그대로 내보낼 것 - 상세(LP-000) · 템플릿(templates/ · templates/PT-01) · 빌드 파일 · Vercel 분석 · 그림 · 아이콘 · robots · 사이트맵 (첫 화면 / 은 .+ 에 걸리지 않는다)
-const LANDING_KEEP = '_next/|_vercel/|landing-gallery/|template-gallery/|images/|icon\\.png|apple-icon\\.png|favicon\\.ico|robots\\.txt|sitemap\\.xml|LP-\\d{3}/?$|templates/?$|templates/[A-Z]{2}-\\d{2}/?$'
+// 하위 도메인에서 그대로 내보낼 것 - 상세(LP-000) · 템플릿(templates/ · templates/PT-01) · 빌드 파일 · Vercel 분석 · 그림 · 움직이는 샘플 페이지(landing-motion/) · 아이콘 · robots · 사이트맵 (첫 화면 / 은 .+ 에 걸리지 않는다)
+const LANDING_KEEP = '_next/|_vercel/|landing-gallery/|landing-motion/|template-gallery/|images/|icon\\.png|apple-icon\\.png|favicon\\.ico|robots\\.txt|sitemap\\.xml|LP-\\d{3}/?$|templates/?$|templates/[A-Z]{2}-\\d{2}/?$'
 
 const nextConfig = {
   images: {

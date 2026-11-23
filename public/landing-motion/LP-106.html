@@ -1,0 +1,1798 @@
+<!doctype html>
+<html lang="ko" data-id="LP-106">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#f4f0ff">
+<title>LP-106 주문 · 재고 관리 서비스 · 그려지는 대시보드 · MATE 랜딩페이지 샘플</title>
+<!-- MATE 랜딩페이지 제작 스타일 샘플 LP-106 · © 2026 MATE · 상호 · 가격 · 일정 · 수치는 모두 예시입니다 · https://landingpage.devteammate.co.kr/LP-106/ -->
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@300;400;500;700&family=Space+Grotesk:wght@400;500;700&display=swap">
+<style>
+*, ::before, ::after {
+  --tw-border-spacing-x: 0;
+  --tw-border-spacing-y: 0;
+  --tw-translate-x: 0;
+  --tw-translate-y: 0;
+  --tw-rotate: 0;
+  --tw-skew-x: 0;
+  --tw-skew-y: 0;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+  --tw-pan-x:  ;
+  --tw-pan-y:  ;
+  --tw-pinch-zoom:  ;
+  --tw-scroll-snap-strictness: proximity;
+  --tw-gradient-from-position:  ;
+  --tw-gradient-via-position:  ;
+  --tw-gradient-to-position:  ;
+  --tw-ordinal:  ;
+  --tw-slashed-zero:  ;
+  --tw-numeric-figure:  ;
+  --tw-numeric-spacing:  ;
+  --tw-numeric-fraction:  ;
+  --tw-ring-inset:  ;
+  --tw-ring-offset-width: 0px;
+  --tw-ring-offset-color: #fff;
+  --tw-ring-color: rgb(59 130 246 / 0.5);
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  --tw-blur:  ;
+  --tw-brightness:  ;
+  --tw-contrast:  ;
+  --tw-grayscale:  ;
+  --tw-hue-rotate:  ;
+  --tw-invert:  ;
+  --tw-saturate:  ;
+  --tw-sepia:  ;
+  --tw-drop-shadow:  ;
+  --tw-backdrop-blur:  ;
+  --tw-backdrop-brightness:  ;
+  --tw-backdrop-contrast:  ;
+  --tw-backdrop-grayscale:  ;
+  --tw-backdrop-hue-rotate:  ;
+  --tw-backdrop-invert:  ;
+  --tw-backdrop-opacity:  ;
+  --tw-backdrop-saturate:  ;
+  --tw-backdrop-sepia:  ;
+  --tw-contain-size:  ;
+  --tw-contain-layout:  ;
+  --tw-contain-paint:  ;
+  --tw-contain-style:  ;
+}
+
+::backdrop {
+  --tw-border-spacing-x: 0;
+  --tw-border-spacing-y: 0;
+  --tw-translate-x: 0;
+  --tw-translate-y: 0;
+  --tw-rotate: 0;
+  --tw-skew-x: 0;
+  --tw-skew-y: 0;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+  --tw-pan-x:  ;
+  --tw-pan-y:  ;
+  --tw-pinch-zoom:  ;
+  --tw-scroll-snap-strictness: proximity;
+  --tw-gradient-from-position:  ;
+  --tw-gradient-via-position:  ;
+  --tw-gradient-to-position:  ;
+  --tw-ordinal:  ;
+  --tw-slashed-zero:  ;
+  --tw-numeric-figure:  ;
+  --tw-numeric-spacing:  ;
+  --tw-numeric-fraction:  ;
+  --tw-ring-inset:  ;
+  --tw-ring-offset-width: 0px;
+  --tw-ring-offset-color: #fff;
+  --tw-ring-color: rgb(59 130 246 / 0.5);
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  --tw-blur:  ;
+  --tw-brightness:  ;
+  --tw-contrast:  ;
+  --tw-grayscale:  ;
+  --tw-hue-rotate:  ;
+  --tw-invert:  ;
+  --tw-saturate:  ;
+  --tw-sepia:  ;
+  --tw-drop-shadow:  ;
+  --tw-backdrop-blur:  ;
+  --tw-backdrop-brightness:  ;
+  --tw-backdrop-contrast:  ;
+  --tw-backdrop-grayscale:  ;
+  --tw-backdrop-hue-rotate:  ;
+  --tw-backdrop-invert:  ;
+  --tw-backdrop-opacity:  ;
+  --tw-backdrop-saturate:  ;
+  --tw-backdrop-sepia:  ;
+  --tw-contain-size:  ;
+  --tw-contain-layout:  ;
+  --tw-contain-paint:  ;
+  --tw-contain-style:  ;
+}/*
+! tailwindcss v3.4.18 | MIT License | https://tailwindcss.com
+*//*
+1. Prevent padding and border from affecting element width. (https://github.com/mozdevs/cssremedy/issues/4)
+2. Allow adding a border to an element by just adding a border-width. (https://github.com/tailwindcss/tailwindcss/pull/116)
+*/
+
+*,
+::before,
+::after {
+  box-sizing: border-box; /* 1 */
+  border-width: 0; /* 2 */
+  border-style: solid; /* 2 */
+  border-color: #e5e7eb; /* 2 */
+}
+
+::before,
+::after {
+  --tw-content: '';
+}
+
+/*
+1. Use a consistent sensible line-height in all browsers.
+2. Prevent adjustments of font size after orientation changes in iOS.
+3. Use a more readable tab size.
+4. Use the user's configured `sans` font-family by default.
+5. Use the user's configured `sans` font-feature-settings by default.
+6. Use the user's configured `sans` font-variation-settings by default.
+7. Disable tap highlights on iOS
+*/
+
+html,
+:host {
+  line-height: 1.5; /* 1 */
+  -webkit-text-size-adjust: 100%; /* 2 */
+  -moz-tab-size: 4; /* 3 */
+  tab-size: 4; /* 3 */
+  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; /* 4 */
+  font-feature-settings: normal; /* 5 */
+  font-variation-settings: normal; /* 6 */
+  -webkit-tap-highlight-color: transparent; /* 7 */
+}
+
+/*
+1. Remove the margin in all browsers.
+2. Inherit line-height from `html` so users can set them as a class directly on the `html` element.
+*/
+
+body {
+  margin: 0; /* 1 */
+  line-height: inherit; /* 2 */
+}
+
+/*
+1. Add the correct height in Firefox.
+2. Correct the inheritance of border color in Firefox. (https://bugzilla.mozilla.org/show_bug.cgi?id=190655)
+3. Ensure horizontal rules are visible by default.
+*/
+
+hr {
+  height: 0; /* 1 */
+  color: inherit; /* 2 */
+  border-top-width: 1px; /* 3 */
+}
+
+/*
+Add the correct text decoration in Chrome, Edge, and Safari.
+*/
+
+abbr:where([title]) {
+  text-decoration: underline dotted;
+}
+
+/*
+Remove the default font size and weight for headings.
+*/
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+/*
+Reset links to optimize for opt-in styling instead of opt-out.
+*/
+
+a {
+  color: inherit;
+  text-decoration: inherit;
+}
+
+/*
+Add the correct font weight in Edge and Safari.
+*/
+
+b,
+strong {
+  font-weight: bolder;
+}
+
+/*
+1. Use the user's configured `mono` font-family by default.
+2. Use the user's configured `mono` font-feature-settings by default.
+3. Use the user's configured `mono` font-variation-settings by default.
+4. Correct the odd `em` font sizing in all browsers.
+*/
+
+code,
+kbd,
+samp,
+pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; /* 1 */
+  font-feature-settings: normal; /* 2 */
+  font-variation-settings: normal; /* 3 */
+  font-size: 1em; /* 4 */
+}
+
+/*
+Add the correct font size in all browsers.
+*/
+
+small {
+  font-size: 80%;
+}
+
+/*
+Prevent `sub` and `sup` elements from affecting the line height in all browsers.
+*/
+
+sub,
+sup {
+  font-size: 75%;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+
+sub {
+  bottom: -0.25em;
+}
+
+sup {
+  top: -0.5em;
+}
+
+/*
+1. Remove text indentation from table contents in Chrome and Safari. (https://bugs.chromium.org/p/chromium/issues/detail?id=999088, https://bugs.webkit.org/show_bug.cgi?id=201297)
+2. Correct table border color inheritance in all Chrome and Safari. (https://bugs.chromium.org/p/chromium/issues/detail?id=935729, https://bugs.webkit.org/show_bug.cgi?id=195016)
+3. Remove gaps between table borders by default.
+*/
+
+table {
+  text-indent: 0; /* 1 */
+  border-color: inherit; /* 2 */
+  border-collapse: collapse; /* 3 */
+}
+
+/*
+1. Change the font styles in all browsers.
+2. Remove the margin in Firefox and Safari.
+3. Remove default padding in all browsers.
+*/
+
+button,
+input,
+optgroup,
+select,
+textarea {
+  font-family: inherit; /* 1 */
+  font-feature-settings: inherit; /* 1 */
+  font-variation-settings: inherit; /* 1 */
+  font-size: 100%; /* 1 */
+  font-weight: inherit; /* 1 */
+  line-height: inherit; /* 1 */
+  letter-spacing: inherit; /* 1 */
+  color: inherit; /* 1 */
+  margin: 0; /* 2 */
+  padding: 0; /* 3 */
+}
+
+/*
+Remove the inheritance of text transform in Edge and Firefox.
+*/
+
+button,
+select {
+  text-transform: none;
+}
+
+/*
+1. Correct the inability to style clickable types in iOS and Safari.
+2. Remove default button styles.
+*/
+
+button,
+input:where([type='button']),
+input:where([type='reset']),
+input:where([type='submit']) {
+  -webkit-appearance: button; /* 1 */
+  background-color: transparent; /* 2 */
+  background-image: none; /* 2 */
+}
+
+/*
+Use the modern Firefox focus style for all focusable elements.
+*/
+
+:-moz-focusring {
+  outline: auto;
+}
+
+/*
+Remove the additional `:invalid` styles in Firefox. (https://github.com/mozilla/gecko-dev/blob/2f9eacd9d3d995c937b4251a5557d95d494c9be1/layout/style/res/forms.css#L728-L737)
+*/
+
+:-moz-ui-invalid {
+  box-shadow: none;
+}
+
+/*
+Add the correct vertical alignment in Chrome and Firefox.
+*/
+
+progress {
+  vertical-align: baseline;
+}
+
+/*
+Correct the cursor style of increment and decrement buttons in Safari.
+*/
+
+::-webkit-inner-spin-button,
+::-webkit-outer-spin-button {
+  height: auto;
+}
+
+/*
+1. Correct the odd appearance in Chrome and Safari.
+2. Correct the outline style in Safari.
+*/
+
+[type='search'] {
+  -webkit-appearance: textfield; /* 1 */
+  outline-offset: -2px; /* 2 */
+}
+
+/*
+Remove the inner padding in Chrome and Safari on macOS.
+*/
+
+::-webkit-search-decoration {
+  -webkit-appearance: none;
+}
+
+/*
+1. Correct the inability to style clickable types in iOS and Safari.
+2. Change font properties to `inherit` in Safari.
+*/
+
+::-webkit-file-upload-button {
+  -webkit-appearance: button; /* 1 */
+  font: inherit; /* 2 */
+}
+
+/*
+Add the correct display in Chrome and Safari.
+*/
+
+summary {
+  display: list-item;
+}
+
+/*
+Removes the default spacing and border for appropriate elements.
+*/
+
+blockquote,
+dl,
+dd,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+hr,
+figure,
+p,
+pre {
+  margin: 0;
+}
+
+fieldset {
+  margin: 0;
+  padding: 0;
+}
+
+legend {
+  padding: 0;
+}
+
+ol,
+ul,
+menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/*
+Reset default styling for dialogs.
+*/
+dialog {
+  padding: 0;
+}
+
+/*
+Prevent resizing textareas horizontally by default.
+*/
+
+textarea {
+  resize: vertical;
+}
+
+/*
+1. Reset the default placeholder opacity in Firefox. (https://github.com/tailwindlabs/tailwindcss/issues/3300)
+2. Set the default placeholder color to the user's configured gray 400 color.
+*/
+
+input::placeholder,
+textarea::placeholder {
+  opacity: 1; /* 1 */
+  color: #9ca3af; /* 2 */
+}
+
+/*
+Set the default cursor for buttons.
+*/
+
+button,
+[role="button"] {
+  cursor: pointer;
+}
+
+/*
+Make sure disabled buttons don't get the pointer cursor.
+*/
+:disabled {
+  cursor: default;
+}
+
+/*
+1. Make replaced elements `display: block` by default. (https://github.com/mozdevs/cssremedy/issues/14)
+2. Add `vertical-align: middle` to align replaced elements more sensibly by default. (https://github.com/jensimmons/cssremedy/issues/14#issuecomment-634934210)
+   This can trigger a poorly considered lint error in some tools but is included by design.
+*/
+
+img,
+svg,
+video,
+canvas,
+audio,
+iframe,
+embed,
+object {
+  display: block; /* 1 */
+  vertical-align: middle; /* 2 */
+}
+
+/*
+Constrain images and videos to the parent width and preserve their intrinsic aspect ratio. (https://github.com/mozdevs/cssremedy/issues/14)
+*/
+
+img,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Make elements with the HTML hidden attribute stay hidden by default */
+[hidden]:where(:not([hidden="until-found"])) {
+  display: none;
+}.absolute {
+  position: absolute;
+}.relative {
+  position: relative;
+}.sticky {
+  position: sticky;
+}.inset-0 {
+  inset: 0px;
+}.inset-x-0 {
+  left: 0px;
+  right: 0px;
+}.bottom-1 {
+  bottom: 0.25rem;
+}.bottom-6 {
+  bottom: 1.5rem;
+}.left-1 {
+  left: 0.25rem;
+}.left-1\/2 {
+  left: 50%;
+}.right-3 {
+  right: 0.75rem;
+}.top-0 {
+  top: 0px;
+}.top-1 {
+  top: 0.25rem;
+}.top-1\/2 {
+  top: 50%;
+}.z-10 {
+  z-index: 10;
+}.z-20 {
+  z-index: 20;
+}.mx-auto {
+  margin-left: auto;
+  margin-right: auto;
+}.ml-1 {
+  margin-left: 0.25rem;
+}.ml-1\.5 {
+  margin-left: 0.375rem;
+}.ml-3 {
+  margin-left: 0.75rem;
+}.mt-0\.5 {
+  margin-top: 0.125rem;
+}.mt-1 {
+  margin-top: 0.25rem;
+}.mt-10 {
+  margin-top: 2.5rem;
+}.mt-12 {
+  margin-top: 3rem;
+}.mt-2 {
+  margin-top: 0.5rem;
+}.mt-2\.5 {
+  margin-top: 0.625rem;
+}.mt-3 {
+  margin-top: 0.75rem;
+}.mt-4 {
+  margin-top: 1rem;
+}.mt-5 {
+  margin-top: 1.25rem;
+}.mt-6 {
+  margin-top: 1.5rem;
+}.mt-8 {
+  margin-top: 2rem;
+}.mt-9 {
+  margin-top: 2.25rem;
+}.block {
+  display: block;
+}.inline-block {
+  display: inline-block;
+}.flex {
+  display: flex;
+}.grid {
+  display: grid;
+}.hidden {
+  display: none;
+}.h-10 {
+  height: 2.5rem;
+}.h-2 {
+  height: 0.5rem;
+}.h-2\.5 {
+  height: 0.625rem;
+}.h-3 {
+  height: 0.75rem;
+}.h-3\.5 {
+  height: 0.875rem;
+}.h-5 {
+  height: 1.25rem;
+}.h-8 {
+  height: 2rem;
+}.h-\[100svh\] {
+  height: 100svh;
+}.h-\[270px\] {
+  height: 270px;
+}.h-\[330vh\] {
+  height: 330vh;
+}.h-\[3px\] {
+  height: 3px;
+}.h-\[520px\] {
+  height: 520px;
+}.h-\[820px\] {
+  height: 820px;
+}.h-\[92px\] {
+  height: 92px;
+}.h-full {
+  height: 100%;
+}.w-1 {
+  width: 0.25rem;
+}.w-10 {
+  width: 2.5rem;
+}.w-2\.5 {
+  width: 0.625rem;
+}.w-3\.5 {
+  width: 0.875rem;
+}.w-5 {
+  width: 1.25rem;
+}.w-8 {
+  width: 2rem;
+}.w-\[236px\] {
+  width: 236px;
+}.w-\[260px\] {
+  width: 260px;
+}.w-\[50\%\] {
+  width: 50%;
+}.w-\[520px\] {
+  width: 520px;
+}.w-\[820px\] {
+  width: 820px;
+}.w-full {
+  width: 100%;
+}.min-w-0 {
+  min-width: 0px;
+}.min-w-\[24px\] {
+  min-width: 24px;
+}.max-w-\[1040px\] {
+  max-width: 1040px;
+}.max-w-\[1080px\] {
+  max-width: 1080px;
+}.max-w-\[1200px\] {
+  max-width: 1200px;
+}.max-w-\[400px\] {
+  max-width: 400px;
+}.max-w-\[430px\] {
+  max-width: 430px;
+}.max-w-\[540px\] {
+  max-width: 540px;
+}.flex-1 {
+  flex: 1 1 0%;
+}.flex-none {
+  flex: none;
+}.origin-top {
+  transform-origin: top;
+}.rotate-45 {
+  --tw-rotate: 45deg;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}.transform {
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}.grid-cols-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}.grid-cols-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}.grid-cols-7 {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}.grid-cols-\[92px_1fr_40px\] {
+  grid-template-columns: 92px 1fr 40px;
+}.flex-col {
+  flex-direction: column;
+}.flex-wrap {
+  flex-wrap: wrap;
+}.items-end {
+  align-items: flex-end;
+}.items-center {
+  align-items: center;
+}.justify-end {
+  justify-content: flex-end;
+}.justify-center {
+  justify-content: center;
+}.justify-between {
+  justify-content: space-between;
+}.gap-1\.5 {
+  gap: 0.375rem;
+}.gap-10 {
+  gap: 2.5rem;
+}.gap-2 {
+  gap: 0.5rem;
+}.gap-2\.5 {
+  gap: 0.625rem;
+}.gap-3 {
+  gap: 0.75rem;
+}.gap-6 {
+  gap: 1.5rem;
+}.gap-7 {
+  gap: 1.75rem;
+}.gap-9 {
+  gap: 2.25rem;
+}.gap-\[3px\] {
+  gap: 3px;
+}.gap-x-6 {
+  column-gap: 1.5rem;
+}.gap-y-3 {
+  row-gap: 0.75rem;
+}.overflow-hidden {
+  overflow: hidden;
+}.overflow-visible {
+  overflow: visible;
+}.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}.whitespace-nowrap {
+  white-space: nowrap;
+}.rounded-\[10px\] {
+  border-radius: 10px;
+}.rounded-\[14px\] {
+  border-radius: 14px;
+}.rounded-\[16px\] {
+  border-radius: 16px;
+}.rounded-\[18px\] {
+  border-radius: 18px;
+}.rounded-\[5px\] {
+  border-radius: 5px;
+}.rounded-\[9px\] {
+  border-radius: 9px;
+}.rounded-full {
+  border-radius: 9999px;
+}.rounded-sm {
+  border-radius: 0.125rem;
+}.rounded-t-\[20px\] {
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+}.rounded-t-\[6px\] {
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+}.border {
+  border-width: 1px;
+}.border-b {
+  border-bottom-width: 1px;
+}.border-b-0 {
+  border-bottom-width: 0px;
+}.border-l-\[3px\] {
+  border-left-width: 3px;
+}.border-r {
+  border-right-width: 1px;
+}.border-t {
+  border-top-width: 1px;
+}.border-t-2 {
+  border-top-width: 2px;
+}.border-\[\#1b1033\] {
+  --tw-border-opacity: 1;
+  border-color: rgb(27 16 51 / var(--tw-border-opacity, 1));
+}.border-\[\#1b1033\]\/10 {
+  border-color: rgb(27 16 51 / 0.1);
+}.border-\[\#1b1033\]\/15 {
+  border-color: rgb(27 16 51 / 0.15);
+}.border-\[\#1b1033\]\/25 {
+  border-color: rgb(27 16 51 / 0.25);
+}.border-\[\#1b1033\]\/30 {
+  border-color: rgb(27 16 51 / 0.3);
+}.border-white\/10 {
+  border-color: rgb(255 255 255 / 0.1);
+}.border-white\/15 {
+  border-color: rgb(255 255 255 / 0.15);
+}.bg-\[\#1b1033\] {
+  --tw-bg-opacity: 1;
+  background-color: rgb(27 16 51 / var(--tw-bg-opacity, 1));
+}.bg-\[\#1b1033\]\/10 {
+  background-color: rgb(27 16 51 / 0.1);
+}.bg-\[\#1b1033\]\/15 {
+  background-color: rgb(27 16 51 / 0.15);
+}.bg-\[\#5b21b6\] {
+  --tw-bg-opacity: 1;
+  background-color: rgb(91 33 182 / var(--tw-bg-opacity, 1));
+}.bg-\[\#5b21b6\]\/25 {
+  background-color: rgb(91 33 182 / 0.25);
+}.bg-\[\#7c3aed\] {
+  --tw-bg-opacity: 1;
+  background-color: rgb(124 58 237 / var(--tw-bg-opacity, 1));
+}.bg-\[\#c8f53c\] {
+  --tw-bg-opacity: 1;
+  background-color: rgb(200 245 60 / var(--tw-bg-opacity, 1));
+}.bg-\[\#ecfccb\] {
+  --tw-bg-opacity: 1;
+  background-color: rgb(236 252 203 / var(--tw-bg-opacity, 1));
+}.bg-\[\#f4f0ff\] {
+  --tw-bg-opacity: 1;
+  background-color: rgb(244 240 255 / var(--tw-bg-opacity, 1));
+}.bg-\[\#ff5d8f\] {
+  --tw-bg-opacity: 1;
+  background-color: rgb(255 93 143 / var(--tw-bg-opacity, 1));
+}.bg-\[\#fff1f5\] {
+  --tw-bg-opacity: 1;
+  background-color: rgb(255 241 245 / var(--tw-bg-opacity, 1));
+}.bg-white {
+  --tw-bg-opacity: 1;
+  background-color: rgb(255 255 255 / var(--tw-bg-opacity, 1));
+}.bg-white\/10 {
+  background-color: rgb(255 255 255 / 0.1);
+}.p-1 {
+  padding: 0.25rem;
+}.p-3 {
+  padding: 0.75rem;
+}.p-4 {
+  padding: 1rem;
+}.p-5 {
+  padding: 1.25rem;
+}.px-2\.5 {
+  padding-left: 0.625rem;
+  padding-right: 0.625rem;
+}.px-3 {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}.px-4 {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}.px-5 {
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+}.px-6 {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}.px-7 {
+  padding-left: 1.75rem;
+  padding-right: 1.75rem;
+}.px-9 {
+  padding-left: 2.25rem;
+  padding-right: 2.25rem;
+}.py-1 {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}.py-2 {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}.py-2\.5 {
+  padding-top: 0.625rem;
+  padding-bottom: 0.625rem;
+}.py-20 {
+  padding-top: 5rem;
+  padding-bottom: 5rem;
+}.py-24 {
+  padding-top: 6rem;
+  padding-bottom: 6rem;
+}.py-3 {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}.py-4 {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}.py-5 {
+  padding-top: 1.25rem;
+  padding-bottom: 1.25rem;
+}.py-7 {
+  padding-top: 1.75rem;
+  padding-bottom: 1.75rem;
+}.pb-24 {
+  padding-bottom: 6rem;
+}.pb-\[7px\] {
+  padding-bottom: 7px;
+}.pl-4 {
+  padding-left: 1rem;
+}.pt-12 {
+  padding-top: 3rem;
+}.pt-28 {
+  padding-top: 7rem;
+}.text-left {
+  text-align: left;
+}.text-center {
+  text-align: center;
+}.text-right {
+  text-align: right;
+}.text-\[13px\] {
+  font-size: 13px;
+}.text-\[14px\] {
+  font-size: 14px;
+}.text-\[15px\] {
+  font-size: 15px;
+}.text-\[16px\] {
+  font-size: 16px;
+}.text-\[17px\] {
+  font-size: 17px;
+}.text-\[18px\] {
+  font-size: 18px;
+}.text-\[19px\] {
+  font-size: 19px;
+}.text-\[20px\] {
+  font-size: 20px;
+}.text-\[24px\] {
+  font-size: 24px;
+}.text-\[26px\] {
+  font-size: 26px;
+}.text-\[28px\] {
+  font-size: 28px;
+}.text-\[30px\] {
+  font-size: 30px;
+}.text-\[32px\] {
+  font-size: 32px;
+}.text-\[34px\] {
+  font-size: 34px;
+}.text-\[36px\] {
+  font-size: 36px;
+}.font-bold {
+  font-weight: 700;
+}.font-medium {
+  font-weight: 500;
+}.font-semibold {
+  font-weight: 600;
+}.leading-\[1\.22\] {
+  line-height: 1.22;
+}.leading-\[1\.25\] {
+  line-height: 1.25;
+}.leading-\[1\.35\] {
+  line-height: 1.35;
+}.leading-\[1\.6\] {
+  line-height: 1.6;
+}.leading-\[1\.75\] {
+  line-height: 1.75;
+}.leading-\[1\.8\] {
+  line-height: 1.8;
+}.leading-none {
+  line-height: 1;
+}.leading-snug {
+  line-height: 1.375;
+}.leading-tight {
+  line-height: 1.25;
+}.tracking-\[-0\.02em\] {
+  letter-spacing: -0.02em;
+}.tracking-\[-0\.03em\] {
+  letter-spacing: -0.03em;
+}.text-\[\#1b1033\] {
+  --tw-text-opacity: 1;
+  color: rgb(27 16 51 / var(--tw-text-opacity, 1));
+}.text-\[\#1b1033\]\/50 {
+  color: rgb(27 16 51 / 0.5);
+}.text-\[\#1b1033\]\/55 {
+  color: rgb(27 16 51 / 0.55);
+}.text-\[\#1b1033\]\/60 {
+  color: rgb(27 16 51 / 0.6);
+}.text-\[\#1b1033\]\/70 {
+  color: rgb(27 16 51 / 0.7);
+}.text-\[\#1b1033\]\/75 {
+  color: rgb(27 16 51 / 0.75);
+}.text-\[\#1b1033\]\/80 {
+  color: rgb(27 16 51 / 0.8);
+}.text-\[\#3f6212\] {
+  --tw-text-opacity: 1;
+  color: rgb(63 98 18 / var(--tw-text-opacity, 1));
+}.text-\[\#5b21b6\] {
+  --tw-text-opacity: 1;
+  color: rgb(91 33 182 / var(--tw-text-opacity, 1));
+}.text-\[\#65a30d\] {
+  --tw-text-opacity: 1;
+  color: rgb(101 163 13 / var(--tw-text-opacity, 1));
+}.text-\[\#be123c\] {
+  --tw-text-opacity: 1;
+  color: rgb(190 18 60 / var(--tw-text-opacity, 1));
+}.text-\[\#c8f53c\] {
+  --tw-text-opacity: 1;
+  color: rgb(200 245 60 / var(--tw-text-opacity, 1));
+}.text-\[\#e11d62\] {
+  --tw-text-opacity: 1;
+  color: rgb(225 29 98 / var(--tw-text-opacity, 1));
+}.text-white {
+  --tw-text-opacity: 1;
+  color: rgb(255 255 255 / var(--tw-text-opacity, 1));
+}.text-white\/55 {
+  color: rgb(255 255 255 / 0.55);
+}.text-white\/70 {
+  color: rgb(255 255 255 / 0.7);
+}.text-white\/75 {
+  color: rgb(255 255 255 / 0.75);
+}.shadow-\[0_-12px_60px_rgba\(91\2c 33\2c 182\2c 0\.18\)\] {
+  --tw-shadow: 0 -12px 60px rgba(91,33,182,0.18);
+  --tw-shadow-colored: 0 -12px 60px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}.shadow-\[0_18px_40px_rgba\(27\2c 16\2c 51\2c 0\.35\)\] {
+  --tw-shadow: 0 18px 40px rgba(27,16,51,0.35);
+  --tw-shadow-colored: 0 18px 40px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}.shadow-\[0_2px_10px_rgba\(27\2c 16\2c 51\2c 0\.08\)\] {
+  --tw-shadow: 0 2px 10px rgba(27,16,51,0.08);
+  --tw-shadow-colored: 0 2px 10px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}.transition-colors {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}.transition-transform {
+  transition-property: transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}.duration-200 {
+  transition-duration: 200ms;
+}.duration-300 {
+  transition-duration: 300ms;
+}.\[--step\:70ms\] {
+  --step: 70ms;
+}.hover\:-translate-y-0\.5:hover {
+  --tw-translate-y: -0.125rem;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}.hover\:bg-\[\#5b21b6\]:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgb(91 33 182 / var(--tw-bg-opacity, 1));
+}.hover\:text-\[\#5b21b6\]:hover {
+  --tw-text-opacity: 1;
+  color: rgb(91 33 182 / var(--tw-text-opacity, 1));
+}@media (min-width: 640px) {
+
+  .sm\:bottom-16 {
+    bottom: 4rem;
+  }
+
+  .sm\:right-\[-26px\] {
+    right: -26px;
+  }
+
+  .sm\:col-start-3 {
+    grid-column-start: 3;
+  }
+
+  .sm\:mt-3 {
+    margin-top: 0.75rem;
+  }
+
+  .sm\:mt-5 {
+    margin-top: 1.25rem;
+  }
+
+  .sm\:mt-6 {
+    margin-top: 1.5rem;
+  }
+
+  .sm\:mt-9 {
+    margin-top: 2.25rem;
+  }
+
+  .sm\:inline {
+    display: inline;
+  }
+
+  .sm\:h-\[108px\] {
+    height: 108px;
+  }
+
+  .sm\:h-\[420px\] {
+    height: 420px;
+  }
+
+  .sm\:w-\[264px\] {
+    width: 264px;
+  }
+
+  .sm\:grid-cols-\[130px_1fr_52px\] {
+    grid-template-columns: 130px 1fr 52px;
+  }
+
+  .sm\:grid-cols-\[150px_1fr_auto\] {
+    grid-template-columns: 150px 1fr auto;
+  }
+
+  .sm\:gap-3 {
+    gap: 0.75rem;
+  }
+
+  .sm\:gap-4 {
+    gap: 1rem;
+  }
+
+  .sm\:gap-5 {
+    gap: 1.25rem;
+  }
+
+  .sm\:gap-6 {
+    gap: 1.5rem;
+  }
+
+  .sm\:p-5 {
+    padding: 1.25rem;
+  }
+
+  .sm\:p-6 {
+    padding: 1.5rem;
+  }
+
+  .sm\:p-7 {
+    padding: 1.75rem;
+  }
+
+  .sm\:px-4 {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .sm\:px-5 {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+
+  .sm\:px-8 {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+
+  .sm\:py-28 {
+    padding-top: 7rem;
+    padding-bottom: 7rem;
+  }
+
+  .sm\:py-36 {
+    padding-top: 9rem;
+    padding-bottom: 9rem;
+  }
+
+  .sm\:py-4 {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+
+  .sm\:py-6 {
+    padding-top: 1.5rem;
+    padding-bottom: 1.5rem;
+  }
+
+  .sm\:pl-5 {
+    padding-left: 1.25rem;
+  }
+
+  .sm\:pt-32 {
+    padding-top: 8rem;
+  }
+
+  .sm\:text-\[14px\] {
+    font-size: 14px;
+  }
+
+  .sm\:text-\[15px\] {
+    font-size: 15px;
+  }
+
+  .sm\:text-\[16px\] {
+    font-size: 16px;
+  }
+
+  .sm\:text-\[18px\] {
+    font-size: 18px;
+  }
+
+  .sm\:text-\[21px\] {
+    font-size: 21px;
+  }
+
+  .sm\:text-\[24px\] {
+    font-size: 24px;
+  }
+
+  .sm\:text-\[26px\] {
+    font-size: 26px;
+  }
+
+  .sm\:text-\[40px\] {
+    font-size: 40px;
+  }
+
+  .sm\:text-\[46px\] {
+    font-size: 46px;
+  }
+
+  .sm\:text-\[48px\] {
+    font-size: 48px;
+  }
+
+  .sm\:text-\[52px\] {
+    font-size: 52px;
+  }
+
+  .sm\:text-\[56px\] {
+    font-size: 56px;
+  }
+}@media (min-width: 768px) {
+
+  .md\:block {
+    display: block;
+  }
+
+  .md\:flex {
+    display: flex;
+  }
+
+  .md\:grid-cols-\[176px_1fr\] {
+    grid-template-columns: 176px 1fr;
+  }
+}@media (min-width: 1024px) {
+
+  .lg\:col-start-auto {
+    grid-column-start: auto;
+  }
+
+  .lg\:grid-cols-\[0\.8fr_1\.2fr\] {
+    grid-template-columns: 0.8fr 1.2fr;
+  }
+
+  .lg\:grid-cols-\[0\.9fr_1\.1fr\] {
+    grid-template-columns: 0.9fr 1.1fr;
+  }
+
+  .lg\:grid-cols-\[1\.55fr_1fr\] {
+    grid-template-columns: 1.55fr 1fr;
+  }
+
+  .lg\:grid-cols-\[170px_1fr_210px_auto\] {
+    grid-template-columns: 170px 1fr 210px auto;
+  }
+
+  .lg\:gap-14 {
+    gap: 3.5rem;
+  }
+
+  .lg\:text-right {
+    text-align: right;
+  }
+
+  .lg\:text-\[66px\] {
+    font-size: 66px;
+  }
+}
+.f-pre{font-family:'Pretendard Variable',Pretendard,sans-serif}
+.f-plex{font-family:'IBM Plex Sans KR',sans-serif}
+.f-grotesk{font-family:'Space Grotesk',sans-serif}
+/* MATE 모션 랜딩 공용 CSS - build.mjs 가 페이지마다 안에 넣는다.
+   움직임은 translate · scale · rotate 낱개 속성과 opacity · clip-path 만 쓴다(요소에 이미 걸린 transform 을 건드리지 않는다). */
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{margin:0;overflow-x:hidden;word-break:keep-all;overflow-wrap:anywhere;-webkit-font-smoothing:antialiased;font-family:'Pretendard Variable',Pretendard,sans-serif;line-height:1.5}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid currentColor;outline-offset:3px}
+
+/* ── 등장 ── data-m="up|down|left|right|zoom|pop|fade|blur|clip-up|clip-down|clip-left|clip-right", 지연은 data-d="120"(ms) */
+[data-m]{opacity:0;transition:opacity .9s cubic-bezier(.16,1,.3,1),translate .9s cubic-bezier(.16,1,.3,1),scale .9s cubic-bezier(.16,1,.3,1),clip-path 1.1s cubic-bezier(.16,1,.3,1),filter .9s ease;transition-delay:var(--d,0ms)}
+[data-m=up]{translate:0 44px}
+[data-m=down]{translate:0 -44px}
+[data-m=left]{translate:-60px 0}
+[data-m=right]{translate:60px 0}
+[data-m=zoom]{scale:.86}
+[data-m=pop]{scale:.5;transition-timing-function:cubic-bezier(.34,1.56,.64,1)}
+[data-m=blur]{filter:blur(18px)}
+[data-m^=clip]{opacity:1}
+[data-m=clip-up]{clip-path:inset(100% 0 0 0)}
+[data-m=clip-down]{clip-path:inset(0 0 100% 0)}
+[data-m=clip-left]{clip-path:inset(0 0 0 100%)}
+[data-m=clip-right]{clip-path:inset(0 100% 0 0)}
+[data-m].is-in{opacity:1;translate:none;scale:none;filter:none}
+/* 잘라 드러내는 등장만 clip-path 를 쓴다. 다른 등장에까지 남겨 두면 그림자와 상자 밖으로 나간 자식이 잘린다 */
+[data-m^=clip].is-in{clip-path:inset(0)}
+
+/* ── 글자 쪼개 등장 ── data-split="chars|words" (간격은 --step) */
+[data-split]{opacity:1}
+.mk-w{display:inline-block;white-space:nowrap}
+.mk-c{display:inline-block;opacity:0;translate:0 .7em;transition:opacity .7s ease,translate .8s cubic-bezier(.16,1,.3,1);transition-delay:calc(var(--d,0ms) + var(--i) * var(--step,30ms))}
+.is-in .mk-c,.is-in.mk-c{opacity:1;translate:none}
+
+/* ── 흐르는 띠 ── data-marquee (data-speed="40" 초, data-dir="r" 반대로) */
+[data-marquee]{display:flex;overflow:hidden;user-select:none}
+.mk-track{display:flex;flex:none;align-items:center;gap:var(--gap,0px);padding-right:var(--gap,0px);min-width:max-content;animation:mk-marq var(--speed,40s) linear infinite}
+[data-dir=r]>.mk-track{animation-direction:reverse}
+[data-marquee]:hover>.mk-track{animation-play-state:paused}
+@keyframes mk-marq{to{translate:-100% 0}}
+
+/* ── 선 그리기 ── SVG path · line · circle 에 data-draw (길이는 --dur) */
+[data-draw]{stroke-dasharray:var(--len,1000);stroke-dashoffset:var(--len,1000);transition:stroke-dashoffset var(--dur,1.6s) cubic-bezier(.6,0,.2,1) var(--d,0ms)}
+[data-draw].is-in{stroke-dashoffset:0}
+
+/* ── 기울기 ── data-tilt */
+[data-tilt]{transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .25s ease-out;transform-style:preserve-3d}
+
+/* ── 탭 ── data-tabs > [data-tab] · [data-panel] */
+[data-panel][hidden]{display:none}
+
+/* ── 자주 쓰는 되풀이 움직임 ── */
+@keyframes mk-float{from{translate:0 -8px}to{translate:0 8px}}
+@keyframes mk-spin{to{rotate:360deg}}
+@keyframes mk-pulse{0%,100%{scale:1}50%{scale:1.06}}
+@keyframes mk-blink{0%,49%{opacity:1}50%,100%{opacity:0}}
+@keyframes mk-sway{from{rotate:-4deg}to{rotate:4deg}}
+.mk-float{animation:mk-float 3.6s ease-in-out infinite alternate}
+.mk-spin{animation:mk-spin 18s linear infinite}
+.mk-pulse{animation:mk-pulse 2.4s ease-in-out infinite}
+.mk-sway{animation:mk-sway 3s ease-in-out infinite alternate}
+.mk-caret::after{content:'';display:inline-block;width:.08em;height:1em;margin-left:.08em;background:currentColor;vertical-align:-.12em;animation:mk-blink 1s steps(1) infinite}
+
+/* ── 샘플 안내 띠 · 알림 ── (갤러리 안에 넣어 볼 때는 숨긴다: html.embed) */
+.mk-bar{position:fixed;left:50%;bottom:14px;z-index:9999;translate:-50% 0;display:flex;align-items:center;gap:10px;max-width:calc(100vw - 20px);padding:9px 10px 9px 16px;border-radius:999px;background:rgba(14,21,50,.94);color:#fff;font:500 13px/1.3 'Pretendard Variable',Pretendard,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.28);white-space:nowrap}
+.mk-bar b{font-weight:700}
+.mk-bar span{opacity:.72;overflow:hidden;text-overflow:ellipsis}
+.mk-bar a{flex:none;padding:6px 12px;border-radius:999px;background:#fff;color:#0e1532;font-weight:700}
+.mk-bar a.mk-ghost{background:transparent;color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.4)}
+.mk-bar button{flex:none;width:28px;height:28px;border:0;border-radius:50%;background:rgba(255,255,255,.14);color:#fff;font-size:15px;line-height:1}
+@media (max-width:560px){.mk-bar span{display:none}.mk-bar{font-size:12px}}
+html.embed .mk-bar{display:none}
+.mk-toast{position:fixed;left:50%;bottom:76px;z-index:9999;translate:-50% 12px;max-width:calc(100vw - 32px);padding:12px 18px;border-radius:12px;background:#111;color:#fff;font:500 14px/1.4 'Pretendard Variable',Pretendard,sans-serif;opacity:0;pointer-events:none;transition:opacity .3s,translate .3s;text-align:center}
+.mk-toast.is-on{opacity:1;translate:-50% 0}
+html.embed .mk-toast{bottom:20px}
+
+/* ── 움직임 줄이기 설정 ── 내용은 모두 보이고 되풀이 움직임은 멈춘다 */
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  [data-m],.mk-c{opacity:1!important;translate:none!important;scale:none!important;filter:none!important;clip-path:none!important;transition:none!important}
+  [data-draw]{stroke-dashoffset:0!important;transition:none!important}
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important}
+}
+
+/* SVG 안의 요소는 제 상자 가운데를 기준으로 커지고 돈다 */
+svg [data-m]{transform-box:fill-box;transform-origin:50% 50%}
+
+
+/* 공용 CSS 가 등장한 요소에 clip-path:inset(0) 을 남겨 밖으로 나간 그림자 · 카드가 잘린다 - 잘라 등장하는 것이 아니면 푼다 */
+[data-m]:not([data-m^=clip]).is-in{clip-path:none}
+/* 기능 고정 구간 - --p(0→1)에 맞춰 세 화면이 바뀐다 */
+.sa-pin{--p:0}
+.sa-step{border-color:rgba(255,255,255,.18);opacity:calc(.34 + clamp(0,1.6 - max(var(--p) - var(--c),var(--c) - var(--p)) * 6.5,1) * .66);transition:opacity .2s,border-color .3s}
+.sa-pin[data-step="0"] .sa-step:nth-child(1),.sa-pin[data-step="1"] .sa-step:nth-child(2),.sa-pin[data-step="2"] .sa-step:nth-child(3){border-color:#c8f53c}
+.sa-panel{pointer-events:none}
+.sa-pa{opacity:clamp(0,(.34 - var(--p)) * 10,1);translate:0 calc(clamp(0,(var(--p) - .18) * 5,1) * -28px)}
+.sa-pb{opacity:clamp(0,min((var(--p) - .32) * 10,(.68 - var(--p)) * 10),1);translate:0 calc((.5 - var(--p)) * 70px)}
+.sa-pc{opacity:clamp(0,(var(--p) - .66) * 10,1);translate:0 calc(clamp(0,(.84 - var(--p)) * 5,1) * 28px)}
+.sa-pin[data-step="2"] .sa-pc{pointer-events:auto}
+.sa-stock{transform-origin:0 50%;scale:clamp(0,(var(--p) - .34) * 7,1) 1}
+.sa-flow{position:relative;overflow:hidden;border-radius:3px}
+.sa-flow::before{content:'';position:absolute;top:0;bottom:0;left:-20px;right:0;background:repeating-linear-gradient(90deg,#c8f53c 0 10px,transparent 10px 20px);animation:sa-flow .7s linear infinite}
+@keyframes sa-flow{to{translate:20px 0}}
+/* 요일별 막대 - 카드가 등장하면 아래에서 자란다 */
+.sa-bar{transform-origin:50% 100%;scale:1 0;transition:scale .8s cubic-bezier(.16,1,.3,1) calc(800ms + var(--i) * 110ms)}
+.is-in .sa-bar{scale:1 1}
+.sa-hub{transform-box:fill-box;transform-origin:50% 50%}
+/* 요금 전환 */
+.sa-knob{width:calc(50% - 4px);translate:calc(var(--tab-i,0) * 100%) 0;transition:translate .45s cubic-bezier(.16,1,.3,1)}
+.sa-tab.is-on{color:#fff}
+.sa-tab.is-on span{color:#c8f53c}
+.sa-ring{translate:-50% -50%;animation:sa-ring 7s ease-in-out infinite alternate}
+.sa-ring2{animation-delay:-3s}
+@keyframes sa-ring{from{scale:.92}to{scale:1.08}}
+
+</style>
+</head>
+<body>
+
+<header class="absolute inset-x-0 top-0 z-20 text-[#1b1033]">
+  <div class="mx-auto flex max-w-[1200px] items-center justify-between px-5 py-5 sm:px-8 sm:py-6">
+    <a href="#top" class="f-plex flex items-center gap-2.5 text-[19px] font-bold tracking-[-0.02em] sm:text-[21px]"><span class="flex h-8 w-8 items-end justify-center gap-[3px] rounded-[9px] bg-[#5b21b6] pb-[7px]"><i class="block h-2 w-1 rounded-sm bg-[#c8f53c]"></i><i class="block h-3.5 w-1 rounded-sm bg-[#c8f53c]"></i><i class="block h-2.5 w-1 rounded-sm bg-[#c8f53c]"></i></span>○○스톡</a>
+    <nav class="hidden items-center gap-9 text-[15px] font-semibold text-[#1b1033]/75 md:flex"><a href="#features" class="transition-colors hover:text-[#5b21b6]">기능</a><a href="#connect" class="transition-colors hover:text-[#5b21b6]">연동</a><a href="#pricing" class="transition-colors hover:text-[#5b21b6]">요금</a></nav>
+    <a href="#!" data-cta class="rounded-full bg-[#1b1033] px-5 py-2.5 text-[14px] font-bold text-white transition-colors hover:bg-[#5b21b6]">무료로 써 보기</a>
+  </div>
+</header>
+
+<section id="top" class="relative overflow-hidden bg-[#f4f0ff] px-5 pt-28 text-[#1b1033] sm:px-8 sm:pt-32">
+  <div class="mx-auto max-w-[1200px] text-center">
+    <p data-m="down" class="inline-block rounded-full bg-white px-4 py-2 text-[13px] font-bold text-[#5b21b6] sm:text-[14px]">주문 · 재고 관리 서비스</p>
+    <h1 data-split="words" data-d="120" class="f-plex mt-6 text-[36px] font-bold leading-[1.22] tracking-[-0.03em] [--step:70ms] sm:text-[56px] lg:text-[66px]">주문은 한곳에 모으고,<br>재고는 숫자로 맞춥니다</h1>
+    <p data-m="up" data-d="600" class="mx-auto mt-6 max-w-[540px] text-[16px] leading-[1.75] text-[#1b1033]/70 sm:text-[18px]">여러 쇼핑몰의 주문을 한 화면에서 확인하고, 재고가 떨어지기 전에 알림을 받으세요.</p>
+    <div data-m="up" data-d="750" class="mt-8 flex flex-wrap items-center justify-center gap-3">
+      <a href="#!" data-cta data-magnet="0.25" class="rounded-full bg-[#5b21b6] px-7 py-4 text-[16px] font-bold text-white">14일 무료로 써 보기</a>
+      <a href="#features" class="rounded-full border border-[#1b1033]/25 bg-white px-7 py-4 text-[16px] font-bold">기능 보기</a>
+    </div>
+  </div>
+
+  <div data-m="up" data-d="500" class="relative mx-auto mt-12 max-w-[1080px]">
+    <div class="rounded-t-[20px] border border-b-0 border-[#1b1033]/10 bg-white shadow-[0_-12px_60px_rgba(91,33,182,0.18)]">
+      <div class="flex items-center gap-2 border-b border-[#1b1033]/10 px-4 py-3"><i class="h-2.5 w-2.5 rounded-full bg-[#1b1033]/15"></i><i class="h-2.5 w-2.5 rounded-full bg-[#1b1033]/15"></i><i class="h-2.5 w-2.5 rounded-full bg-[#1b1033]/15"></i><span class="ml-3 text-[13px] font-semibold text-[#1b1033]/55">○○스톡 · 오늘</span></div>
+      <div class="grid md:grid-cols-[176px_1fr]">
+        <aside class="hidden border-r border-[#1b1033]/10 p-4 text-[14px] font-semibold text-[#1b1033]/60 md:block">
+          <p class="rounded-[10px] px-3 py-2.5 bg-[#f4f0ff] text-[#5b21b6]">대시보드</p><p class="rounded-[10px] px-3 py-2.5 ">주문</p><p class="rounded-[10px] px-3 py-2.5 ">재고</p><p class="rounded-[10px] px-3 py-2.5 ">발주</p><p class="rounded-[10px] px-3 py-2.5 ">거래처</p>
+        </aside>
+        <div class="grid gap-3 p-3 text-left sm:gap-4 sm:p-6">
+          <div class="grid grid-cols-3 gap-2 sm:gap-4">
+            <div data-m="up" data-d="600" class="rounded-[14px] border border-[#1b1033]/10 p-3 sm:p-5"><p class="text-[13px] font-semibold text-[#1b1033]/60">오늘 주문</p><p class="f-grotesk mt-1 text-[26px] font-bold leading-none sm:text-[40px] "><span data-count="128" data-dur="2">128</span><span class="ml-1 text-[13px] font-semibold sm:text-[15px]">건</span></p></div><div data-m="up" data-d="720" class="rounded-[14px] border border-[#1b1033]/10 p-3 sm:p-5"><p class="text-[13px] font-semibold text-[#1b1033]/60">출고 대기</p><p class="f-grotesk mt-1 text-[26px] font-bold leading-none sm:text-[40px] "><span data-count="37" data-dur="2">37</span><span class="ml-1 text-[13px] font-semibold sm:text-[15px]">건</span></p></div><div data-m="up" data-d="840" class="rounded-[14px] border border-[#1b1033]/10 p-3 sm:p-5"><p class="text-[13px] font-semibold text-[#1b1033]/60">재고 부족</p><p class="f-grotesk mt-1 text-[26px] font-bold leading-none sm:text-[40px] text-[#e11d62]"><span data-count="4" data-dur="2">4</span><span class="ml-1 text-[13px] font-semibold sm:text-[15px]">품목</span></p></div>
+          </div>
+          <div class="grid gap-3 sm:gap-4 lg:grid-cols-[1.55fr_1fr]">
+            <div class="rounded-[14px] border border-[#1b1033]/10 p-4 sm:p-5">
+              <div class="flex items-center justify-between"><p class="text-[14px] font-bold">이번 주 주문</p><p class="f-grotesk rounded-full bg-[#ecfccb] px-2.5 py-1 text-[13px] font-bold text-[#3f6212]">+18%</p></div>
+              <svg viewBox="0 0 320 120" class="mt-3 w-full overflow-visible" fill="none" aria-hidden="true">
+                <defs><linearGradient id="sa-area" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7c3aed" stop-opacity=".28"/><stop offset="1" stop-color="#7c3aed" stop-opacity="0"/></linearGradient></defs>
+                <path d="M0 30h320M0 60h320M0 90h320" stroke="#1b1033" stroke-opacity=".08"/>
+                <path data-m="fade" data-d="1900" d="M0 96 46 80 92 86 138 54 184 62 230 34 276 44 320 16V120H0z" fill="url(#sa-area)"/>
+                <path data-draw data-dur="1.8" data-d="700" d="M0 96 46 80 92 86 138 54 184 62 230 34 276 44 320 16" stroke="#5b21b6" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <g data-m="pop" data-d="2300"><circle cx="320" cy="16" r="7" fill="#c8f53c" stroke="#5b21b6" stroke-width="3"/></g>
+              </svg>
+            </div>
+            <div data-m="fade" data-d="600" class="rounded-[14px] border border-[#1b1033]/10 p-4 sm:p-5">
+              <p class="text-[14px] font-bold">요일별 출고</p>
+              <div class="mt-3 flex h-[92px] items-end gap-2 sm:h-[108px] sm:gap-3">
+                <div class="flex h-full flex-1 flex-col justify-end gap-1.5 text-center"><i class="sa-bar block w-full rounded-t-[6px] bg-[#5b21b6]/25" style="height:46%;--i:0"></i><span class="text-[13px] font-semibold text-[#1b1033]/55">월</span></div><div class="flex h-full flex-1 flex-col justify-end gap-1.5 text-center"><i class="sa-bar block w-full rounded-t-[6px] bg-[#5b21b6]/25" style="height:72%;--i:1"></i><span class="text-[13px] font-semibold text-[#1b1033]/55">화</span></div><div class="flex h-full flex-1 flex-col justify-end gap-1.5 text-center"><i class="sa-bar block w-full rounded-t-[6px] bg-[#5b21b6]/25" style="height:58%;--i:2"></i><span class="text-[13px] font-semibold text-[#1b1033]/55">수</span></div><div class="flex h-full flex-1 flex-col justify-end gap-1.5 text-center"><i class="sa-bar block w-full rounded-t-[6px] bg-[#c8f53c]" style="height:90%;--i:3"></i><span class="text-[13px] font-semibold text-[#1b1033]/55">목</span></div><div class="flex h-full flex-1 flex-col justify-end gap-1.5 text-center"><i class="sa-bar block w-full rounded-t-[6px] bg-[#5b21b6]/25" style="height:66%;--i:4"></i><span class="text-[13px] font-semibold text-[#1b1033]/55">금</span></div>
+              </div>
+            </div>
+          </div>
+          <ul class="rounded-[14px] border border-[#1b1033]/10">
+            <li data-m="left" data-d="900" class="flex items-center gap-3 px-4 py-3 text-[13px] sm:px-5 sm:text-[14px] "><span class="f-grotesk hidden font-bold text-[#1b1033]/50 sm:inline">A-1042</span><span class="min-w-0 flex-1 truncate font-semibold">○○ 텀블러 2개</span><span class="flex-none rounded-full px-2.5 py-1 text-[13px] font-bold" style="background:#ede9fe;color:#5b21b6">결제 완료</span></li><li data-m="left" data-d="1030" class="flex items-center gap-3 px-4 py-3 text-[13px] sm:px-5 sm:text-[14px] border-t border-[#1b1033]/10"><span class="f-grotesk hidden font-bold text-[#1b1033]/50 sm:inline">A-1041</span><span class="min-w-0 flex-1 truncate font-semibold">○○ 머그 세트</span><span class="flex-none rounded-full px-2.5 py-1 text-[13px] font-bold" style="background:#fef3c7;color:#92400e">포장 중</span></li><li data-m="left" data-d="1160" class="flex items-center gap-3 px-4 py-3 text-[13px] sm:px-5 sm:text-[14px] border-t border-[#1b1033]/10"><span class="f-grotesk hidden font-bold text-[#1b1033]/50 sm:inline">A-1040</span><span class="min-w-0 flex-1 truncate font-semibold">○○ 에코백 5개</span><span class="flex-none rounded-full px-2.5 py-1 text-[13px] font-bold" style="background:#ecfccb;color:#3f6212">출고</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div data-m="pop" data-d="1900" class="absolute bottom-6 right-3 w-[236px] sm:bottom-16 sm:right-[-26px] sm:w-[264px]">
+      <div class="mk-float rounded-[16px] bg-[#1b1033] p-4 text-left text-white shadow-[0_18px_40px_rgba(27,16,51,0.35)]">
+        <p class="flex items-center gap-2 text-[13px] font-bold text-[#c8f53c]"><svg viewBox="0 0 24 24" class="mk-sway h-5 w-5 origin-top" fill="currentColor" aria-hidden="true"><path d="M12 2a6 6 0 0 0-6 6v4l-2 4h16l-2-4V8a6 6 0 0 0-6-6zm-2.5 16a2.5 2.5 0 0 0 5 0z"/></svg>재고 부족 알림</p>
+        <p class="mt-2 text-[15px] font-bold leading-snug">○○ 텀블러가 12개 남았습니다</p>
+        <a href="#!" data-cta class="mt-3 inline-block rounded-full bg-[#c8f53c] px-4 py-2 text-[13px] font-bold text-[#1b1033]">발주서 만들기</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="features" data-scroll="pin" class="sa-pin relative h-[330vh] bg-[#1b1033] text-white">
+  <div class="sticky top-0 flex h-[100svh] items-center overflow-hidden">
+    <div class="mx-auto grid w-full max-w-[1200px] items-center gap-7 px-5 sm:px-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-14">
+      <div>
+        <p class="text-[14px] font-bold text-[#c8f53c] sm:text-[15px]">하루 일이 이렇게 줄어듭니다</p>
+        <h2 class="f-plex mt-2 text-[28px] font-bold leading-[1.25] tracking-[-0.02em] sm:text-[46px]">받고, 맞추고,<br>미리 채웁니다</h2>
+        <ol class="mt-5 grid gap-3 sm:mt-9 sm:gap-6">
+          <li class="sa-step border-l-[3px] pl-4 sm:pl-5" style="--c:0.14"><p class="f-plex text-[18px] font-bold sm:text-[24px]">주문 모으기</p><p class="mt-0.5 text-[14px] leading-[1.6] text-white/70 sm:text-[16px]">여러 쇼핑몰의 주문이 한 목록으로 들어옵니다</p></li><li class="sa-step border-l-[3px] pl-4 sm:pl-5" style="--c:0.5"><p class="f-plex text-[18px] font-bold sm:text-[24px]">재고 맞추기</p><p class="mt-0.5 text-[14px] leading-[1.6] text-white/70 sm:text-[16px]">팔릴 때마다 남은 수량이 바로 줄어듭니다</p></li><li class="sa-step border-l-[3px] pl-4 sm:pl-5" style="--c:0.86"><p class="f-plex text-[18px] font-bold sm:text-[24px]">발주 알림</p><p class="mt-0.5 text-[14px] leading-[1.6] text-white/70 sm:text-[16px]">떨어지기 전에 알려 주고 발주서 초안을 만듭니다</p></li>
+        </ol>
+      </div>
+      <div class="relative h-[270px] sm:h-[420px]">
+        <div class="sa-panel sa-pa absolute inset-0 flex items-center gap-3 sm:gap-5">
+          <ul class="grid flex-none gap-3">
+            <li class="flex items-center gap-2.5 rounded-[14px] bg-white/10 px-3 py-3 text-[13px] font-semibold sm:px-4 sm:py-4 sm:text-[15px]"><i class="block h-3.5 w-3.5 flex-none rounded-full" style="background:#c8f53c"></i>○○몰</li><li class="flex items-center gap-2.5 rounded-[14px] bg-white/10 px-3 py-3 text-[13px] font-semibold sm:px-4 sm:py-4 sm:text-[15px]"><i class="block h-3.5 w-3.5 flex-none rounded-[5px]" style="background:#ff8fb1"></i>○○마켓</li><li class="flex items-center gap-2.5 rounded-[14px] bg-white/10 px-3 py-3 text-[13px] font-semibold sm:px-4 sm:py-4 sm:text-[15px]"><i class="block h-3.5 w-3.5 flex-none rounded-[5px] rotate-45" style="background:#a78bfa"></i>자사몰</li>
+          </ul>
+          <div class="sa-flow h-[3px] min-w-[24px] flex-1"></div>
+          <div class="w-[50%] flex-none rounded-[18px] bg-white p-4 text-[#1b1033] sm:p-6">
+            <p class="text-[13px] font-semibold text-[#1b1033]/60">모인 주문</p>
+            <p class="f-grotesk text-[34px] font-bold leading-tight sm:text-[52px]">128<span class="ml-1 text-[14px] font-semibold">건</span></p>
+            <p class="mt-2.5 flex items-center gap-2 sm:mt-3"><i class="h-2.5 w-2.5 flex-none rounded-full" style="background:#c8f53c"></i><i class="block h-2.5 rounded-full bg-[#1b1033]/10" style="width:78%"></i></p><p class="mt-2.5 flex items-center gap-2 sm:mt-3"><i class="h-2.5 w-2.5 flex-none rounded-full" style="background:#ff8fb1"></i><i class="block h-2.5 rounded-full bg-[#1b1033]/10" style="width:56%"></i></p><p class="mt-2.5 flex items-center gap-2 sm:mt-3"><i class="h-2.5 w-2.5 flex-none rounded-full" style="background:#a78bfa"></i><i class="block h-2.5 rounded-full bg-[#1b1033]/10" style="width:68%"></i></p><p class="mt-2.5 flex items-center gap-2 sm:mt-3"><i class="h-2.5 w-2.5 flex-none rounded-full" style="background:#c8f53c"></i><i class="block h-2.5 rounded-full bg-[#1b1033]/10" style="width:44%"></i></p>
+          </div>
+        </div>
+        <div class="sa-panel sa-pb absolute inset-0 flex items-center">
+          <div class="w-full rounded-[18px] bg-white p-4 text-[#1b1033] sm:p-7">
+            <div class="flex justify-between text-[13px] font-semibold text-[#1b1033]/60"><span>품목</span><span>남은 수량</span></div>
+            <div class="mt-3 grid grid-cols-[92px_1fr_40px] items-center gap-3 sm:mt-5 sm:grid-cols-[130px_1fr_52px]"><span class="truncate text-[13px] font-semibold sm:text-[15px]">○○ 텀블러</span><span class="block h-3 overflow-hidden rounded-full bg-[#1b1033]/10"><i class="sa-stock block h-full rounded-full bg-[#ff5d8f]" style="width:9%"></i></span><span class="f-grotesk text-right text-[15px] font-bold text-[#e11d62]">12</span></div><div class="mt-3 grid grid-cols-[92px_1fr_40px] items-center gap-3 sm:mt-5 sm:grid-cols-[130px_1fr_52px]"><span class="truncate text-[13px] font-semibold sm:text-[15px]">○○ 머그 세트</span><span class="block h-3 overflow-hidden rounded-full bg-[#1b1033]/10"><i class="sa-stock block h-full rounded-full bg-[#7c3aed]" style="width:62%"></i></span><span class="f-grotesk text-right text-[15px] font-bold ">148</span></div><div class="mt-3 grid grid-cols-[92px_1fr_40px] items-center gap-3 sm:mt-5 sm:grid-cols-[130px_1fr_52px]"><span class="truncate text-[13px] font-semibold sm:text-[15px]">○○ 에코백</span><span class="block h-3 overflow-hidden rounded-full bg-[#1b1033]/10"><i class="sa-stock block h-full rounded-full bg-[#7c3aed]" style="width:88%"></i></span><span class="f-grotesk text-right text-[15px] font-bold ">230</span></div><div class="mt-3 grid grid-cols-[92px_1fr_40px] items-center gap-3 sm:mt-5 sm:grid-cols-[130px_1fr_52px]"><span class="truncate text-[13px] font-semibold sm:text-[15px]">○○ 노트</span><span class="block h-3 overflow-hidden rounded-full bg-[#1b1033]/10"><i class="sa-stock block h-full rounded-full bg-[#7c3aed]" style="width:44%"></i></span><span class="f-grotesk text-right text-[15px] font-bold ">96</span></div>
+            <p class="mt-4 rounded-[10px] bg-[#fff1f5] px-3 py-2.5 text-[13px] font-semibold text-[#be123c] sm:mt-6 sm:text-[14px]">○○ 텀블러가 안전 재고 20개 아래로 내려갔습니다</p>
+          </div>
+        </div>
+        <div class="sa-panel sa-pc absolute inset-0 flex items-center justify-center">
+          <div class="w-full max-w-[430px]">
+            <div class="rounded-[18px] bg-[#c8f53c] p-5 text-[#1b1033] sm:p-7">
+              <p class="flex items-center gap-3 text-[13px] font-bold sm:text-[14px]"><span class="mk-sway flex h-10 w-10 items-center justify-center rounded-full bg-[#1b1033] text-[#c8f53c]"><svg viewBox="0 0 24 24" class="h-5 w-5" fill="currentColor" aria-hidden="true"><path d="M12 2a6 6 0 0 0-6 6v4l-2 4h16l-2-4V8a6 6 0 0 0-6-6zm-2.5 16a2.5 2.5 0 0 0 5 0z"/></svg></span>발주 알림</p>
+              <p class="f-plex mt-4 text-[20px] font-bold leading-snug sm:text-[26px]">○○ 텀블러가<br>사흘 뒤 떨어집니다</p>
+              <p class="mt-2 text-[13px] font-medium text-[#1b1033]/70 sm:text-[14px]">지난 4주 판매 속도로 계산했습니다</p>
+              <a href="#!" data-cta class="mt-4 inline-block rounded-full bg-[#1b1033] px-5 py-3 text-[14px] font-bold text-white">발주서 초안 만들기</a>
+            </div>
+            <div class="mt-3 grid grid-cols-7 gap-1.5 text-center text-[13px] font-semibold">
+              <span class="rounded-[10px] py-2 bg-white/10 text-white/70">월</span><span class="rounded-[10px] py-2 bg-white/10 text-white/70">화</span><span class="rounded-[10px] py-2 bg-white/10 text-white/70">수</span><span class="rounded-[10px] py-2 bg-[#ff5d8f] text-white">목</span><span class="rounded-[10px] py-2 bg-white/10 text-white/70">금</span><span class="rounded-[10px] py-2 bg-white/10 text-white/70">토</span><span class="rounded-[10px] py-2 bg-white/10 text-white/70">일</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="connect" class="bg-white px-5 py-24 text-[#1b1033] sm:px-8 sm:py-36">
+  <div class="mx-auto grid max-w-[1200px] items-center gap-10 lg:grid-cols-[0.8fr_1.2fr]">
+    <div>
+      <p data-m="up" class="text-[14px] font-bold text-[#5b21b6] sm:text-[15px]">연동</p>
+      <h2 data-m="up" data-d="80" class="f-plex mt-2 text-[32px] font-bold leading-[1.25] tracking-[-0.02em] sm:text-[48px]">쓰던 서비스에<br>그대로 붙습니다</h2>
+      <p data-m="up" data-d="160" class="mt-5 max-w-[400px] text-[16px] leading-[1.8] text-[#1b1033]/70">주문은 쇼핑몰에서 들어오고, 송장과 장부는 알아서 나갑니다. 엑셀 파일로 한 번에 옮겨 올 수도 있습니다.</p>
+      <p data-m="up" data-d="240" class="mt-4 text-[13px] text-[#1b1033]/50">연동 서비스 이름은 예시입니다</p>
+    </div>
+    <svg viewBox="0 0 640 440" class="w-full" fill="none" role="img" aria-label="○○스톡을 가운데 두고 쇼핑몰, 오픈마켓, 자사몰, 택배, 회계, 메신저가 선으로 이어진 그림">
+      <path id="sa-l0" data-draw data-dur="1.3" data-d="200" d="M320 220C240 220 190 74 100 74" stroke="#7c3aed" stroke-opacity=".45" stroke-width="2.5"/><path id="sa-l1" data-draw data-dur="1.3" data-d="350" d="M320 220C240 220 152 220 62 220" stroke="#7c3aed" stroke-opacity=".45" stroke-width="2.5"/><path id="sa-l2" data-draw data-dur="1.3" data-d="500" d="M320 220C240 220 190 366 100 366" stroke="#7c3aed" stroke-opacity=".45" stroke-width="2.5"/><path id="sa-l3" data-draw data-dur="1.3" data-d="650" d="M320 220C400 220 450 74 540 74" stroke="#7c3aed" stroke-opacity=".45" stroke-width="2.5"/><path id="sa-l4" data-draw data-dur="1.3" data-d="800" d="M320 220C400 220 488 220 578 220" stroke="#7c3aed" stroke-opacity=".45" stroke-width="2.5"/><path id="sa-l5" data-draw data-dur="1.3" data-d="950" d="M320 220C400 220 450 366 540 366" stroke="#7c3aed" stroke-opacity=".45" stroke-width="2.5"/>
+      <g data-m="fade" data-d="1500"><circle r="5.5" fill="#5b21b6"><animateMotion dur="2.4s" begin="0s" repeatCount="indefinite" keyPoints="1;0" keyTimes="0;1" calcMode="linear"><mpath href="#sa-l0"/></animateMotion></circle><circle r="5.5" fill="#5b21b6"><animateMotion dur="2.9s" begin="0.35s" repeatCount="indefinite" keyPoints="1;0" keyTimes="0;1" calcMode="linear"><mpath href="#sa-l1"/></animateMotion></circle><circle r="5.5" fill="#5b21b6"><animateMotion dur="3.4s" begin="0.7s" repeatCount="indefinite" keyPoints="1;0" keyTimes="0;1" calcMode="linear"><mpath href="#sa-l2"/></animateMotion></circle><circle r="5.5" fill="#5b21b6"><animateMotion dur="2.4s" begin="1.0499999999999998s" repeatCount="indefinite" keyPoints="0;1" keyTimes="0;1" calcMode="linear"><mpath href="#sa-l3"/></animateMotion></circle><circle r="5.5" fill="#5b21b6"><animateMotion dur="2.9s" begin="1.4s" repeatCount="indefinite" keyPoints="0;1" keyTimes="0;1" calcMode="linear"><mpath href="#sa-l4"/></animateMotion></circle><circle r="5.5" fill="#5b21b6"><animateMotion dur="3.4s" begin="1.75s" repeatCount="indefinite" keyPoints="0;1" keyTimes="0;1" calcMode="linear"><mpath href="#sa-l5"/></animateMotion></circle></g>
+      <g data-m="pop" data-d="900"><circle cx="100" cy="74" r="34" fill="#fff" stroke="#1b1033" stroke-opacity=".18" stroke-width="2"/><g transform="translate(100 74)"><circle r="11" fill="#c8f53c"/></g><text x="100" y="136" text-anchor="middle" fill="#1b1033" font-size="23" font-weight="600">쇼핑몰 ○○</text></g><g data-m="pop" data-d="1050"><circle cx="62" cy="220" r="34" fill="#fff" stroke="#1b1033" stroke-opacity=".18" stroke-width="2"/><g transform="translate(62 220)"><rect x="-10" y="-10" width="20" height="20" rx="4" fill="#ff8fb1"/></g><text x="62" y="282" text-anchor="middle" fill="#1b1033" font-size="23" font-weight="600">오픈마켓 ○○</text></g><g data-m="pop" data-d="1200"><circle cx="100" cy="366" r="34" fill="#fff" stroke="#1b1033" stroke-opacity=".18" stroke-width="2"/><g transform="translate(100 366)"><path d="M0-12 12 9H-12z" fill="#8b5cf6"/></g><text x="100" y="428" text-anchor="middle" fill="#1b1033" font-size="23" font-weight="600">자사몰</text></g><g data-m="pop" data-d="1350"><circle cx="540" cy="74" r="34" fill="#fff" stroke="#1b1033" stroke-opacity=".18" stroke-width="2"/><g transform="translate(540 74)"><rect x="-10" y="-10" width="20" height="20" rx="4" fill="#8b5cf6" transform="rotate(45)"/></g><text x="540" y="136" text-anchor="middle" fill="#1b1033" font-size="23" font-weight="600">택배 ○○</text></g><g data-m="pop" data-d="1500"><circle cx="578" cy="220" r="34" fill="#fff" stroke="#1b1033" stroke-opacity=".18" stroke-width="2"/><g transform="translate(578 220)"><circle r="11" fill="#ff8fb1"/></g><text x="578" y="282" text-anchor="middle" fill="#1b1033" font-size="23" font-weight="600">회계 ○○</text></g><g data-m="pop" data-d="1650"><circle cx="540" cy="366" r="34" fill="#fff" stroke="#1b1033" stroke-opacity=".18" stroke-width="2"/><g transform="translate(540 366)"><path d="M-12-9H12L0 12z" fill="#c8f53c"/></g><text x="540" y="428" text-anchor="middle" fill="#1b1033" font-size="23" font-weight="600">메신저 ○○</text></g>
+      <g data-m="pop"><g class="sa-hub mk-pulse"><rect x="262" y="162" width="116" height="116" rx="30" fill="#5b21b6"/><rect x="296" y="218" width="12" height="26" rx="4" fill="#c8f53c"/><rect x="314" y="196" width="12" height="48" rx="4" fill="#c8f53c"/><rect x="332" y="208" width="12" height="36" rx="4" fill="#c8f53c"/></g></g>
+    </svg>
+  </div>
+</section>
+
+<section id="pricing" class="bg-[#f4f0ff] px-5 py-24 text-[#1b1033] sm:px-8 sm:py-36">
+  <div id="sa-price" data-tabs class="mx-auto max-w-[1040px]">
+    <div class="flex flex-wrap items-end justify-between gap-6">
+      <div><p data-m="up" class="text-[14px] font-bold text-[#5b21b6] sm:text-[15px]">요금</p><h2 data-m="up" data-d="80" class="f-plex mt-2 text-[32px] font-bold leading-[1.25] tracking-[-0.02em] sm:text-[48px]">쓰는 만큼만 냅니다</h2></div>
+      <div data-m="up" data-d="160" class="relative grid w-[260px] grid-cols-2 rounded-full bg-white p-1 shadow-[0_2px_10px_rgba(27,16,51,0.08)]">
+        <span class="sa-knob absolute bottom-1 left-1 top-1 rounded-full bg-[#1b1033]"></span>
+        <button type="button" data-tab="m" class="sa-tab relative z-10 rounded-full py-2.5 text-[14px] font-bold transition-colors duration-300">월 결제</button>
+        <button type="button" data-tab="y" class="sa-tab relative z-10 rounded-full py-2.5 text-[14px] font-bold transition-colors duration-300">연 결제 <span class="text-[#65a30d]">17%↓</span></button>
+      </div>
+    </div>
+    <ul class="mt-10 border-t-2 border-[#1b1033]">
+      <li data-m="up" data-d="0" class="grid items-center gap-x-6 gap-y-3 border-b border-[#1b1033]/15 py-7 sm:grid-cols-[150px_1fr_auto] lg:grid-cols-[170px_1fr_210px_auto]">
+        <div><p class="f-plex text-[24px] font-bold">스타터</p><p class="text-[14px] text-[#1b1033]/60">혼자 운영하는 가게</p></div>
+        <p class="text-[15px] leading-[1.6] text-[#1b1033]/80">주문 월 300건 · 창고 1곳</p>
+        <p class="f-grotesk text-[30px] font-bold leading-none lg:text-right"><span data-pm="29000" data-py="24000">29,000</span><span class="ml-1.5 text-[14px] font-semibold text-[#1b1033]/60">원 / 월</span></p>
+        <a href="#!" data-cta class="rounded-full border border-[#1b1033]/30 bg-white px-6 py-3 text-center text-[15px] font-bold transition-transform duration-200 hover:-translate-y-0.5 sm:col-start-3 lg:col-start-auto">써 보기</a>
+      </li><li data-m="up" data-d="110" class="grid items-center gap-x-6 gap-y-3 border-b border-[#1b1033]/15 py-7 sm:grid-cols-[150px_1fr_auto] lg:grid-cols-[170px_1fr_210px_auto]">
+        <div><p class="f-plex text-[24px] font-bold">팀</p><p class="text-[14px] text-[#1b1033]/60">직원과 함께 쓰는 곳</p></div>
+        <p class="text-[15px] leading-[1.6] text-[#1b1033]/80">주문 월 3,000건 · 창고 3곳 · 발주 알림</p>
+        <p class="f-grotesk text-[30px] font-bold leading-none lg:text-right"><span data-pm="79000" data-py="66000">79,000</span><span class="ml-1.5 text-[14px] font-semibold text-[#1b1033]/60">원 / 월</span></p>
+        <a href="#!" data-cta class="rounded-full bg-[#5b21b6] text-white px-6 py-3 text-center text-[15px] font-bold transition-transform duration-200 hover:-translate-y-0.5 sm:col-start-3 lg:col-start-auto">써 보기</a>
+      </li><li data-m="up" data-d="220" class="grid items-center gap-x-6 gap-y-3 border-b border-[#1b1033]/15 py-7 sm:grid-cols-[150px_1fr_auto] lg:grid-cols-[170px_1fr_210px_auto]">
+        <div><p class="f-plex text-[24px] font-bold">기업</p><p class="text-[14px] text-[#1b1033]/60">창고와 매장이 여러 곳</p></div>
+        <p class="text-[15px] leading-[1.6] text-[#1b1033]/80">건수 제한 없음 · 전담 담당자 · 맞춤 연동</p>
+        <p class="f-grotesk text-[30px] font-bold leading-none lg:text-right"><span class="f-plex text-[20px]">상담 뒤 안내</span></p>
+        <a href="#!" data-cta class="rounded-full border border-[#1b1033]/30 bg-white px-6 py-3 text-center text-[15px] font-bold transition-transform duration-200 hover:-translate-y-0.5 sm:col-start-3 lg:col-start-auto">도입 문의</a>
+      </li>
+    </ul>
+    <p class="mt-5 text-[13px] text-[#1b1033]/50">요금과 제공 범위는 예시입니다 · 부가세 별도</p>
+  </div>
+</section>
+
+<section class="relative overflow-hidden bg-[#5b21b6] px-5 py-20 text-center text-white sm:px-8 sm:py-28">
+  <span class="sa-ring absolute left-1/2 top-1/2 h-[520px] w-[520px] rounded-full border border-white/15"></span>
+  <span class="sa-ring sa-ring2 absolute left-1/2 top-1/2 h-[820px] w-[820px] rounded-full border border-white/10"></span>
+  <h2 data-m="up" class="f-plex relative text-[30px] font-bold leading-[1.35] tracking-[-0.02em] sm:text-[52px]">이번 달부터<br><span class="text-[#c8f53c]" data-type="주문 확인|재고 맞춤|발주 계산">주문 확인</span>은 맡겨 두세요</h2>
+  <p data-m="up" data-d="150" class="relative mt-5 text-[16px] text-white/75 sm:text-[18px]">카드 등록 없이 14일 동안 모든 기능을 써 볼 수 있습니다</p>
+  <a data-m="up" data-d="300" href="#!" data-cta data-magnet="0.3" class="relative mt-9 inline-block rounded-full bg-[#c8f53c] px-9 py-5 text-[17px] font-bold text-[#1b1033]">무료로 써 보기</a>
+</section>
+<footer class="bg-[#1b1033] px-5 pb-24 pt-12 text-white/55 sm:px-8">
+  <div class="mx-auto flex max-w-[1200px] flex-wrap items-end justify-between gap-6 text-[13px] leading-[1.8]">
+    <div><p class="f-plex text-[19px] font-bold text-white">○○스톡</p><p class="mt-2">○○스톡 · 대표 ○○○ · <span class="whitespace-nowrap">사업자등록번호 000-00-00000</span> · <span class="whitespace-nowrap">02-000-0000</span></p></div>
+    <p>상호 · 수치 · 요금 · 연동 서비스 이름은 모두 예시입니다</p>
+  </div>
+</footer>
+
+<script>
+/* MATE 모션 랜딩 공용 스크립트 - build.mjs 가 페이지마다 안에 넣는다. 전역 MK 로 쓴다.
+   data-m · data-split · data-count · data-parallax · data-scroll · data-marquee · data-draw · data-tilt · data-magnet
+   · data-tabs · data-countdown · data-type · data-cta 는 kit.css 와 README 에 설명이 있다. */
+(() => {
+  const errs = (window.__errs = []);
+  addEventListener('error', (e) => errs.push(String(e.message)));
+  addEventListener('unhandledrejection', (e) => errs.push(String(e.reason)));
+
+  const doc = document.documentElement;
+  const qs = new URLSearchParams(location.search);
+  const embed = qs.has('embed');
+  if (embed) doc.classList.add('embed');
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+  const lerp = (a, b, t) => a + (b - a) * t;
+
+  /** 화면에 들어오면 한 번 부른다 */
+  const inView = (el, cb, { margin = '0px 0px -12% 0px', once = true } = {}) => {
+    const io = new IntersectionObserver((es) => {
+      for (const e of es) {
+        if (e.isIntersecting) { cb(el, true); if (once) io.disconnect(); }
+        else if (!once) cb(el, false);
+      }
+    }, { rootMargin: margin, threshold: 0.01 });
+    io.observe(el);
+  };
+
+  /** 요소가 보이는 동안만 도는 반복 그리기. fn(지난 ms, 시작부터 ms) */
+  const loop = (el, fn) => {
+    if (reduced) { fn(16, 0); return; }
+    let on = false, raf = 0, last = 0, start = 0;
+    const tick = (t) => {
+      if (!start) start = last = t;
+      fn(Math.min(48, t - last), t - start); last = t;
+      raf = requestAnimationFrame(tick);
+    };
+    const set = (v) => {
+      if (v === on) return; on = v;
+      if (on) { last = 0; start = 0; raf = requestAnimationFrame(tick); } else cancelAnimationFrame(raf);
+    };
+    let vis = false;
+    new IntersectionObserver((es) => { vis = es[0].isIntersecting; set(vis && !document.hidden); }).observe(el);
+    document.addEventListener('visibilitychange', () => set(vis && !document.hidden));
+  };
+
+  /** 스크롤할 때마다(프레임에 한 번) 부른다 */
+  const scrollFns = [];
+  let ticking = false;
+  const runScroll = () => { ticking = false; for (const f of scrollFns) f(scrollY, innerHeight); };
+  const onScroll = (fn) => { scrollFns.push(fn); fn(scrollY, innerHeight); };
+  const kick = () => { if (!ticking) { ticking = true; requestAnimationFrame(runScroll); } };
+  addEventListener('scroll', kick, { passive: true });
+  addEventListener('resize', kick);
+
+  let toastEl, toastT;
+  const toast = (msg) => {
+    if (!toastEl) { toastEl = document.createElement('div'); toastEl.className = 'mk-toast'; toastEl.setAttribute('role', 'status'); document.body.appendChild(toastEl); }
+    toastEl.textContent = msg; toastEl.classList.add('is-on');
+    clearTimeout(toastT); toastT = setTimeout(() => toastEl.classList.remove('is-on'), 2600);
+  };
+
+  window.MK = { $$, clamp, lerp, inView, loop, onScroll, toast, reduced, embed };
+
+  const init = () => {
+    /* 등장 - data-stagger="80" 을 가진 부모 안의 data-m 은 차례로 늦춘다 */
+    for (const p of $$('[data-stagger]')) {
+      const step = +p.dataset.stagger || 80;
+      $$('[data-m]', p).forEach((el, i) => { if (!el.dataset.d) el.dataset.d = String(i * step); });
+    }
+    /* 글자 쪼개기 - 낱말은 줄이 안 갈리게 묶는다 */
+    for (const el of $$('[data-split]')) {
+      const mode = el.dataset.split || 'chars';
+      let i = 0;
+      const walk = (node) => {
+        for (const n of [...node.childNodes]) {
+          if (n.nodeType === 3) {
+            const frag = document.createDocumentFragment();
+            for (const part of n.textContent.split(/(\s+)/)) {
+              if (!part) continue;
+              if (/^\s+$/.test(part)) { frag.appendChild(document.createTextNode(' ')); continue; }
+              const w = document.createElement('span'); w.className = 'mk-w';
+              if (mode === 'words') { w.classList.add('mk-c'); w.style.setProperty('--i', i++); w.textContent = part; }
+              else for (const ch of part) { const c = document.createElement('span'); c.className = 'mk-c'; c.style.setProperty('--i', i++); c.textContent = ch; w.appendChild(c); }
+              frag.appendChild(w);
+            }
+            n.replaceWith(frag);
+          } else if (n.nodeType === 1 && n.tagName !== 'BR') walk(n);
+        }
+      };
+      el.setAttribute('aria-label', el.textContent.trim());
+      walk(el);
+    }
+    const clipEls = [];
+    for (const el of $$('[data-m],[data-split],[data-draw]')) {
+      if (el.dataset.d) el.style.setProperty('--d', el.dataset.d + 'ms');
+      if (el.hasAttribute('data-draw')) {
+        try { el.style.setProperty('--len', Math.ceil(el.getTotalLength()) + 1); } catch (e) { /* 길이를 못 재는 도형 */ }
+        if (el.dataset.dur) el.style.setProperty('--dur', el.dataset.dur + 's');
+      }
+      // 잘라 드러내는 등장(clip-*)은 처음에 통째로 잘려 있어 IntersectionObserver 가 보인다고 치지 않는다. 자리로만 따진다
+      if ((el.dataset.m || '').startsWith('clip')) clipEls.push(el);
+      else inView(el, () => el.classList.add('is-in'));
+    }
+    if (clipEls.length) {
+      onScroll((y, vh) => {
+        for (let i = clipEls.length - 1; i >= 0; i--) {
+          const r = clipEls[i].getBoundingClientRect();
+          if (r.top < vh * 0.88 && r.bottom > 0) { clipEls[i].classList.add('is-in'); clipEls.splice(i, 1); }
+        }
+      });
+    }
+
+    /* 숫자 올리기 - data-count="1280" data-decimals="1" */
+    for (const el of $$('[data-count]')) {
+      const to = +el.dataset.count; const dec = +(el.dataset.decimals || 0);
+      const fmt = (v) => v.toLocaleString('ko-KR', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+      if (reduced) { el.textContent = fmt(to); continue; }
+      el.textContent = fmt(0);
+      inView(el, () => {
+        const t0 = performance.now(); const dur = +(el.dataset.dur || 1.6) * 1000;
+        const step = (t) => {
+          const k = clamp((t - t0) / dur); const e = 1 - Math.pow(2, -10 * k);
+          el.textContent = fmt(k >= 1 ? to : to * e);
+          if (k < 1) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+      });
+    }
+
+    /* 흐르는 띠 - 내용을 한 벌 더 붙여 끊김 없이 돈다 */
+    for (const el of $$('[data-marquee]')) {
+      const track = document.createElement('div'); track.className = 'mk-track';
+      track.append(...el.childNodes);
+      const copy = track.cloneNode(true); copy.setAttribute('aria-hidden', 'true');
+      el.append(track, copy);
+      if (el.dataset.speed) el.style.setProperty('--speed', el.dataset.speed + 's');
+    }
+
+    /* 스크롤 연동 - data-scroll(화면을 지나는 동안 0→1) · data-scroll="pin"(고정 구간: 높이 - 화면 만큼 0→1) · data-parallax="0.2" */
+    const scrollEls = $$('[data-scroll]'); const para = reduced ? [] : $$('[data-parallax]');
+    if (scrollEls.length || para.length) {
+      onScroll((y, vh) => {
+        for (const el of scrollEls) {
+          const r = el.getBoundingClientRect();
+          if (r.bottom < -vh || r.top > vh * 2) continue;
+          const p = el.dataset.scroll === 'pin' ? clamp(-r.top / Math.max(1, r.height - vh)) : clamp((vh - r.top) / (vh + r.height));
+          el.style.setProperty('--p', p.toFixed(4));
+        }
+        for (const el of para) {
+          const r = el.getBoundingClientRect();
+          if (r.bottom < -200 || r.top > vh + 200) continue;
+          const off = (r.top + r.height / 2 - vh / 2) * -(+el.dataset.parallax || 0.15);
+          el.style.translate = `0 ${off.toFixed(1)}px`;
+        }
+      });
+    }
+
+    /* 기울기 · 자석 - 마우스가 있는 기기에서만 */
+    if (!reduced && matchMedia('(hover: hover) and (pointer: fine)').matches) {
+      for (const el of $$('[data-tilt]')) {
+        const max = +(el.dataset.tilt || 8);
+        el.addEventListener('pointermove', (e) => {
+          const r = el.getBoundingClientRect();
+          el.style.setProperty('--ry', (((e.clientX - r.left) / r.width - 0.5) * 2 * max).toFixed(2) + 'deg');
+          el.style.setProperty('--rx', (((e.clientY - r.top) / r.height - 0.5) * -2 * max).toFixed(2) + 'deg');
+        });
+        el.addEventListener('pointerleave', () => { el.style.setProperty('--rx', '0deg'); el.style.setProperty('--ry', '0deg'); });
+      }
+      for (const el of $$('[data-magnet]')) {
+        const k = +(el.dataset.magnet || 0.3);
+        el.style.transition = 'translate .25s ease-out';
+        el.addEventListener('pointermove', (e) => {
+          const r = el.getBoundingClientRect();
+          el.style.translate = `${((e.clientX - r.left - r.width / 2) * k).toFixed(1)}px ${((e.clientY - r.top - r.height / 2) * k).toFixed(1)}px`;
+        });
+        el.addEventListener('pointerleave', () => { el.style.translate = '0 0'; });
+      }
+    }
+
+    /* 탭 - data-tabs 안의 [data-tab="키"] 단추와 [data-panel="키"] 칸. 고른 단추에 is-on, 고른 값은 --tab-i(순서) */
+    for (const box of $$('[data-tabs]')) {
+      const tabs = $$('[data-tab]', box); const panels = $$('[data-panel]', box);
+      const pick = (key) => {
+        tabs.forEach((t, i) => { const on = t.dataset.tab === key; t.classList.toggle('is-on', on); t.setAttribute('aria-pressed', on); if (on) box.style.setProperty('--tab-i', i); });
+        for (const p of panels) p.hidden = p.dataset.panel !== key;
+        box.dispatchEvent(new CustomEvent('mk:tab', { detail: key }));
+      };
+      for (const t of tabs) t.addEventListener('click', () => pick(t.dataset.tab));
+      pick((tabs.find((t) => t.classList.contains('is-on')) || tabs[0]).dataset.tab);
+    }
+
+    /* 남은 시간 - data-countdown="21"(지금부터 21일 뒤, 늘 같은 간격이라 샘플이 지나지 않는다) 안에 [data-cd="d|h|m|s"] */
+    for (const el of $$('[data-countdown]')) {
+      const end = Date.now() + (+el.dataset.countdown || 21) * 86400000 - 3600000 * 5.4;
+      const put = () => {
+        const s = Math.max(0, Math.floor((end - Date.now()) / 1000));
+        const v = { d: Math.floor(s / 86400), h: Math.floor(s / 3600) % 24, m: Math.floor(s / 60) % 60, s: s % 60 };
+        for (const c of $$('[data-cd]', el)) c.textContent = String(v[c.dataset.cd]).padStart(c.dataset.cd === 'd' ? 1 : 2, '0');
+      };
+      put(); if (!reduced) setInterval(put, 1000);
+    }
+
+    /* 타자 - data-type="첫 문장|둘째 문장" */
+    for (const el of $$('[data-type]')) {
+      const lines = el.dataset.type.split('|'); el.classList.add('mk-caret');
+      if (reduced) { el.textContent = lines[0]; continue; }
+      let li = 0, ci = 0, del = false;
+      const step = () => {
+        const s = lines[li];
+        ci += del ? -1 : 1; el.textContent = s.slice(0, ci);
+        let wait = del ? 28 : 62;
+        if (!del && ci >= s.length) { del = lines.length > 1; wait = 1700; if (!del) return; }
+        else if (del && ci <= 0) { del = false; li = (li + 1) % lines.length; wait = 320; }
+        setTimeout(step, wait);
+      };
+      inView(el, () => setTimeout(step, +(el.dataset.d || 300)));
+    }
+
+    /* 샘플이라 실제로 이어지지 않는 단추 · 양식 */
+    document.addEventListener('click', (e) => {
+      const a = e.target.closest('[data-cta],a[href="#!"]');
+      if (!a) return;
+      e.preventDefault();
+      toast(a.dataset.cta || '샘플 화면입니다. 제작할 때 예약 · 문의 · 결제로 연결합니다.');
+    });
+    document.addEventListener('submit', (e) => { e.preventDefault(); toast('샘플 화면이라 보내지지 않습니다.'); });
+
+    /* 샘플 안내 띠 - 갤러리 안에서 볼 때(embed)는 숨긴다 */
+    const id = doc.dataset.id;
+    if (id && !embed) {
+      const host = location.hostname; const live = host.endsWith('devteammate.co.kr');
+      const back = host === 'landingpage.devteammate.co.kr' ? `/${id}/` : live ? `https://landingpage.devteammate.co.kr/${id}/` : `/landing-page/${id}/`;
+      const ask = `${live ? 'https://devteammate.co.kr' : ''}/contact/?domain=web&design=${id}`;
+      const bar = document.createElement('div'); bar.className = 'mk-bar';
+      bar.innerHTML = `<b>MATE 샘플 ${id}</b><span>상호와 내용은 예시입니다</span><a class="mk-ghost" href="${back}">갤러리</a><a href="${ask}">이 스타일로 문의</a><button type="button" aria-label="안내 닫기">×</button>`;
+      bar.querySelector('button').addEventListener('click', () => bar.remove());
+      document.body.appendChild(bar);
+    }
+    doc.classList.add('mk-ready');
+  };
+  /* 이 스크립트는 body 맨 끝에 들어가므로 위의 내용은 이미 다 읽힌 상태다. 바로 돌려야 뒤따르는 페이지 스크립트가 준비된 화면을 본다 */
+  init();
+})();
+
+</script>
+<script>
+(() => {
+
+/* 기능 고정 구간 - 지금 몇 번째 화면인지 표시한다(강조 선, 단추 누름) */
+var pin = document.getElementById('features');
+MK.onScroll(function () {
+  var p = parseFloat(pin.style.getPropertyValue('--p')) || 0;
+  var step = p < 0.34 ? 0 : p < 0.67 ? 1 : 2;
+  if (pin.dataset.step !== String(step)) pin.dataset.step = step;
+});
+/* 요금 - 월 · 연을 바꾸면 금액이 굴러서 바뀐다 */
+var prices = MK.$$('[data-pm]');
+function won(v) { return Math.round(v).toLocaleString('ko-KR'); }
+document.getElementById('sa-price').addEventListener('mk:tab', function (e) {
+  prices.forEach(function (el) {
+    var from = parseInt(el.textContent.replace(/,/g, ''), 10) || 0, to = +(e.detail === 'y' ? el.dataset.py : el.dataset.pm);
+    if (MK.reduced || from === to) { el.textContent = won(to); return; }
+    var t0 = performance.now();
+    (function step(t) { var k = MK.clamp((t - t0) / 450); el.textContent = won(from + (to - from) * (1 - Math.pow(1 - k, 3))); if (k < 1) requestAnimationFrame(step); })(t0);
+  });
+});
+/* 움직임 줄이기 설정이면 연동 그림의 오가는 점을 멈춘다 */
+if (MK.reduced) MK.$$('#connect svg').forEach(function (s) { if (s.pauseAnimations) s.pauseAnimations(); });
+
+})();
+</script>
+</body>
+</html>

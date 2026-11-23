@@ -1,20 +1,22 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { FiArrowUpRight, FiSearch } from 'react-icons/fi';
+import { FiArrowUpRight, FiPlay, FiSearch } from 'react-icons/fi';
 import PageHeader from '@/components/PageHeader';
 import SectionHead from '@/components/ui/SectionHead';
 import PartnersBand from '@/components/home/PartnersBand';
+import type { LandingDesign } from '@/types';
 import { landingDesigns, landingFields, landingVocab } from '@/data/landingDesigns';
 import {
-  landingContactHref, landingHero, landingProcess, landingScope, landingScopeNote, landingTabs,
+  landingContactHref, landingHero, landingMotion, landingProcess, landingScope, landingScopeNote, landingTabs,
   landingViewQuery, readLandingView, saveLandingView, type LandingView,
 } from '@/data/landingService';
 import { fadeUp, inView, rowIn, staggerRows, staggerTight } from '@/lib/motion';
 import { arrowHover, btnLight, chip, container, numTile, radiusCard } from '@/lib/styles';
+import MotionFrame from './MotionFrame';
 
 type FilterKey = 'field' | 'purpose' | 'mood' | 'visual';
 const EMPTY: Record<FilterKey, string[]> = { field: [], purpose: [], mood: [], visual: [] };
@@ -25,6 +27,50 @@ const groups: { key: FilterKey; label: string; items: [string, string][] }[] = [
   { key: 'mood', label: '분위기', items: landingVocab.moods.map((p): [string, string] => [p, p]) },
   { key: 'visual', label: '표현', items: landingVocab.visualStyles.map((p): [string, string] => [p, p]) },
 ];
+
+/** 움직이는 페이지(모션 그래픽 포함) - 그림 대신 실제로 열리는 샘플이 있는 디자인 */
+const motionDesigns = landingDesigns.filter((d) => d.demo);
+
+/** 카드 그림 위의 '체험' 표시 */
+const motionBadge = 'absolute bottom-2.5 left-2.5 inline-flex items-center gap-1 rounded-pill bg-ink/85 px-2.5 py-1 text-[12px] font-bold text-white';
+
+/**
+ * 움직이는 페이지 카드 - 마우스를 올리면 그 자리에서 실제 페이지가 돈다.
+ * 터치 기기에는 올려 두기가 없으므로 그림만 보이고, 누르면 상세에서 열린다.
+ */
+function MotionCard({ d, view }: { d: LandingDesign; view: LandingView }) {
+  const [live, setLive] = useState(false);
+  const timer = useRef<number>();
+  const enter = () => {
+    if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+    timer.current = window.setTimeout(() => setLive(true), 220);
+  };
+  const leave = () => { window.clearTimeout(timer.current); setLive(false); };
+  useEffect(() => () => window.clearTimeout(timer.current), []);
+  const mobile = view === 'mobile';
+
+  return (
+    <Link href={`${d.id}/${landingViewQuery(view)}`} className="group block" onMouseEnter={enter} onMouseLeave={leave}>
+      <div className={`relative overflow-hidden bg-night-2 transition-transform duration-300 group-hover:-translate-y-1 ${
+        mobile ? 'rounded-[20px] border-[5px] border-white/25' : 'rounded-[12px] border border-white/15'}`}>
+        {mobile ? (
+          <Image src={d.mobileThumb} alt={`${d.title} 모바일 첫 화면`} width={360} height={779} className="aspect-[390/844] w-full object-cover object-top" />
+        ) : (
+          <Image src={d.thumb} alt={`${d.title} PC 첫 화면`} width={640} height={400} className="aspect-[16/10] w-full object-cover object-top" />
+        )}
+        {live && d.demo && (
+          <div className="absolute inset-0">
+            <MotionFrame src={d.demo} title={`${d.title} 미리보기`} w={mobile ? 390 : 1440} h={mobile ? 844 : 900} interactive={false} />
+          </div>
+        )}
+        <span className={motionBadge}><FiPlay aria-hidden /> 체험</span>
+      </div>
+      <p className="mt-3 font-mono text-[12px] text-gray-300">{d.id}</p>
+      <h3 className="mt-1.5 text-[16px] font-bold leading-snug text-white group-hover:text-point-light">{d.title}</h3>
+      <p className="mt-1 text-[13px] text-gray-300">{d.fieldLabel}</p>
+    </Link>
+  );
+}
 
 /**
  * 단일 랜딩페이지 제작 - 서비스 소개와 스타일 갤러리.
@@ -87,6 +133,23 @@ export default function LandingClient() {
         </div>
       </section>
 
+      {/* 움직이는 페이지 - 그림이 아니라 실제로 열리는 샘플. 아래 갤러리에도 같은 번호로 들어 있다(표현 > 모션 그래픽) */}
+      {motionDesigns.length > 0 && (
+        <section id="motion" data-header="dark" className="night-grid on-night scroll-mt-24 py-24 sm:py-32 xl:py-40">
+          <div className={container}>
+            <SectionHead dark eyebrow="Motion" title={<>움직이는 디자인은<br /><b>직접 열어 보세요</b></>} desc={landingMotion.desc} />
+            <ul className={`mt-12 flex snap-x gap-4 overflow-x-auto pb-4 [scrollbar-width:none] sm:mt-16 sm:grid sm:gap-x-5 sm:gap-y-10 sm:overflow-visible sm:pb-0 ${
+              view === 'pc' ? 'sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5' : 'sm:grid-cols-4 lg:grid-cols-5'}`}>
+              {motionDesigns.map((d) => (
+                <li key={d.id} className={`min-w-0 shrink-0 snap-start sm:w-auto ${view === 'pc' ? 'w-[78%]' : 'w-[44%]'}`}>
+                  <MotionCard d={d} view={view} />
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+      )}
+
       {/* 스타일 갤러리 */}
       <section id="gallery" data-header="light" className="scroll-mt-24 bg-white py-24 sm:py-32 xl:py-40">
         <div className={container}>
@@ -145,19 +208,21 @@ export default function LandingClient() {
                   {/* 상대 주소 - 하위 도메인에서는 /LP-001/, 본 사이트 경로에서는 /landing-page/LP-001/ 로 간다. 모바일로 보고 있으면 상세도 모바일로 연다 */}
                   <Link href={`${d.id}/${landingViewQuery(view)}`} className="group block">
                     {view === 'pc' ? (
-                      <div className="overflow-hidden rounded-[12px] border border-gray-200 bg-gray-100 transition-transform duration-300 group-hover:-translate-y-1">
+                      <div className="relative overflow-hidden rounded-[12px] border border-gray-200 bg-gray-100 transition-transform duration-300 group-hover:-translate-y-1">
                         <Image src={d.thumb} alt={`${d.title} PC 첫 화면`} width={640} height={400}
                           className="aspect-[16/10] w-full object-cover object-top" />
+                        {d.demo && <span className={motionBadge}><FiPlay aria-hidden /> 체험</span>}
                       </div>
                     ) : (
-                      <div className="overflow-hidden rounded-[20px] border-[5px] border-ink bg-white transition-transform duration-300 group-hover:-translate-y-1">
+                      <div className="relative overflow-hidden rounded-[20px] border-[5px] border-ink bg-white transition-transform duration-300 group-hover:-translate-y-1">
                         <Image src={d.mobileThumb} alt={`${d.title} 모바일 첫 화면`} width={360} height={779}
                           className="aspect-[390/844] w-full object-cover object-top" />
+                        {d.demo && <span className={motionBadge}><FiPlay aria-hidden /> 체험</span>}
                       </div>
                     )}
                     <div className="mt-3 flex items-center gap-2 text-[12px]">
                       <span className="font-mono text-ink">{d.id}</span>
-                      <span className={chip}>{d.kind === 'template' ? '외부 디자인 기반' : 'MATE 시안'}</span>
+                      <span className={chip}>{d.demo ? '움직이는 페이지' : d.kind === 'template' ? '외부 디자인 기반' : 'MATE 시안'}</span>
                     </div>
                     <h3 className="mt-2 text-[16px] font-bold leading-snug text-ink group-hover:text-point-200">{d.title}</h3>
                     <p className="mt-1 text-[13px] text-gray-500">

@@ -1,11 +1,14 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { FiArrowLeft, FiArrowRight, FiArrowUpRight } from 'react-icons/fi';
 import type { TemplateItem } from '@/types';
-import { landingContactHref, rightsNotice } from '@/data/landingService';
-import { templatePage, templateVideo } from '@/data/templateLibrary';
+import {
+  landingContactHref, landingViewQuery, readLandingView, rightsNotice, saveLandingView, type LandingView,
+} from '@/data/landingService';
+import { templateMobile, templatePage, templateVideo } from '@/data/templateLibrary';
 import { arrowHover, btnLine, btnPoint, chip, chipLine, container } from '@/lib/styles';
 
 interface Props {
@@ -27,16 +30,26 @@ function previewWidth(t: TemplateItem): string {
 
 /**
  * 템플릿 상세 - 왼쪽은 쪽별 미리보기(영상은 재생기와 장면 그림), 오른쪽은 분류 · 사진 출처 · 문의.
+ * 모바일판이 따로 있는 종류(상세페이지)는 PC · 모바일을 골라 본다. 갤러리에서 고른 화면으로 열린다.
  * 문의 버튼은 /contact 로 design 번호를 넘긴다(문의 제목이 채워진다).
  */
 export default function TemplateDetailClient({ template: t, prev, next }: Props) {
   const isVideo = t.video > 0;
+  /* 갤러리에서 고른 화면(?view=mobile 또는 저장해 둔 값)으로 연다. 서버 그림과 같게 PC 로 시작한다 */
+  const [view, setView] = useState<LandingView>('pc');
+  useEffect(() => {
+    const v = readLandingView();
+    if (v) setView(v);
+  }, []);
+  const pickView = (v: LandingView) => { setView(v); saveLandingView(v); };
+  /* 모바일판이 없는 템플릿은 무엇을 골랐든 PC 판을 보여 준다 */
+  const mobile = view === 'mobile' && !!t.mobile;
   const rows: [string, string][] = [
     ['종류', `${t.formatLabel} · ${t.spec}`],
     ['업종', t.fieldLabel],
     ['장르', t.genreLabel],
     ['쓰임', t.business],
-    ['구성', isVideo ? `영상 ${t.video}초 · 장면 그림 ${t.pages.length}장` : `${t.pages.length}쪽`],
+    ['구성', isVideo ? `영상 ${t.video}초 · 장면 그림 ${t.pages.length}장` : t.mobile ? 'PC판 · 모바일판' : `${t.pages.length}쪽`],
     ['글꼴', t.fonts.join(', ')],
     ['형식', t.outputs.join(', ')],
   ];
@@ -63,14 +76,31 @@ export default function TemplateDetailClient({ template: t, prev, next }: Props)
         <div className="mt-10 grid gap-10 lg:grid-cols-12 lg:gap-8">
           {/* 미리보기 */}
           <div className="min-w-0 lg:col-span-8">
+            {t.mobile && (
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div role="group" aria-label="미리보기 화면" className="inline-flex rounded-pill border border-gray-200 p-1">
+                  {(['pc', 'mobile'] as const).map((v) => (
+                    <button key={v} type="button" aria-pressed={view === v} onClick={() => pickView(v)}
+                      className={`rounded-pill px-5 py-2 text-[14px] font-bold transition-colors ${view === v ? 'bg-ink text-white' : 'text-gray-500 hover:text-ink'}`}>
+                      {v === 'pc' ? 'PC' : '모바일'}
+                    </button>
+                  ))}
+                </div>
+                <span className="text-[13px] text-gray-400">전체 길이 미리보기</span>
+              </div>
+            )}
             <div className={`grid justify-items-center gap-6 rounded-[12px] border border-gray-200 bg-gray-100 p-4 sm:p-6 ${t.format === 'dp' ? 'max-h-[78vh] overflow-auto' : ''}`}>
-              {isVideo && (
+              {mobile && t.mobile && (
+                <Image key="mobile" src={templateMobile(t.id)} alt={`${t.title} 모바일판`} width={t.mobile[0]} height={t.mobile[1]} priority
+                  className="h-auto w-full max-w-[360px] rounded-[22px] border-[6px] border-ink" />
+              )}
+              {!mobile && isVideo && (
                 <video controls loop muted playsInline preload="metadata" poster={templatePage(t.id, 1)}
                   className={`h-auto w-full ${width} rounded-[6px] bg-black`}>
                   <source src={templateVideo(t.id)} type="video/mp4" />
                 </video>
               )}
-              {isVideo ? (
+              {mobile ? null : isVideo ? (
                 <div className={`grid w-full ${t.pages[0][0] > t.pages[0][1] ? 'max-w-[980px] sm:grid-cols-3' : 'max-w-[620px] grid-cols-3'} gap-3`}>
                   {t.pages.map(([w, h], i) => (
                     <figure key={i} className="min-w-0">
@@ -138,12 +168,12 @@ export default function TemplateDetailClient({ template: t, prev, next }: Props)
 
         <nav aria-label="이전 · 다음 템플릿" className="mt-16 flex flex-wrap justify-between gap-4 border-t border-gray-200 pt-8">
           {prev ? (
-            <Link href={`../${prev.id}/`} className="group flex items-center gap-3 text-[15px] text-gray-500 hover:text-point-200">
+            <Link href={`../${prev.id}/${landingViewQuery(view)}`} className="group flex items-center gap-3 text-[15px] text-gray-500 hover:text-point-200">
               <FiArrowLeft aria-hidden /> <span className="font-mono">{prev.id}</span> {prev.title}
             </Link>
           ) : <span />}
           {next && (
-            <Link href={`../${next.id}/`} className="group flex items-center gap-3 text-[15px] text-gray-500 hover:text-point-200">
+            <Link href={`../${next.id}/${landingViewQuery(view)}`} className="group flex items-center gap-3 text-[15px] text-gray-500 hover:text-point-200">
               <span className="font-mono">{next.id}</span> {next.title} <FiArrowRight aria-hidden />
             </Link>
           )}
