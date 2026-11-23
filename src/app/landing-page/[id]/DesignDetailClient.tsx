@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { FiArrowLeft, FiArrowRight, FiArrowUpRight } from 'react-icons/fi';
 import type { LandingDesign } from '@/types';
 import {
-  landingContactHref, landingViewQuery, readLandingView, saveLandingView, type LandingView,
+  landingContactHref, landingViewQuery, readLandingView, rightsNotice, saveLandingView, type LandingView,
 } from '@/data/landingService';
 import { arrowHover, btnLine, btnPoint, chip, chipLine, container } from '@/lib/styles';
 
@@ -89,22 +89,30 @@ export default function DesignDetailClient({ design: d, prev, next }: Props) {
             </dl>
 
             <div className="grid gap-2 rounded-[12px] bg-gray-100 p-5 text-[13px] leading-[1.7] text-gray-500">
-              {d.credit ? (
-                <>
-                  <b className="text-ink">출처</b>
-                  <span>{d.credit.text}</span>
-                  {d.kind === 'template' && (
-                    <span>
-                      <a href={d.credit.sourceUrl} target="_blank" rel="noopener noreferrer" className="underline hover:text-point-200">원본 보기</a>
-                      {' · '}
-                      <a href={d.credit.licenseUrl} target="_blank" rel="noopener noreferrer" className="underline hover:text-point-200">{d.credit.license}</a>
-                    </span>
-                  )}
-                  {d.kind === 'template' && <span>이 스타일로 만든 페이지에도 원작자 표시가 한 줄 들어갑니다.</span>}
-                </>
+              {d.kind === 'template' ? (
+                <b className="text-ink">출처</b>
               ) : (
                 <><b className="text-ink">MATE 시안</b><span>MATE가 구성한 시안입니다.</span></>
               )}
+              {d.credit && (
+                <>
+                  <span>{d.credit.text}</span>
+                  <span>
+                    <a href={d.credit.sourceUrl} target="_blank" rel="noopener noreferrer" className="underline hover:text-point-200">
+                      {d.kind === 'template' ? '원본 보기' : 'KRDS 홈페이지'}
+                    </a>
+                    {' · '}
+                    <a href={d.credit.licenseUrl} target="_blank" rel="noopener noreferrer" className="underline hover:text-point-200">{d.credit.license}</a>
+                  </span>
+                </>
+              )}
+              {d.kind === 'template' && d.credit && (
+                <>
+                  <span>{rightsNotice.template(d.credit.creator)}</span>
+                  <span>이 스타일로 만든 페이지에도 원작자 표시가 한 줄 들어갑니다.</span>
+                </>
+              )}
+              {d.kind === 'mate' && <span>{d.credit ? rightsNotice.krds : rightsNotice.mate}</span>}
               <span>제작 스타일 샘플입니다. 상호·수치·후기·일정은 예시이고, 사진 자리는 실제 촬영으로 채웁니다.</span>
               {d.photoCredits.length > 0 && (
                 <span>

@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { FiArrowLeft, FiArrowRight, FiArrowUpRight } from 'react-icons/fi';
 import type { TemplateItem } from '@/types';
-import { landingContactHref } from '@/data/landingService';
+import { landingContactHref, rightsNotice } from '@/data/landingService';
 import { templatePage, templateVideo } from '@/data/templateLibrary';
 import { arrowHover, btnLine, btnPoint, chip, chipLine, container } from '@/lib/styles';
 
@@ -124,6 +124,7 @@ export default function TemplateDetailClient({ template: t, prev, next }: Props)
                   ))}
                 </span>
               )}
+              <span>{rightsNotice.mate}</span>
             </div>
 
             <div className="grid gap-3">

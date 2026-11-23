@@ -176,8 +176,8 @@ export default function LandingClient() {
                     <p className="mt-1 text-[13px] text-gray-500">
                       {[d.fieldLabel, ...d.purposes.slice(0, 2), ...d.moods.slice(0, 2)].join(' · ')}
                     </p>
-                    {d.kind === 'template' && d.credit && (
-                      <p className="mt-1 text-[12px] text-gray-400">원작 {d.credit.creator} · {d.credit.license}</p>
+                    {d.credit && (
+                      <p className="mt-1 text-[12px] text-gray-400">{d.kind === 'template' ? '원작' : '바탕'} {d.credit.creator} · {d.credit.license}</p>
                     )}
                   </Link>
                 </li>
@@ -229,7 +229,9 @@ export default function LandingClient() {
             {krds.length > 0 && krds[0].credit && (
               <li className="border-b border-gray-200 py-3">
                 <span className="mr-2 font-mono text-ink">{krds[0].id}~{krds[krds.length - 1].id}</span>
-                {krds[0].credit.text}
+                {krds[0].credit.text}{' '}
+                <a href={krds[0].credit.sourceUrl} target="_blank" rel="noopener noreferrer" className="underline hover:text-point-200">원본</a>{' · '}
+                <a href={krds[0].credit.licenseUrl} target="_blank" rel="noopener noreferrer" className="underline hover:text-point-200">{krds[0].credit.license}</a>
               </li>
             )}
           </ul>
