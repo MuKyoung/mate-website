@@ -10,7 +10,7 @@ import SectionHead from '@/components/ui/SectionHead';
 import PartnersBand from '@/components/home/PartnersBand';
 import { landingDesigns, landingFields, landingVocab } from '@/data/landingDesigns';
 import {
-  landingContactHref, landingHero, landingProcess, landingSampleNotes, landingScope, landingScopeNote, landingTabs,
+  landingContactHref, landingHero, landingProcess, landingScope, landingScopeNote, landingTabs,
   landingViewQuery, readLandingView, saveLandingView, type LandingView,
 } from '@/data/landingService';
 import { fadeUp, inView, rowIn, staggerRows, staggerTight } from '@/lib/motion';
@@ -25,19 +25,6 @@ const groups: { key: FilterKey; label: string; items: [string, string][] }[] = [
   { key: 'mood', label: '분위기', items: landingVocab.moods.map((p): [string, string] => [p, p]) },
   { key: 'visual', label: '표현', items: landingVocab.visualStyles.map((p): [string, string] => [p, p]) },
 ];
-
-/** 외부 디자인 기반 샘플의 출처 - 같은 원본 파일은 한 줄로 묶는다 */
-const templateCredits = (() => {
-  const m = new Map<string, { text: string; sourceUrl: string; licenseUrl: string; ids: string[] }>();
-  for (const d of landingDesigns) {
-    if (d.kind !== 'template' || !d.credit) continue;
-    const key = d.credit.sourceUrl;
-    if (!m.has(key)) m.set(key, { text: d.credit.text, sourceUrl: d.credit.sourceUrl, licenseUrl: d.credit.licenseUrl, ids: [] });
-    m.get(key)!.ids.push(d.id);
-  }
-  return [...m.values()];
-})();
-const krds = landingDesigns.filter((d) => d.kind === 'mate' && d.credit);
 
 /**
  * 단일 랜딩페이지 제작 - 서비스 소개와 스타일 갤러리.
@@ -210,34 +197,7 @@ export default function LandingClient() {
         </div>
       </section>
 
-      {/* 샘플과 출처 */}
-      <section data-header="light" className="bg-white py-20 sm:py-24">
-        <div className={container}>
-          <SectionHead eyebrow="Credits" title={<><b>샘플과 출처</b></>} />
-          <div className="mt-8 grid gap-3 text-[15px] leading-[1.7] text-gray-500">
-            {landingSampleNotes.map((n) => <p key={n}>{n}</p>)}
-          </div>
-          <ul className="mt-8 border-t border-gray-200 text-[13px] leading-[1.6] text-gray-500">
-            {templateCredits.map((c) => (
-              <li key={c.sourceUrl} className="border-b border-gray-200 py-3">
-                <span className="mr-2 font-mono text-ink">{c.ids.length > 1 ? `${c.ids[0]}~${c.ids[c.ids.length - 1]}` : c.ids[0]}</span>
-                {c.text}{' '}
-                <a href={c.sourceUrl} target="_blank" rel="noopener noreferrer" className="underline hover:text-point-200">원본</a>{' · '}
-                <a href={c.licenseUrl} target="_blank" rel="noopener noreferrer" className="underline hover:text-point-200">CC BY 4.0</a>
-              </li>
-            ))}
-            {krds.length > 0 && krds[0].credit && (
-              <li className="border-b border-gray-200 py-3">
-                <span className="mr-2 font-mono text-ink">{krds[0].id}~{krds[krds.length - 1].id}</span>
-                {krds[0].credit.text}{' '}
-                <a href={krds[0].credit.sourceUrl} target="_blank" rel="noopener noreferrer" className="underline hover:text-point-200">원본</a>{' · '}
-                <a href={krds[0].credit.licenseUrl} target="_blank" rel="noopener noreferrer" className="underline hover:text-point-200">{krds[0].credit.license}</a>
-              </li>
-            )}
-          </ul>
-        </div>
-      </section>
-
+      {/* 샘플 안내 · 출처 · 권리 표시는 본 사이트의 /credits/ 에 둔다(푸터 링크). 디자인마다의 출처는 상세 화면에 있다 */}
       {/* 문의 */}
       <section data-header="dark" className="night-grid on-night py-20 sm:py-28">
         <div className={`${container} flex flex-col items-start gap-8 lg:flex-row lg:items-center lg:justify-between`}>

@@ -7,7 +7,7 @@ import { FiArrowUpRight, FiPlay, FiSearch } from 'react-icons/fi';
 import PageHeader from '@/components/PageHeader';
 import SectionHead from '@/components/ui/SectionHead';
 import PartnersBand from '@/components/home/PartnersBand';
-import { landingContactHref, landingTabs, templateHero, templateSampleNotes } from '@/data/landingService';
+import { landingContactHref, landingTabs, templateHero } from '@/data/landingService';
 import { templateFields, templateFormats, templateGenres, templateThumb, templates } from '@/data/templateLibrary';
 import { arrowHover, btnLight, chip, container } from '@/lib/styles';
 
@@ -19,9 +19,6 @@ const groups: { key: FilterKey; label: string; items: [string, string][] }[] = [
   { key: 'field', label: '업종', items: templateFields.map((f): [string, string] => [String(f.id), f.name]) },
   { key: 'genre', label: '장르', items: templateGenres.map((g): [string, string] => [g.key, g.name]) },
 ];
-
-/** 사진가 수 - 안내 글에 쓴다 */
-const photographerCount = new Set(templates.flatMap((t) => t.credits.map((c) => c.name))).size;
 
 /**
  * 디자인 템플릿 라이브러리 - 종류 · 업종 · 장르로 고르는 갤러리.
@@ -130,20 +127,7 @@ export default function TemplatesClient() {
         </div>
       </section>
 
-      {/* 샘플과 사진 출처 */}
-      <section data-header="light" className="bg-gray-100 py-20 sm:py-24">
-        <div className={container}>
-          <SectionHead eyebrow="Credits" title={<><b>샘플과 사진 출처</b></>} />
-          <div className="mt-8 grid max-w-[980px] gap-3 text-[15px] leading-[1.7] text-gray-500">
-            {templateSampleNotes.map((n) => <p key={n}>{n}</p>)}
-            <p>
-              사진가 {photographerCount}명의 사진을 썼고, 사진가 이름과 원본 주소는 템플릿마다 상세 화면에 있습니다.{' '}
-              <a href="https://unsplash.com/license" target="_blank" rel="noopener noreferrer" className="underline hover:text-point-200">Unsplash License</a>
-            </p>
-          </div>
-        </div>
-      </section>
-
+      {/* 샘플 안내 · 사진 출처 · 권리 표시는 본 사이트의 /credits/ 에 둔다(푸터 링크). 템플릿마다의 사진가는 상세 화면에 있다 */}
       {/* 문의 */}
       <section data-header="dark" className="night-grid on-night py-20 sm:py-28">
         <div className={`${container} flex flex-col items-start gap-8 lg:flex-row lg:items-center lg:justify-between`}>

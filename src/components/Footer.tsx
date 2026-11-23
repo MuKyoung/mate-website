@@ -123,7 +123,11 @@ export default function Footer() {
               {business.name} ({business.brand}) · 대표 {business.owner} · 사업자등록번호 {business.regNo}<br />
               {business.address}
             </p>
-            <p>© {year} {business.brand}. All rights reserved.</p>
+            <p>
+              © {year} {business.brand}. All rights reserved.
+              {/* 랜딩페이지 · 템플릿 갤러리의 샘플 안내 · 출처는 본 사이트에 둔다(하위 도메인에서도 본 사이트 주소로 간다) */}
+              <Link href={siteHref(pathname, '/credits/')} className="ml-4 underline-offset-4 transition-colors hover:text-white hover:underline">출처 안내</Link>
+            </p>
           </div>
         </div>
       </div>
