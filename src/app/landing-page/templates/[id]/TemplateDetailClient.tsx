@@ -10,6 +10,7 @@ import {
 } from '@/data/landingService';
 import { templateMobile, templatePage, templateVideo } from '@/data/templateLibrary';
 import { arrowHover, btnLine, btnPoint, chip, chipLine, container } from '@/lib/styles';
+import PhoneScreen, { hasPhoneView } from '../PhoneScreen';
 
 interface Props {
   template: TemplateItem;
@@ -30,7 +31,8 @@ function previewWidth(t: TemplateItem): string {
 
 /**
  * 템플릿 상세 - 왼쪽은 쪽별 미리보기(영상은 재생기와 장면 그림), 오른쪽은 분류 · 사진 출처 · 문의.
- * 모바일판이 따로 있는 종류(상세페이지)는 PC · 모바일을 골라 본다. 갤러리에서 고른 화면으로 열린다.
+ * 휴대폰에서 보는 종류는 PC · 모바일을 골라 본다(상세페이지는 따로 짠 모바일판, 카드뉴스 · 인스타그램 피드 · 릴스는
+ * 휴대폰 틀 안에 뜬 모습 - 카드뉴스는 옆으로 넘기고 릴스는 영상이 돈다). 갤러리에서 고른 화면으로 열린다.
  * 문의 버튼은 /contact 로 design 번호를 넘긴다(문의 제목이 채워진다).
  */
 export default function TemplateDetailClient({ template: t, prev, next }: Props) {
@@ -42,8 +44,8 @@ export default function TemplateDetailClient({ template: t, prev, next }: Props)
     if (v) setView(v);
   }, []);
   const pickView = (v: LandingView) => { setView(v); saveLandingView(v); };
-  /* 모바일판이 없는 템플릿은 무엇을 골랐든 PC 판을 보여 준다 */
-  const mobile = view === 'mobile' && !!t.mobile;
+  /* 휴대폰 화면이 없는 템플릿은 무엇을 골랐든 PC 판을 보여 준다 */
+  const mobile = view === 'mobile' && hasPhoneView(t);
   const rows: [string, string][] = [
     ['종류', `${t.formatLabel} · ${t.spec}`],
     ['업종', t.fieldLabel],
@@ -76,7 +78,7 @@ export default function TemplateDetailClient({ template: t, prev, next }: Props)
         <div className="mt-10 grid gap-10 lg:grid-cols-12 lg:gap-8">
           {/* 미리보기 */}
           <div className="min-w-0 lg:col-span-8">
-            {t.mobile && (
+            {hasPhoneView(t) && (
               <div className="mb-4 flex items-center justify-between gap-3">
                 <div role="group" aria-label="미리보기 화면" className="inline-flex rounded-pill border border-gray-200 p-1">
                   {(['pc', 'mobile'] as const).map((v) => (
@@ -86,13 +88,20 @@ export default function TemplateDetailClient({ template: t, prev, next }: Props)
                     </button>
                   ))}
                 </div>
-                <span className="text-[13px] text-gray-400">전체 길이 미리보기</span>
+                <span className="text-[13px] text-gray-400">
+                  {t.mobile ? '전체 길이 미리보기' : !mobile ? '' : t.format === 'cn' ? '옆으로 넘겨 보세요' : '휴대폰에 뜬 모습'}
+                </span>
               </div>
             )}
             <div className={`grid justify-items-center gap-6 rounded-[12px] border border-gray-200 bg-gray-100 p-4 sm:p-6 ${t.format === 'dp' ? 'max-h-[78vh] overflow-auto' : ''}`}>
               {mobile && t.mobile && (
                 <Image key="mobile" src={templateMobile(t.id)} alt={`${t.title} 모바일판`} width={t.mobile[0]} height={t.mobile[1]} priority
                   className="h-auto w-full max-w-[360px] rounded-[22px] border-[6px] border-ink" />
+              )}
+              {mobile && !t.mobile && (
+                <div className="w-full max-w-[340px] overflow-hidden rounded-[26px] border-[6px] border-ink bg-white">
+                  <PhoneScreen key={t.id} t={t} mode="detail" />
+                </div>
               )}
               {!mobile && isVideo && (
                 <video controls loop muted playsInline preload="metadata" poster={templatePage(t.id, 1)}

@@ -10,10 +10,9 @@ import PartnersBand from '@/components/home/PartnersBand';
 import {
   landingContactHref, landingTabs, landingViewQuery, readLandingView, rightsNotice, saveLandingView, templateHero, type LandingView,
 } from '@/data/landingService';
-import {
-  templateFields, templateFormats, templateGenres, templateMobileThumb, templateThumb, templates,
-} from '@/data/templateLibrary';
+import { templateFields, templateFormats, templateGenres, templateThumb, templates } from '@/data/templateLibrary';
 import { arrowHover, btnLight, chip, chipLine, container } from '@/lib/styles';
+import PhoneScreen, { hasPhoneView } from './PhoneScreen';
 
 type FilterKey = 'format' | 'field' | 'genre';
 const EMPTY: Record<FilterKey, string[]> = { format: [], field: [], genre: [] };
@@ -24,13 +23,14 @@ const groups: { key: FilterKey; label: string; items: [string, string][] }[] = [
   { key: 'genre', label: '장르', items: templateGenres.map((g): [string, string] => [g.key, g.name]) },
 ];
 
-/** 모바일판이 따로 있는 종류의 이름 (지금은 상세페이지) - 모바일로 볼 때 안내에 쓴다 */
-const mobileFormats = templateFormats.filter((f) => templates.some((t) => t.format === f.key && t.mobile)).map((f) => f.name);
+/** 휴대폰 화면으로 볼 수 있는 종류의 이름 (모바일판이 따로 있는 상세페이지 + 카드뉴스 · 인스타그램 피드 · 릴스) - 모바일로 볼 때 안내에 쓴다 */
+const mobileFormats = templateFormats.filter((f) => templates.some((t) => t.format === f.key && hasPhoneView(t))).map((f) => f.name);
 
 /**
  * 디자인 템플릿 라이브러리 - 종류 · 업종 · 장르로 고르는 갤러리.
- * PC · 모바일 고르기: 모바일을 고르면 모바일판이 따로 있는 템플릿만 남기고 휴대폰 화면으로 보여 준다
- * (인쇄물 · 영상처럼 크기가 하나뿐인 종류에는 모바일판이 없다). 고른 화면은 상세까지 이어진다.
+ * PC · 모바일 고르기: 모바일을 고르면 휴대폰에서 보는 종류만 남기고 휴대폰 틀에 넣어 보여 준다
+ * (상세페이지는 따로 짠 모바일판, 카드뉴스 · 인스타그램 피드 · 릴스는 같은 그림이 휴대폰에 뜬 모습.
+ * 인쇄물 · 발표 자료처럼 휴대폰으로 보지 않는 종류는 빠진다). 고른 화면은 상세까지 이어진다.
  * 카드는 걸러질 때마다 다시 그려지므로 스크롤 등장 효과를 걸지 않는다(걸러진 뒤 안 보이는 일이 없게).
  */
 export default function TemplatesClient() {
@@ -52,7 +52,7 @@ export default function TemplatesClient() {
   const list = useMemo(() => {
     const words = q.trim().toLowerCase().split(/\s+/).filter(Boolean);
     return templates.filter((t) => {
-      if (view === 'mobile' && !t.mobile) return false;
+      if (view === 'mobile' && !hasPhoneView(t)) return false;
       if (sel.format.length && !sel.format.includes(t.format)) return false;
       if (sel.field.length && !sel.field.includes(String(t.field))) return false;
       if (sel.genre.length && !sel.genre.includes(t.genre)) return false;
@@ -105,7 +105,7 @@ export default function TemplatesClient() {
             </div>
             {view === 'mobile' && (
               <p className="text-[14px] text-gray-500">
-                모바일판이 따로 있는 {mobileFormats.join(' · ')} 템플릿만 보여 줍니다. 인쇄물과 영상처럼 크기가 하나인 종류는 PC에서 보세요.
+                휴대폰에서 보는 {mobileFormats.join(' · ')} 템플릿만 휴대폰 화면으로 보여 줍니다. 인쇄물과 발표 자료는 PC에서 보세요.
               </p>
             )}
             {groups.map((g) => (
@@ -140,10 +140,9 @@ export default function TemplatesClient() {
                   {/* 상대 주소 - 하위 도메인에서는 /templates/PT-01/, 본 사이트 경로에서는 /landing-page/templates/PT-01/ 로 간다 */}
                   <Link href={`${t.id}/${landingViewQuery(view)}`} className="group block">
                     {view === 'mobile' ? (
-                      /* 모바일판의 첫 화면을 휴대폰 틀에 넣는다 */
+                      /* 휴대폰 틀 - 상세페이지는 모바일판 첫 화면, SNS 종류는 글이 뜬 모습 */
                       <div className="overflow-hidden rounded-[20px] border-[5px] border-ink bg-white transition-transform duration-300 group-hover:-translate-y-1">
-                        <Image src={templateMobileThumb(t.id)} alt={`${t.title} 모바일 첫 화면`} width={360} height={779}
-                          className="aspect-[390/844] w-full object-cover object-top" />
+                        <PhoneScreen t={t} mode="card" />
                       </div>
                     ) : (
                     /* 종류마다 비율이 달라(16:9 · 9:16 · 현수막 ...) 같은 크기 칸 안에 통째로 넣는다 */
