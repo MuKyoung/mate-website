@@ -58,9 +58,21 @@ namespace MateCalendar
             ToBottom();
         }
 
+        private bool _hold;
+
+        /// <summary>
+        /// 위젯 메뉴가 열려 있는 동안 - 맨 아래로 되돌리기 · 내리기를 멈춘다(메뉴 창과 순서를 다투다 메뉴가 닫히지 않게).
+        /// 메뉴가 닫히면 다시 맨 아래로
+        /// </summary>
+        public void Hold(bool on)
+        {
+            _hold = on;
+            if (!on) ToBottom();
+        }
+
         public void ToBottom()
         {
-            if (_hwnd == IntPtr.Zero || _raised) return;
+            if (_hwnd == IntPtr.Zero || _raised || _hold) return;
             Native.SetWindowPos(_hwnd, Native.HWND_BOTTOM, 0, 0, 0, 0,
                 Native.SWP_NOMOVE | Native.SWP_NOSIZE | Native.SWP_NOACTIVATE | Native.SWP_NOOWNERZORDER);
         }
@@ -100,9 +112,13 @@ namespace MateCalendar
 
         private DateTime _graceUntil;
 
+        /// <summary>점검용(--probe-unraise) - 맨 위에 떠 있으면서도 평소처럼 '맨 아래로 되돌리기'가 켜진 상태</summary>
+        internal void ForgetRaised() => _raised = false;
+        internal static bool Probe;
+
         private void Lower()
         {
-            if (!_raised || DateTime.UtcNow < _graceUntil) return;
+            if (!_raised || DateTime.UtcNow < _graceUntil || _hold) return;
             _raised = false;
             Native.SetWindowPos(_hwnd, Native.HWND_NOTOPMOST, 0, 0, 0, 0, Native.SWP_NOMOVE | Native.SWP_NOSIZE | Native.SWP_NOACTIVATE);
             ToBottom();
@@ -110,11 +126,12 @@ namespace MateCalendar
 
         private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
-            if (msg == Native.WM_WINDOWPOSCHANGING && !_raised)
+            if (msg == Native.WM_WINDOWPOSCHANGING && !_raised && !_hold)
             {
                 var pos = Marshal.PtrToStructure<Native.WINDOWPOS>(lParam);
                 if ((pos.flags & Native.SWP_NOZORDER) == 0 && pos.hwndInsertAfter != Native.HWND_BOTTOM)
                 {
+                    if (Probe) Program.Log("probe zorder forced to bottom (after " + Native.ClassOf(pos.hwndInsertAfter) + " " + pos.hwndInsertAfter + ")");
                     pos.hwndInsertAfter = Native.HWND_BOTTOM;
                     Marshal.StructureToPtr(pos, lParam, false);
                 }

@@ -431,8 +431,9 @@ namespace MateCalendar
 
         public void Render()
         {
-            // 끄는 동안 다시 그리면 손잡이가 없어져 끌기가 끊긴다 - 놓을 때 그린다
-            if (_dragging)
+            // 끄는 동안 다시 그리면 손잡이가 없어져 끌기가 끊긴다 - 놓을 때 그린다.
+            // ⋯ 메뉴가 열려 있을 때도 - 새로 읽기가 끝나 다시 그리면 메뉴가 붙은 단추가 사라진다. 메뉴가 닫힐 때 그린다
+            if (_dragging || _c.MenuIsOpen)
             {
                 _renderAfterDrag = true;
                 return;
@@ -897,6 +898,42 @@ namespace MateCalendar
             Native.GetWindowRect(Handle, out var after);
             Program.Log($"resize-test {(_c.Settings.Wide ? "wide" : "compact")} before {r.Left},{r.Top}-{r.Right},{r.Bottom} after {after.Left},{after.Top}-{after.Right},{after.Bottom} " +
                 $"scale {_c.Settings.Scale:F2} list {_c.Settings.ListPt} cell {_c.Settings.WideCellPt} row {_c.Settings.WideRowPt}");
+        }
+
+        private FrameworkElement? _moreButton;
+
+        /// <summary>메뉴가 열려 있는 동안 미뤄 둔 다시 그리기를 지금</summary>
+        public void FlushRender()
+        {
+            if (!_renderAfterDrag || _dragging || _c.MenuIsOpen) return;
+            _renderAfterDrag = false;
+            Render();
+        }
+
+        /// <summary>점검용 - ⋯ 단추 가운데의 화면 좌표(픽셀)</summary>
+        internal string MoreButtonScreen()
+        {
+            if (_moreButton == null || PresentationSource.FromVisual(_moreButton) == null) return "-";
+            var p = _moreButton.PointToScreen(new Point(_moreButton.ActualWidth / 2, _moreButton.ActualHeight / 2));
+            return $"{(int)p.X},{(int)p.Y}";
+        }
+
+        /// <summary>
+        /// 점검용(--demo --menu-test) - ⋯ 메뉴를 연 뒤 새로 읽기가 끝나 위젯을 다시 그린 것처럼 Render 를 불러
+        /// 메뉴가 열린 채로 남는지 log.txt 에 적는다
+        /// </summary>
+        internal async void SelfTestMenu()
+        {
+            await System.Threading.Tasks.Task.Delay(1200);
+            if (_moreButton == null) return;
+            _c.ShowMenu(_moreButton);
+            await System.Threading.Tasks.Task.Delay(400);
+            bool opened = _c.MenuIsOpen;
+            string before = _c.MenuRect();
+            Render();
+            await System.Threading.Tasks.Task.Delay(600);
+            Program.Log($"menu-test opened={opened} rect {before} afterRender={_c.MenuIsOpen} rect {_c.MenuRect()}");
+            _c.CloseMenu();
         }
 
         /// <summary>끌어서 정한 크기를 지우고 기본 크기로(⋯ 메뉴)</summary>
@@ -1364,6 +1401,7 @@ namespace MateCalendar
                 () => _c.SetLayout(wide ? "compact" : "wide"), 15));
             FrameworkElement? more = null;
             more = IconButton(Icons.More, "메뉴 열기", () => _c.ShowMenu(more!), 17, null, _c.UpdateReady);
+            _moreButton = more;
             panel.Children.Add(more);
         }
 

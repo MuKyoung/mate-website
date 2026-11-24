@@ -129,6 +129,9 @@ namespace MateCalendar
                 if (a.Contains("--update-ready")) controller.DemoUpdate("9.9.9");
                 // --resize-test : 왼쪽 아래 모서리를 왼쪽으로 200px · 아래로 150px 끌어 본 결과를 log.txt 에(점검용)
                 if (a.Contains("--resize-test")) app.Startup += (s, e) => controller.SelfTestResize(-200, 150);
+                // --menu-test : ⋯ 메뉴를 연 채 다시 그려도 메뉴가 남는지 log.txt 에(점검용)
+                if (a.Contains("--menu-test")) app.Startup += (s, e) => Application.Current.Dispatcher.BeginInvoke(
+                    new Action(controller.SelfTestMenu), System.Windows.Threading.DispatcherPriority.ApplicationIdle);
             }
             app.Startup += (s, e) => controller.Start();
             app.Run();
@@ -173,6 +176,16 @@ namespace MateCalendar
         public string UpdateNotes => _update?.Notes ?? "";
         /// <summary>새 판을 받는 중(단추를 다시 못 누르게)</summary>
         public bool Updating { get; private set; }
+
+        internal bool MenuIsOpen => _menu?.IsOpen == true;
+        internal string MenuRect()
+        {
+            if (_menu == null || !(PresentationSource.FromVisual(_menu) is HwndSource src)) return "-";
+            Native.GetWindowRect(src.Handle, out var r);
+            return $"{r.Left},{r.Top}-{r.Right},{r.Bottom}" + (Native.IsWindowVisible(src.Handle) ? "" : " hidden");
+        }
+        internal void CloseMenu() { if (_menu != null) _menu.IsOpen = false; }
+        internal void SelfTestMenu() => _widget?.SelfTestMenu();
 
         internal void SelfTestResize(int dx, int dy) => Application.Current.Dispatcher.BeginInvoke(new Action(() => _widget?.SelfTestResize(dx, dy)),
             System.Windows.Threading.DispatcherPriority.ApplicationIdle);
@@ -245,7 +258,22 @@ namespace MateCalendar
             };
             _timer.Start();
 
-            if (_demo) return;
+            if (_demo)
+            {
+                if (Environment.GetCommandLineArgs().Any(x => x.Equals("--peek", StringComparison.OrdinalIgnoreCase)))
+                    Ui(async () =>
+                    {
+                        await Task.Delay(1500);
+                        _widget?.Pin.Peek();
+                        if (Environment.GetCommandLineArgs().Any(x => x.Equals("--probe-unraise", StringComparison.OrdinalIgnoreCase)))
+                        {
+                            DesktopPin.Probe = true;
+                            _widget?.Pin.ForgetRaised();
+                        }
+                        Program.Log("probe more " + _widget?.MoreButtonScreen());
+                    });
+                return;
+            }
             if (NeedLogin) ShowLogin();
             else _ = Refresh(true);
             Ui(async () => { await Task.Delay(15000); await CheckUpdate(); });
@@ -538,9 +566,34 @@ namespace MateCalendar
         /* ── 메뉴 ─────────────────────────────────────── */
 
         /// <summary>⋯ 단추 · 작업 표시줄 아이콘의 메뉴. anchor 가 없으면 마우스 자리에 연다</summary>
+        private DateTime _menuClosedAt = DateTime.MinValue, _menuLostAt = DateTime.MinValue;
+        private bool _menuAlive; // 메뉴를 열고 아직 Closed 가 오지 않았다(닫히는 중 포함)
+
+        /// <summary>
+        /// 메뉴가 열려 있거나 닫히는 중인가. 열린 메뉴를 ⋯ 로 다시 누르면 누르는 순간(바깥 누름) 닫히기 시작하고
+        /// 떼는 순간 ShowMenu 가 불리는데, 그때 새 메뉴를 열면 옛 메뉴가 다 닫히며 Windows 가 앞 창을 다른 앱으로 넘겨
+        /// 새 메뉴가 곧바로 닫혔다(1.0.4 까지 '열자마자 닫힘'). 그래서 닫히는 중에는 새로 열지 않는다
+        /// </summary>
+        private bool MenuBusy =>
+            _menu != null && (_menu.IsOpen || (_menuAlive && DateTime.UtcNow - _menuLostAt < TimeSpan.FromSeconds(1)))
+            || DateTime.UtcNow - _menuClosedAt < TimeSpan.FromMilliseconds(350);
+
         public void ShowMenu(FrameworkElement? anchor)
         {
-            if (_menu != null) _menu.IsOpen = false;
+            // 열려 있으면(또는 막 닫혔으면) 이 누름은 '닫기' - 다시 열지 않는다
+            if (MenuBusy)
+            {
+                if (_menu != null) _menu.IsOpen = false;
+                return;
+            }
+            // 누름 처리가 다 끝난 뒤에 연다 - 같은 누름이 '메뉴 바깥 누름'으로 잡혀 바로 닫히지 않게
+            Application.Current.Dispatcher.BeginInvoke(new Action(() => OpenMenu(anchor)), DispatcherPriority.Input);
+        }
+
+        private void OpenMenu(FrameworkElement? anchor)
+        {
+            if (_menu?.IsOpen == true) return;
+            if (anchor != null && PresentationSource.FromVisual(anchor) == null) anchor = null; // 그사이 다시 그려졌다
             var m = BuildMenu();
             if (anchor != null)
             {
@@ -550,10 +603,39 @@ namespace MateCalendar
             else m.Placement = System.Windows.Controls.Primitives.PlacementMode.MousePoint;
             m.Opened += (s, e) =>
             {
+                // 메뉴가 열린 동안 위젯을 맨 아래로 되돌리지 않는다(메뉴 창과 순서 다툼)
+                _widget?.Pin.Hold(true);
                 // 다른 곳을 누르면 닫히게 메뉴 창을 앞 창으로
                 if (PresentationSource.FromVisual(m) is HwndSource src) Native.SetForegroundWindow(src.Handle);
             };
+            m.Closed += (s, e) =>
+            {
+                if (_menu == m) _menuAlive = false;
+                _menuClosedAt = DateTime.UtcNow;
+                _widget?.Pin.Hold(false);
+                // 열려 있는 동안 미뤄 둔 다시 그리기(새로 읽기 · 메뉴에서 바꾼 설정)
+                Application.Current.Dispatcher.BeginInvoke(new Action(() => _widget?.FlushRender()), DispatcherPriority.Background);
+            };
+            if (_demo)
+            {
+                var t0 = DateTime.UtcNow;
+                m.Opened += async (s, e) =>
+                {
+                    Program.Log("probe menu opened fg=" + Native.ClassOf(Native.GetForegroundWindow()));
+                    if (Environment.GetCommandLineArgs().Any(x => x.Equals("--probe-render", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        await Task.Delay(500);
+                        _widget?.Render(); // 새로 읽기가 끝나 다시 그린 것처럼
+                        Program.Log("probe rendered, menu open=" + m.IsOpen);
+                    }
+                };
+                m.Closed += (s, e) => Program.Log($"probe menu closed after {(DateTime.UtcNow - t0).TotalMilliseconds:F0}ms fg=" +
+                    Native.ClassOf(Native.GetForegroundWindow()) + " capture=" + (System.Windows.Input.Mouse.Captured?.GetType().Name ?? "none"));
+                m.LostMouseCapture += (s, e) => Program.Log("probe menu lost capture to " + (System.Windows.Input.Mouse.Captured?.GetType().Name ?? "none"));
+            }
+            m.LostMouseCapture += (s, e) => _menuLostAt = DateTime.UtcNow;
             _menu = m;
+            _menuAlive = true;
             m.IsOpen = true;
         }
 
