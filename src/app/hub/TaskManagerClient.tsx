@@ -1700,10 +1700,11 @@ function Workspace({ account }: { account?: Account }) {
             open: setOpenId,
             update: (id, patch) => store.update(id, patch),
             // 새 하위 업무는 상위 업무의 영역으로, 할 일 칸에. 창은 상위 업무에 그대로 둬 이어서 여러 개를 적게 한다
+            // 담당자는 상위 업무의 담당자를 그대로 물려받는다(상세 창에서 바꿀 수 있다)
             // 나만 보기 업무의 하위도 나만 보기(남에게 상위 없이 보이지 않게)
             create: (title) => {
               store.create({
-                title, parentId: open.id, domain: open.domain, status: 'todo', owner: me,
+                title, parentId: open.id, domain: open.domain, status: 'todo', owner: me, assignee: open.assignee ?? null,
                 ...(open.private ? { private: true, assignee: me } : {}),
               });
             },

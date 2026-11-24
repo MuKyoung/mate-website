@@ -286,12 +286,32 @@ namespace MateCalendar
             catch { /* 사본 없이도 돈다 */ }
         }
 
-        public async Task Refresh(bool meta)
+        /// <summary>지금 작업을 읽는 중인지 - 새로 읽기 단추가 도는 동안</summary>
+        public bool Refreshing => _refreshing;
+
+        private Task? _running;
+
+        /// <summary>작업을 새로 읽는다. 이미 읽는 중이면 그 읽기가 끝나기를 기다린다.
+        /// manual = 사람이 단추로 누른 것 - 너무 빨리 끝나도 단추가 잠깐은 돌아 눌린 것이 보이게 한다</summary>
+        public Task Refresh(bool meta, bool manual = false)
+        {
+            if (_running != null && !_running.IsCompleted)
+            {
+                // 저절로 읽는 중에 눌렀으면 단추만 돌게 다시 그린다
+                if (manual) _widget?.Render();
+                return _running;
+            }
+            return _running = RefreshCore(meta, manual);
+        }
+
+        private async Task RefreshCore(bool meta, bool manual)
         {
             if (_demo || _refreshing) return;
             if (NeedLogin) { _widget?.Render(); return; }
             _refreshing = true;
             _lastRefresh = DateTime.UtcNow;
+            var started = DateTime.UtcNow;
+            if (manual) _widget?.Render();
             try
             {
                 var scope = Settings.Scope;
@@ -332,6 +352,11 @@ namespace MateCalendar
             }
             finally
             {
+                if (manual)
+                {
+                    var left = TimeSpan.FromMilliseconds(600) - (DateTime.UtcNow - started);
+                    if (left > TimeSpan.Zero) await Task.Delay(left);
+                }
                 _refreshing = false;
                 _widget?.Render();
                 _tray?.Update();
@@ -464,7 +489,7 @@ namespace MateCalendar
             if (!NeedLogin && !_demo)
             {
                 m.Items.Add(Item(Api.Who, null, false, false));
-                m.Items.Add(Item("새로 읽기", () => _ = Refresh(true), false, true,
+                m.Items.Add(Item("새로 읽기", () => _ = Refresh(true, manual: true), false, true,
                     Data.SyncedAt.HasValue ? Data.SyncedAt.Value.ToString("HH:mm", CultureInfo.InvariantCulture) : null));
                 m.Items.Add(new Separator());
             }

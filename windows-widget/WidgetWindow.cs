@@ -1118,8 +1118,9 @@ namespace MateCalendar
         {
             if (_c.Error != null && !_c.NeedLogin)
             {
-                panel.Children.Add(IconButton(Icons.Warning, _c.Error + "\n누르면 다시 읽습니다", () => _ = _c.Refresh(true), 16, _t.Secondary));
+                panel.Children.Add(IconButton(Icons.Warning, _c.Error + "\n누르면 다시 읽습니다", () => _ = _c.Refresh(true, manual: true), 16, _t.Secondary));
             }
+            if (!_c.NeedLogin) panel.Children.Add(RefreshButton());
             panel.Children.Add(IconButton(Icons.List, "Hub 작업 목록 열기", () => _c.OpenHub("list"), 17));
             panel.Children.Add(IconButton(Icons.Calendar, "Hub 캘린더 열기", () => _c.OpenHub("calendar"), 17));
             bool wide = _c.Settings.Wide;
@@ -1128,6 +1129,29 @@ namespace MateCalendar
             FrameworkElement? more = null;
             more = IconButton(Icons.More, "메뉴 열기", () => _c.ShowMenu(more!), 17, null, _c.UpdateReady);
             panel.Children.Add(more);
+        }
+
+        /// <summary>⟳ 새로 읽기 - Hub 에서 바꾼 것을 3분 기다리지 않고 바로 가져온다. 읽는 동안 돈다</summary>
+        private FrameworkElement RefreshButton()
+        {
+            bool busy = _c.Refreshing;
+            string when = _c.Data.SyncedAt.HasValue
+                ? "\n마지막으로 읽은 시각 " + _c.Data.SyncedAt.Value.ToString("HH:mm", CultureInfo.InvariantCulture)
+                : "";
+            var b = (Border)IconButton(Icons.Refresh, busy ? "새로 읽는 중…" : "새로 읽기" + when, () =>
+            {
+                if (!_c.Refreshing) _ = _c.Refresh(true, manual: true);
+            }, 15);
+            if (busy && b.Child is Grid g && g.Children.Count > 0 && g.Children[0] is FrameworkElement glyph)
+            {
+                var spin = new RotateTransform();
+                glyph.RenderTransformOrigin = new Point(0.5, 0.5);
+                glyph.RenderTransform = spin;
+                spin.BeginAnimation(RotateTransform.AngleProperty,
+                    new System.Windows.Media.Animation.DoubleAnimation(0, 360, TimeSpan.FromSeconds(0.8)) { RepeatBehavior = System.Windows.Media.Animation.RepeatBehavior.Forever });
+                b.Cursor = Cursors.Arrow;
+            }
+            return b;
         }
 
         /// <summary>새 판이 나왔을 때만 보이는 단추 - 누르면 받아서 바로 바꾼다(작게 보기는 도구 줄 아래 한 줄, 넓게 보기는 위 줄 오른쪽)</summary>
@@ -1272,7 +1296,7 @@ namespace MateCalendar
             }
             if (!_c.Loaded)
             {
-                _list.Children.Add(Message(_c.Error ?? "작업을 읽는 중…", _c.Error != null ? "다시 읽기" : null, () => _ = _c.Refresh(true)));
+                _list.Children.Add(Message(_c.Error ?? "작업을 읽는 중…", _c.Error != null ? "다시 읽기" : null, () => _ = _c.Refresh(true, manual: true)));
                 return;
             }
 
