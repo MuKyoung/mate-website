@@ -194,8 +194,11 @@ export default function Calendar({
               const hidden = keys.map((_, i) => segs.filter((s) => s.lane >= cap && s.col <= i && i < s.col + s.span).length);
               const more = !compact && (expanded ? lanes > LANES : hidden.some((n) => n > 0));
               const rows = `${compact ? 28 : 34}px ${shown ? `repeat(${shown}, auto) ` : ''}${more || (compact && hidden.some((n) => n > 0)) ? 'auto ' : ''}1fr`;
+              /* 주 줄 높이: 기본은 120px(좁은 화면 60px)에서 남는 높이를 똑같이 나눠 갖고, 막대가 그보다 많으면(+n건 더를 펼친 주)
+                 그 내용만큼 길어진다 - min-height 를 auto 로 두어야 내용보다 줄어들지 않는다(예전 min-h-[120px] + flex-1 은
+                 펼친 막대가 다음 주 칸 위로 넘쳐 겹쳤다). 늘어난 만큼 달력이 길어지고 바깥이 스크롤된다 */
               return (
-                <div key={keys[0]} className={`relative grid flex-1 grid-cols-7 ${compact ? 'min-h-[60px]' : 'min-h-[120px]'} ${
+                <div key={keys[0]} className={`relative grid grid-cols-7 ${compact ? 'flex-[1_0_60px]' : 'flex-[1_0_120px]'} ${
                   w < 5 ? 'border-b border-tm-line' : ''}`} style={{ gridTemplateRows: rows }}>
                   {/* 날짜 칸 */}
                   {weeks[w].map((d, i) => {
