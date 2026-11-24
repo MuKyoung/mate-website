@@ -131,6 +131,8 @@ namespace MateCalendar
         public double Scale = 1.5;         // 크기 - Calendr 의 1pt 를 몇 DIP 로 그릴지
         public string Layout = "compact";  // compact(달력 + 목록) · wide(넓게 펼친 달력 + 옆 목록)
         public double WideScale = 1.25;    // 넓게 펼친 화면의 크기
+        // 가장자리를 끌어 정한 크기(pt). 없으면 기본 - 작게: 목록 196, 넓게: 날짜 칸 90 × 64
+        public double? ListPt, WideCellPt, WideRowPt;
         public string Appearance = "system";
         public int Transparency = 1;       // 0 낮음 · 1 보통 · 2 높음
         public string Scope = "mine";      // mine · all
@@ -165,9 +167,12 @@ namespace MateCalendar
                     X = d.ContainsKey("x") && d["x"] != null ? (int?)d.Long("x") : null,
                     Y = d.ContainsKey("y") && d["y"] != null ? (int?)d.Long("y") : null,
                     W = d.ContainsKey("w") && d["w"] != null ? (int?)d.Long("w") : null,
-                    Scale = Clamp(d.Num("scale", 1.5), 1.0, 2.5),
+                    Scale = Clamp(d.Num("scale", 1.5), 0.8, 2.5),
                     Layout = d.Str("layout", "compact") == "wide" ? "wide" : "compact",
-                    WideScale = Clamp(d.Num("wideScale", 1.25), 1.0, 2.5),
+                    WideScale = Clamp(d.Num("wideScale", 1.25), 0.8, 2.5),
+                    ListPt = d.ContainsKey("listPt") && d["listPt"] != null ? Clamp(d.Num("listPt"), 112, 1200) : (double?)null,
+                    WideCellPt = d.ContainsKey("wideCellPt") && d["wideCellPt"] != null ? Clamp(d.Num("wideCellPt"), 64, 200) : (double?)null,
+                    WideRowPt = d.ContainsKey("wideRowPt") && d["wideRowPt"] != null ? Clamp(d.Num("wideRowPt"), 44, 240) : (double?)null,
                     Appearance = d.Str("appearance", "system"),
                     Transparency = (int)Clamp(d.Long("transparency", 1), 0, 2),
                     Scope = d.Str("scope", "mine") == "all" ? "all" : "mine",
@@ -196,7 +201,8 @@ namespace MateCalendar
                 Directory.CreateDirectory(Dir);
                 var d = new Dictionary<string, object?>
                 {
-                    ["x"] = X, ["y"] = Y, ["w"] = W, ["scale"] = Scale, ["layout"] = Layout, ["wideScale"] = WideScale, ["appearance"] = Appearance, ["transparency"] = Transparency,
+                    ["x"] = X, ["y"] = Y, ["w"] = W, ["scale"] = Scale, ["layout"] = Layout, ["wideScale"] = WideScale,
+                    ["listPt"] = ListPt, ["wideCellPt"] = WideCellPt, ["wideRowPt"] = WideRowPt, ["appearance"] = Appearance, ["transparency"] = Transparency,
                     ["scope"] = Scope, ["colorBy"] = ColorBy, ["weekNumbers"] = WeekNumbers, ["summary"] = Summary,
                     ["monthOutline"] = MonthOutline, ["upcomingDays"] = UpcomingDays, ["locked"] = Locked,
                     ["skippedVersion"] = SkippedVersion,

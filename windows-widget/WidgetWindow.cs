@@ -137,6 +137,7 @@ namespace MateCalendar
             _card.Children.Add(_tint);
             _card.Children.Add(_stack);
             _outer.Children.Add(_card);
+            AddResizeGrips();
             Content = _outer;
 
             _glass.CornerRadius = new CornerRadius(Radius);
@@ -156,6 +157,7 @@ namespace MateCalendar
             SizeChanged += (s, e) =>
             {
                 if (!IsLoaded) return;
+                if (_resizing) { AnchorResize(e.NewSize); return; }
                 // 크기가 바뀌면(배수 · 요약 줄 · 화면 맞춤) 카드가 작업 영역 밖으로 나가지 않게
                 Dispatcher.BeginInvoke(new Action(KeepOnScreen), DispatcherPriority.Loaded);
                 QueueBackdrop();
@@ -272,9 +274,14 @@ namespace MateCalendar
         private (double list, double scale) Fit(double fixedPt)
         {
             double scale = _c.Settings.Scale;
-            double room = WorkDip().Height - 2 * Edge;
+            var work = WorkDip();
+            // 폭이 작업 영역을 넘으면(끌어서 크게 했는데 다른 모니터로 옮김) 배수부터 줄인다
+            double width = 2 * M + (_c.Settings.WeekNumbers ? Cell * WeekRatio : 0) + 7 * Cell;
+            if (width * scale > work.Width - 2 * Edge) scale = Math.Max(0.75, (work.Width - 2 * Edge) / width);
+            double room = work.Height - 2 * Edge;
             double avail = room / scale - fixedPt;
-            if (avail >= ListHeight) return (ListHeight, scale);
+            double want = _c.Settings.ListPt ?? ListHeight; // 가장자리를 끌어 정한 목록 높이
+            if (avail >= want) return (want, scale);
             if (avail >= MinList) return (Math.Floor(avail), scale);
             return (MinList, Math.Max(0.75, room / (fixedPt + MinList)));
         }
@@ -291,7 +298,8 @@ namespace MateCalendar
             double w = WideWidth();
             if (w * scale > roomW) scale = roomW / w;
             double row = Math.Floor((roomH / scale - WideFixed) / 6);
-            if (row >= WRow) row = WRow;
+            double want = _c.Settings.WideRowPt ?? WRow; // 가장자리를 끌어 정한 칸 높이
+            if (row >= want) row = want;
             else if (row < WMinRow)
             {
                 row = WMinRow;
@@ -300,7 +308,9 @@ namespace MateCalendar
             return (row, Math.Max(0.75, scale));
         }
 
-        private double WideGridWidth() => (_c.Settings.WeekNumbers ? WWeekCol : 0) + 7 * WCell;
+        /// <summary>넓게 펼친 화면의 날짜 칸 폭 - 가장자리를 끌어 정한 값, 없으면 90pt</summary>
+        private double CellW => _c.Settings.WideCellPt ?? WCell;
+        private double WideGridWidth() => (_c.Settings.WeekNumbers ? WWeekCol : 0) + 7 * CellW;
         private double WideWidth() => 2 * M + WideGridWidth() + WGap + WList;
 
         /// <summary>위젯이 있는(아직 안 놓였으면 놓일) 모니터의 작업 영역(DIP)</summary>
@@ -390,7 +400,7 @@ namespace MateCalendar
 
         private void UpdateBackdrop()
         {
-            if (Handle == IntPtr.Zero || _dragging) return;
+            if (Handle == IntPtr.Zero || _dragging || _resizing) return;
             Native.GetWindowRect(Handle, out var wr);
             double dpi = Native.GetDpiForWindow(Handle) / 96.0;
             double k = _scale.ScaleX * dpi;
@@ -478,6 +488,7 @@ namespace MateCalendar
         private void RenderWide()
         {
             var (rowH, scale) = WideFit();
+            _rowH = rowH;
             _scale.ScaleX = _scale.ScaleY = scale;
             _fitKey = FitKey();
             _stack.Width = WideWidth();
@@ -713,11 +724,197 @@ namespace MateCalendar
             Render();
         }
 
+        /* ── 가장자리를 끌어 크기 바꾸기 ─────────────────
+         * 카드 둘레의 그림자 자리(Pad)에 보이지 않는 손잡이를 둔다 - 왼쪽 · 오른쪽 · 아래 가장자리와 아래 두 모서리.
+         * (위쪽은 달 이름 줄이 옮기는 손잡이다.) 투명 창은 알파 0 인 곳을 누를 수 없어 알파 1/255 로 칠한다.
+         *   작게 보기: 옆으로 끌면 배수(달력 칸 비율은 그대로), 아래로 끌면 목록 높이
+         *   넓게 보기: 옆으로 끌면 날짜 칸 폭(제목이 더 보임), 아래로 끌면 날짜 칸 높이(하루에 작업 줄이 더)
+         * 왼쪽을 끌거나 기본 자리(오른쪽 위)면 오른쪽 끝을, 아니면 왼쪽 끝을 지킨다. 📌 자리 고정이면 크기도 고정. */
+
+        [Flags]
+        private enum Side { None = 0, Left = 1, Right = 2, Bottom = 4 }
+
+        private const double Grip = 7;   // 손잡이 두께(pt) - 카드 바깥 Pad(14pt) 안
+        private bool _resizing, _rsQueued;
+        private Side _rsSide;
+        private Native.POINT _rsStart;
+        private Native.RECT _rsRect;
+        private double _rsScale, _rsList, _rsFixed, _rsWidthPt, _rsCell, _rsRow;
+        private double _rowH = WRow;     // 넓게 보기에서 이번에 그린 날짜 칸 높이(pt)
+
+        private void AddResizeGrips()
+        {
+            var catchMouse = Theme.Brush(Color.FromArgb(1, 0, 0, 0));
+            void Add(Side side, HorizontalAlignment h, VerticalAlignment v, double w, double ht, Thickness margin, Cursor cursor)
+            {
+                var b = new Border { Background = catchMouse, HorizontalAlignment = h, VerticalAlignment = v, Margin = margin };
+                if (!double.IsNaN(w)) b.Width = w;
+                if (!double.IsNaN(ht)) b.Height = ht;
+                b.MouseEnter += (s, e) => b.Cursor = _c.Settings.Locked ? Cursors.Arrow : cursor;
+                b.MouseLeftButtonDown += (s, e) => BeginResize(b, side, e);
+                b.MouseMove += (s, e) => ResizeMove(b, e);
+                b.MouseLeftButtonUp += (s, e) => EndResize(b);
+                b.LostMouseCapture += (s, e) => EndResize(b);
+                _outer.Children.Add(b);
+            }
+            double o = Pad - Grip, corner = Grip + 5, inset = Pad + 5;
+            Add(Side.Left, HorizontalAlignment.Left, VerticalAlignment.Stretch, Grip, double.NaN, new Thickness(o, inset, 0, inset), Cursors.SizeWE);
+            Add(Side.Right, HorizontalAlignment.Right, VerticalAlignment.Stretch, Grip, double.NaN, new Thickness(0, inset, o, inset), Cursors.SizeWE);
+            Add(Side.Bottom, HorizontalAlignment.Stretch, VerticalAlignment.Bottom, double.NaN, Grip, new Thickness(inset, 0, inset, o), Cursors.SizeNS);
+            Add(Side.Left | Side.Bottom, HorizontalAlignment.Left, VerticalAlignment.Bottom, corner, corner, new Thickness(o, 0, 0, o), Cursors.SizeNESW);
+            Add(Side.Right | Side.Bottom, HorizontalAlignment.Right, VerticalAlignment.Bottom, corner, corner, new Thickness(0, 0, o, o), Cursors.SizeNWSE);
+        }
+
+        private void BeginResize(UIElement grip, Side side, MouseButtonEventArgs e)
+        {
+            if (_c.Settings.Locked || _dragging || _resizing || Handle == IntPtr.Zero) return;
+            Native.GetCursorPos(out var at);
+            StartResize(side, at);
+            grip.CaptureMouse();
+            e.Handled = true;
+        }
+
+        private void StartResize(Side side, Native.POINT at)
+        {
+            _rsStart = at;
+            Native.GetWindowRect(Handle, out _rsRect);
+            _rsSide = side;
+            _rsScale = _scale.ScaleX;
+            _rsList = _listH;
+            _rsFixed = _fixedPt;
+            _rsWidthPt = _stack.Width;
+            _rsCell = CellW;
+            _rsRow = _rowH;
+            _resizing = true;
+        }
+
+        private static double Clamp(double v, double lo, double hi) => Math.Max(lo, Math.Min(hi, v));
+
+        private void ResizeMove(UIElement grip, MouseEventArgs e)
+        {
+            if (!_resizing) return;
+            if (e.LeftButton != MouseButtonState.Pressed) { EndResize(grip); return; }
+            Native.GetCursorPos(out var p);
+            ResizeTo(p);
+        }
+
+        private void ResizeTo(Native.POINT p)
+        {
+            double dpi = Native.GetDpiForWindow(Handle) / 96.0;
+            double dx = (p.X - _rsStart.X) / dpi, dy = (p.Y - _rsStart.Y) / dpi; // DIP
+            double grow = (_rsSide & Side.Left) != 0 ? -dx : (_rsSide & Side.Right) != 0 ? dx : 0;
+            double down = (_rsSide & Side.Bottom) != 0 ? dy : 0;
+            var s = _c.Settings;
+            bool changed = false;
+            if (s.Wide)
+            {
+                if (grow != 0)
+                {
+                    double cell = Clamp(Math.Round(_rsCell + grow / _rsScale / 7), 64, 200);
+                    if (Math.Abs(cell - CellW) > 0.5) { s.WideCellPt = cell; changed = true; }
+                }
+                if (down != 0)
+                {
+                    double row = Clamp(Math.Round(_rsRow + down / _rsScale / 6), WMinRow, 240);
+                    if (Math.Abs(row - (s.WideRowPt ?? WRow)) > 0.5) { s.WideRowPt = row; changed = true; }
+                }
+            }
+            else
+            {
+                double scale = s.Scale;
+                if (grow != 0)
+                {
+                    scale = Clamp(Math.Round((_rsWidthPt * _rsScale + grow) / _rsWidthPt, 2), 0.8, 2.5);
+                    if (Math.Abs(scale - s.Scale) > 0.001) { s.Scale = scale; changed = true; }
+                }
+                if (down != 0)
+                {
+                    double list = Clamp(Math.Round(((_rsFixed + _rsList) * _rsScale + down) / scale - _rsFixed), MinList, 1200);
+                    if (Math.Abs(list - (s.ListPt ?? ListHeight)) > 0.5) { s.ListPt = list; changed = true; }
+                }
+            }
+            // 마우스가 움직일 때마다 다시 그리지 않고, 밀린 것은 한 번에
+            if (changed && !_rsQueued)
+            {
+                _rsQueued = true;
+                Dispatcher.BeginInvoke(new Action(() => { _rsQueued = false; Render(); }), DispatcherPriority.Background);
+            }
+        }
+
+        /// <summary>끄는 동안 크기가 바뀌었다 - 왼쪽을 끌었거나 기본 자리(오른쪽 위)면 오른쪽 끝을, 아니면 왼쪽 끝을 지킨다</summary>
+        private void AnchorResize(Size size)
+        {
+            if (Handle == IntPtr.Zero) return;
+            double dpi = Native.GetDpiForWindow(Handle) / 96.0;
+            int w = (int)Math.Round(size.Width * dpi);
+            bool keepRight = (_rsSide & Side.Left) != 0 || !_c.Settings.X.HasValue;
+            int x = keepRight ? _rsRect.Right - w : _rsRect.Left;
+            Native.SetWindowPos(Handle, IntPtr.Zero, x, _rsRect.Top, 0, 0, Native.SWP_NOSIZE | Native.SWP_NOZORDER | Native.SWP_NOACTIVATE);
+        }
+
+        private void EndResize(UIElement? grip)
+        {
+            if (!_resizing) return;
+            _resizing = false;
+            grip?.ReleaseMouseCapture();
+            var s = _c.Settings;
+            // 옮겨 둔 자리면 지금 자리를 남긴다(기본 자리는 그대로 오른쪽 위에 붙는다)
+            if (s.X.HasValue && s.Y.HasValue)
+            {
+                Native.GetWindowRect(Handle, out var r);
+                int x = r.Left, y = r.Top;
+                ClampToWork(ref x, ref y, r.Width, r.Height);
+                if (x != r.Left || y != r.Top)
+                    Native.SetWindowPos(Handle, IntPtr.Zero, x, y, 0, 0, Native.SWP_NOSIZE | Native.SWP_NOZORDER | Native.SWP_NOACTIVATE);
+                s.X = x;
+                s.Y = y;
+                s.W = r.Width;
+            }
+            s.Save();
+            Render();
+            _pin.ToBottom();
+            QueueBackdrop(force: true);
+        }
+
+        /// <summary>
+        /// 점검용(--demo --resize-test) - 마우스 대신 커서 자리를 흉내 내 왼쪽 아래 모서리를 끌어 본다
+        /// (사람의 마우스를 움직이지 않고 끄는 계산 · 다시 그리기 · 오른쪽 끝 지키기를 실제 창에서 본다)
+        /// </summary>
+        internal async void SelfTestResize(int dxPx, int dyPx)
+        {
+            await System.Threading.Tasks.Task.Delay(1200);
+            if (Handle == IntPtr.Zero) return;
+            Native.GetWindowRect(Handle, out var r);
+            var start = new Native.POINT { X = r.Left + PadPx(), Y = r.Bottom - PadPx() };
+            StartResize(Side.Left | Side.Bottom, start);
+            for (int i = 1; i <= 10; i++)
+            {
+                ResizeTo(new Native.POINT { X = start.X + dxPx * i / 10, Y = start.Y + dyPx * i / 10 });
+                await System.Threading.Tasks.Task.Delay(60);
+            }
+            await System.Threading.Tasks.Task.Delay(300);
+            EndResize(null);
+            Native.GetWindowRect(Handle, out var after);
+            Program.Log($"resize-test {(_c.Settings.Wide ? "wide" : "compact")} before {r.Left},{r.Top}-{r.Right},{r.Bottom} after {after.Left},{after.Top}-{after.Right},{after.Bottom} " +
+                $"scale {_c.Settings.Scale:F2} list {_c.Settings.ListPt} cell {_c.Settings.WideCellPt} row {_c.Settings.WideRowPt}");
+        }
+
+        /// <summary>끌어서 정한 크기를 지우고 기본 크기로(⋯ 메뉴)</summary>
+        public void ResetSize()
+        {
+            var s = _c.Settings;
+            if (s.Wide) { s.WideScale = 1.25; s.WideCellPt = null; s.WideRowPt = null; }
+            else { s.Scale = 1.5; s.ListPt = null; }
+            s.Save();
+            Render();
+            QueueBackdrop(force: true);
+        }
+
         /* ── 끌어서 옮기기 ───────────────────────────── */
 
         private void BeginDrag(UIElement handle, MouseButtonEventArgs e)
         {
-            if (_c.Settings.Locked) return;
+            if (_c.Settings.Locked || _resizing) return;
             Native.GetCursorPos(out _dragStart);
             Native.GetWindowRect(Handle, out _dragRect);
             _dragging = true;
@@ -872,7 +1069,7 @@ namespace MateCalendar
             bool weekNumbers = _c.Settings.WeekNumbers;
             var g = new Grid();
             g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(weekNumbers ? WWeekCol : 0) });
-            for (int i = 0; i < 7; i++) g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(WCell) });
+            for (int i = 0; i < 7; i++) g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(CellW) });
             g.RowDefinitions.Add(new RowDefinition { Height = new GridLength(WWeekday) });
             for (int i = 0; i < 6; i++) g.RowDefinitions.Add(new RowDefinition { Height = new GridLength(rowH) });
 

@@ -127,6 +127,8 @@ namespace MateCalendar
                 // --wide : 넓게 펼친 화면, --update-ready : 새 판이 나온 것처럼(단추만 보이고 설치는 안 한다)
                 if (a.Contains("--wide")) controller.Settings.Layout = "wide";
                 if (a.Contains("--update-ready")) controller.DemoUpdate("9.9.9");
+                // --resize-test : 왼쪽 아래 모서리를 왼쪽으로 200px · 아래로 150px 끌어 본 결과를 log.txt 에(점검용)
+                if (a.Contains("--resize-test")) app.Startup += (s, e) => controller.SelfTestResize(-200, 150);
             }
             app.Startup += (s, e) => controller.Start();
             app.Run();
@@ -171,6 +173,9 @@ namespace MateCalendar
         public string UpdateNotes => _update?.Notes ?? "";
         /// <summary>새 판을 받는 중(단추를 다시 못 누르게)</summary>
         public bool Updating { get; private set; }
+
+        internal void SelfTestResize(int dx, int dy) => Application.Current.Dispatcher.BeginInvoke(new Action(() => _widget?.SelfTestResize(dx, dy)),
+            System.Windows.Threading.DispatcherPriority.ApplicationIdle);
 
         /// <summary>점검용 - 새 판이 나온 것처럼 단추를 보인다</summary>
         internal void DemoUpdate(string version) =>
@@ -602,7 +607,11 @@ namespace MateCalendar
             double sc = Settings.ActiveScale, def = Settings.Wide ? 1.25 : 1.5;
             MenuItem Size(double v) => Item(v.ToString("0.##", CultureInfo.InvariantCulture) + "배" + (Math.Abs(v - def) < 0.01 ? " (기본)" : ""),
                 () => SetScale(v), Math.Abs(sc - v) < 0.01);
-            m.Items.Add(Sub(Settings.Wide ? "크기(넓은 화면)" : "크기", Size(1.0), Size(1.25), Size(1.5), Size(1.75), Size(2.0)));
+            bool custom = Settings.Wide ? Settings.WideCellPt.HasValue || Settings.WideRowPt.HasValue : Settings.ListPt.HasValue;
+            m.Items.Add(Sub(Settings.Wide ? "크기(넓은 화면)" : "크기", Size(1.0), Size(1.25), Size(1.5), Size(1.75), Size(2.0),
+                new Separator(),
+                Item("기본 크기로", () => _widget?.ResetSize(), false, custom || Math.Abs(sc - def) > 0.01),
+                Item("가장자리를 끌어 크기를 바꿉니다", null, false, false)));
             m.Items.Add(Sub("모양",
                 Item("시스템 설정 따름", () => SetLook(() => Settings.Appearance = "system"), Settings.Appearance == "system"),
                 Item("밝게", () => SetLook(() => Settings.Appearance = "light"), Settings.Appearance == "light"),
@@ -806,6 +815,11 @@ namespace MateCalendar
                 c.Settings.WideScale = double.Parse(Arg("--scale", "1.25"), CultureInfo.InvariantCulture);
             }
             else c.Settings.Scale = double.Parse(Arg("--scale", "1.5"), CultureInfo.InvariantCulture);
+            // --list N(작게 보기 목록 pt) · --cell N · --row N(넓게 보기 날짜 칸 pt) : 가장자리를 끌어 정한 크기
+            double? Pt(string name) => Arg(name, "") is var v && v != "" ? double.Parse(v, CultureInfo.InvariantCulture) : (double?)null;
+            c.Settings.ListPt = Pt("--list");
+            c.Settings.WideCellPt = Pt("--cell");
+            c.Settings.WideRowPt = Pt("--row");
             // --update-ready : 새 판이 나왔을 때의 업데이트 단추
             if (args.Contains("--update-ready")) c.DemoUpdate("1.0.2");
             c.Settings.WeekNumbers = args.Contains("--weeks");
