@@ -142,6 +142,9 @@ namespace MateCalendar
         public bool Locked;
         public string? SkippedVersion;
         public bool Scratch;               // 점검(--demo)용 - 파일에서 읽지도 남기지도 않는다
+        public bool AutoUpdate = true;     // 새 판이 나오면 저절로 받아 깐다
+        public string? AutoTriedVersion;   // 저절로 깔아 본 판과 그 시각 - 실패 · 판 표기 실수로 같은 판을 되풀이해 깔지 않게
+        public DateTime? AutoTriedAt;
 
         public bool Wide => Layout == "wide";
         /// <summary>지금 화면(작게 · 넓게)의 크기</summary>
@@ -175,6 +178,10 @@ namespace MateCalendar
                     UpcomingDays = (int)Clamp(d.Long("upcomingDays", 7), 0, 31),
                     Locked = d.Bool("locked"),
                     SkippedVersion = d.StrOrNull("skippedVersion"),
+                    AutoUpdate = d.Bool("autoUpdate", true),
+                    AutoTriedVersion = d.StrOrNull("autoTriedVersion"),
+                    AutoTriedAt = DateTime.TryParse(d.Str("autoTriedAt"), CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var tried)
+                        ? tried.ToUniversalTime() : (DateTime?)null,
                 };
                 return s;
             }
@@ -193,6 +200,8 @@ namespace MateCalendar
                     ["scope"] = Scope, ["colorBy"] = ColorBy, ["weekNumbers"] = WeekNumbers, ["summary"] = Summary,
                     ["monthOutline"] = MonthOutline, ["upcomingDays"] = UpcomingDays, ["locked"] = Locked,
                     ["skippedVersion"] = SkippedVersion,
+                    ["autoUpdate"] = AutoUpdate, ["autoTriedVersion"] = AutoTriedVersion,
+                    ["autoTriedAt"] = AutoTriedAt?.ToUniversalTime().ToString("o", CultureInfo.InvariantCulture),
                 };
                 File.WriteAllText(File_, Json.Write(d), new UTF8Encoding(false));
             }

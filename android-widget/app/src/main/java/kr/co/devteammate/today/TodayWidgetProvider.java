@@ -86,6 +86,15 @@ public class TodayWidgetProvider extends AppWidgetProvider {
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE));
 
         setEmptyClick(ctx, v, !Api.signedIn(ctx));
+
+        // 새 판 - 저절로 깔다 안드로이드가 확인을 기다릴 때만 보인다
+        boolean confirm = Updater.needsConfirm(ctx);
+        v.setViewVisibility(R.id.update, confirm ? View.VISIBLE : View.GONE);
+        if (confirm) {
+            v.setOnClickPendingIntent(R.id.update, PendingIntent.getActivity(ctx, 6,
+                    new Intent(ctx, MainActivity.class).setAction(MainActivity.ACTION_UPDATE).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
+        }
         return v;
     }
 

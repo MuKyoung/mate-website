@@ -238,8 +238,12 @@ namespace MateCalendar
         private void KeepOnScreen()
         {
             if (!_placed || _dragging || Handle == IntPtr.Zero) return;
-            if (!_c.Settings.X.HasValue || !_c.Settings.Y.HasValue) { PlaceFirst(); return; }
             Native.GetWindowRect(Handle, out var r);
+            if (!_c.Settings.X.HasValue || !_c.Settings.Y.HasValue || !OnScreen(SavedLeft(r.Width), _c.Settings.Y.Value, r.Width, r.Height))
+            {
+                PlaceFirst();
+                return;
+            }
             // 저장한 자리에서 다시 맞춘다 - 넓게 펼쳐 화면 밖으로 밀려 당겼던 카드도 접으면 원래 자리로 돌아온다
             int x = SavedLeft(r.Width), y = _c.Settings.Y.Value;
             ClampToWork(ref x, ref y, r.Width, r.Height);
@@ -351,6 +355,7 @@ namespace MateCalendar
             _c.Settings.W = null;
             _c.Settings.Save();
             PlaceFirst();
+            Refit(); // 다른 크기의 모니터로 돌아왔으면 그 화면에 맞춘다
         }
 
         private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
@@ -393,8 +398,8 @@ namespace MateCalendar
             var card = new Native.RECT { Left = wr.Left + pad, Top = wr.Top + pad, Right = wr.Right - pad, Bottom = wr.Bottom - pad };
             var key = $"{card.Left},{card.Top},{card.Right},{card.Bottom}|{Backdrop.Signature(card)}";
             if (key == _backdropKey) return;
-            _backdropKey = key;
             var bmp = Backdrop.Make(card, 34 * dpi);
+            _backdropKey = bmp != null ? key : ""; // 그림을 못 읽었으면(슬라이드 쇼가 쓰는 중 등) 다음에 다시 해 본다
             _glass.Background = bmp != null
                 ? new ImageBrush(bmp) { Stretch = Stretch.Fill }
                 : Theme.Brush(_t.Fallback);
@@ -412,8 +417,16 @@ namespace MateCalendar
             Render();
         }
 
+        private bool _renderAfterDrag;
+
         public void Render()
         {
+            // 끄는 동안 다시 그리면 손잡이가 없어져 끌기가 끊긴다 - 놓을 때 그린다
+            if (_dragging)
+            {
+                _renderAfterDrag = true;
+                return;
+            }
             // 새로 읽어 다시 그릴 때 보던 목록 자리를 지킨다(고른 날이 그대로일 때)
             double? keep = _scroll != null && _listFor == _selected ? _scroll.VerticalOffset : (double?)null;
             _t = Theme.Create(_c.Settings.Appearance, _c.Settings.Transparency);
@@ -561,10 +574,30 @@ namespace MateCalendar
         {
             return new TextBlock
             {
-                Text = text, FontSize = size, Foreground = Theme.Brush(color), FontWeight = weight ?? Theme.Regular,
+                Text = KeepWords(text), FontSize = size, Foreground = Theme.Brush(color), FontWeight = weight ?? Theme.Regular,
                 FontFamily = Theme.Font,
             };
         }
+
+        /// <summary>
+        /// 한글 낱말 가운데서 줄이 바뀌지 않게('작업 / 이 없습니다' → '작업이 / 없습니다') 붙어 있는 글자 사이에
+        /// 보이지 않는 낱말 이음표(U+2060)를 넣는다. WPF 는 CSS 의 word-break: keep-all 이 없다. 띄어쓰기에서만 줄이 바뀐다
+        /// </summary>
+        internal static string KeepWords(string s)
+        {
+            if (s.Length < 2) return s;
+            var sb = new System.Text.StringBuilder(s.Length * 2);
+            for (int i = 0; i < s.Length; i++)
+            {
+                char c = s[i];
+                sb.Append(c);
+                if (i + 1 < s.Length && Hangul(c) && !char.IsWhiteSpace(s[i + 1]) && (Hangul(s[i + 1]) || char.IsLetterOrDigit(s[i + 1]) || s[i + 1] == '.'))
+                    sb.Append('⁠');
+            }
+            return sb.ToString();
+        }
+
+        private static bool Hangul(char c) => c >= '가' && c <= '힣';
 
         /* ── 머리: 달 이름 · ‹ ○ › ───────────────────── */
 
@@ -625,8 +658,9 @@ namespace MateCalendar
                 ToolTip = locked ? null : "끌어서 옮기기",
             };
             handle.MouseLeftButtonDown += (s, e) => BeginDrag(handle, e);
-            handle.MouseMove += (s, e) => DragMove_(e);
+            handle.MouseMove += (s, e) => DragMove_(handle, e);
             handle.MouseLeftButtonUp += (s, e) => EndDrag(handle);
+            handle.LostMouseCapture += (s, e) => EndDrag(handle); // 다른 창이 마우스를 가져갔거나 손잡이가 사라졌다
             return handle;
         }
 
@@ -691,9 +725,10 @@ namespace MateCalendar
             e.Handled = true;
         }
 
-        private void DragMove_(MouseEventArgs e)
+        private void DragMove_(UIElement handle, MouseEventArgs e)
         {
             if (!_dragging) return;
+            if (e.LeftButton != MouseButtonState.Pressed) { EndDrag(handle); return; } // 단추를 놓친 채 돌아왔다
             Native.GetCursorPos(out var p);
             Native.SetWindowPos(Handle, IntPtr.Zero, _dragRect.Left + p.X - _dragStart.X, _dragRect.Top + p.Y - _dragStart.Y, 0, 0,
                 Native.SWP_NOSIZE | Native.SWP_NOZORDER | Native.SWP_NOACTIVATE);
@@ -716,8 +751,13 @@ namespace MateCalendar
             _c.Settings.Save();
             _pin.ToBottom();
             QueueBackdrop();
-            // 다른 크기 · 배율의 모니터로 옮겼으면 그 화면에 맞춘다
-            Refit();
+            // 끄는 동안 미뤄 둔 다시 그리기가 있으면 지금(그 안에서 화면 맞춤도 한다), 없으면 옮긴 모니터에 맞춘다
+            if (_renderAfterDrag)
+            {
+                _renderAfterDrag = false;
+                Render();
+            }
+            else Refit();
         }
 
         /* ── 달력 ─────────────────────────────────────── */
@@ -775,7 +815,7 @@ namespace MateCalendar
             {
                 if (weekNumbers)
                 {
-                    int wn = ko.Calendar.GetWeekOfYear(start.AddDays(row * 7), CalendarWeekRule.FirstDay, DayOfWeek.Sunday);
+                    int wn = ko.Calendar.GetWeekOfYear(start.AddDays(row * 7 + 6), CalendarWeekRule.FirstDay, DayOfWeek.Sunday);
                     var tb = Text(wn.ToString(CultureInfo.InvariantCulture), 10, _t.Secondary);
                     tb.HorizontalAlignment = HorizontalAlignment.Center;
                     tb.VerticalAlignment = VerticalAlignment.Center;
@@ -818,7 +858,6 @@ namespace MateCalendar
             b.MouseLeftButtonDown += (s, e) =>
             {
                 e.Handled = true;
-                if (e.ClickCount >= 2) { _c.OpenHub("calendar"); return; }
                 Select(d);
             };
             _cells.Add((d, b));
@@ -854,7 +893,7 @@ namespace MateCalendar
             {
                 if (weekNumbers)
                 {
-                    int wn = ko.Calendar.GetWeekOfYear(start.AddDays(row * 7), CalendarWeekRule.FirstDay, DayOfWeek.Sunday);
+                    int wn = ko.Calendar.GetWeekOfYear(start.AddDays(row * 7 + 6), CalendarWeekRule.FirstDay, DayOfWeek.Sunday);
                     var tb = Text(wn.ToString(CultureInfo.InvariantCulture), 10, _t.Secondary);
                     tb.HorizontalAlignment = HorizontalAlignment.Center;
                     tb.Margin = new Thickness(0, 5, 2, 0);
@@ -909,7 +948,6 @@ namespace MateCalendar
             b.MouseLeftButtonDown += (s, e) =>
             {
                 e.Handled = true;
-                if (e.ClickCount >= 2) { _c.OpenHub("calendar"); return; }
                 Select(d);
             };
             _cells.Add((d, b));
@@ -957,7 +995,8 @@ namespace MateCalendar
         private string TaskTip(TaskItem t, string action)
         {
             var who = _c.Settings.Scope == "all" && t.Assignee != null && _memberName.TryGetValue(t.Assignee, out var n) && n != "" ? " · " + n : "";
-            return $"{t.Key} {t.Title}\n{TaskItem.StatusLabel(t.Status)} · 마감 {t.Due.Month}월 {t.Due.Day}일{who}\n{action}";
+            var pr = t.Priority == "urgent" ? " · 급함" : t.Priority == "high" ? " · 높음" : "";
+            return $"{t.Key} {t.Title}\n{TaskItem.StatusLabel(t.Status)}{pr} · 마감 {t.Due.Month}월 {t.Due.Day}일{who}\n{action}";
         }
 
         private void PaintCells()
@@ -1135,9 +1174,7 @@ namespace MateCalendar
         private FrameworkElement RefreshButton()
         {
             bool busy = _c.Refreshing;
-            string when = _c.Data.SyncedAt.HasValue
-                ? "\n마지막으로 읽은 시각 " + _c.Data.SyncedAt.Value.ToString("HH:mm", CultureInfo.InvariantCulture)
-                : "";
+            string when = _c.Data.SyncedAt.HasValue ? "\n마지막으로 읽은 시각 " + When(_c.Data.SyncedAt.Value) : "";
             var b = (Border)IconButton(Icons.Refresh, busy ? "새로 읽는 중…" : "새로 읽기" + when, () =>
             {
                 if (!_c.Refreshing) _ = _c.Refresh(true, manual: true);
@@ -1300,6 +1337,8 @@ namespace MateCalendar
                 return;
             }
 
+            if (_c.Error != null) _list.Children.Add(StaleNotice());
+
             bool isToday = _selected == _today;
             int sections = 0;
             bool overdue = false;
@@ -1335,9 +1374,10 @@ namespace MateCalendar
 
             if (sections == 0)
             {
-                string msg = _c.Settings.UpcomingDays > 0
-                    ? (isToday ? $"오늘부터 {_c.Settings.UpcomingDays}일 동안 마감인 작업이 없습니다." : $"이날부터 {_c.Settings.UpcomingDays}일 동안 마감인 작업이 없습니다.")
-                    : "이날 마감인 작업이 없습니다.";
+                int n = _c.Settings.UpcomingDays;
+                string msg = n > 0
+                    ? (isToday ? $"오늘과 그 뒤 {n}일 동안 마감인 작업이 없습니다." : $"이날과 그 뒤 {n}일 동안 마감인 작업이 없습니다.")
+                    : isToday ? "오늘 마감인 작업이 없습니다." : "이날 마감인 작업이 없습니다.";
                 // 기한 지난 줄이 있으면 그 아래에 작게, 아니면 목록 칸 가운데에
                 _list.Children.Add(Message(msg, null, null, fill: !overdue));
             }
@@ -1346,6 +1386,55 @@ namespace MateCalendar
                 _list.Children.Add(new Border { Height = 10 }); // 끝이 흐려지는 자리
             }
             _scroll.ScrollToTop();
+        }
+
+        /// <summary>'오늘 14:02' · '어제 18:30' · '11월 21일 09:05'(해가 다르면 연도까지)</summary>
+        private string When(DateTime t)
+        {
+            var hm = t.ToString("HH:mm", CultureInfo.InvariantCulture);
+            if (t.Date == _today) return "오늘 " + hm;
+            if (t.Date == _today.AddDays(-1)) return "어제 " + hm;
+            return (t.Year != _today.Year ? $"{t.Year}년 " : "") + $"{t.Month}월 {t.Day}일 {hm}";
+        }
+
+        /// <summary>새로 읽지 못했다 - 까닭과 지금 보이는 작업을 언제 읽었는지, 다시 읽기(누르면)</summary>
+        private FrameworkElement StaleNotice()
+        {
+            var body = new StackPanel();
+            var head = new DockPanel { LastChildFill = true };
+            var retry = Text(_c.Refreshing ? "읽는 중…" : "다시 읽기", 10.5, _t.Accent, Theme.Medium);
+            retry.VerticalAlignment = VerticalAlignment.Center;
+            DockPanel.SetDock(retry, Dock.Right);
+            head.Children.Add(retry);
+            var warn = Icons.Make(Icons.Warning, 12, Theme.Brush(_t.Secondary));
+            warn.Margin = new Thickness(0, 0, 5, 0);
+            DockPanel.SetDock(warn, Dock.Left);
+            head.Children.Add(warn);
+            var title = Text("새로 읽지 못했습니다", 11, _t.Header, Theme.Medium);
+            title.TextTrimming = TextTrimming.CharacterEllipsis;
+            head.Children.Add(title);
+            body.Children.Add(head);
+            var why = Text(_c.Error + " " + (_c.Data.SyncedAt.HasValue ? When(_c.Data.SyncedAt.Value) + "에 읽은 작업입니다." : "읽은 시각을 모르는 저장된 작업입니다."),
+                10, _t.Secondary);
+            why.TextWrapping = TextWrapping.Wrap;
+            why.Margin = new Thickness(17, 2, 0, 0);
+            body.Children.Add(why);
+
+            var row = new Border
+            {
+                CornerRadius = new CornerRadius(8), Background = Theme.Brush(_t.Quaternary), Child = body, Cursor = Cursors.Hand,
+                Padding = new Thickness(8, 6, 8, 6), Margin = new Thickness(0, 4, 0, 2),
+            };
+            var normal = row.Background;
+            var hover = Theme.Brush(_t.Hover);
+            row.MouseEnter += (s, e) => row.Background = hover;
+            row.MouseLeave += (s, e) => row.Background = normal;
+            row.MouseLeftButtonUp += (s, e) =>
+            {
+                e.Handled = true;
+                if (!_c.Refreshing) _ = _c.Refresh(true, manual: true);
+            };
+            return row;
         }
 
         /// <summary>기한 지난 작업 한 줄 - 누르면 펼치고 접는다</summary>
@@ -1472,6 +1561,7 @@ namespace MateCalendar
 
             // 작은 글: MATE-12 · 진행 중 (· 담당자)
             var sub = $"{t.Key} · {TaskItem.StatusLabel(t.Status)}";
+            if (!t.Done && (t.Priority == "urgent" || t.Priority == "high")) sub += t.Priority == "urgent" ? " · 급함" : " · 높음";
             if (_c.Settings.Scope == "all" && t.Assignee != null && _memberName.TryGetValue(t.Assignee, out var who) && who != "")
                 sub += " · " + who;
             var subtitle = Text(sub, 10, _t.Secondary);

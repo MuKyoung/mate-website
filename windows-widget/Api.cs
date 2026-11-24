@@ -13,7 +13,13 @@ namespace MateCalendar
     internal sealed class ApiException : Exception
     {
         public bool NeedLogin { get; }
-        public ApiException(string message, bool needLogin) : base(message) { NeedLogin = needLogin; }
+        /// <summary>기다리는 사이 로그아웃했거나 다른 계정으로 로그인했다 - 이 응답으로는 아무것도 바꾸지 않는다</summary>
+        public bool Stale { get; }
+        public ApiException(string message, bool needLogin, bool stale = false) : base(message)
+        {
+            NeedLogin = needLogin;
+            Stale = stale;
+        }
     }
 
     /// <summary>
@@ -50,6 +56,12 @@ namespace MateCalendar
 
         private static Session? _session;
         private static bool _loaded;
+        private static int _epoch;
+
+        /// <summary>로그인 · 로그아웃마다 올라가는 번호. 요청을 시작할 때와 달라졌으면 그 응답은 버린다</summary>
+        public static int Epoch => _epoch;
+
+        private static ApiException StaleError() => new ApiException("로그인이 바뀌었습니다.", false, true);
 
         public static Session? Current
         {
@@ -91,12 +103,14 @@ namespace MateCalendar
         {
             _loaded = true;
             _session = null;
+            _epoch++;
             Persist();
             Vault.Delete("cache.bin");
         }
 
-        private static void Save(Dictionary<string, object?> s)
+        private static void Save(Dictionary<string, object?> s, bool newLogin = false)
         {
+            if (newLogin) _epoch++;
             var user = s.TryGetValue("user", out var u) ? u as Dictionary<string, object?> : null;
             var prev = _session;
             _session = new Session
@@ -119,19 +133,30 @@ namespace MateCalendar
         {
             public int Code;
             public string Body = "";
+            /// <summary>Prefer: count=exact 로 물었을 때 Content-Range 의 전체 줄 수</summary>
+            public long? Total;
         }
 
-        private static async Task<Res> Call(HttpMethod method, string path, string? bearer, string? json)
+        private static async Task<Res> Call(HttpMethod method, string path, string? bearer, string? json, string? prefer = null)
         {
             using var req = new HttpRequestMessage(method, Base + path);
             req.Headers.Add("apikey", Key);
             req.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             if (bearer != null) req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", bearer);
+            if (prefer != null) req.Headers.Add("Prefer", prefer);
             if (json != null) req.Content = new StringContent(json, Encoding.UTF8, "application/json");
             try
             {
                 using var res = await Http.SendAsync(req).ConfigureAwait(true);
-                return new Res { Code = (int)res.StatusCode, Body = await res.Content.ReadAsStringAsync().ConfigureAwait(true) };
+                var r = new Res { Code = (int)res.StatusCode, Body = await res.Content.ReadAsStringAsync().ConfigureAwait(true) };
+                // 'Content-Range: 0-999/2345' - 뒤의 수가 전체 줄 수('*' 면 모름)
+                if (res.Content.Headers.TryGetValues("Content-Range", out var cr) || res.Headers.TryGetValues("Content-Range", out cr))
+                {
+                    var v = cr.FirstOrDefault() ?? "";
+                    int slash = v.LastIndexOf('/');
+                    if (slash >= 0 && long.TryParse(v.Substring(slash + 1), out var total)) r.Total = total;
+                }
+                return r;
             }
             catch (Exception e) when (e is HttpRequestException || e is TaskCanceledException)
             {
@@ -159,7 +184,7 @@ namespace MateCalendar
             if (r.Code >= 300) throw new ApiException($"로그인하지 못했습니다({r.Code}). 잠시 뒤 다시 해 주세요.", true);
             if (!(ParseBody(r) is Dictionary<string, object?> s)) throw new ApiException("서버 답을 읽지 못했습니다.", true);
             await Gate.WaitAsync();
-            try { Save(s); }
+            try { Save(s, newLogin: true); }
             finally { Gate.Release(); }
             await CheckMember();
         }
@@ -192,8 +217,11 @@ namespace MateCalendar
                 var s = Current ?? throw new ApiException("로그인해 주세요.", true);
                 if (!force && s.Access != "" && s.ExpiresAt - 60 > DateTimeOffset.UtcNow.ToUnixTimeSeconds()) return s.Access;
 
+                int epoch = _epoch;
                 var body = Json.Write(new Dictionary<string, object?> { ["refresh_token"] = s.Refresh });
                 var r = await Call(HttpMethod.Post, "/auth/v1/token?grant_type=refresh_token", null, body);
+                // 기다리는 사이 로그아웃 · 다시 로그인했으면 옛 로그인을 되살리지 않는다
+                if (epoch != _epoch) throw StaleError();
                 if (r.Code == 400 || r.Code == 401)
                 {
                     SignOut();
@@ -208,35 +236,65 @@ namespace MateCalendar
         }
 
         /// <summary>읽기. 접근 토큰이 그사이 끝났으면 한 번만 새로 받아 다시 읽는다</summary>
-        private static async Task<Res> Get(string path)
+        private static async Task<Res> Get(string path, string? prefer = null)
         {
-            var r = await Call(HttpMethod.Get, path, await Access(false), null);
-            if (r.Code == 401) r = await Call(HttpMethod.Get, path, await Access(true), null);
-            if (r.Code == 401) throw new ApiException("로그인이 풀렸습니다. 다시 로그인해 주세요.", true);
+            int epoch = _epoch;
+            var r = await Call(HttpMethod.Get, path, await Access(false), null, prefer);
+            if (r.Code == 401) r = await Call(HttpMethod.Get, path, await Access(true), null, prefer);
+            if (epoch != _epoch) throw StaleError();
+            if (r.Code == 401)
+            {
+                // 새로 받은 토큰으로도 거절됐다 - 이 로그인은 더 쓸 수 없으니 풀고 로그인 창으로 안내한다
+                SignOut();
+                throw new ApiException("로그인이 풀렸습니다. 다시 로그인해 주세요.", true);
+            }
             return r;
         }
 
         /* ── 읽기 ─────────────────────────────────────── */
 
-        /// <summary>마감일이 있는 작업. mine 이면 내가 담당인 것만</summary>
+        /// <summary>
+        /// 마감일이 있는 작업. mine 이면 내가 담당인 것만.
+        /// Supabase 는 한 번에 1000줄까지만 돌려준다 - 마감일 오래된 순이라 한 번만 읽으면 오늘 · 앞날 작업이 잘린다.
+        /// 전체 줄 수(Content-Range)를 받아 다 읽을 때까지 쪽을 넘기고, 같은 작업이 두 번 오면 하나만 둔다
+        /// </summary>
         public static async Task<List<TaskItem>> Tasks(bool mine)
         {
+            const int page = 1000;
             var q = "/rest/v1/tm_tasks?select=id,num,title,status,priority,domain,labels,start_date,due_date,assignee"
-                + "&due_date=not.is.null&order=due_date.asc,num.asc&limit=5000";
+                + "&due_date=not.is.null&order=due_date.asc,num.asc,id.asc";
             if (mine) q += "&assignee=eq." + Uri.EscapeDataString(Current?.Uid ?? "");
-            var r = await Get(q);
-            if (r.Code >= 300) throw new ApiException($"작업을 읽지 못했습니다({r.Code}).", false);
-            var list = Json.Rows(ParseBody(r)).Select(TaskItem.From).Where(t => t != null).Select(t => t!).ToList();
+            var list = new List<TaskItem>();
+            var seen = new HashSet<string>();
+            long? total = null;
+            int offset = 0;
+            for (int i = 0; i < 100; i++)
+            {
+                var r = await Get($"{q}&limit={page}&offset={offset}", "count=exact");
+                if (r.Code >= 300) throw new ApiException($"작업을 읽지 못했습니다({r.Code}).", false);
+                total ??= r.Total;
+                var rows = Json.Rows(ParseBody(r)).ToList();
+                if (rows.Count == 0) break;
+                foreach (var row in rows)
+                {
+                    var t = TaskItem.From(row);
+                    if (t != null && seen.Add(t.Id)) list.Add(t);
+                }
+                offset += rows.Count;
+                // 전체 줄 수를 알면 그만큼, 모르면 빈 쪽이 올 때까지
+                if (total.HasValue && offset >= total.Value) break;
+            }
             // 승인이 취소되면 RLS 가 빈 목록을 준다 - '작업 없음'으로 보이지 않게 비었을 때만 팀원 줄을 확인한다
             if (list.Count == 0) await CheckMember();
             return list;
         }
 
-        /// <summary>영역(이름 · 색). 표가 아직 없는 DB 면 빈 목록</summary>
+        /// <summary>영역(이름 · 색). 표가 아직 없는 DB(404)면 빈 목록, 그 밖의 실패는 알린다(전에 읽은 것을 지우지 않게)</summary>
         public static async Task<List<DomainItem>> Domains()
         {
             var r = await Get("/rest/v1/tm_domains?select=id,label,color,sort&order=sort.asc");
-            if (r.Code >= 300) return new List<DomainItem>();
+            if (r.Code == 404) return new List<DomainItem>();
+            if (r.Code >= 300) throw new ApiException($"영역 정보를 읽지 못했습니다({r.Code}).", false);
             return Json.Rows(ParseBody(r)).Select(d => new DomainItem
             {
                 Id = d.Str("id"), Label = d.Str("label"), Color = d.Str("color", "gray"), Sort = d.Num("sort"),
@@ -248,7 +306,8 @@ namespace MateCalendar
         {
             var r = await Get("/rest/v1/tm_colors?select=id,color");
             var map = new Dictionary<string, string>();
-            if (r.Code >= 300) return map;
+            if (r.Code == 404) return map;
+            if (r.Code >= 300) throw new ApiException($"색 정보를 읽지 못했습니다({r.Code}).", false);
             foreach (var d in Json.Rows(ParseBody(r))) map[d.Str("id")] = d.Str("color", "gray");
             return map;
         }
@@ -257,7 +316,7 @@ namespace MateCalendar
         public static async Task<List<MemberItem>> Members()
         {
             var r = await Get("/rest/v1/tm_members?select=id,name,active&order=created_at.asc");
-            if (r.Code >= 300) return new List<MemberItem>();
+            if (r.Code >= 300) throw new ApiException($"팀원 정보를 읽지 못했습니다({r.Code}).", false);
             return Json.Rows(ParseBody(r)).Select(d => new MemberItem
             {
                 Id = d.Str("id"), Name = d.Str("name"), Active = d.Bool("active"),

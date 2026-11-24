@@ -93,6 +93,21 @@
             android:textSize="13.5sp" />
     </FrameLayout>
 
+    <!-- 새 판을 깔려면 안드로이드가 한 번 확인을 받아야 할 때만 보인다 - 누르면 앱이 확인 창을 연다 -->
+    <TextView
+        android:id="@+id/update"
+        android:layout_width="match_parent"
+        android:layout_height="32dp"
+        android:layout_marginTop="6dp"
+        android:background="@drawable/btn_primary"
+        android:gravity="center"
+        android:maxLines="1"
+        android:text="새 판이 있습니다 · 눌러서 업데이트"
+        android:textColor="#FFFFFF"
+        android:textSize="12.5sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
+
     <TextView
         android:id="@+id/status"
         android:layout_width="match_parent"

@@ -61,45 +61,75 @@ namespace MateCalendar
             set => SetAutoStart(value);
         }
 
+        /// <summary>켜기는 둘 중 하나로 켜졌을 때, 끄기는 둘 다 없어졌을 때 true</summary>
         public static bool SetAutoStart(bool on)
         {
-            bool ok = false;
+            bool run = false;
             try
             {
                 using var k = Registry.CurrentUser.CreateSubKey(RunKey);
                 if (on) k.SetValue(RunName, $"\"{Exe}\" --autostart");
                 else k.DeleteValue(RunName, false);
-                ok = true;
+                run = true;
             }
             catch (Exception e) { Program.Log("autostart(run): " + e.Message); }
 
+            bool link = false;
             try
             {
-                if (on && !ok) ok = MakeShortcut(StartupLink, Exe, "MATE 캘린더 자동 실행", "--autostart");
-                else if (!on && File.Exists(StartupLink)) File.Delete(StartupLink);
-                else if (on && File.Exists(StartupLink)) File.Delete(StartupLink); // Run 값을 썼으면 바로 가기는 겹치지 않게
+                if (on && !run) link = MakeShortcut(StartupLink, Exe, "MATE 캘린더 자동 실행", "--autostart");
+                else if (File.Exists(StartupLink)) File.Delete(StartupLink); // 끌 때, 또는 Run 값을 썼으면 겹치지 않게
             }
             catch (Exception e) { Program.Log("autostart(link): " + e.Message); }
-            return ok || !on;
+
+            if (on) return run || link;
+            // 끄기는 실제로 둘 다 없어졌는지 다시 본다(지우다 막혔으면 다음 로그인에 또 켜진다)
+            bool runLeft;
+            try
+            {
+                using var k = Registry.CurrentUser.OpenSubKey(RunKey);
+                runLeft = k?.GetValue(RunName) != null;
+            }
+            catch { runLeft = !run; }
+            return !runLeft && !File.Exists(StartupLink);
         }
 
-        /// <summary>설치 · 업데이트. 돌고 있는 위젯은 먼저 끈다. 자동 실행을 못 켰으면 false</summary>
+        /// <summary>
+        /// 설치 · 업데이트. 새 파일을 설치 폴더에 먼저 옮겨 둔 뒤(여기서 실패하면 쓰던 위젯은 그대로 돈다)
+        /// 돌고 있는 위젯을 끄고 바꿔 끼운다. 바꿔 끼우다 실패하면 옛 파일을 되돌려 놓고 예외를 넘긴다.
+        /// 자동 실행을 못 켰으면 false
+        /// </summary>
         public static bool Install(bool autostart)
         {
-            StopRunning();
             Directory.CreateDirectory(Dir);
-            for (int i = 0; ; i++)
+            var next = Exe + ".new";
+            var old = Exe + ".old";
+            File.Copy(Self, next, true);
+            StopRunning();
+            try
             {
-                try
+                for (int i = 0; ; i++)
                 {
-                    File.Copy(Self, Exe, true);
-                    break;
-                }
-                catch (IOException) when (i < 20)
-                {
-                    Thread.Sleep(250); // 꺼지는 중인 옛 위젯이 파일을 놓을 때까지
+                    try
+                    {
+                        if (File.Exists(Exe)) File.Replace(next, Exe, old, true);
+                        else File.Move(next, Exe);
+                        break;
+                    }
+                    catch (Exception e) when ((e is IOException || e is UnauthorizedAccessException) && i < 20)
+                    {
+                        Thread.Sleep(250); // 꺼지는 중인 옛 위젯이 파일을 놓을 때까지
+                    }
                 }
             }
+            catch
+            {
+                // 옛 파일만 옮겨지고 새 파일이 못 들어간 경우 - 옛 판을 제자리로
+                try { if (!File.Exists(Exe) && File.Exists(old)) File.Move(old, Exe); } catch { /* 그대로 */ }
+                try { File.Delete(next); } catch { /* 그대로 */ }
+                throw;
+            }
+            try { File.Delete(old); } catch { /* 다음 업데이트 때 덮인다 */ }
             // 인터넷에서 받은 표시(Zone.Identifier)를 지워 설치한 뒤에는 SmartScreen 이 다시 묻지 않게
             try { File.Delete(Exe + ":Zone.Identifier"); } catch { /* 없으면 그만 */ }
 
@@ -150,6 +180,9 @@ namespace MateCalendar
                 try { p.Kill(); p.WaitForExit(2000); } catch { /* 이미 꺼짐 */ }
             }
         }
+
+        /// <summary>이 프로세스 말고 위젯이 돌고 있나(업데이트가 옛 위젯을 끄기 전에 실패했을 때)</summary>
+        public static bool OthersRunning() => Others(Process.GetCurrentProcess().Id).Length > 0;
 
         private static Process[] Others(int me) =>
             Process.GetProcessesByName("MateCalendar").Where(p => p.Id != me).ToArray();

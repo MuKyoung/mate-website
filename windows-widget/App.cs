@@ -71,9 +71,31 @@ namespace MateCalendar
                     {
                         Installer.Install(File.Exists(Installer.Exe) ? Installer.AutoStart : true);
                         if (!quiet) Process.Start(new ProcessStartInfo(Installer.Exe) { UseShellExecute = false });
+                        return 0;
                     }
-                    catch (Exception e) { Log("update: " + e); }
-                    return 0;
+                    catch (Exception e)
+                    {
+                        Log("update: " + e);
+                        // 쓰던 위젯이 꺼졌으면 남아 있는 판을 다시 띄우고 까닭을 알린다(끄기 전에 실패했으면 그대로 돈다)
+                        bool back = Installer.OthersRunning();
+                        try
+                        {
+                            if (!quiet && !back && File.Exists(Installer.Exe))
+                            {
+                                Process.Start(new ProcessStartInfo(Installer.Exe) { UseShellExecute = false });
+                                back = true;
+                            }
+                        }
+                        catch (Exception e2) { Log("update restart: " + e2.Message); }
+                        if (!quiet && !a.Contains("--auto"))
+                        {
+                            MessageBox.Show("업데이트를 설치하지 못했습니다.\n" + e.Message + "\n\n" +
+                                (back ? "쓰던 판을 다시 띄웠습니다. 잠시 뒤 위젯의 업데이트 단추를 다시 눌러 주세요."
+                                      : "Hub 의 Windows 위젯 메뉴에서 설치 파일을 다시 받아 설치해 주세요."),
+                                "MATE 캘린더", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        }
+                        return 1;
+                    }
                 }
                 var setup = new SetupWindow(Theme.Create("system", 0));
                 setup.Closed += (s, e) => app.Shutdown();
@@ -160,6 +182,7 @@ namespace MateCalendar
         private LoginWindow? _login;
         private Updater.Info? _update;
         private bool _refreshing;
+        private bool _again, _againMeta; // 읽는 사이 로그인 · 보기 범위가 바뀌어 응답을 버렸다 - 끝나면 새 설정으로 다시 읽는다
         private DateTime _lastRefresh = DateTime.MinValue;
         private DateTime _metaAt = DateTime.MinValue;
         private readonly DispatcherTimer _timer = new DispatcherTimer();
@@ -193,7 +216,7 @@ namespace MateCalendar
             if (!_demo) ListenSignals();
             SystemEvents.PowerModeChanged += (s, e) =>
             {
-                if (e.Mode == PowerModes.Resume) Ui(async () => { await Task.Delay(6000); await Refresh(false); });
+                if (e.Mode == PowerModes.Resume) Ui(async () => { await Task.Delay(6000); await Refresh(false); await CheckUpdate(); });
             };
             NetworkChange.NetworkAvailabilityChanged += (s, e) =>
             {
@@ -204,7 +227,7 @@ namespace MateCalendar
                 if (e.Category == UserPreferenceCategory.Desktop) Ui(() => _widget?.QueueBackdrop(force: true));
             };
 
-            // 3분마다 작업, 30분마다 영역 · 색 · 팀원, 10분마다 바탕화면 그림, 6시간마다 업데이트
+            // 3분마다 작업, 30분마다 영역 · 색 · 팀원, 10분마다 바탕화면 그림, 1시간마다 새 판 확인(나왔으면 1분마다 저절로 깔 때인지 본다)
             _timer.Interval = TimeSpan.FromMinutes(1);
             int tick = 0;
             _timer.Tick += (s, e) =>
@@ -212,7 +235,8 @@ namespace MateCalendar
                 tick++;
                 if (tick % 3 == 0) _ = Refresh(false);
                 if (tick % 10 == 0) _widget?.CheckBackdrop();
-                if (tick % 360 == 0) _ = CheckUpdate();
+                if (tick % 60 == 0) _ = CheckUpdate();
+                else TryAutoUpdate();
             };
             _timer.Start();
 
@@ -256,6 +280,9 @@ namespace MateCalendar
                 Data = new Snapshot
                 {
                     Scope = d.Str("scope"),
+                    // 전에 저장한 사본(1.0.2 까지)에는 읽은 시각이 없다 - 지어내지 않고 비워 둔다
+                    SyncedAt = DateTime.TryParse(d.Str("syncedAt"), CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var at)
+                        ? at.ToLocalTime() : (DateTime?)null,
                     Tasks = Json.Rows(d.TryGetValue("tasks", out var t) ? t : null).Select(TaskItem.From).Where(x => x != null).Select(x => x!).ToList(),
                     Domains = Json.Rows(d.TryGetValue("domains", out var dm) ? dm : null)
                         .Select(r => new DomainItem { Id = r.Str("id"), Label = r.Str("label"), Color = r.Str("color", "gray"), Sort = r.Num("sort") }).ToList(),
@@ -277,6 +304,7 @@ namespace MateCalendar
                 {
                     ["uid"] = Api.Current?.Uid ?? "",
                     ["scope"] = Data.Scope,
+                    ["syncedAt"] = Data.SyncedAt?.ToUniversalTime().ToString("o", CultureInfo.InvariantCulture),
                     ["tasks"] = Data.Tasks.Select(t => t.ToRow()).ToList(),
                     ["domains"] = Data.Domains.Select(x => new Dictionary<string, object?> { ["id"] = x.Id, ["label"] = x.Label, ["color"] = x.Color, ["sort"] = x.Sort }).ToList(),
                     ["members"] = Data.Members.Select(x => new Dictionary<string, object?> { ["id"] = x.Id, ["name"] = x.Name, ["active"] = x.Active }).ToList(),
@@ -307,20 +335,43 @@ namespace MateCalendar
         private async Task RefreshCore(bool meta, bool manual)
         {
             if (_demo || _refreshing) return;
+            _lastRefresh = DateTime.UtcNow;
             if (NeedLogin) { _widget?.Render(); return; }
             _refreshing = true;
-            _lastRefresh = DateTime.UtcNow;
             var started = DateTime.UtcNow;
             if (manual) _widget?.Render();
+            // 요청을 시작할 때의 로그인 · 보기 범위 - 응답이 왔을 때 달라졌으면 버리고 새 설정으로 다시 읽는다
+            int epoch = Api.Epoch;
+            var scope = Settings.Scope;
             try
             {
-                var scope = Settings.Scope;
                 var tasks = await Api.Tasks(scope != "all");
+                List<DomainItem>? domains = null;
+                Dictionary<string, string>? colors = null;
+                List<MemberItem>? members = null;
                 if (meta || DateTime.UtcNow - _metaAt > TimeSpan.FromMinutes(30) || Data.Domains.Count == 0)
                 {
-                    var domains = await Api.Domains();
-                    var colors = await Api.Colors();
-                    var members = await Api.Members();
+                    try
+                    {
+                        domains = await Api.Domains();
+                        colors = await Api.Colors();
+                        members = await Api.Members();
+                    }
+                    catch (ApiException e) when (!e.NeedLogin && !e.Stale)
+                    {
+                        // 영역 · 색 · 팀원은 전에 읽은 것을 그대로 쓰고 다음에 다시 읽는다(빈 값으로 덮지 않는다)
+                        Program.Log("meta: " + e.Message);
+                        domains = null;
+                    }
+                }
+                if (epoch != Api.Epoch || scope != Settings.Scope)
+                {
+                    _again = true;
+                    _againMeta |= meta;
+                    return;
+                }
+                if (domains != null && colors != null && members != null)
+                {
                     Data.Domains = domains;
                     Data.Colors = colors;
                     Data.Members = members;
@@ -334,6 +385,12 @@ namespace MateCalendar
                 LoginMessage = null;
                 SaveCache();
             }
+            // 그사이 사람이 로그아웃 · 다시 로그인했다 - 이 응답은 버린다.
+            // (로그인이 풀려 Api 가 스스로 로그아웃한 NeedLogin 은 아래에서 로그인 안내로 바꾼다)
+            catch (ApiException e) when (e.Stale || (epoch != Api.Epoch && !e.NeedLogin))
+            {
+                _again = true;
+            }
             catch (ApiException e)
             {
                 Program.Log("refresh: " + e.Message);
@@ -342,8 +399,9 @@ namespace MateCalendar
                     LoginMessage = e.Message;
                     Data = new Snapshot();
                     Loaded = false;
+                    Error = null;
                 }
-                Error = Data.SyncedAt.HasValue ? $"{e.Message} ({Data.SyncedAt:HH:mm} 기준)" : e.Message;
+                else Error = e.Message; // 읽은 시각은 위젯이 Data.SyncedAt 으로 함께 보인다
             }
             catch (Exception e)
             {
@@ -360,6 +418,12 @@ namespace MateCalendar
                 _refreshing = false;
                 _widget?.Render();
                 _tray?.Update();
+                if (_again)
+                {
+                    bool m = _againMeta;
+                    _again = _againMeta = false;
+                    _running = RefreshCore(m, false);
+                }
             }
         }
 
@@ -387,6 +451,7 @@ namespace MateCalendar
                 if (ok)
                 {
                     LoginMessage = null;
+                    Error = null;
                     Data = new Snapshot();
                     Loaded = false;
                     _widget?.Render();
@@ -418,24 +483,45 @@ namespace MateCalendar
 
         private async Task CheckUpdate()
         {
-            if (_demo) return;
+            if (_demo || Updating) return;
             var info = await Updater.Check();
+            bool changed = (info?.Version) != (_update?.Version);
             _update = info;
-            _widget?.Render();
+            if (changed) _widget?.Render();
+            TryAutoUpdate();
         }
 
-        public async Task InstallUpdate()
+        /// <summary>
+        /// 새 판을 저절로 깐다 - 설치한 위젯이고, 자동 업데이트를 켰고, 사람이 위젯을 만지는 중이 아니고(아니면 1분 뒤 다시),
+        /// 같은 판을 12시간 안에 이미 깔아 보지 않았을 때. 깔면 위젯이 잠깐 꺼졌다가 새 판으로 다시 뜬다
+        /// </summary>
+        private void TryAutoUpdate()
+        {
+            if (_demo || _update == null || Updating || !Settings.AutoUpdate || !Installer.IsInstalledCopy) return;
+            var v = _update.Version.ToString(3);
+            if (Settings.AutoTriedVersion == v && Settings.AutoTriedAt.HasValue && DateTime.UtcNow - Settings.AutoTriedAt.Value < TimeSpan.FromHours(12)) return;
+            if (_widget?.IsMouseOver == true || _menu?.IsOpen == true || _login != null) return;
+            Settings.AutoTriedVersion = v;
+            Settings.AutoTriedAt = DateTime.UtcNow;
+            Settings.Save();
+            Program.Log("auto update " + v);
+            _ = InstallUpdate(auto: true);
+        }
+
+        public async Task InstallUpdate(bool auto = false)
         {
             if (_update == null || Updating) return;
             if (_demo) { MessageBox.Show("점검 화면이라 설치하지 않습니다.", "MATE 캘린더"); return; }
             Updating = true;
             _widget?.Render();
-            var err = await Updater.Install(_update);
+            var err = await Updater.Install(_update, auto);
             if (err != null)
             {
                 Updating = false;
                 _widget?.Render();
-                MessageBox.Show(err, "MATE 캘린더", MessageBoxButton.OK, MessageBoxImage.Warning);
+                Program.Log("update: " + err);
+                // 저절로 깔다 실패하면 창을 띄우지 않는다(단추는 남아 사람이 다시 누를 수 있다)
+                if (!auto) MessageBox.Show(err, "MATE 캘린더", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
             // 성공하면 새 exe 가 이 위젯을 끄라고 알린다(ExitEvent). 1분이 지나도 그대로면 단추를 되살린다
@@ -512,13 +598,11 @@ namespace MateCalendar
                 Item("이번 달 테두리", () => Set(() => Settings.MonthOutline = !Settings.MonthOutline), Settings.MonthOutline),
                 Item("주 번호", () => Set(() => Settings.WeekNumbers = !Settings.WeekNumbers), Settings.WeekNumbers)));
             m.Items.Add(Item("넓게 펼쳐 보기", () => SetLayout(Settings.Wide ? "compact" : "wide"), Settings.Wide));
-            double sc = Settings.ActiveScale;
-            m.Items.Add(Sub(Settings.Wide ? "크기(넓은 화면)" : "크기",
-                Item("작게", () => SetScale(1.0), Math.Abs(sc - 1.0) < 0.01),
-                Item("보통", () => SetScale(1.25), Math.Abs(sc - 1.25) < 0.01),
-                Item("크게", () => SetScale(1.5), Math.Abs(sc - 1.5) < 0.01),
-                Item("아주 크게", () => SetScale(1.75), Math.Abs(sc - 1.75) < 0.01),
-                Item("가장 크게", () => SetScale(2.0), Math.Abs(sc - 2.0) < 0.01)));
+            // 크기는 Windows 화면 배율 위에 한 번 더 곱하는 배수 - 이름 대신 배수와 기본값을 적는다
+            double sc = Settings.ActiveScale, def = Settings.Wide ? 1.25 : 1.5;
+            MenuItem Size(double v) => Item(v.ToString("0.##", CultureInfo.InvariantCulture) + "배" + (Math.Abs(v - def) < 0.01 ? " (기본)" : ""),
+                () => SetScale(v), Math.Abs(sc - v) < 0.01);
+            m.Items.Add(Sub(Settings.Wide ? "크기(넓은 화면)" : "크기", Size(1.0), Size(1.25), Size(1.5), Size(1.75), Size(2.0)));
             m.Items.Add(Sub("모양",
                 Item("시스템 설정 따름", () => SetLook(() => Settings.Appearance = "system"), Settings.Appearance == "system"),
                 Item("밝게", () => SetLook(() => Settings.Appearance = "light"), Settings.Appearance == "light"),
@@ -536,13 +620,19 @@ namespace MateCalendar
                 m.Items.Add(Item("Windows 시작 시 실행", () =>
                 {
                     if (!Installer.SetAutoStart(!auto))
-                        MessageBox.Show("자동 실행을 켜지 못했습니다. 보안 프로그램이 막았을 수 있습니다.", "MATE 캘린더",
-                            MessageBoxButton.OK, MessageBoxImage.Warning);
+                        MessageBox.Show(auto
+                                ? "자동 실행을 끄지 못했습니다. 작업 관리자의 '시작 앱'에서 'MATE 캘린더'를 끌 수 있습니다."
+                                : "자동 실행을 켜지 못했습니다. 보안 프로그램이 막았을 수 있습니다.\n시작 메뉴의 'MATE 캘린더'로 언제든 띄울 수 있습니다.",
+                            "MATE 캘린더", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }, auto));
             }
+            if (Installer.IsInstalledCopy || _demo)
+                m.Items.Add(Item("자동 업데이트", () => Set(() => Settings.AutoUpdate = !Settings.AutoUpdate), Settings.AutoUpdate));
             m.Items.Add(new Separator());
             m.Items.Add(Item("Hub 열기", () => OpenHub(null)));
-            if (_update != null) m.Items.Add(Item($"업데이트 설치 ({_update.Version.ToString(3)})", () => _ = InstallUpdate()));
+            if (_update != null)
+                m.Items.Add(Updating ? Item("업데이트 받는 중…", null, false, false)
+                    : Item($"업데이트 설치 ({_update.Version.ToString(3)})", () => _ = InstallUpdate()));
             m.Items.Add(new Separator());
             if (!_demo)
             {
@@ -550,7 +640,7 @@ namespace MateCalendar
                 else m.Items.Add(Item("로그아웃", SignOut));
             }
             m.Items.Add(Item($"정보 · MATE 캘린더 {Program.Version}", () => MessageBox.Show(
-                $"MATE 캘린더 {Program.Version}\n\nHub 의 작업을 바탕화면 캘린더 위젯으로 보여 줍니다.\n" +
+                $"MATE 캘린더 {Program.Version}\n\nHub 의 작업 가운데 마감일이 있는 것을 바탕화면 캘린더로 보여 줍니다. 위젯에서는 작업을 고치지 않고, 누르면 Hub 에서 엽니다.\n" +
                 "화면 디자인: Calendr (github.com/pakerwreah/Calendr, MIT 라이선스)\n글꼴: Pretendard (SIL Open Font License 1.1)",
                 "MATE 캘린더", MessageBoxButton.OK, MessageBoxImage.Information)));
             m.Items.Add(Item("끝내기", Quit));
@@ -563,8 +653,9 @@ namespace MateCalendar
             Settings.Scope = scope;
             Settings.Save();
             if (_demo) { _widget?.Render(); return; }
-            Data = new Snapshot();
+            Data = new Snapshot { Domains = Data.Domains, Colors = Data.Colors, Members = Data.Members };
             Loaded = false;
+            Error = null;
             _widget?.Render();
             _ = Refresh(true);
         }
@@ -734,7 +825,7 @@ namespace MateCalendar
             {
                 case "login": c.DemoSignedOut = true; break;
                 case "loading": c.DemoState(false, null); break;
-                case "error": c.DemoState(true, "서버에 닿지 않습니다. 인터넷 연결을 확인해 주세요. (14:02 기준)"); break;
+                case "error": c.DemoState(true, "서버에 닿지 않습니다. 인터넷 연결을 확인해 주세요."); break;
             }
 
             if (real) c.LoadCacheForSnapshot();

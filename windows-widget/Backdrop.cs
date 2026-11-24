@@ -173,12 +173,16 @@ namespace MateCalendar
                 if (com != null) Marshal.ReleaseComObject(com);
             }
 
+            bool picture = path != "";
             if (!File.Exists(path))
             {
                 var sb = new StringBuilder(520);
                 if (Native.SystemParametersInfo(Native.SPI_GETDESKWALLPAPER, sb.Capacity, sb, 0)) path = sb.ToString();
+                picture |= path != "";
             }
-            if (!File.Exists(path))
+            // 두 길 모두 그림 경로가 비었으면 단색 바탕화면이다 - 남아 있는 옛 TranscodedWallpaper 를 깔지 않는다
+            if (!picture) path = "";
+            else if (!File.Exists(path))
             {
                 // 슬라이드 쇼 · Windows 추천(Spotlight)은 지금 보이는 그림을 여기에 둔다
                 var t = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),

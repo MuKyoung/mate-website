@@ -39,6 +39,66 @@ namespace MateCalendar
             sv.Template = (ControlTemplate)XamlReader.Parse(xaml);
         }
 
+        /// <summary>로그인 · 설치 창의 단추 - 키보드(Tab · Enter · Space)와 화면 읽기 프로그램이 다루는 진짜 Button</summary>
+        public static ControlTemplate DialogButton(Theme t, double radius, bool hoverFill)
+        {
+            string hover = hoverFill
+                ? $@"<Setter TargetName=""Bd"" Property=""Background"" Value=""{Theme.Hex(t.Quaternary)}""/>"
+                : @"<Setter TargetName=""Bd"" Property=""Opacity"" Value=""0.86""/>";
+            var xaml = $@"
+<ControlTemplate {Ns} TargetType=""Button"">
+  <Border x:Name=""Bd"" CornerRadius=""{radius}"" Background=""{{TemplateBinding Background}}"" Padding=""{{TemplateBinding Padding}}"">
+    <ContentPresenter HorizontalAlignment=""Center"" VerticalAlignment=""Center"" RecognizesAccessKey=""False""/>
+  </Border>
+  <ControlTemplate.Triggers>
+    <Trigger Property=""IsMouseOver"" Value=""True"">{hover}</Trigger>
+    <Trigger Property=""IsPressed"" Value=""True""><Setter TargetName=""Bd"" Property=""Opacity"" Value=""0.72""/></Trigger>
+    <Trigger Property=""IsEnabled"" Value=""False""><Setter Property=""Opacity"" Value=""0.5""/></Trigger>
+  </ControlTemplate.Triggers>
+</ControlTemplate>";
+            return (ControlTemplate)XamlReader.Parse(xaml);
+        }
+
+        /// <summary>설치 창의 체크 상자 - 둥근 칸 · 흰 체크(Space 로 바꾼다)</summary>
+        public static ControlTemplate DialogCheck(Theme t)
+        {
+            string acc = Theme.Hex(t.Accent), sec = Theme.Hex(t.Secondary);
+            var xaml = $@"
+<ControlTemplate {Ns} TargetType=""CheckBox"">
+  <StackPanel Orientation=""Horizontal"" Background=""Transparent"">
+    <Border x:Name=""Box"" Width=""18"" Height=""18"" CornerRadius=""5"" BorderThickness=""1.3"" BorderBrush=""{sec}"" Background=""Transparent"" VerticalAlignment=""Center"">
+      <Path x:Name=""Tick"" Data=""M1,5 L4.6,8.6 L11,1.6"" Stroke=""#FFFFFFFF"" StrokeThickness=""1.8"" StrokeStartLineCap=""Round"" StrokeEndLineCap=""Round""
+            StrokeLineJoin=""Round"" HorizontalAlignment=""Center"" VerticalAlignment=""Center"" Visibility=""Hidden""/>
+    </Border>
+    <ContentPresenter Margin=""9,0,0,0"" VerticalAlignment=""Center"" RecognizesAccessKey=""False""/>
+  </StackPanel>
+  <ControlTemplate.Triggers>
+    <Trigger Property=""IsChecked"" Value=""True"">
+      <Setter TargetName=""Box"" Property=""Background"" Value=""{acc}""/>
+      <Setter TargetName=""Box"" Property=""BorderBrush"" Value=""{acc}""/>
+      <Setter TargetName=""Tick"" Property=""Visibility"" Value=""Visible""/>
+    </Trigger>
+  </ControlTemplate.Triggers>
+</ControlTemplate>";
+            return (ControlTemplate)XamlReader.Parse(xaml);
+        }
+
+        /// <summary>키보드로 옮겨 왔을 때만 보이는 둥근 초점 테두리</summary>
+        public static Style FocusRing(Theme t, double radius)
+        {
+            var xaml = $@"
+<Style {Ns} TargetType=""Control"">
+  <Setter Property=""Template"">
+    <Setter.Value>
+      <ControlTemplate>
+        <Border Margin=""-3"" CornerRadius=""{radius + 3}"" BorderThickness=""2"" BorderBrush=""{Theme.Hex(Theme.WithAlpha(t.Accent, 0.75))}""/>
+      </ControlTemplate>
+    </Setter.Value>
+  </Setter>
+</Style>";
+            return (Style)XamlReader.Parse(xaml);
+        }
+
         /// <summary>오른쪽 클릭 메뉴 · 작업 표시줄 메뉴에 쓰는 모양</summary>
         public static ResourceDictionary Menu(Theme t)
         {

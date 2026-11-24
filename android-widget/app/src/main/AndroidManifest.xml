@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- 새 판 저절로 받기(Updater) - 같은 키로 서명한 이 앱의 새 판만 깐다 -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <application
         android:allowBackup="false"
@@ -48,6 +50,15 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/today_widget_info" />
+        </receiver>
+
+        <!-- 새 판 설치 결과 · 새 판으로 바뀜 -->
+        <receiver
+            android:name=".UpdateReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
         </receiver>
 
         <service

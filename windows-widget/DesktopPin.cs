@@ -25,11 +25,19 @@ namespace MateCalendar
         private Native.WinEventDelegate? _proc; // 가비지 수집에 지워지지 않게 붙들어 둔다
         private bool _raised;
         private readonly uint _pid = (uint)Process.GetCurrentProcess().Id;
+        private readonly DispatcherTimer _graceEnd = new DispatcherTimer();
+        private int _deskSeq; // 바탕화면이 앞으로 온 뒤 다른 창이 오면 올라가 있던 판단을 버린다
 
         public DesktopPin(Window window)
         {
             _window = window;
             window.SourceInitialized += (s, e) => Attach();
+            // 잠깐 꺼내 본 뒤 - 그사이 다른 앱을 눌렀으면 그 앱 위에 남지 않게 내린다
+            _graceEnd.Tick += (s, e) =>
+            {
+                _graceEnd.Stop();
+                if (_raised && !KeepsRaised(Native.GetForegroundWindow())) Lower();
+            };
         }
 
         private void Attach()
@@ -65,9 +73,30 @@ namespace MateCalendar
         {
             if (_hwnd == IntPtr.Zero) return;
             _raised = true;
-            if (graceSeconds > 0) _graceUntil = DateTime.UtcNow.AddSeconds(graceSeconds);
+            if (graceSeconds > 0)
+            {
+                _graceUntil = DateTime.UtcNow.AddSeconds(graceSeconds);
+                _graceEnd.Stop();
+                _graceEnd.Interval = TimeSpan.FromSeconds(graceSeconds + 0.05);
+                _graceEnd.Start();
+            }
             Native.SetWindowPos(_hwnd, Native.HWND_TOPMOST, 0, 0, 0, 0, Native.SWP_NOMOVE | Native.SWP_NOSIZE | Native.SWP_NOACTIVATE);
         }
+
+        /// <summary>앞 창이 이것이면 올려 둔 위젯을 그대로 둔다 - 바탕화면 · 작업 표시줄 · 알림 영역 · 내 메뉴와 로그인 창</summary>
+        private bool KeepsRaised(IntPtr fg)
+        {
+            if (fg == IntPtr.Zero) return true;
+            Native.GetWindowThreadProcessId(fg, out var pid);
+            if (pid == _pid) return true;
+            var cls = Native.ClassOf(fg);
+            return IsDesktop(cls) || IsTray(cls);
+        }
+
+        private static bool IsDesktop(string cls) => cls == "WorkerW" || cls == "Progman";
+
+        private static bool IsTray(string cls) => cls == "Shell_TrayWnd" || cls == "Shell_SecondaryTrayWnd" || cls == "NotifyIconOverflowWindow"
+            || cls == "TopLevelWindowForOverflowXamlIsland" || cls == "XamlExplorerHostIslandWindow";
 
         private DateTime _graceUntil;
 
@@ -104,18 +133,22 @@ namespace MateCalendar
             Native.GetWindowThreadProcessId(hwnd, out var pid);
             if (pid == _pid) return; // 내 메뉴 · 로그인 창
             var cls = Native.ClassOf(hwnd);
-            if (cls == "WorkerW" || cls == "Progman")
+            if (IsDesktop(cls))
             {
-                // 바탕화면이 앞으로 왔다 - Win+D 로 올라왔는지는 z 순서가 자리 잡은 뒤에 본다
+                // 바탕화면이 앞으로 왔다 - Win+D 로 올라왔는지는 z 순서가 자리 잡은 뒤에 본다.
+                // 그 120ms 사이 다른 앱으로 돌아갔으면(번호가 바뀌었거나 앞 창이 바탕화면이 아니면) 올리지 않는다
+                int seq = ++_deskSeq;
                 _window.Dispatcher.BeginInvoke(new Action(async () =>
                 {
                     await System.Threading.Tasks.Task.Delay(120);
+                    if (seq != _deskSeq || _hook == IntPtr.Zero) return;
+                    if (!IsDesktop(Native.ClassOf(Native.GetForegroundWindow()))) return;
                     if (DesktopAbove()) Peek();
                 }), DispatcherPriority.Background);
             }
-            else if (cls != "Shell_TrayWnd" && cls != "Shell_SecondaryTrayWnd" && cls != "NotifyIconOverflowWindow"
-                     && cls != "TopLevelWindowForOverflowXamlIsland" && cls != "XamlExplorerHostIslandWindow")
+            else if (!IsTray(cls))
             {
+                _deskSeq++;
                 _window.Dispatcher.BeginInvoke(new Action(Lower), DispatcherPriority.Background);
             }
         }
@@ -134,6 +167,8 @@ namespace MateCalendar
 
         public void Dispose()
         {
+            _graceEnd.Stop();
+            _deskSeq++;
             if (_hook != IntPtr.Zero) Native.UnhookWinEvent(_hook);
             _hook = IntPtr.Zero;
         }

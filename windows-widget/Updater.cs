@@ -47,7 +47,7 @@ namespace MateCalendar
         }
 
         /// <summary>받아서 해시를 맞춰 보고 설치를 시작한다. 실패하면 까닭을 돌려준다</summary>
-        public static async Task<string?> Install(Info info)
+        public static async Task<string?> Install(Info info, bool auto = false)
         {
             try
             {
@@ -59,7 +59,8 @@ namespace MateCalendar
                 }
                 var path = Path.Combine(Path.GetTempPath(), $"MateCalendar-update-{info.Version}.exe");
                 File.WriteAllBytes(path, bytes);
-                Process.Start(new ProcessStartInfo(path, "--update") { UseShellExecute = false });
+                // --auto : 저절로 까는 것 - 실패해도 창을 띄우지 않고 쓰던 판을 다시 띄운다
+                Process.Start(new ProcessStartInfo(path, auto ? "--update --auto" : "--update") { UseShellExecute = false });
                 return null;
             }
             catch (Exception e)

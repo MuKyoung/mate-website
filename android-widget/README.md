@@ -7,6 +7,12 @@ Hub(/hub, 예전 /taskmanager) 캘린더에서 **오늘이 마감일인 작업**
 - 30분마다, 새로고침 단추를 누를 때, 앱에서 로그인 · 로그아웃할 때 새로 읽습니다.
 - 끝나지 않은 일이 위로(진행 중 · 리뷰 · 할 일 · 백로그 순, 같으면 급한 순), 완료는 맨 아래 회색입니다.
 - 항목을 누르면 웹 작업 관리에서 그 작업이 열리고(`?task=<id>`), 머리를 누르면 캘린더가 열립니다(`?view=calendar`).
+- **새 판은 저절로 받습니다**(1.1 부터, `Updater.java`). 위젯이 새로 읽을 때 · 앱을 열 때 3시간에 한 번
+  `https://devteammate.co.kr/downloads/mate-today.json` 의 `versionCode` 를 보고, 새것이면 APK 를 받아 SHA-256 을 맞춘 뒤
+  PackageInstaller 로 깝니다. 안드로이드 12 부터는 이 앱이 스스로 깐 적이 있으면 묻지 않고 바뀝니다.
+  처음 한 번(파일로 깐 앱) · 안드로이드 11 까지는 안드로이드가 확인을 받으므로, 위젯 아래에 **새 판이 있습니다 · 눌러서 업데이트**,
+  앱 화면에 **업데이트 설치**가 뜹니다. 누르면 확인 창이 열립니다. 같은 판이 막히면 12시간 뒤 다시 시도합니다.
+  1.0 에는 이 기능이 없어 1.1 은 한 번 손으로 깔아야 합니다.
 
 ## 휴대폰에 설치
 
@@ -31,7 +37,9 @@ cd android-widget
 # → app/build/outputs/apk/release/app-release.apk
 ```
 
-- 작업 관리의 받기 단추는 `public/downloads/mate-today.apk` 를 내려줍니다. 다시 빌드하면 이 파일을 새 APK 로 바꿔 커밋 · 배포합니다.
+- 작업 관리의 받기 단추는 `public/downloads/mate-today.apk` 를 내려줍니다. 다시 빌드하면 이 파일을 새 APK 로 바꾸고,
+  `public/downloads/mate-today.json` 의 `versionCode` · `versionName` · `sha256`(새 APK 의 SHA-256) · `size` 를 고쳐 함께 커밋 · 배포합니다.
+  깔린 앱은 이 json 을 보고 저절로 새 판을 받습니다 - `versionCode` 를 올리지 않으면 아무도 받지 않습니다.
 
 - `local.properties` 에 `sdk.dir=` (위 SDK 경로)가 있어야 합니다. 저장소에는 올리지 않습니다.
 - 고친 판을 덮어 깔려면 `app/build.gradle` 의 `versionCode` 를 1 올리고, **같은 키로 서명**해야 합니다.
@@ -49,5 +57,6 @@ cd android-widget
 | `WidgetConfigActivity.java` | 위젯을 놓을 때 내 작업 / 팀 전체 |
 | `MainActivity.java` | 로그인 · 상태 화면 |
 | `OpenActivity.java` | 위젯 항목의 주소를 브라우저로 넘기는 화면 없는 창 |
+| `Updater.java` · `UpdateReceiver.java` | 새 판 확인 · 받기 · 설치(PackageInstaller), 설치 결과 · 새 판으로 바뀜 받기 |
 
 외부 라이브러리는 쓰지 않습니다(안드로이드 기본 기능만).

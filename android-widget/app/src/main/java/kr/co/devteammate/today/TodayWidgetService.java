@@ -43,6 +43,8 @@ public class TodayWidgetService extends RemoteViewsService {
                 items = new ArrayList<>();
                 TodayWidgetProvider.showResult(ctx, widgetId, -1, e.getMessage(), e.needLogin);
             }
+            // 새 판 확인(3시간에 한 번) - 나왔으면 받아서 깐다
+            Updater.check(ctx, false);
         }
 
         @Override

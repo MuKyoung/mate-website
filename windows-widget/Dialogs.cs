@@ -1,7 +1,10 @@
 using System;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Automation;
+using System.Windows.Automation.Peers;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
@@ -27,7 +30,9 @@ namespace MateCalendar
             SizeToContent = SizeToContent.WidthAndHeight;
             WindowStartupLocation = WindowStartupLocation.CenterScreen;
             ShowInTaskbar = true;
+            // 처음에는 다른 창들 위에 띄우되(바탕화면 위젯이 연 창이라 뒤에 숨지 않게), 다른 앱으로 옮겨 가면 맨 위 고정을 푼다
             Topmost = true;
+            Deactivated += (s, e) => Topmost = false;
             UseLayoutRounding = true;
             FontFamily = Theme.Font;
             Language = System.Windows.Markup.XmlLanguage.GetLanguage("ko-KR");
@@ -44,21 +49,20 @@ namespace MateCalendar
             };
             var grid = new Grid();
             grid.Children.Add(Body);
-            var close = new Border
+            var close = new Button
             {
-                Width = 26, Height = 26, CornerRadius = new CornerRadius(6), Background = Brushes.Transparent, Cursor = Cursors.Hand,
+                Width = 26, Height = 26, Background = Brushes.Transparent, Cursor = Cursors.Hand,
                 HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(0, -6, -10, 0),
-                ToolTip = "닫기",
-                Child = new Path
+                ToolTip = "닫기", Template = Styles.DialogButton(theme, 6, true), FocusVisualStyle = Styles.FocusRing(theme, 6),
+                Content = new Path
                 {
                     Data = Geometry.Parse("M0,0 L9,9 M9,0 L0,9"), Stroke = Theme.Brush(theme.Secondary), StrokeThickness = 1.5,
                     StrokeStartLineCap = PenLineCap.Round, StrokeEndLineCap = PenLineCap.Round,
                     HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center,
                 },
             };
-            close.MouseEnter += (s, e) => close.Background = Theme.Brush(theme.Quaternary);
-            close.MouseLeave += (s, e) => close.Background = Brushes.Transparent;
-            close.MouseLeftButtonUp += (s, e) => Close();
+            AutomationProperties.SetName(close, "닫기");
+            close.Click += (s, e) => Close();
             grid.Children.Add(close);
             card.Child = grid;
             Content = card;
@@ -91,21 +95,17 @@ namespace MateCalendar
             return head;
         }
 
-        protected Border Button(string text, bool primary, Action click)
+        /// <summary>진짜 Button(Tab 으로 오고 Enter · Space 로 눌린다). primary 는 Enter 로 눌리는 기본 단추</summary>
+        protected Button Button(string text, bool primary, Action click)
         {
-            var label = Text(text, 13.5, primary ? Colors.White : T.Label, Theme.Medium);
-            label.HorizontalAlignment = HorizontalAlignment.Center;
-            var b = new Border
+            var b = new Button
             {
-                MinWidth = 84, Height = 34, CornerRadius = new CornerRadius(8), Padding = new Thickness(16, 0, 16, 0),
-                Background = Theme.Brush(primary ? T.Accent : T.Quaternary), Child = label, Cursor = Cursors.Hand,
-                Margin = new Thickness(8, 0, 0, 0),
+                Content = text, MinWidth = 84, Height = 34, Padding = new Thickness(16, 0, 16, 0), Margin = new Thickness(8, 0, 0, 0),
+                FontSize = 13.5, FontWeight = Theme.Medium, FontFamily = Theme.Font, Cursor = Cursors.Hand,
+                Foreground = Theme.Brush(primary ? Colors.White : T.Label), Background = Theme.Brush(primary ? T.Accent : T.Quaternary),
+                Template = Styles.DialogButton(T, 8, false), FocusVisualStyle = Styles.FocusRing(T, 8), IsDefault = primary,
             };
-            label.VerticalAlignment = VerticalAlignment.Center;
-            b.MouseEnter += (s, e) => b.Opacity = 0.88;
-            b.MouseLeave += (s, e) => b.Opacity = 1;
-            b.MouseLeftButtonUp += (s, e) => { if (b.IsEnabled) click(); };
-            b.IsEnabledChanged += (s, e) => b.Opacity = b.IsEnabled ? 1 : 0.5;
+            b.Click += (s, e) => click();
             return b;
         }
 
@@ -126,6 +126,7 @@ namespace MateCalendar
                 BorderBrush = Theme.Brush(T.Tertiary), Background = Theme.Brush(T.Dark ? Color.FromArgb(0x26, 0, 0, 0) : Colors.White),
                 Child = input,
             };
+            input.FocusVisualStyle = null; // 테두리 색으로 초점을 보인다
             input.GotKeyboardFocus += (s, e) => border.BorderBrush = Theme.Brush(T.Accent);
             input.LostKeyboardFocus += (s, e) => border.BorderBrush = Theme.Brush(T.Tertiary);
             return border;
@@ -138,24 +139,30 @@ namespace MateCalendar
         private readonly TextBox _email = new TextBox();
         private readonly PasswordBox _password = new PasswordBox();
         private readonly TextBlock _error;
-        private readonly Border _submit;
+        private readonly Button _submit;
         public bool Succeeded { get; private set; }
 
         public LoginWindow(Theme theme, string? message) : base("MATE 캘린더 로그인", theme)
         {
             Body.Children.Add(Head("MATE 캘린더", "Hub 와 같은 메일 · 비밀번호로 로그인합니다."));
 
-            Body.Children.Add(Label("메일"));
+            var mail = Label("메일");
+            Body.Children.Add(mail);
             _email.Text = Api.Current?.Email ?? "";
+            AutomationProperties.SetLabeledBy(_email, mail);
+            AutomationProperties.SetName(_email, "메일");
             Body.Children.Add(Field(_email));
             var pw = Label("비밀번호");
             pw.Margin = new Thickness(0, 12, 0, 6);
+            AutomationProperties.SetLabeledBy(_password, pw);
+            AutomationProperties.SetName(_password, "비밀번호");
             Body.Children.Add(pw);
             Body.Children.Add(Field(_password));
 
             _error = Text(message ?? "", 12.5, T.Red, null, true);
             _error.Margin = new Thickness(0, 10, 0, 0);
             _error.Visibility = string.IsNullOrEmpty(message) ? Visibility.Collapsed : Visibility.Visible;
+            AutomationProperties.SetLiveSetting(_error, AutomationLiveSetting.Assertive);
             Body.Children.Add(_error);
 
             var foot = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 18, 0, 0) };
@@ -164,11 +171,21 @@ namespace MateCalendar
             foot.Children.Add(_submit);
             Body.Children.Add(foot);
 
-            var hint = Text("계정이 없으면 Hub(devteammate.co.kr/hub)에서 가입 요청 뒤 관리자 승인을 받습니다.", 11.5, T.Secondary, null, true);
+            // 가입 · 비밀번호는 Hub 에서 - 누르면 Hub 가 열린다(Tab 으로 와서 Enter 로도)
+            var hint = Text("계정이 없으면 Hub 에서 가입 요청 뒤 관리자 승인을 받습니다.", 11.5, T.Secondary, null, true);
+            var link = new Hyperlink(new Run("Hub 열기")) { Foreground = Theme.Brush(T.Accent), TextDecorations = null, Cursor = Cursors.Hand };
+            link.Click += (s, e) =>
+            {
+                try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(Api.Web) { UseShellExecute = true }); }
+                catch (Exception ex) { Program.Log("open hub: " + ex.Message); }
+            };
+            link.MouseEnter += (s, e) => link.TextDecorations = TextDecorations.Underline;
+            link.MouseLeave += (s, e) => link.TextDecorations = null;
+            hint.Inlines.Add(new LineBreak());
+            hint.Inlines.Add(link);
             hint.Margin = new Thickness(0, 14, 0, 0);
             Body.Children.Add(hint);
 
-            KeyDown += (s, e) => { if (e.Key == Key.Enter) _ = Submit(); };
             Loaded += (s, e) =>
             {
                 Activate();
@@ -196,7 +213,7 @@ namespace MateCalendar
             }
             _busy = true;
             _submit.IsEnabled = false;
-            ((TextBlock)_submit.Child).Text = "확인 중…";
+            _submit.Content = "확인 중…";
             try
             {
                 await Api.SignIn(_email.Text, _password.Password);
@@ -215,7 +232,7 @@ namespace MateCalendar
             {
                 _busy = false;
                 _submit.IsEnabled = true;
-                ((TextBlock)_submit.Child).Text = "로그인";
+                _submit.Content = "로그인";
             }
         }
 
@@ -223,6 +240,9 @@ namespace MateCalendar
         {
             _error.Text = text;
             _error.Visibility = Visibility.Visible;
+            // 화면 읽기 프로그램이 바로 읽게
+            try { UIElementAutomationPeer.CreatePeerForElement(_error)?.RaiseAutomationEvent(AutomationEvents.LiveRegionChanged); }
+            catch { /* 화면 읽기 없음 */ }
         }
     }
 
@@ -230,7 +250,7 @@ namespace MateCalendar
     internal sealed class SetupWindow : CardWindow
     {
         private bool _autostart = true;
-        private readonly Border _go;
+        private readonly Button _go;
         private readonly TextBlock _status;
 
         public SetupWindow(Theme theme) : base("MATE 캘린더 설치", theme)
@@ -258,39 +278,25 @@ namespace MateCalendar
             _go = Button(verb, true, () => _ = Go());
             foot.Children.Add(_go);
             Body.Children.Add(foot);
-            KeyDown += (s, e) => { if (e.Key == Key.Enter) _ = Go(); };
-            Loaded += (s, e) => Activate();
+            Loaded += (s, e) =>
+            {
+                Activate();
+                _go.Focus();
+            };
         }
 
+        /// <summary>진짜 CheckBox(Tab 으로 오고 Space 로 바뀐다)</summary>
         private FrameworkElement Toggle(string text, bool on, Action<bool> changed)
         {
-            var box = new Border
+            var box = new CheckBox
             {
-                Width = 18, Height = 18, CornerRadius = new CornerRadius(5), BorderThickness = new Thickness(1.3),
-                VerticalAlignment = VerticalAlignment.Center,
+                Content = text, IsChecked = on, Margin = new Thickness(0, 14, 0, 0), Cursor = Cursors.Hand, HorizontalAlignment = HorizontalAlignment.Left,
+                FontSize = 13, FontFamily = Theme.Font, Foreground = Theme.Brush(T.Header),
+                Template = Styles.DialogCheck(T), FocusVisualStyle = Styles.FocusRing(T, 5),
             };
-            var tick = new Path
-            {
-                Data = Geometry.Parse("M1,5 L4.6,8.6 L11,1.6"), Stroke = Brushes.White, StrokeThickness = 1.8,
-                StrokeStartLineCap = PenLineCap.Round, StrokeEndLineCap = PenLineCap.Round, StrokeLineJoin = PenLineJoin.Round,
-                HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center,
-            };
-            box.Child = tick;
-            void Paint()
-            {
-                box.Background = on ? Theme.Brush(T.Accent) : Brushes.Transparent;
-                box.BorderBrush = Theme.Brush(on ? T.Accent : T.Secondary);
-                tick.Visibility = on ? Visibility.Visible : Visibility.Hidden;
-            }
-            Paint();
-            var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 14, 0, 0), Background = Brushes.Transparent, Cursor = Cursors.Hand };
-            row.Children.Add(box);
-            var label = Text(text, 13, T.Header);
-            label.Margin = new Thickness(9, 0, 0, 0);
-            label.VerticalAlignment = VerticalAlignment.Center;
-            row.Children.Add(label);
-            row.MouseLeftButtonUp += (s, e) => { on = !on; Paint(); changed(on); };
-            return row;
+            box.Checked += (s, e) => changed(true);
+            box.Unchecked += (s, e) => changed(false);
+            return box;
         }
 
         private bool _busy;
