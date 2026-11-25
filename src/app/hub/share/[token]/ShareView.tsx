@@ -68,7 +68,7 @@ export default function ShareView({ result }: { result: SharedResult }) {
   return (
     // Hub 셸은 페이지 전체 스크롤을 끈다(body overflow hidden) - 이 화면이 스스로 스크롤한다
     <div className="h-[100dvh] overflow-y-auto bg-tm-bg text-[15.5px] leading-[1.6] text-tm-ink">
-      <header className="border-b border-tm-line bg-white">
+      <header className="border-b border-tm-line bg-tm-card">
         <div className="mx-auto flex h-14 max-w-[860px] items-center gap-3 px-7 max-[720px]:px-4">
           <span className="text-[15px] font-extrabold tracking-[-0.01em] text-tm-deep">MATE 팀 위키</span>
           <span className="ml-auto rounded-full bg-tm-tint px-2.5 py-1 text-[12.5px] font-bold text-tm-deep">읽기 전용</span>
@@ -106,7 +106,7 @@ function SharedArticle({ doc }: { doc: SharedDoc }) {
 
   return (
     <>
-      <article className="rounded-tm border border-tm-line bg-white px-10 pb-12 pt-9 shadow-tm max-[720px]:px-4 max-[720px]:pb-8 max-[720px]:pt-6">
+      <article className="rounded-tm border border-tm-line bg-tm-card px-10 pb-12 pt-9 shadow-tm max-[720px]:px-4 max-[720px]:pb-8 max-[720px]:pt-6">
         {doc.icon && <div className="mb-1 text-[40px] leading-[1.2]" aria-hidden>{doc.icon}</div>}
         <h1 className="text-[28px] font-extrabold leading-[1.3] tracking-[-0.02em] text-tm-deep [overflow-wrap:anywhere] max-[720px]:text-[23px]">
           {title}
@@ -148,7 +148,7 @@ const BLOCKED = {
 function Blocked({ kind }: { kind: keyof typeof BLOCKED }) {
   const copy = BLOCKED[kind];
   return (
-    <section className="rounded-tm border border-tm-line bg-white px-7 py-12 text-center shadow-tm max-[720px]:px-4 max-[720px]:py-10">
+    <section className="rounded-tm border border-tm-line bg-tm-card px-7 py-12 text-center shadow-tm max-[720px]:px-4 max-[720px]:py-10">
       <h1 className="text-[22px] font-extrabold leading-[1.35] text-tm-deep">{copy.title}</h1>
       <p className="mx-auto mt-3 max-w-[460px] text-[15px] leading-[1.7] text-tm-sub">{copy.body}</p>
       {kind === 'error' && (
