@@ -108,9 +108,15 @@ export default function Markdown({
   let i = 0;
   /** 앞 바퀴를 시작한 줄 - 어느 갈래도 줄을 넘기지 못하고 돌아왔는지 본다 */
   let last = -1;
-  const para = (text: string, key: string) => (
-    <p key={key} className="my-3.5 text-[15.5px] leading-[1.75] text-tm-ink">
-      {inline(text, key)}
+  /* 댓글은 쓴 그대로 보여 준다 - 엔터 한 번이 줄바꿈 한 번, 빈 줄은 빈 줄로(마크다운처럼 줄을 이어 붙이지 않는다) */
+  const para = (rows: string[], key: string) => (
+    <p key={key} className="my-3.5 text-[15.5px] leading-[1.75] text-tm-ink [overflow-wrap:anywhere]">
+      {rows.map((row, n) => (
+        <React.Fragment key={n}>
+          {n > 0 && <br />}
+          {inline(row, `${key}-${n}`)}
+        </React.Fragment>
+      ))}
     </p>
   );
 
@@ -122,7 +128,7 @@ export default function Markdown({
   while (i < lines.length) {
     // 같은 줄에서 다시 시작했다 - 그 줄을 글로 두고 넘어간다. 본문이 어떻든 탭이 멈추지 않게
     if (i === last) {
-      out.push(para(lines[i], `g${i}`));
+      out.push(para([lines[i]], `g${i}`));
       i += 1;
       continue;
     }
@@ -259,19 +265,22 @@ export default function Markdown({
     // 빈 줄
     if (!line.trim()) { i += 1; continue; }
 
-    // 문단 - 다음 빈 줄까지 묶는다. 첫 줄은 위 갈래 어디에도 맞지 않았으니 무엇이든 글로 받는다
+    // 문단 - 다른 갈래(제목 · 목록 · 인용 · 표 · 코드 · 구분선)가 나올 때까지 줄을 그대로 묶는다. 사이의 빈 줄도 빈 줄로 남긴다.
+    // 첫 줄은 위 갈래 어디에도 맞지 않았으니 무엇이든 글로 받는다
     // (구분행 없는 '|' 줄, 줄바꿈 문자가 섞여 제목이 못 된 '#' 줄도 여기서 글이 된다)
     const buf: string[] = [line];
     i += 1;
     while (
-      i < lines.length && lines[i].trim() &&
+      i < lines.length &&
       !/^(#{1,4}\s|\s*>|\s*([-*]|\d+\.)\s|---+$)/.test(lines[i]) &&
       !lines[i].trimStart().startsWith('```') && !lines[i].trim().startsWith('|')
     ) {
       buf.push(lines[i]);
       i += 1;
     }
-    out.push(para(buf.join(' '), `p${i}`));
+    // 끝의 빈 줄은 문단에 넣지 않는다 - 다음 갈래와의 사이는 원래 여백으로 둔다
+    while (buf.length > 1 && !buf[buf.length - 1].trim()) buf.pop();
+    out.push(para(buf, `p${i}`));
   }
 
   const body = out.length === 0
