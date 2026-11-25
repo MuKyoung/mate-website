@@ -12,6 +12,7 @@ import McpConnect from './McpConnect';
 import { useNoPresence, useRemotePresence, type Presence } from './remote';
 import DocEditor, { focusEditor, scrollToAnchor, scrollToPos, type WikiHeading, type WikiRefs } from './DocEditor';
 import DocTree, { FlatRow, buildTree, type DropZone } from './DocTree';
+import { freshDocs, markRead, useUnread } from './reads';
 import { useDocShares } from './docShare';
 import {
   Comments, DocIcon, DropMenu, EmojiPicker, HistoryDialog, LabelEditor, MoveDialog, NewDocDialog, QuickFind, ShareDialog, Snippet,
@@ -71,6 +72,8 @@ function between(a: number | undefined, b: number | undefined): number {
 }
 
 const WIDE_KEY = 'mate.taskmanager.docs.wide.v1';
+/** 왼쪽 칸 '새로 바뀐 문서'에 늘어놓는 수 - 나머지는 트리의 빨간 점으로 */
+const FRESH_SHOWN = 8;
 
 export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
   store: DocStore;
@@ -168,6 +171,14 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
 
   const doc = activeId ? byId.get(activeId) ?? null : null;
   const canEdit = !!doc && !hidden.has(doc.id);
+
+  /* 읽음 표시(reads.ts) - 남이 만들거나 고친 뒤 아직 안 본 문서. 열면 읽은 것(열어 둔 사이에 남이 고친 것도) */
+  const docUnread = useUnread(me, 'doc');
+  const freshList = useMemo(() => freshDocs(store.docs, me, docUnread), [store.docs, me, docUnread]);
+  const freshSet = useMemo(() => new Set(freshList.map((d) => d.id)), [freshList]);
+  useEffect(() => {
+    if (doc && freshSet.has(doc.id)) markRead(me, 'doc', { id: doc.id, at: doc.updatedAt });
+  }, [doc, freshSet, me]);
   const editing = editingId !== null && editingId === activeId && canEdit;
   const presence = usePresence(me, canEdit ? activeId : null, editing, wikiOn);
   const watched = useMemo(() => new Set(presence.byDoc.keys()), [presence]);
@@ -965,6 +976,30 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
             )
           ) : (
             <>
+              {freshList.length > 0 && (
+                <div className="mb-2 border-b border-tm-line pb-2">
+                  <div className="mx-2 mb-1 mt-1 flex items-center justify-between gap-2">
+                    <p className="text-[12.5px] font-bold text-tm-sub">
+                      새로 바뀐 문서 <span className="tabular-nums text-tm-red">{freshList.length}</span>
+                    </p>
+                    <button type="button" className={`${tmTextBtn} min-h-0 text-[12.5px]`}
+                      onClick={() => markRead(me, 'doc', freshList.map((d) => ({ id: d.id, at: d.updatedAt })))}>
+                      모두 읽음
+                    </button>
+                  </div>
+                  <ul className="space-y-0.5">
+                    {freshList.slice(0, FRESH_SHOWN).map((d) => (
+                      <li key={d.id}>
+                        <FlatRow doc={d} active={d.id === activeId} onSelect={() => pick(d.id)}
+                          sub={`${members.find((m) => m.id === (d.updatedBy ?? d.author))?.name ?? '팀원'} · ${ago(d.updatedAt)}`} />
+                      </li>
+                    ))}
+                  </ul>
+                  {freshList.length > FRESH_SHOWN && (
+                    <p className="mx-2.5 mt-1 text-[12.5px] text-tm-sub">나머지 {freshList.length - FRESH_SHOWN}건은 트리의 빨간 점</p>
+                  )}
+                </div>
+              )}
               {starredDocs.length > 0 && (
                 <div className="mb-2 border-b border-tm-line pb-2">
                   <p className="mx-2 mb-1 mt-1 text-[12.5px] font-bold text-tm-sub">즐겨찾기</p>
@@ -1013,7 +1048,7 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
               })()}
               <DocTree roots={tree} activeId={activeId} openSet={openSet} onToggle={toggleOpen} onSelect={select}
                 onAfterSelect={inDrawer ? () => closeDrawer() : undefined} topTitle={homeTitle}
-                onAddChild={(id) => setCreatingUnder(id)} onDrop={onDrop} onBlockedDrop={onBlockedDrop} canDrag={!inDrawer} watched={watched} menuFor={rowMenu}
+                onAddChild={(id) => setCreatingUnder(id)} onDrop={onDrop} onBlockedDrop={onBlockedDrop} canDrag={!inDrawer} watched={watched} fresh={freshSet} menuFor={rowMenu}
                 onDelete={(id) => { const d = byId.get(id); if (d) void trashFromTree(d); }} />
             </>
           )}

@@ -6,7 +6,8 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { LOCAL_ME_KEY, isUntouchedSample, useTaskStore, type Store, type StoreOptions } from './store';
-import { liveDocCount, useDocStore, type DocStore } from './docStore';
+import { useDocStore, type DocStore } from './docStore';
+import { freshDocs, freshPosts, freshTasks, markRead, useBlogFeed, useOwnTaskEdits, useUnread } from './reads';
 import { useMemoStore, type MemoStore } from './memoStore';
 import { DomainsContext, defaultDomain, domainOf, useDomainStore, type DomainStore } from './domainStore';
 import { ColorsContext, useColorStore, type ColorStore } from './colorStore';
@@ -16,7 +17,7 @@ import {
   type ColorBy, type DomainColor, type DomainKey, type Member, type Priority, type Status, type Task,
 } from './types';
 import {
-  Avatar, DOMAIN_FILL, DomainChip, DueBadge, IconChevron, IconNav, IconPlus, IconSearch, Modal, ThemeCycle, ThemeSwitch,
+  Avatar, DOMAIN_FILL, DomainChip, DueBadge, IconChevron, IconNav, IconPlus, IconSearch, Modal, NewMark, ThemeCycle, ThemeSwitch,
   PRIORITY_STYLE, PageHead, ParentLine, PriorityDot, STATUS_STYLE, StatusPill, SubCount, TaskCard, TaskMarks, Toast,
   tmBtn, tmBtnPrimary, tmCallout, tmCount, tmEditBtn, tmGhostBtn, tmIconBtnSm, tmInput, tmSelect, tmTab, tmTextBtn,
   useMediaQuery, type NavIcon,
@@ -113,7 +114,11 @@ const VIEWS: { id: View; label: string; key: string; hint: string }[] = [
 type Scope = { kind: 'all' } | { kind: 'mine' } | { kind: 'domain'; id: DomainKey };
 
 /** count 가 없으면 숫자 알약을 그리지 않는다(보고처럼 셀 것이 없는 메뉴) */
-type NavItem = { key: string; label: string; icon?: NavIcon; dot?: DomainColor; count?: number; active: boolean; go(): void };
+/** count = 회색 숫자(전체 수) · alert = 빨간 알림 숫자(아직 안 본 것, 0 이면 숨김) */
+type NavItem = { key: string; label: string; icon?: NavIcon; dot?: DomainColor; count?: number; alert?: number; active: boolean; go(): void };
+const alertText = (n: number) => (n > 99 ? '99+' : String(n));
+const navTitle = (it: NavItem) => ((it.alert ?? 0) > 0 ? `${it.label} 새 소식 ${it.alert}건`
+  : it.count === undefined ? it.label : `${it.label} ${it.count}건`);
 /** 메뉴 묶음 - action 은 묶음 이름 옆의 글자 버튼(영역 '관리') */
 type NavGroup = { label?: string; action?: { text: string; label: string; go(): void }; items: NavItem[] };
 
@@ -299,7 +304,7 @@ function Workspace({ account }: { account?: Account }) {
   /** undo 에 번호(저장소의 undoSeq)가 있으면 그 동작의 '실행 취소'를 함께 띄운다. err 는 저장 실패 같은 빨간 알림 */
   const [toast, setToast] = useState<{ text: string; undo: number | false; tone?: 'ok' | 'err' } | null>(null);
   const notify = useCallback((text: string) => setToast({ text, undo: false, tone: 'err' }), []);
-  const store = useTasks({ onError: notify });
+  const taskStore = useTasks({ onError: notify });
   const docStore = useDocs({ onError: notify });
   const memoStore = useMemos({ onError: notify });
   const domainStore = useDomainList({ onError: notify });
@@ -353,6 +358,8 @@ function Workspace({ account }: { account?: Account }) {
   /** 브라우저 저장 모드에서 고른 '나'. Supabase 모드에서는 로그인한 계정이 '나'다 */
   const [localMe, setLocalMe] = useState<string>('m7');
   const me = account ? account.me.id : localMe;
+  /** 이 화면에서 고친 작업은 내 알림(읽음 표시)에 올리지 않는다 - reads.ts */
+  const store = useOwnTaskEdits(taskStore, me);
   /* 나만 보기 작업은 만든 사람에게만 - Supabase 는 RLS 가 이미 빼고 주지만, 브라우저 저장 모드('나'를 바꿔 씀) · 늦은 알림에도 지킨다.
      조직도 · 위키 · 블로그 · 보고처럼 팀이 함께 보는 화면에는 내 나만 보기 작업도 넘기지 않는다 */
   const [favs, toggleFav] = useFavDomains(me);
@@ -764,6 +771,20 @@ function Workspace({ account }: { account?: Account }) {
 
   const open = openId ? tasksAll.find((t) => t.id === openId) ?? null : null;
 
+  /* 알림(읽음 표시) - 내 작업 · 팀 위키 · 블로그 메뉴의 빨간 숫자는 아직 열어 보지 않은 것만 센다(reads.ts) */
+  const taskUnread = useUnread(me, 'task');
+  const docUnread = useUnread(me, 'doc');
+  const blogUnread = useUnread(me, 'blog');
+  const blogFeed = useBlogFeed(me);
+  const newTasks = useMemo(() => freshTasks(tasksAll, me, taskUnread), [tasksAll, me, taskUnread]);
+  const newTaskIds = useMemo(() => new Set(newTasks.map((t) => t.id)), [newTasks]);
+  const newDocCount = useMemo(() => freshDocs(docStore.docs, me, docUnread).length, [docStore.docs, me, docUnread]);
+  const newPostCount = useMemo(() => freshPosts(blogFeed, me, blogUnread).length, [blogFeed, me, blogUnread]);
+  /* 연 작업은 읽은 것 - 열어 둔 사이에 남이 바꾼 것도 */
+  useEffect(() => {
+    if (open && taskUnread(open.id, open.updatedAt)) markRead(me, 'task', { id: open.id, at: open.updatedAt });
+  }, [open, me, taskUnread]);
+
   /* 위젯에서 누른 작업(?task=<id>)을 연다 - 목록을 읽은 뒤 한 번만. ?task · ?view 는 주소에서 지워
      새로고침하거나 다른 보기로 옮겨도 다시 열리지 않게 한다 */
   const linkDone = useRef(false);
@@ -954,7 +975,7 @@ function Workspace({ account }: { account?: Account }) {
       items: [
         { key: 'all', label: '모든 작업', icon: 'board', count: counts.open,
           active: section === 'tasks' && scope.kind === 'all', go: () => goTasks({ kind: 'all' }) },
-        { key: 'mine', label: '내 작업', icon: 'mine', count: counts.mine,
+        { key: 'mine', label: '내 작업', icon: 'mine', alert: newTasks.length,
           active: section === 'tasks' && scope.kind === 'mine', go: () => goTasks({ kind: 'mine' }) },
       ],
     },
@@ -989,7 +1010,7 @@ function Workspace({ account }: { account?: Account }) {
         { key: 'drive', label: '구글 드라이브', icon: 'drive', active: section === 'drive', go: () => setSection('drive') },
         // 프로젝트별 드라이브 '빌드파일' 폴더의 파일 - 드라이브 목록에서 뽑는다
         { key: 'builds', label: '빌드 파일', icon: 'build', active: section === 'builds', go: () => setSection('builds') },
-        { key: 'docs', label: '팀 위키', icon: 'wiki', count: liveDocCount(docStore.docs),
+        { key: 'docs', label: '팀 위키', icon: 'wiki', alert: newDocCount,
           active: section === 'docs', go: () => setSection('docs') },
         // 나만 보는 메모 - 브라우저 저장 모드는 '나'를 바꿔 쓸 수 있어 쓴 사람으로 센다
         { key: 'memos', label: '내 메모', icon: 'memo', count: memoStore.memos.filter((m) => m.owner === me).length,
@@ -1005,10 +1026,10 @@ function Workspace({ account }: { account?: Account }) {
       ],
     },
     {
-      // 팀원 모두가 함께 쓰는 블로그 하나 - 열 때 표를 읽으므로 숫자를 달지 않는다
+      // 팀원 모두가 함께 쓰는 블로그 하나 - 숫자는 아직 안 본 새 글(글 목록은 열 때 읽고, 숫자용으로는 번호 · 쓴 사람만 받는다)
       label: '커뮤니티',
       items: [
-        { key: 'blog', label: '블로그', icon: 'blog', active: section === 'blog', go: () => setSection('blog') },
+        { key: 'blog', label: '블로그', icon: 'blog', alert: newPostCount, active: section === 'blog', go: () => setSection('blog') },
       ],
     },
   ];
@@ -1033,8 +1054,8 @@ function Workspace({ account }: { account?: Account }) {
         {g.items.map((it) => compact ? (
           <button key={it.key} type="button" aria-current={it.active ? 'page' : undefined}
             onClick={() => { it.go(); after?.(); }}
-            title={it.count === undefined ? it.label : `${it.label} ${it.count}건`}
-            aria-label={it.count === undefined ? it.label : `${it.label} ${it.count}건`}
+            title={navTitle(it)}
+            aria-label={navTitle(it)}
             className={`flex min-h-[54px] w-full flex-col items-center justify-center gap-1 rounded-tm-sm px-1 py-1.5 text-[12px] leading-tight
                         transition-colors duration-150 ${
               it.active ? 'bg-tm-blue font-bold text-white' : 'font-semibold text-tm-ink hover:bg-tm-tint'}`}>
@@ -1042,7 +1063,11 @@ function Workspace({ account }: { account?: Account }) {
               {it.icon ? <IconNav name={it.icon} /> : (
                 <span className={`h-3 w-3 rounded-[4px] ${it.dot ? DOMAIN_FILL[it.dot] : ''} ${it.active ? 'ring-2 ring-white' : ''}`} />
               )}
-              {(it.count ?? 0) > 0 && (
+              {(it.alert ?? 0) > 0 ? (
+                <span className="absolute -right-3 -top-1.5 inline-grid h-[18px] min-w-[20px] place-items-center rounded-full bg-tm-red-deep px-1 text-[12px] font-bold leading-none tabular-nums text-white">
+                  {alertText(it.alert ?? 0)}
+                </span>
+              ) : (it.count ?? 0) > 0 && (
                 <span className={`absolute -right-3 -top-1.5 inline-grid h-[18px] min-w-[20px] place-items-center rounded-full px-1 text-[12px] font-bold leading-none tabular-nums ${
                   it.active ? 'bg-tm-card text-tm-blue' : 'bg-tm-tint text-tm-deep'}`}>
                   {it.count}
@@ -1063,6 +1088,12 @@ function Workspace({ account }: { account?: Account }) {
               </span>
             )}
             <span className="min-w-0 truncate">{it.label}</span>
+            {(it.alert ?? 0) > 0 && (
+              <span aria-label={`새 소식 ${it.alert}건`} title={`아직 안 본 것 ${it.alert}건`}
+                className="ml-auto inline-grid h-[22px] min-w-[26px] flex-none place-items-center rounded-full bg-tm-red-deep px-2 text-[12.5px] font-bold tabular-nums text-white">
+                {alertText(it.alert ?? 0)}
+              </span>
+            )}
             {it.count !== undefined && (
               <span className={`ml-auto inline-grid h-[22px] min-w-[26px] flex-none place-items-center rounded-full px-2 text-[12.5px] font-bold tabular-nums ${
                 it.active ? 'bg-white/20 text-white' : 'bg-tm-tint text-tm-deep group-hover:bg-tm-card'}`}>
@@ -1489,7 +1520,7 @@ function Workspace({ account }: { account?: Account }) {
                                     <span className="pointer-events-none absolute -top-[7px] left-1 right-1 h-[3px] rounded-full bg-tm-blue" />
                                   )}
                                   <TaskCard task={t} dragging={dragId === t.id}
-                                    mine={t.assignee === me}
+                                    mine={t.assignee === me} unread={newTaskIds.has(t.id)}
                                     parent={parentFor(t)} sub={kin.sub.get(t.id)}
                                     onMove={(st, keyboard) => {
                                       store.move(t.id, st, null);
@@ -1584,6 +1615,7 @@ function Workspace({ account }: { account?: Account }) {
                             <td className="px-4 py-3.5">
                               <div className="flex min-w-0 items-center gap-2.5">
                                 <span className="flex-none text-[13px] font-bold tabular-nums text-tm-sub">{t.key}</span>
+                                {newTaskIds.has(t.id) && <NewMark />}
                                 <TaskMarks task={t} />
                                 <span className={`min-w-0 font-semibold ${t.status === 'done' ? 'text-tm-sub line-through' : 'text-tm-ink'}`}>
                                   {t.title}
@@ -1644,7 +1676,7 @@ function Workspace({ account }: { account?: Account }) {
                               className="flex w-full flex-col gap-2 px-4 py-3.5 text-left transition-colors duration-150 hover:bg-tm-tint">
                               <span className="flex w-full min-w-0 items-start gap-3">
                                 <span className="min-w-0 flex-1">
-                                  <span className="flex items-center gap-2 text-[13px] font-bold tabular-nums text-tm-sub">{t.key}<TaskMarks task={t} /></span>
+                                  <span className="flex items-center gap-2 text-[13px] font-bold tabular-nums text-tm-sub">{t.key}{newTaskIds.has(t.id) && <NewMark />}<TaskMarks task={t} /></span>
                                   <span className={`block text-[15px] font-semibold leading-[1.45] ${
                                     t.status === 'done' ? 'text-tm-sub line-through' : 'text-tm-ink'}`}>
                                     {t.title}

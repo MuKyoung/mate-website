@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Doc } from './types';
 import { DocIcon, titleOf, type MenuEntry } from './DocPanels';
 import { FloatMenu } from './DocEditor';
-import { IconPlus } from './ui';
+import { IconPlus, NewDot } from './ui';
 
 /*
  * 문서 트리 - 왼쪽 목록. 줄을 끌어 놓으면 위 · 아래(같은 깊이에서 순서) 또는 가운데(그 문서 아래)로 옮긴다.
@@ -60,6 +60,8 @@ interface Props {
   canDrag: boolean;
   /** 다른 팀원이 보고 있는 문서 */
   watched?: ReadonlySet<string>;
+  /** 남이 만들거나 고친 뒤 아직 안 본 문서(읽음 표시, reads.ts) - 빨간 점 */
+  fresh?: ReadonlySet<string>;
   /** 줄 메뉴(⋯) 항목 - 없으면 메뉴 단추를 두지 않는다 */
   menuFor?(node: TreeNode): MenuEntry[];
   /** Delete 키 - 줄 메뉴의 '휴지통으로 옮기기'와 같은 일 */
@@ -70,7 +72,7 @@ interface Props {
   topTitle?: string;
 }
 
-export default function DocTree({ roots, activeId, openSet, onToggle, onSelect, onAddChild, onDrop, onBlockedDrop, canDrag, watched, menuFor, onDelete, onAfterSelect, topTitle }: Props) {
+export default function DocTree({ roots, activeId, openSet, onToggle, onSelect, onAddChild, onDrop, onBlockedDrop, canDrag, watched, fresh, menuFor, onDelete, onAfterSelect, topTitle }: Props) {
   const [drag, setDrag] = useState<string | null>(null);
   const [over, setOver] = useState<{ id: string | null; zone: DropZone } | null>(null);
   /* 끄는 문서와 그 아래 문서 - 그 위로는 놓을 수 없다 */
@@ -103,6 +105,19 @@ export default function DocTree({ roots, activeId, openSet, onToggle, onSelect, 
     }
     return out;
   }, [activeId, byId]);
+  /** 아래 어딘가에 아직 안 본 문서가 있는 줄 - 접혀 있으면 그 줄에 빨간 점을 단다 */
+  const freshUnder = useMemo(() => {
+    const out = new Set<string>();
+    if (!fresh?.size) return out;
+    const walk = (n: TreeNode): boolean => {
+      let any = false;
+      n.children.forEach((c) => { if (walk(c)) any = true; });
+      if (any) out.add(n.id);
+      return any || fresh.has(n.id);
+    };
+    roots.forEach(walk);
+    return out;
+  }, [roots, fresh]);
 
   const start = (id: string) => {
     const out = new Set<string>();
@@ -261,6 +276,10 @@ export default function DocTree({ roots, activeId, openSet, onToggle, onSelect, 
             className={`flex min-w-0 flex-1 cursor-pointer items-center gap-2 self-stretch rounded-md text-left text-[14.5px] ${active ? 'font-bold' : 'font-semibold'}`}>
             <span className={active ? 'text-white' : 'text-tm-sub'}><DocIcon icon={node.icon} /></span>
             <span className="truncate">{titleOf(node)}</span>
+            {(fresh?.has(node.id) || (!expanded && freshUnder.has(node.id))) && (
+              <NewDot title={fresh?.has(node.id) ? '아직 안 본 변경' : '아래에 아직 안 본 문서가 있습니다'}
+                className={active ? 'ring-2 ring-white' : ''} />
+            )}
             {watched?.has(node.id) && (
               <span aria-label="다른 팀원이 보는 중" title="다른 팀원이 보는 중"
                 className={`h-2 w-2 flex-none rounded-full ${active ? 'bg-tm-card' : 'bg-tm-ok'}`} />

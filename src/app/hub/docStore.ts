@@ -45,20 +45,16 @@ export const isWikiHome = (id: string | null | undefined) => id === WIKI_HOME_ID
 /** 팀 양식 라벨 - 이 라벨을 단 문서는 새 문서 창에서 양식으로 고를 수 있다(Confluence 에서 옮긴 양식도 이 라벨을 단다) */
 export const TEMPLATE_LABEL = '양식';
 
-/** 휴지통에 들지 않은 문서 수 - 휴지통에 든 문서의 아래 문서도 뺀다(메뉴의 숫자). 맨 위 문서는 위키 자체라 세지 않는다 */
-export function liveDocCount(docs: Doc[]): number {
-  const byId = new Map(docs.map((d) => [d.id, d]));
-  return docs.filter((d) => {
-    if (isWikiHome(d.id)) return false;
-    let cur: Doc | undefined = d;
-    let guard = 0;
-    while (cur && guard < 60) {
-      if (cur.trashedAt && !isWikiHome(cur.id)) return false;
-      cur = cur.parentId ? byId.get(cur.parentId) : undefined;
-      guard += 1;
-    }
-    return true;
-  }).length;
+/** 휴지통에 들었거나 휴지통에 든 문서 아래에 있다. 맨 위 문서는 휴지통에 들지 않는다(예전 화면이 넣었어도) */
+export function inTrash(d: Doc, byId: ReadonlyMap<string, Doc>): boolean {
+  let cur: Doc | undefined = d;
+  let guard = 0;
+  while (cur && guard < 60) {
+    if (cur.trashedAt && !isWikiHome(cur.id)) return true;
+    cur = cur.parentId ? byId.get(cur.parentId) : undefined;
+    guard += 1;
+  }
+  return false;
 }
 
 /** 예전에 저장한 문서에는 위키 칸이 없다 - 빈 값으로 채운다 */

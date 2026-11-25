@@ -4,10 +4,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import DocEditor, { type WikiRefs } from './DocEditor';
 import { imageSrcOk, plainText } from './docMarkdown';
 import { useMembers } from './members';
+import { freshPosts, markRead, useUnread } from './reads';
 import { isRemote } from './supabase';
 import type { Doc, Task } from './types';
 import {
-  Avatar, IconArrow, IconPlus, IconSearch, Modal, tmBtn, tmBtnPrimary, tmCallout, tmCard, tmFieldBase, tmGhostBtn,
+  Avatar, IconArrow, IconPlus, IconSearch, Modal, NewMark, tmBtn, tmBtnPrimary, tmCallout, tmCard, tmFieldBase, tmGhostBtn,
   tmGhostDanger, tmIconBtnSm, tmInput, tmLabel, tmSelect, tmTab, tmTextBtn, tmTextarea, useConfirm,
 } from './ui';
 import {
@@ -318,6 +319,16 @@ export default function Blog({ me, admin, docs, tasks, onOpenDoc, onTaskOpen, on
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewed, exists]);
 
+  /* 읽음 표시(reads.ts) - 남이 쓴 새 글 중 아직 열어 보지 않은 것에 N. 글을 열면 읽은 것 */
+  const blogUnread = useUnread(me, 'blog');
+  const fresh = useMemo(() => freshPosts(store.posts, me, blogUnread), [store.posts, me, blogUnread]);
+  const freshIds = useMemo(() => new Set(fresh.map((p) => p.id)), [fresh]);
+  const viewedFresh = viewed ? fresh.find((p) => p.id === viewed) : undefined;
+  useEffect(() => {
+    if (viewedFresh) markRead(me, 'blog', { id: viewedFresh.id, at: viewedFresh.createdAt });
+  }, [viewedFresh, me]);
+  const readAll = () => markRead(me, 'blog', fresh.map((p) => ({ id: p.id, at: p.createdAt })));
+
   /* ── 위키 편집기에 넘기는 것 ── */
 
   const docRefs = useMemo(
@@ -572,7 +583,7 @@ export default function Blog({ me, admin, docs, tasks, onOpenDoc, onTaskOpen, on
       <ListView shown={shown} filter={filter} page={page} setPage={(n) => { setPage(n); toTop(); }} mode={mode} setMode={setMode}
         store={store} catLabel={catLabel} shortCat={shortCat} catOf={catOf} nameOf={nameOf} likesOf={likesOf} commentCount={commentCount}
         onOpen={openPost} onClear={() => go({})} onWrite={() => setRoute({ kind: 'write', id: null })}
-        all={posts} />
+        all={posts} fresh={freshIds} onReadAll={readAll} />
     );
   }
 
@@ -618,11 +629,18 @@ function Meta({ post, nameOf, likes, comments }: {
   );
 }
 
+/** 아직 열어 보지 않은 남의 새 글 - 제목 곁 N */
+const NewPost = () => <NewMark label="새 글" title="아직 안 본 새 글" className="ml-1.5 align-[3px]" />;
+
 function ListView({
   shown, all, filter, page, setPage, mode, setMode, store, catLabel, shortCat, catOf, nameOf, likesOf, commentCount, onOpen, onClear, onWrite,
+  fresh, onReadAll,
 }: {
   shown: BlogPost[];
   all: BlogPost[];
+  /** 남이 쓴 새 글 중 아직 열어 보지 않은 것 - 제목 곁에 N */
+  fresh: ReadonlySet<string>;
+  onReadAll(): void;
   filter: Filter;
   page: number;
   setPage(n: number): void;
@@ -668,6 +686,12 @@ function ListView({
           <h1 className="text-[26px] font-extrabold leading-[1.25] tracking-[-0.02em] text-tm-deep max-[900px]:text-[22px]">{title}</h1>
           <p className="mt-1 text-[14px] text-tm-sub">
             <b className="font-bold tabular-nums text-tm-ink">{shown.length}</b>개의 글
+            {fresh.size > 0 && (
+              <>
+                {' · '}새 글 <b className="font-bold tabular-nums text-tm-red">{fresh.size}</b>
+                <button type="button" onClick={onReadAll} className={`${tmTextBtn} ml-2 min-h-0`}>모두 읽음</button>
+              </>
+            )}
             {!plain && <button type="button" onClick={onClear} className={`${tmTextBtn} ml-2 min-h-0`}>전체보기로</button>}
           </p>
         </div>
@@ -686,7 +710,9 @@ function ListView({
           {notices.map((p) => (
             <button key={p.id} type="button" onClick={() => onOpen(p.id)} className="flex w-full items-center gap-3 py-2.5 text-left">
               <span className="flex-none rounded-full bg-tm-red-tint px-2.5 py-[2px] text-[12.5px] font-bold text-tm-red">공지</span>
-              <span className="min-w-0 flex-1 truncate text-[15px] font-bold text-tm-ink hover:underline">{p.title}</span>
+              <span className="min-w-0 truncate text-[15px] font-bold text-tm-ink hover:underline">{p.title}</span>
+              {fresh.has(p.id) && <NewPost />}
+              <span className="flex-1" />
               <span className="flex-none text-[13px] tabular-nums text-tm-sub max-[600px]:hidden">{whenOf(p.createdAt)}</span>
             </button>
           ))}
@@ -737,6 +763,7 @@ function ListView({
                   <span className="block p-3">
                     <span className="line-clamp-2 text-[14.5px] font-bold leading-[1.45] text-tm-ink group-hover:text-tm-blue">
                       {p.notice && <span className="mr-1 text-tm-red">[공지]</span>}{p.title}
+                      {fresh.has(p.id) && <NewPost />}
                     </span>
                     <span className="mt-1.5 block truncate text-[12.5px] text-tm-sub">{nameOf(p.author)} · {whenOf(p.createdAt)}</span>
                   </span>
@@ -757,6 +784,7 @@ function ListView({
                     <span className="text-[13px] font-bold text-tm-blue">{catLabel(catOf(p))}</span>
                     <span className="line-clamp-2 text-[18px] font-extrabold leading-[1.4] tracking-[-0.01em] text-tm-ink group-hover:text-tm-blue max-[720px]:text-[16px]">
                       {p.notice && <span className="mr-1.5 text-tm-red">[공지]</span>}{p.title}
+                      {fresh.has(p.id) && <NewPost />}
                     </span>
                     {d.text && <span className="line-clamp-2 text-[14.5px] leading-[1.65] text-tm-sub max-[720px]:hidden">{d.text}</span>}
                     <span className="mt-1"><Meta post={p} nameOf={nameOf} likes={likesOf.get(p.id)?.length ?? 0} comments={commentCount.get(p.id) ?? 0} /></span>

@@ -241,6 +241,24 @@ export function IconSubtasks({ size = 14 }: { size?: number }) {
     </svg>
   );
 }
+/** 아직 안 본 변경 - 빨간 점(읽음 표시, reads.ts). 줄이 좁은 위키 트리에 쓴다 */
+export function NewDot({ title = '아직 안 본 변경', className = '' }: { title?: string; className?: string }) {
+  return <span role="img" aria-label="새 소식" title={title} className={`inline-block h-2 w-2 flex-none rounded-full bg-tm-red-deep ${className}`} />;
+}
+
+/**
+ * 아직 안 본 새것 - 네이버 블로그처럼 빨간 N(읽음 표시, reads.ts). 작업 카드 · 목록 줄 · 블로그 글 제목 곁에 쓴다.
+ * 작업 카드의 우선순위 점(긴급 = 빨강)과 헷갈리지 않게 점이 아니라 글자로
+ */
+export function NewMark({ label = '새 소식', title = '아직 안 본 변경', className = '' }: { label?: string; title?: string; className?: string }) {
+  return (
+    <span role="img" aria-label={label} title={title}
+      className={`inline-grid h-[18px] min-w-[18px] flex-none place-items-center rounded-full bg-tm-red-deep px-1 text-[12px] font-extrabold leading-none text-white ${className}`}>
+      N
+    </span>
+  );
+}
+
 /** 번호 곁 표시 - 나만 보기 자물쇠 · 참고자료 수. 없으면 그리지 않는다 */
 export function TaskMarks({ task }: { task: Task }) {
   const n = task.refs?.length ?? 0;
@@ -1037,12 +1055,14 @@ interface CardProps {
   parent?: Task | null;
   /** 하위 업무 진행 - 있으면 마감 곁에 */
   sub?: { done: number; total: number } | null;
+  /** 남이 만들거나 고친 뒤 아직 열어 보지 않은 내 작업 - 번호 곁에 빨간 점 */
+  unread?: boolean;
 }
 
-export function TaskCard({ task, onOpen, onDragStart, onDragEnd, dragging, onMove, mine, parent, sub }: CardProps) {
+export function TaskCard({ task, onOpen, onDragStart, onDragEnd, dragging, onMove, mine, parent, sub, unread }: CardProps) {
   const done = task.status === 'done';
   const idx = STATUSES.findIndex((s) => s.id === task.status);
-  const kin = `${parent ? `, 상위 업무 ${parent.key}` : ''}${sub ? `, 하위 업무 ${sub.total}개 중 ${sub.done}개 완료` : ''}`;
+  const kin = `${unread ? ', 새 소식' : ''}${parent ? `, 상위 업무 ${parent.key}` : ''}${sub ? `, 하위 업무 ${sub.total}개 중 ${sub.done}개 완료` : ''}`;
   return (
     <article
       data-task={task.id}
@@ -1081,6 +1101,7 @@ export function TaskCard({ task, onOpen, onDragStart, onDragEnd, dragging, onMov
       <div className="mb-1.5 flex items-center gap-2">
         <PriorityDot p={task.priority} />
         <span className="whitespace-nowrap text-[13px] font-bold tabular-nums text-tm-sub">{task.key}</span>
+        {unread && <NewMark />}
         <TaskMarks task={task} />
         <span className="ml-auto" />
         <StatusMenu task={task} onMove={onMove} />
