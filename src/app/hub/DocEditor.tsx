@@ -13,7 +13,7 @@ import { BubbleMenu } from '@tiptap/react/menus';
 import { Extension, getMarkRange, type EditorOptions, type Range } from '@tiptap/core';
 import { NodeSelection, Plugin, PluginKey } from '@tiptap/pm/state';
 import { CellSelection } from '@tiptap/pm/tables';
-import { Decoration, DecorationSet } from '@tiptap/pm/view';
+import { Decoration, DecorationSet, type EditorView } from '@tiptap/pm/view';
 import { DOMParser as PMDOMParser, type Node as PMNode } from '@tiptap/pm/model';
 import Suggestion, { type SuggestionKeyDownProps, type SuggestionProps } from '@tiptap/suggestion';
 import { Placeholder } from '@tiptap/extensions';
@@ -1036,6 +1036,216 @@ function uploadMarks(act: () => UploadActions) {
   });
 }
 
+/* ── 영상 링크 - 누르면 새 창을 열지 않고 링크가 든 문단 바로 아래에서 재생한다 ──────────
+   팀 저장소에 올린 영상(tmfile:….mp4 등) · 구글 드라이브 영상(링크 글이 영상 파일 이름) · 유튜브.
+   꾸밈(widget)이라 마크다운으로 저장되지 않는다. 같은 링크를 다시 누르거나 '닫기'로 닫는다 */
+
+interface VideoSrc {
+  /** file = 이 화면의 재생기(<video>), frame = 드라이브 · 유튜브 재생기(iframe) */
+  kind: 'file' | 'frame';
+  href: string;
+  embed?: string;
+  name: string;
+}
+interface VideoPlayer extends VideoSrc {
+  id: string;
+  /** 링크가 든 문단 바로 뒤 - 앞에서 글을 넣거나 지우면 따라 옮긴다 */
+  pos: number;
+  /** 같은 문단에 여럿 열면 연 순서대로 */
+  order: number;
+}
+type VideoMeta = { add?: VideoPlayer; drop?: string };
+
+const VIDEO_KEY = new PluginKey<VideoPlayer[]>('tmVideos');
+const VIDEO_FILE = /\.(mp4|m4v|webm|mov|ogv)$/i;
+let videoSeq = 0;
+
+/** 유튜브 시작 시각(t=90 · 1m30s) → 초 */
+function ytSeconds(t: string): number {
+  if (/^\d+s?$/.test(t)) return parseInt(t, 10);
+  const m = /^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/.exec(t);
+  return m ? Number(m[1] ?? 0) * 3600 + Number(m[2] ?? 0) * 60 + Number(m[3] ?? 0) : 0;
+}
+
+/** 누른 링크가 영상이면 재생할 것을, 아니면 null */
+function videoOf(href: string, text: string): VideoSrc | null {
+  const label = text.replace(/^\s*📎\s*/u, '').trim();
+  const named = (fallback: string) => (label && !/^https?:\/\//i.test(label) ? label : fallback);
+  if (href.startsWith('tmfile:')) return VIDEO_FILE.test(href) ? { kind: 'file', href, name: named('영상') } : null;
+  let u: URL;
+  try { u = new URL(href); } catch { return null; }
+  if (u.protocol !== 'https:' && u.protocol !== 'http:') return null;
+  const host = u.hostname.replace(/^(?:www|m)\./, '');
+  const drive = /^\/file\/d\/([\w-]+)/.exec(u.pathname);
+  if (host === 'drive.google.com' && drive) {
+    if (!VIDEO_FILE.test(label)) return null;
+    const embed = new URL(`https://drive.google.com/file/d/${drive[1]}/preview`);
+    const who = u.searchParams.get('authuser');
+    if (who) embed.searchParams.set('authuser', who);
+    return { kind: 'frame', href, embed: embed.href, name: label };
+  }
+  let id: string | null = null;
+  if (host === 'youtu.be') id = u.pathname.split('/')[1] ?? null;
+  else if (host === 'youtube.com' || host === 'music.youtube.com') {
+    id = u.pathname === '/watch' ? u.searchParams.get('v') : /^\/(?:shorts|embed|live)\/([\w-]+)/.exec(u.pathname)?.[1] ?? null;
+  }
+  if (!id || !/^[\w-]{11}$/.test(id)) return null;
+  const embed = new URL(`https://www.youtube-nocookie.com/embed/${id}`);
+  embed.searchParams.set('autoplay', '1');
+  embed.searchParams.set('rel', '0');
+  const list = u.searchParams.get('list');
+  if (list && /^[\w-]+$/.test(list)) embed.searchParams.set('list', list);
+  const start = ytSeconds(u.searchParams.get('t') ?? u.searchParams.get('start') ?? '');
+  if (start) embed.searchParams.set('start', String(start));
+  return { kind: 'frame', href, embed: embed.href, name: named('유튜브 영상') };
+}
+
+/** 이 링크가 든 문단 바로 뒤(문서를 통째로 다시 받았을 때 재생기를 다시 붙일 곳) */
+function linkBlockEnd(doc: PMNode, href: string): number | null {
+  let at: number | null = null;
+  doc.descendants((node, pos) => {
+    if (at !== null) return false;
+    if (!node.isTextblock) return true;
+    node.forEach((c) => { if (c.marks.some((m) => m.type.name === 'link' && m.attrs.href === href)) at = pos + node.nodeSize; });
+    return false;
+  });
+  return at;
+}
+
+/** 영상 링크를 누름 - 그 문단 아래에 재생기를 열거나(이미 열려 있으면) 닫는다. 영상이 아니면 false */
+function toggleVideo(view: EditorView, a: HTMLAnchorElement): boolean {
+  const v = videoOf(a.getAttribute('href') ?? '', a.textContent ?? '');
+  if (!v) return false;
+  let $pos;
+  try { $pos = view.state.doc.resolve(view.posAtDOM(a, 0)); } catch { return false; }
+  if (!$pos.parent.isTextblock) return false;
+  const end = $pos.after();
+  const open = (VIDEO_KEY.getState(view.state) ?? []).find((p) => p.href === v.href && p.pos === end);
+  const meta: VideoMeta = open ? { drop: open.id } : { add: { ...v, id: `v${++videoSeq}`, pos: end, order: videoSeq } };
+  view.dispatch(view.state.tr.setMeta(VIDEO_KEY, meta));
+  return true;
+}
+
+function videoDom(p: VideoPlayer, view: EditorView, getRefs: () => WikiRefs | null) {
+  const box = document.createElement('div');
+  box.className = 'tm-video';
+  box.contentEditable = 'false';
+  box.setAttribute('role', 'group');
+  box.setAttribute('aria-label', `영상 - ${p.name}`);
+  const head = document.createElement('div');
+  head.className = 'tm-video-head';
+  const name = document.createElement('span');
+  name.className = 'tm-video-name';
+  name.textContent = p.name;
+  name.title = p.name;
+  const btn = (label: string, title: string, run: () => void) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = label;
+    b.title = title;
+    b.addEventListener('mousedown', (e) => e.preventDefault());
+    b.addEventListener('click', (e) => { e.preventDefault(); run(); });
+    return b;
+  };
+  head.append(
+    name,
+    btn('새 탭', '새 탭에서 열기', () => { const r = getRefs(); if (r) openHref(p.href, r); }),
+    btn('닫기', '재생기 닫기', () => view.dispatch(view.state.tr.setMeta(VIDEO_KEY, { drop: p.id } satisfies VideoMeta))),
+  );
+  box.append(head);
+  // 열자마자 재생기가 화면 밖이면 보이는 곳까지만 내린다. scrollIntoView 는 가려 둔(overflow hidden) 바깥 칸까지 밀어
+  // Hub 화면이 통째로 올라가므로, 본문을 스크롤하는 칸만 내린다
+  let shown = false;
+  const reveal = () => {
+    if (shown || !box.isConnected) return;
+    shown = true;
+    let sc = box.parentElement;
+    while (sc && !(/(auto|scroll)/.test(getComputedStyle(sc).overflowY) && sc.scrollHeight > sc.clientHeight)) sc = sc.parentElement;
+    const r = box.getBoundingClientRect();
+    const v = sc ? sc.getBoundingClientRect() : { top: 0, bottom: window.innerHeight };
+    const by = Math.max(0, Math.min(r.bottom - v.bottom + 16, r.top - v.top - 16));
+    if (by > 0) (sc ?? window).scrollBy({ top: by, behavior: 'smooth' });
+  };
+  if (p.kind === 'frame' && p.embed) {
+    const f = document.createElement('iframe');
+    f.src = p.embed;
+    f.title = p.name;
+    f.allow = 'autoplay; fullscreen; picture-in-picture; encrypted-media';
+    f.allowFullscreen = true;
+    // 유튜브는 어디서 트는지(사이트 주소)를 받아야 재생한다 - 공유 링크 화면(no-referrer)에서도 주소만 보낸다
+    f.referrerPolicy = 'strict-origin-when-cross-origin';
+    box.append(f);
+    requestAnimationFrame(reveal);
+    return box;
+  }
+  const video = document.createElement('video');
+  video.controls = true;
+  video.playsInline = true;
+  video.preload = 'metadata';
+  video.hidden = true;
+  const msg = document.createElement('div');
+  msg.className = 'tm-video-msg';
+  msg.setAttribute('role', 'status');
+  msg.textContent = '영상을 불러오는 중…';
+  box.append(video, msg);
+  const fail = (text: string) => {
+    video.hidden = true;
+    msg.textContent = text;
+    if (!msg.isConnected) box.append(msg);
+    requestAnimationFrame(reveal);
+  };
+  video.addEventListener('loadedmetadata', () => {
+    video.hidden = false;
+    msg.remove();
+    requestAnimationFrame(reveal);
+  });
+  video.addEventListener('error', () => {
+    if (video.getAttribute('src')) fail('이 브라우저에서 재생할 수 없는 영상입니다. 새 탭에서 열어 받아 보세요');
+  });
+  const refs = getRefs();
+  (refs ? refs.fileUrl(p.href) : Promise.reject(new Error('no refs'))).then((u) => {
+    video.src = u;
+    // 브라우저가 소리 나는 자동 재생을 막으면 재생 단추를 누르면 된다
+    video.play().catch(() => undefined);
+  }).catch(() => fail('영상을 불러오지 못했습니다. 지워졌거나 받을 수 없는 파일일 수 있습니다'));
+  // 화면 맞춤은 영상 크기를 안 뒤(loadedmetadata) · 실패 안내를 띄운 뒤에 한다
+  return box;
+}
+
+function videoPlayers(getRefs: () => WikiRefs | null) {
+  return new Plugin<VideoPlayer[]>({
+    key: VIDEO_KEY,
+    state: {
+      init: () => [],
+      apply: (tr, list) => {
+        let next = list;
+        if (tr.docChanged && list.length) {
+          next = list.flatMap((p) => {
+            const r = tr.mapping.mapResult(p.pos, -1);
+            const pos = r.deleted ? linkBlockEnd(tr.doc, p.href) : r.pos;
+            return pos === null ? [] : [{ ...p, pos }];
+          });
+        }
+        const meta = tr.getMeta(VIDEO_KEY) as VideoMeta | undefined;
+        if (meta?.add) next = [...next, meta.add];
+        if (meta?.drop) next = next.filter((p) => p.id !== meta.drop);
+        return next;
+      },
+    },
+    props: {
+      decorations: (state) => {
+        const list = VIDEO_KEY.getState(state) ?? [];
+        if (!list.length) return null;
+        return DecorationSet.create(state.doc, list.map((p) =>
+          Decoration.widget(Math.min(p.pos, state.doc.content.size), (view) => videoDom(p, view, getRefs), {
+            key: p.id, side: 1 + p.order, ignoreSelection: true, stopEvent: () => true,
+            destroy: (dom) => (dom as HTMLElement).querySelector('video')?.pause(),
+          })));
+      },
+    },
+  });
+}
+
 /* ── 기록 비교 - 블록마다 새로 생김 · 사라짐 ───────────── */
 
 const DIFF_KEY = new PluginKey('tmDiff');
@@ -1246,7 +1456,7 @@ export default function DocEditor(props: DocEditorProps) {
     const extras = Extension.create({
       name: 'tmWikiExtras',
       addProseMirrorPlugins() {
-        const plugins = [taskRefs(getRefs), uploadMarks(() => uploadActions.current)];
+        const plugins = [taskRefs(getRefs), uploadMarks(() => uploadActions.current), videoPlayers(getRefs)];
         // 문서 화면의 편집기만 - 기록 미리 보기에는 제목 링크를 달지 않는다
         if (selfId) plugins.push(headingAnchors(copyAnchor));
         if (diff) plugins.push(diffMarks(diff));
@@ -1584,11 +1794,12 @@ export default function DocEditor(props: DocEditorProps) {
         live.current.onNotice?.('편집을 누른 뒤 파일을 넣을 수 있습니다', 'err');
         return true;
       },
-      // 보기 모드 - 링크는 새 탭(밖으로 나가는 주소) · 팀 저장소 파일은 받을 수 있는 주소로 바꿔 연다 · #제목은 본문 안에서 간다
+      // 보기 모드 - 영상은 그 자리에서 재생, 링크는 새 탭(밖으로 나가는 주소) · 팀 저장소 파일은 받을 수 있는 주소로 바꿔 연다 · #제목은 본문 안에서 간다
       click: (view, event) => {
         const a = (event.target as HTMLElement | null)?.closest<HTMLAnchorElement>('a[href]');
         if (!a || (view.editable && !(event.ctrlKey || event.metaKey))) return false;
         event.preventDefault();
+        if (toggleVideo(view, a)) return true;
         openHref(a.getAttribute('href') ?? '', live.current.refs, view.dom);
         return true;
       },

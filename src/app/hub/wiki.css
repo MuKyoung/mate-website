@@ -204,6 +204,27 @@
 @media (prefers-reduced-motion: reduce) { .tm-upload-spin { animation: none; } }
 @media (pointer: coarse) { .tm-prose .tm-upload button { height: 44px; } }
 
+/* 영상 링크를 누르면 그 문단 아래에 열리는 재생기(꾸밈 - 저장되지 않음) */
+.tm-prose .tm-video {
+  max-width: 880px; margin: 6px 0 14px; border: 1px solid rgb(var(--tm-line)); border-radius: 10px; overflow: hidden;
+  background: rgb(var(--tm-card)); user-select: none; white-space: normal;
+}
+.tm-prose .tm-video-head { display: flex; align-items: center; gap: 6px; padding: 5px 6px 5px 12px; border-bottom: 1px solid rgb(var(--tm-line)); }
+.tm-prose .tm-video-name {
+  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: 13px; font-weight: 700; color: rgb(var(--tm-ink));
+}
+.tm-prose .tm-video-head button {
+  flex: none; height: 28px; padding: 0 10px; border: 1px solid rgb(var(--tm-edge)); border-radius: 9999px; background: rgb(var(--tm-card));
+  font-size: 12.5px; font-weight: 700; color: rgb(var(--tm-ink)); cursor: pointer;
+}
+.tm-prose .tm-video-head button:hover { border-color: rgb(var(--tm-blue)); background: rgb(var(--tm-tint)); }
+.tm-prose .tm-video video { display: block; width: 100%; max-height: 70vh; margin: 0; background: #000; }
+.tm-prose .tm-video video[hidden] { display: none; }
+.tm-prose .tm-video iframe { display: block; width: 100%; aspect-ratio: 16 / 9; border: 0; background: #000; }
+.tm-prose .tm-video-msg { padding: 14px 12px; font-size: 13.5px; color: rgb(var(--tm-sub)); }
+@media (pointer: coarse) { .tm-prose .tm-video-head button { height: 40px; } }
+
 /* 글 안 - 링크 · 형광펜 · 언급 · 문서 링크 · 작업 */
 .tm-prose a {
   color: rgb(var(--tm-blue-text)); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer;
@@ -608,7 +629,7 @@
   .tm-print-root h1 { font-size: 26px; font-weight: 800; color: rgb(var(--tm-deep)); margin: 0 0 6px; }
   .tm-print-root .tm-print-meta { font-size: 12px; color: rgb(var(--tm-sub)); margin-bottom: 20px; }
   .tm-print-root .tm-prose { min-height: 0; }
-  .tm-print-root .tm-anchor, .tm-print-root .tm-upload { display: none !important; }
+  .tm-print-root .tm-anchor, .tm-print-root .tm-upload, .tm-print-root .tm-video { display: none !important; }
   .tm-print-root .tm-details [data-type='detailsContent'] { display: block !important; }
   .tm-print-root pre, .tm-print-root blockquote, .tm-print-root .tm-callout, .tm-print-root table, .tm-print-root img { break-inside: avoid; }
 }
