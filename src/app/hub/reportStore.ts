@@ -577,23 +577,51 @@ export function lastDailyBefore(daily: DailyEntry[], person: string, day: string
 
 /* ── 주간 초안 - 그 주의 스크럼을 프로젝트별로 모은다 ────────────
    Confluence 작성법 그대로: 완료는 프로젝트별로 모으고 같은 일이 여러 날 나오면 한 줄로 합쳐 소요기간을 더한다.
-   진행 중은 그 주 마지막 스크럼의 예정 가운데 끝나지 않은 것, 다음 주 계획은 예정이었지만 완료 기록이 없던 나머지 */
+   예정은 그날이나 뒤 스크럼에서 완료로 적은 일(말이 조금 달라도 - sameWork)이면 완료에만 두고,
+   나머지는 이번 주에 하던 일이라 진행 중으로 넣는다(같은 일이 여러 날이면 마지막 날 글로 한 줄).
+   스크럼의 예정은 그날 할 일이라 다음 주 계획에는 글에 '다음 주 · 차주'를 적은 예정만 넣는다 - 나머지는 사람이 적는다 */
+
+/** 같은 일인지 견줄 글 - 진행 · 완료 같은 상태 말, 오전) · 오후) 머리, 띄어쓰기를 뗀다 */
+function workKey(key: string): string {
+  return key.replace(/^(?:오전|오후)\s+/, '').replace(/진행\s*중|진행|완료|예정|마무리|및/g, ' ').replace(/\s+/g, '');
+}
+
+/**
+ * 예정 줄과 완료 줄이 같은 일인가 - 스크럼은 같은 일을 날마다 조금씩 다르게 적는다
+ * ('브로 침뱉기 기능 개발' → '브로 침뱉기 제작 완료', '3차 개발 진행 중' → '로맨틱 에이전트 3차 개발 완료').
+ * 짧은 쪽이 긴 쪽에 그대로 들었거나(4글자 이상), 짧은 쪽 두 글자 묶음(4개 이상)의 60% 이상이 긴 쪽에 있으면 같은 일.
+ * 숫자(1차 · 2차)가 다르면 다른 일. 닮은 정도(0~1)를 돌려준다
+ */
+function workLikeness(a: string, b: string): number {
+  const x = workKey(a);
+  const y = workKey(b);
+  if (!x || !y) return 0;
+  if (x === y) return 1;
+  const [s, l] = x.length <= y.length ? [x, y] : [y, x];
+  const nums = (t: string): string[] => t.match(/\d+/g) ?? [];
+  const ln = nums(l);
+  if (nums(s).some((n) => !ln.includes(n))) return 0;
+  if (s.length >= 4 && l.includes(s)) return 0.95;
+  const pairs = (t: string) => {
+    const set = new Set<string>();
+    for (let i = 0; i + 1 < t.length; i += 1) set.add(t.slice(i, i + 2));
+    return set;
+  };
+  const ps = pairs(s);
+  if (ps.size < 4) return 0;
+  const pl = pairs(l);
+  let hit = 0;
+  for (const p of ps) if (pl.has(p)) hit += 1;
+  return hit / ps.size;
+}
+
+export const sameWork = (a: string, b: string) => workLikeness(a, b) >= 0.6;
 
 function sumDurs(durs: Dur[]): Dur | null {
   if (!durs.length) return null;
   const unit = durs[durs.length - 1].unit;
   if (unit === '일차' || durs.some((d) => d.unit !== unit)) return durs[durs.length - 1];
   return { n: durs.reduce((s, d) => s + d.n, 0), unit, approx: durs.some((d) => d.approx) };
-}
-
-/** 예정 덩이가 이미 끝낸 일인가 - 열쇠가 같거나, 긴 쪽이 짧은 쪽을 품는다(짧은 쪽 6글자 이상) */
-function matchesAny(key: string, keys: Iterable<string>): boolean {
-  for (const k of keys) {
-    if (k === key) return true;
-    const [short, long] = k.length < key.length ? [k, key] : [key, k];
-    if (short.length >= 6 && long.includes(short)) return true;
-  }
-  return false;
 }
 
 export interface WeeklyDraft {
@@ -610,21 +638,26 @@ export function weeklyDraft(daily: DailyEntry[], person: string, week: string): 
     .filter((e) => e.person === person && e.day >= week && e.day <= end && isDailyFilled(e))
     .sort((a, b) => a.day.localeCompare(b.day));
   type Done = { head: Line; lines: string[]; durs: Dur[] };
-  type Acc = { name: string; done: Map<string, Done>; doing: Block[]; later: Block[] };
+  type Acc = { name: string; done: Map<string, Done> };
   const acc = new Map<string, Acc>();
   const get = (name: string) => {
     const k = projectKey(name);
     let a = acc.get(k);
     if (!a) {
-      a = { name: name.trim(), done: new Map(), doing: [], later: [] };
+      a = { name: name.trim(), done: new Map() };
       acc.set(k, a);
     }
     return a;
   };
+  /** 같은 일 견주기는 하위 줄까지 - '세코닉스' 아래 '기기 테스트'와 '영상 시나리오'는 다른 일이다 */
+  const workOf = (b: Block) => b.lines.map((l) => itemKey(l)).filter(Boolean).join(' ');
+  /** 완료로 적은 일과 그 스크럼 날 - 프로젝트 이름이 날마다 달라도 견준다 */
+  const doneKeys: { day: string; work: string }[] = [];
   for (const e of mine) {
     for (const p of dailyProjects(e)) {
       for (const b of blocksOf(p.done)) {
         if (!b.key) continue;
+        doneKeys.push({ day: e.day, work: workOf(b) });
         const a = get(p.project);
         const d = a.done.get(b.key);
         if (!d) {
@@ -636,32 +669,44 @@ export function weeklyDraft(daily: DailyEntry[], person: string, week: string): 
       }
     }
   }
-  const last = mine.length ? mine[mine.length - 1] : null;
+  // 예정 - 그날이나 뒤에 완료로 적은 일은 완료에만 두고, 나머지는 진행 중.
+  // 앞날에 적은 같은 일은 마지막 날 글 · 프로젝트로 한 줄(같은 날 적은 줄끼리는 따로 둔다)
+  const doing: { k: string; day: string; work: string; block: Block }[] = [];
   for (const e of mine) {
     for (const p of dailyProjects(e)) {
       for (const b of blocksOf(p.plan)) {
         if (!b.key) continue;
-        const a = get(p.project);
-        if (matchesAny(b.key, a.done.keys())) continue;
-        const into = e === last ? a.doing : a.later;
-        if (!into.some((x) => x.key === b.key)) into.push(b);
+        const work = workOf(b);
+        if (doneKeys.some((d) => d.day >= e.day && sameWork(work, d.work))) continue;
+        get(p.project);
+        const it = { k: projectKey(p.project), day: e.day, work, block: b };
+        let i = -1;
+        let best = 0.6;
+        doing.forEach((x, j) => {
+          const like = x.day < e.day ? workLikeness(x.work, work) : 0;
+          if (like >= best) { best = like; i = j; }
+        });
+        if (i >= 0) doing[i] = it;
+        else doing.push(it);
       }
     }
   }
   let count = 0;
   const projects: WeeklyProject[] = [];
-  for (const a of acc.values()) {
+  for (const [k, a] of acc) {
     const done = [...a.done.values()].map((d) => {
       if (d.durs.length < 2) return d.lines.join('\n');
       const sum = sumDurs(d.durs);
       const head = `${d.head.text}${sum ? ` · ${durLabel(sum)}` : ''}`;
       return [head, ...d.lines.slice(1)].join('\n');
     });
-    const doing = a.doing.map((b) => b.lines.join('\n'));
-    const next = a.later.filter((b) => !a.doing.some((x) => x.key === b.key)).map((b) => b.lines.join('\n'));
-    if (!done.length && !doing.length && !next.length) continue;
-    count += done.length + doing.length + next.length;
-    projects.push({ id: newRowId(), project: a.name, done: done.join('\n'), doing: doing.join('\n'), next: next.join('\n') });
+    const mineHere = doing.filter((d) => d.k === k);
+    const later = (d: { work: string }) => /다음\s*주|차주/.test(d.work);
+    const now = mineHere.filter((d) => !later(d)).map((d) => d.block.lines.join('\n'));
+    const next = mineHere.filter(later).map((d) => d.block.lines.join('\n'));
+    if (!done.length && !now.length && !next.length) continue;
+    count += done.length + now.length + next.length;
+    projects.push({ id: newRowId(), project: a.name, done: done.join('\n'), doing: now.join('\n'), next: next.join('\n') });
   }
   return { projects, days: mine.map((e) => e.day), count };
 }

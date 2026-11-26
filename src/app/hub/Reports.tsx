@@ -1435,8 +1435,8 @@ function WeeklyView({
             <ProjectsView rows={draft.projects} cols={WEEKLY_COLS} wide={width >= 760} />
           </div>
           <p className="mt-3 text-[13.5px] leading-[1.6] text-tm-sub">
-            완료는 그 주 스크럼의 완료 줄, 진행 중은 마지막 스크럼의 예정 가운데 완료 기록이 없는 것, 다음 주 계획은 예정이었지만 완료 기록이 없던 나머지입니다.
-            채운 뒤 고칠 곳만 고치면 됩니다.
+            완료는 그 주 스크럼의 완료 줄입니다. 예정에 적었다가 뒤에 완료로 적은 일은 완료에만 넣고, 완료로 적지 않은 예정은 진행 중으로 넣습니다.
+            다음 주 계획에는 예정 글에 &apos;다음 주&apos;를 적은 것만 넣으니 나머지는 직접 적어 주세요. 채운 뒤 고칠 곳만 고치면 됩니다.
           </p>
         </Modal>
       )}
