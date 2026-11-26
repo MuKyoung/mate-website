@@ -2356,6 +2356,239 @@ begin
 end;
 $$;
 
+-- ── 공용계정 (2026-11-26) ─────────────────────────────────────
+-- 팀이 같이 쓰는 서비스 계정의 아이디 · 비밀번호. Hub 의 '팀 › 공용계정' 화면이 쓴다.
+-- 비밀번호는 이 표에 두지 않는다. Supabase Vault(vault.secrets, 암호화 저장)에 넣고 표에는 그 번호(secret_id)만 둔다.
+-- 목록에는 비밀번호가 실리지 않는다. 화면의 '보기' · '복사'가 tm_account_secret 으로 한 개씩 꺼내고, 그때마다 tm_account_log 에 남는다.
+-- 승인된 팀원은 모두 보고 등록 · 고친다. '관리자만'(admin_only) 계정은 관리자만 보고, 그 표시는 관리자만 바꾼다.
+-- 지우기는 등록한 사람과 관리자. 표에 직접 쓰는 권한은 없고 쓰기는 아래 함수로만 한다(secret_id 는 읽기 권한도 없다).
+-- 이 블록만 따로 실행해도 된다(tm_members · tm_is_member · tm_is_admin 이 이미 있으면). 여러 번 실행해도 된다.
+create extension if not exists supabase_vault with schema vault;
+
+create table if not exists public.tm_accounts (
+  id uuid primary key default gen_random_uuid(),
+  service text not null check (char_length(service) between 1 and 80),
+  url text not null default '' check (char_length(url) <= 500),
+  login text not null default '' check (char_length(login) <= 200),
+  note text not null default '' check (char_length(note) <= 2000),
+  admin_only boolean not null default false,
+  secret_id uuid,                                                        -- vault.secrets 의 id, 비면 비밀번호 없음
+  has_password boolean generated always as (secret_id is not null) stored,
+  password_at timestamptz,                                               -- 비밀번호를 마지막으로 바꾼 때
+  password_by uuid references public.tm_members (id) on delete set null,
+  created_by uuid references public.tm_members (id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_by uuid references public.tm_members (id) on delete set null,
+  updated_at timestamptz not null default now()
+);
+
+-- 누가 언제 무엇을 했는지 - 계정을 지워도 남는다(service · admin_only 는 그때 값)
+create table if not exists public.tm_account_log (
+  id bigint generated always as identity primary key,
+  account uuid not null,
+  service text not null default '',
+  admin_only boolean not null default false,
+  member uuid references public.tm_members (id) on delete set null,
+  action text not null check (action in ('view', 'copy', 'create', 'edit', 'password', 'remove')),
+  at timestamptz not null default now()
+);
+create index if not exists tm_account_log_account on public.tm_account_log (account, at desc);
+create index if not exists tm_account_log_at on public.tm_account_log (at desc);
+
+-- Vault 의 비밀 하나를 없앤다. 지울 권한이 없는 Vault 판이면 내용만 비운다
+create or replace function public.tm_account_drop_secret(p_secret uuid)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  begin
+    delete from vault.secrets s where s.id = p_secret;
+  exception when insufficient_privilege then
+    perform vault.update_secret(p_secret, '');
+  end;
+end;
+$$;
+
+-- 등록 · 고치기. p_id 가 비면 새로 만든다. p_password: null = 그대로, '' = 지우기, 그 밖 = 바꾸기. 계정 id 를 돌려준다
+create or replace function public.tm_account_save(
+  p_id uuid,
+  p_service text,
+  p_url text,
+  p_login text,
+  p_note text,
+  p_admin_only boolean,
+  p_password text default null
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  me uuid := auth.uid();
+  admin boolean := public.tm_is_admin();
+  cur public.tm_accounts;
+  svc text := btrim(coalesce(p_service, ''));
+  link text := btrim(coalesce(p_url, ''));
+  who text := btrim(coalesce(p_login, ''));
+  memo text := coalesce(p_note, '');
+  only_admin boolean;
+  sid uuid;
+begin
+  if not public.tm_is_member() then
+    raise exception '승인된 팀원만 공용계정을 씁니다' using errcode = '42501';
+  end if;
+  if svc = '' then raise exception '서비스 이름을 적어 주세요'; end if;
+  if char_length(svc) > 80 then raise exception '서비스 이름은 80자까지입니다'; end if;
+  if char_length(link) > 500 then raise exception '주소는 500자까지입니다'; end if;
+  if link <> '' and link !~* '^https?://' then raise exception '주소는 http:// 나 https:// 로 시작해야 합니다'; end if;
+  if char_length(who) > 200 then raise exception '아이디는 200자까지입니다'; end if;
+  if char_length(memo) > 2000 then raise exception '메모는 2000자까지입니다'; end if;
+  if p_password is not null and char_length(p_password) > 500 then raise exception '비밀번호는 500자까지입니다'; end if;
+
+  if p_id is null then
+    only_admin := coalesce(p_admin_only, false);
+    if only_admin and not admin then
+      raise exception '관리자만 보기는 관리자만 정합니다' using errcode = '42501';
+    end if;
+    insert into public.tm_accounts (service, url, login, note, admin_only, created_by, updated_by)
+      values (svc, link, who, memo, only_admin, me, me)
+      returning * into cur;
+    insert into public.tm_account_log (account, service, admin_only, member, action)
+      values (cur.id, cur.service, cur.admin_only, me, 'create');
+  else
+    select * into cur from public.tm_accounts a where a.id = p_id for update;
+    if not found or (cur.admin_only and not admin) then
+      raise exception '계정을 찾을 수 없습니다. 지워졌을 수 있습니다' using errcode = 'P0002';
+    end if;
+    only_admin := coalesce(p_admin_only, cur.admin_only);
+    if only_admin <> cur.admin_only and not admin then
+      raise exception '관리자만 보기는 관리자만 바꿉니다' using errcode = '42501';
+    end if;
+    if (svc, link, who, memo, only_admin) is distinct from (cur.service, cur.url, cur.login, cur.note, cur.admin_only) then
+      update public.tm_accounts a
+        set service = svc, url = link, login = who, note = memo, admin_only = only_admin, updated_by = me, updated_at = now()
+        where a.id = cur.id
+        returning * into cur;
+      insert into public.tm_account_log (account, service, admin_only, member, action)
+        values (cur.id, cur.service, cur.admin_only, me, 'edit');
+    end if;
+  end if;
+
+  if p_password is not null and (p_password <> '' or cur.secret_id is not null) then
+    if p_password = '' then
+      perform public.tm_account_drop_secret(cur.secret_id);
+      sid := null;
+    elsif cur.secret_id is null then
+      sid := vault.create_secret(p_password, null, 'Hub 공용계정 비밀번호 · ' || cur.id::text);
+    else
+      perform vault.update_secret(cur.secret_id, p_password);
+      sid := cur.secret_id;
+    end if;
+    update public.tm_accounts a
+      set secret_id = sid, password_at = now(), password_by = me, updated_by = me, updated_at = now()
+      where a.id = cur.id;
+    insert into public.tm_account_log (account, service, admin_only, member, action)
+      values (cur.id, cur.service, cur.admin_only, me, 'password');
+  end if;
+  return cur.id;
+end;
+$$;
+
+-- 비밀번호 하나 꺼내기(보기 · 복사). 꺼낼 때마다 기록한다. 비밀번호가 없으면 null
+create or replace function public.tm_account_secret(p_id uuid, p_copy boolean default false)
+returns text
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  cur public.tm_accounts;
+  pw text;
+begin
+  if not public.tm_is_member() then
+    raise exception '승인된 팀원만 공용계정을 씁니다' using errcode = '42501';
+  end if;
+  select * into cur from public.tm_accounts a where a.id = p_id;
+  if not found or (cur.admin_only and not public.tm_is_admin()) then
+    raise exception '계정을 찾을 수 없습니다. 지워졌을 수 있습니다' using errcode = 'P0002';
+  end if;
+  if cur.secret_id is null then return null; end if;
+  select d.decrypted_secret into pw from vault.decrypted_secrets d where d.id = cur.secret_id;
+  insert into public.tm_account_log (account, service, admin_only, member, action)
+    values (cur.id, cur.service, cur.admin_only, auth.uid(), case when coalesce(p_copy, false) then 'copy' else 'view' end);
+  return pw;
+end;
+$$;
+
+-- 지우기 - 등록한 사람과 관리자. Vault 의 비밀도 함께 없앤다
+create or replace function public.tm_account_remove(p_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  cur public.tm_accounts;
+  admin boolean := public.tm_is_admin();
+begin
+  if not public.tm_is_member() then
+    raise exception '승인된 팀원만 공용계정을 씁니다' using errcode = '42501';
+  end if;
+  select * into cur from public.tm_accounts a where a.id = p_id for update;
+  if not found or (cur.admin_only and not admin) then
+    raise exception '계정을 찾을 수 없습니다. 이미 지워졌을 수 있습니다' using errcode = 'P0002';
+  end if;
+  if not admin and cur.created_by is distinct from auth.uid() then
+    raise exception '등록한 사람과 관리자만 지웁니다' using errcode = '42501';
+  end if;
+  if cur.secret_id is not null then
+    perform public.tm_account_drop_secret(cur.secret_id);
+  end if;
+  delete from public.tm_accounts a where a.id = cur.id;
+  insert into public.tm_account_log (account, service, admin_only, member, action)
+    values (cur.id, cur.service, cur.admin_only, auth.uid(), 'remove');
+end;
+$$;
+
+alter table public.tm_accounts enable row level security;
+drop policy if exists tm_accounts_read on public.tm_accounts;
+create policy tm_accounts_read on public.tm_accounts
+  for select to authenticated
+  using ((select public.tm_is_member()) and (not admin_only or (select public.tm_is_admin())));
+revoke all on public.tm_accounts from anon, authenticated;
+grant select (id, service, url, login, note, admin_only, has_password, password_at, password_by,
+              created_by, created_at, updated_by, updated_at)
+  on public.tm_accounts to authenticated;
+
+alter table public.tm_account_log enable row level security;
+drop policy if exists tm_account_log_read on public.tm_account_log;
+create policy tm_account_log_read on public.tm_account_log
+  for select to authenticated
+  using ((select public.tm_is_member()) and (not admin_only or (select public.tm_is_admin())));
+revoke all on public.tm_account_log from anon, authenticated;
+grant select on public.tm_account_log to authenticated;
+
+revoke execute on function public.tm_account_drop_secret(uuid) from public, anon, authenticated;
+revoke execute on function public.tm_account_save(uuid, text, text, text, text, boolean, text) from public, anon;
+revoke execute on function public.tm_account_secret(uuid, boolean) from public, anon;
+revoke execute on function public.tm_account_remove(uuid) from public, anon;
+grant execute on function public.tm_account_save(uuid, text, text, text, text, boolean, text) to authenticated;
+grant execute on function public.tm_account_secret(uuid, boolean) to authenticated;
+grant execute on function public.tm_account_remove(uuid) to authenticated;
+
+-- 실시간 - 다른 사람이 등록 · 고친 계정이 새로고침 없이 보이게(비밀번호는 이 표에 없다)
+do $$
+begin
+  begin
+    alter publication supabase_realtime add table public.tm_accounts;
+  exception when duplicate_object then null;
+  end;
+end;
+$$;
+
 -- ── 첫 관리자 정하기 ─────────────────────────────────────────
 -- 위를 실행하고 첫 계정을 만든 뒤, 아래 줄의 메일을 바꾸고 맨 앞의 -- 를 지워 그 줄만 따로 실행한다.
 -- 관리자 칸이 생기기 전부터 쓰던 프로젝트도 한 번 실행한다(그 전에는 아무도 승인할 수 없다).

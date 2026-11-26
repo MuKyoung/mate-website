@@ -51,6 +51,11 @@ const Org = dynamic(() => import('./Org'), {
   ssr: false,
   loading: () => <div className="flex flex-1 items-center justify-center text-[15px] font-semibold text-tm-sub">불러오는 중…</div>,
 });
+/* 팀 > 공용계정도 열 때만 받고, 그때 공용계정 표를 읽는다(비밀번호는 보기 · 복사 때 한 개씩) */
+const Accounts = dynamic(() => import('./Accounts'), {
+  ssr: false,
+  loading: () => <div className="flex flex-1 items-center justify-center text-[15px] font-semibold text-tm-sub">불러오는 중…</div>,
+});
 /* 커뮤니티 > 블로그도 열 때만 받고, 그때 블로그 표에 붙는다 */
 const Blog = dynamic(() => import('./Blog'), {
   ssr: false,
@@ -101,7 +106,7 @@ interface Account {
 }
 
 type View = 'board' | 'list' | 'timeline' | 'calendar' | 'roadmap';
-type Section = 'tasks' | 'org' | 'drive' | 'builds' | 'docs' | 'memos' | 'daily' | 'weekly' | 'blog';
+type Section = 'tasks' | 'org' | 'accounts' | 'drive' | 'builds' | 'docs' | 'memos' | 'daily' | 'weekly' | 'blog';
 
 /** 보기 - hint 는 쪽 머리의 설명 줄에 나온다 */
 const VIEWS: { id: View; label: string; key: string; hint: string }[] = [
@@ -1001,6 +1006,7 @@ function Workspace({ account }: { account?: Account }) {
       label: '팀',
       items: [
         { key: 'org', label: '조직도', icon: 'org', active: section === 'org', go: () => setSection('org') },
+        { key: 'accounts', label: '공용계정', icon: 'key', active: section === 'accounts', go: () => setSection('accounts') },
       ],
     },
     {
@@ -1286,6 +1292,10 @@ function Workspace({ account }: { account?: Account }) {
                 admin={!account || account.me.isAdmin === true}
                 onRole={account ? (id, role) => account.update(id, { role }) : undefined}
                 onTasks={(id) => setSection('tasks', () => { setScope({ kind: 'all' }); setAssigneeFilter(id); })}
+                onNotice={(text, tone) => setToast({ text, undo: false, tone: tone === 'err' ? 'err' : undefined })} />
+            ) : section === 'accounts' ? (
+              /* '관리자만' 계정과 남이 등록한 계정 지우기는 관리자만(DB 도 그렇게 받는다). 브라우저 저장 모드에서는 화면이 꺼 둔다 */
+              <Accounts me={me} admin={!!account && account.me.isAdmin === true}
                 onNotice={(text, tone) => setToast({ text, undo: false, tone: tone === 'err' ? 'err' : undefined })} />
             ) : section === 'docs' ? (
               <Docs store={docStore} me={me} tasks={tasksAll}

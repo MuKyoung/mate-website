@@ -315,7 +315,7 @@ export function useMediaQuery(query: string): boolean {
 }
 
 /** 메뉴 아이콘 */
-export type NavIcon = 'star' | 'board' | 'mine' | 'drive' | 'build' | 'wiki' | 'memo' | 'home' | 'menu' | 'phone' | 'monitor' | 'sidebar' | 'filter' | 'mindmap' | 'daily' | 'weekly' | 'org' | 'blog' | 'sun' | 'moon';
+export type NavIcon = 'star' | 'board' | 'mine' | 'drive' | 'build' | 'wiki' | 'memo' | 'home' | 'menu' | 'phone' | 'monitor' | 'sidebar' | 'filter' | 'mindmap' | 'daily' | 'weekly' | 'org' | 'key' | 'blog' | 'sun' | 'moon';
 export function IconNav({ name, size = 20 }: { name: NavIcon; size?: number }) {
   const paths: Record<NavIcon, React.ReactNode> = {
     /* 모든 작업 - 보드의 칸 */
@@ -385,6 +385,13 @@ export function IconNav({ name, size = 20 }: { name: NavIcon; size?: number }) {
         <rect x="2.5" y="13" width="6" height="4.5" rx="1.2" />
         <rect x="11.5" y="13" width="6" height="4.5" rx="1.2" />
         <path d="M10 7v3M5.5 13v-3h9v3" />
+      </>
+    ),
+    /* 공용계정 - 열쇠 */
+    key: (
+      <>
+        <circle cx="6.5" cy="13.5" r="3.5" />
+        <path d="M9 11l7.5-7.5M13.5 6.5l2 2M11.5 8.5l1.5 1.5" />
       </>
     ),
     /* 블로그 - 펜과 줄 */
