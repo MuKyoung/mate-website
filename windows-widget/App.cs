@@ -861,6 +861,7 @@ namespace MateCalendar
                 T(2, "갤럭시 위젯 실기기 시험", "web", "todo", "high", null, "m1", "Hub"),
                 T(2, "게임 BGM 루프 다듬기", "game", "backlog", "normal", null, "m2", "사운드"),
                 T(4, "세금계산서 발행", "ops", "todo", "urgent", null, "m2", "영업"),
+                T(4, "캐릭터 시안 4차 수정", "game", "backlog", "normal", -4, "m3"),
                 T(6, "포트폴리오 사진 교체", "web", "todo", "normal", null, "m1"),
                 T(9, "교육 과정 안내문", "edu", "todo", "normal", null, "m3", "강의"),
                 T(12, "레벨 디자인 검토", "game", "todo", "high", -5, "m3"),

@@ -1484,20 +1484,25 @@ namespace MateCalendar
             }
             var overdue = _c.Data.Tasks.Where(t => !t.Done && t.Due < _today).ToList();
             var today = _byDate.TryGetValue(_today, out var l) ? l.Where(t => !t.Done).ToList() : new List<TaskItem>();
+            var ongoing = Ongoing(_today);
             var items = new List<(string label, List<TaskItem> tasks)>();
             if (overdue.Count > 0) items.Add(("기한 지남", overdue));
-            if (today.Count > 0) items.Add(("오늘", today));
+            if (today.Count > 0) items.Add(("오늘 마감", today));
+            if (ongoing.Count > 0) items.Add(("오늘 진행", ongoing));
             if (items.Count == 0)
             {
                 _summarySlot.Child = null;
                 _summarySlot.Visibility = Visibility.Collapsed;
                 return;
             }
+            // 같은 폭 칸으로 나눈다. 작게 보기(달력 폭 175pt)에 세 칸이면 글자가 잘려서 두 칸씩 줄을 바꾼다
+            int cols = items.Count > 2 && !_c.Settings.Wide ? 2 : items.Count;
             var grid = new Grid();
+            for (int i = 0; i < cols; i++) grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             for (int i = 0; i < items.Count; i++)
             {
-                grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-                var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(i == 0 ? 1 : 4, 0, 1, 0) };
+                if (i % cols == 0) grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+                var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(i % cols == 0 ? 1 : 4, i < cols ? 0 : 3, 1, 0) };
                 var bars = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, items.Count > 2 ? 4 : 6, 0) };
                 foreach (var c in items[i].tasks.Select(PaintName).Distinct().OrderBy(n => Array.IndexOf(Palette, n)))
                 {
@@ -1508,7 +1513,8 @@ namespace MateCalendar
                 }
                 row.Children.Add(bars);
                 row.Children.Add(Text($"{items[i].label}: {items[i].tasks.Count}", 10, _t.Label));
-                Grid.SetColumn(row, i);
+                Grid.SetColumn(row, i % cols);
+                Grid.SetRow(row, i / cols);
                 grid.Children.Add(row);
             }
             _summarySlot.Child = grid;
@@ -1598,13 +1604,25 @@ namespace MateCalendar
                 }
             }
 
+            // 고른 날 마감 → 고른 날이 기간 안에 든 작업(시작일 ≤ 그날 < 마감일) → 그 뒤 날짜별 마감.
+            // 기간 작업은 '진행'에도, 마감일 아래에도 보인다(오늘 할 일과 마감 일정을 따로 본다)
             for (int i = 0; i <= _c.Settings.UpcomingDays; i++)
             {
                 var d = _selected.AddDays(i);
-                if (!_byDate.TryGetValue(d, out var tasks) || tasks.Count == 0) continue;
-                _list.Children.Add(Section(d == _today ? "오늘" : DateLabel(d)));
-                foreach (var t in Order(tasks)) _list.Children.Add(Row(t));
-                sections++;
+                if (_byDate.TryGetValue(d, out var tasks) && tasks.Count > 0)
+                {
+                    _list.Children.Add(Section((d == _today ? "오늘" : DateLabel(d)) + " 마감"));
+                    foreach (var t in Order(tasks)) _list.Children.Add(Row(t));
+                    sections++;
+                }
+                if (i == 0)
+                {
+                    var ongoing = Ongoing(d);
+                    if (ongoing.Count == 0) continue;
+                    _list.Children.Add(Section(d == _today ? "오늘 진행" : DateLabel(d) + " 진행"));
+                    foreach (var t in ongoing) _list.Children.Add(Row(t, d));
+                    sections++;
+                }
             }
 
             if (sections == 0)
@@ -1722,6 +1740,12 @@ namespace MateCalendar
         private static IEnumerable<TaskItem> Order(IEnumerable<TaskItem> tasks) =>
             tasks.OrderBy(t => TaskItem.StatusRank(t.Status)).ThenBy(t => TaskItem.PriorityRank(t.Priority)).ThenBy(t => t.Num);
 
+        /// <summary>그날이 기간 안에 든 끝나지 않은 작업(시작일 ≤ 그날 < 마감일) - 마감이 가까운 것부터</summary>
+        private List<TaskItem> Ongoing(DateTime d) =>
+            _c.Data.Tasks.Where(t => !t.Done && t.Start.HasValue && t.Start.Value.Date <= d && d < t.Due.Date)
+                .OrderBy(t => t.Due).ThenBy(t => TaskItem.StatusRank(t.Status)).ThenBy(t => TaskItem.PriorityRank(t.Priority)).ThenBy(t => t.Num)
+                .ToList();
+
         private static string DateLabel(DateTime d)
         {
             // Calendr 의 "EEEE d MMM" - 한국어로 '11월 18일 화요일'
@@ -1746,7 +1770,8 @@ namespace MateCalendar
             return g;
         }
 
-        private FrameworkElement Row(TaskItem t)
+        /// <param name="ongoingOn">'진행' 칸의 줄이면 그날 - 기간 줄에 마감까지 남은 날을 붙인다</param>
+        private FrameworkElement Row(TaskItem t, DateTime? ongoingOn = null)
         {
             var color = ColorOf(t);
             var brush = Theme.Brush(color);
@@ -1814,6 +1839,12 @@ namespace MateCalendar
                     : s.Month == t.Due.Month
                         ? $"{s.Month}월 {s.Day}일~{t.Due.Day}일"
                         : $"{s.Month}월 {s.Day}일~{t.Due.Month}월 {t.Due.Day}일";
+                if (ongoingOn.HasValue)
+                {
+                    int left = (int)(t.Due.Date - ongoingOn.Value.Date).TotalDays;
+                    // 고른 날 기준으로 센다(오늘이면 하루 남은 것은 '내일 마감')
+                    range += ongoingOn.Value == _today && left == 1 ? " · 내일 마감" : $" · 마감까지 {left}일";
+                }
                 var dur = Text(range, 10, _t.Secondary);
                 dur.TextTrimming = TextTrimming.CharacterEllipsis;
                 dur.Margin = new Thickness(0, 2, 0, 0);
