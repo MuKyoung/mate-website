@@ -27,10 +27,13 @@ import {
 
 type Route = { kind: 'list' } | { kind: 'post'; id: string } | { kind: 'write'; id: string | null };
 /** cat: null = 전체보기, NONE = 미분류 */
-type Filter = { cat: string | null; author: string | null; tag: string | null; q: string };
+/** unread - 남이 쓴 새 글 중 이 브라우저에서 아직 열어 보지 않은 것만(왼쪽 메뉴 블로그 숫자와 같은 기준, reads.ts) */
+type Filter = { cat: string | null; author: string | null; tag: string | null; q: string; unread?: boolean };
 type ListMode = 'list' | 'album';
 
 const NONE = '__none';
+/** 좁은 화면 카테고리 칩 줄의 '안 읽은 글' 자리 표시 */
+const UNREAD = '__unread';
 const NO_FILTER: Filter = { cat: null, author: null, tag: null, q: '' };
 const MODE_KEY = 'mate.taskmanager.blog.mode.v1';
 const DRAFT_KEY = 'mate.taskmanager.blog.drafts.v1';
@@ -286,6 +289,11 @@ export default function Blog({ me, admin, docs, tasks, onOpenDoc, onTaskOpen, on
   const nameOf = useCallback((id: string | null) => members.find((m) => m.id === id)?.name ?? (id ? '떠난 팀원' : '알 수 없음'), [members]);
   const canEdit = (p: BlogPost) => admin || p.author === me;
 
+  /* 읽음 표시(reads.ts) - 남이 쓴 새 글 중 아직 열어 보지 않은 것에 N. 글을 열면 읽은 것 */
+  const blogUnread = useUnread(me, 'blog');
+  const fresh = useMemo(() => freshPosts(store.posts, me, blogUnread), [store.posts, me, blogUnread]);
+  const freshIds = useMemo(() => new Set(fresh.map((p) => p.id)), [fresh]);
+
   /* ── 걸러 보기 ── */
 
   const inCat = useCallback((p: BlogPost, cat: string | null) => {
@@ -297,11 +305,12 @@ export default function Blog({ me, admin, docs, tasks, onOpenDoc, onTaskOpen, on
   const shown = useMemo(() => {
     const q = filter.q.trim().toLowerCase();
     return posts.filter((p) => inCat(p, filter.cat)
+      && (!filter.unread || freshIds.has(p.id))
       && (!filter.author || p.author === filter.author)
       && (!filter.tag || p.tags.some((t) => t.toLowerCase() === filter.tag!.toLowerCase()))
       && (!q || p.title.toLowerCase().includes(q) || p.tags.some((t) => t.toLowerCase().includes(q))
         || digest(p.body).text.toLowerCase().includes(q) || nameOf(p.author).toLowerCase().includes(q)));
-  }, [posts, filter, inCat, nameOf]);
+  }, [posts, filter, inCat, nameOf, freshIds]);
 
   const go = useCallback((f: Partial<Filter>) => {
     setFilter({ ...NO_FILTER, ...f });
@@ -319,10 +328,6 @@ export default function Blog({ me, admin, docs, tasks, onOpenDoc, onTaskOpen, on
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewed, exists]);
 
-  /* 읽음 표시(reads.ts) - 남이 쓴 새 글 중 아직 열어 보지 않은 것에 N. 글을 열면 읽은 것 */
-  const blogUnread = useUnread(me, 'blog');
-  const fresh = useMemo(() => freshPosts(store.posts, me, blogUnread), [store.posts, me, blogUnread]);
-  const freshIds = useMemo(() => new Set(fresh.map((p) => p.id)), [fresh]);
   const viewedFresh = viewed ? fresh.find((p) => p.id === viewed) : undefined;
   useEffect(() => {
     if (viewedFresh) markRead(me, 'blog', { id: viewedFresh.id, at: viewedFresh.createdAt });
@@ -414,7 +419,7 @@ export default function Blog({ me, admin, docs, tasks, onOpenDoc, onTaskOpen, on
     .slice(0, 5);
 
   const catRow = (id: string | null, label: string, count: number, depth: number) => {
-    const on = route.kind === 'list' && !filter.author && !filter.tag && !filter.q && filter.cat === id;
+    const on = route.kind === 'list' && !filter.author && !filter.tag && !filter.q && !filter.unread && filter.cat === id;
     return (
       <li key={id ?? 'all'}>
         <button type="button" onClick={() => go({ cat: id })} aria-current={on ? 'page' : undefined}
@@ -428,6 +433,7 @@ export default function Blog({ me, admin, docs, tasks, onOpenDoc, onTaskOpen, on
     );
   };
 
+  const unreadOn = route.kind === 'list' && !!filter.unread;
   const sideCard = 'rounded-tm border border-tm-line bg-tm-card p-4 shadow-tm';
   const sideHead = 'mb-2 flex items-center justify-between gap-2 px-1 text-[13.5px] font-extrabold text-tm-deep';
   const sidebar = (
@@ -474,6 +480,17 @@ export default function Blog({ me, admin, docs, tasks, onOpenDoc, onTaskOpen, on
         </div>
         <ul className="space-y-px">
           {catRow(null, '전체보기', posts.length, 0)}
+          <li>
+            <button type="button" onClick={() => go({ unread: true })} aria-current={unreadOn ? 'page' : undefined}
+              title="팀원이 최근 30일 동안 올린 글 중 이 브라우저에서 아직 열어 보지 않은 글"
+              className={`flex w-full items-center gap-1.5 rounded-tm-sm py-[7px] pl-2.5 pr-2 text-left text-[14.5px] transition-colors duration-150 [@media(pointer:coarse)]:min-h-11 ${
+                unreadOn ? 'bg-tm-tint font-bold text-tm-blue' : 'text-tm-ink hover:bg-tm-tint'}`}>
+              <span className="min-w-0 truncate">안 읽은 글</span>
+              <span className={`flex-none text-[13px] tabular-nums ${fresh.length > 0 ? 'font-bold text-tm-red' : unreadOn ? 'text-tm-blue' : 'text-tm-sub'}`}>
+                ({fresh.length})
+              </span>
+            </button>
+          </li>
           {tops.map((c) => [
             catRow(c.id, c.name, catCount.get(c.id) ?? 0, 0),
             ...kidsOf(c.id).map((k) => catRow(k.id, k.name, catCount.get(k.id) ?? 0, 1)),
@@ -538,12 +555,19 @@ export default function Blog({ me, admin, docs, tasks, onOpenDoc, onTaskOpen, on
   /* 좁은 화면 - 카테고리를 글 위에 가로로 */
   const chips = (
     <nav aria-label="카테고리" className="-mx-1 mb-4 flex gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none] min-[1100px]:hidden [&::-webkit-scrollbar]:hidden">
-      {[{ id: null as string | null, name: '전체보기' }, ...tops.flatMap((c) => [c, ...kidsOf(c.id)])].map((c) => (
-        <button key={c.id ?? 'all'} type="button" onClick={() => go({ cat: c.id })}
-          aria-pressed={route.kind === 'list' && !filter.author && !filter.tag && !filter.q && filter.cat === c.id}
-          className={`${tmTab} h-[38px] px-3.5 text-[13.5px]`}>
-          {c.name}
-        </button>
+      {[{ id: null as string | null, name: '전체보기' }, { id: UNREAD, name: '안 읽은 글' }, ...tops.flatMap((c) => [c, ...kidsOf(c.id)])].map((c) => (
+        c.id === UNREAD ? (
+          <button key="unread" type="button" onClick={() => go({ unread: true })} aria-pressed={unreadOn}
+            className={`${tmTab} h-[38px] flex-none px-3.5 text-[13.5px]`}>
+            안 읽은 글{fresh.length > 0 && <b className={`ml-1 font-bold tabular-nums ${unreadOn ? 'text-white' : 'text-tm-red'}`}>{fresh.length}</b>}
+          </button>
+        ) : (
+          <button key={c.id ?? 'all'} type="button" onClick={() => go({ cat: c.id })}
+            aria-pressed={route.kind === 'list' && !filter.author && !filter.tag && !filter.q && !filter.unread && filter.cat === c.id}
+            className={`${tmTab} h-[38px] px-3.5 text-[13.5px]`}>
+            {c.name}
+          </button>
+        )
       ))}
     </nav>
   );
@@ -566,6 +590,7 @@ export default function Blog({ me, admin, docs, tasks, onOpenDoc, onTaskOpen, on
         onAuthor={() => post.author && go({ author: post.author })}
         onTag={(t) => go({ tag: t })}
         onOpen={openPost}
+        nextUnread={filter.unread ? posts.find((p) => p.id !== post.id && freshIds.has(p.id)) ?? null : null}
         onBack={() => setRoute({ kind: 'list' })}
         onEdit={() => setRoute({ kind: 'write', id: post.id })}
         onRemove={() => void removePost(post)}
@@ -583,7 +608,7 @@ export default function Blog({ me, admin, docs, tasks, onOpenDoc, onTaskOpen, on
       <ListView shown={shown} filter={filter} page={page} setPage={(n) => { setPage(n); toTop(); }} mode={mode} setMode={setMode}
         store={store} catLabel={catLabel} shortCat={shortCat} catOf={catOf} nameOf={nameOf} likesOf={likesOf} commentCount={commentCount}
         onOpen={openPost} onClear={() => go({})} onWrite={() => setRoute({ kind: 'write', id: null })}
-        all={posts} fresh={freshIds} onReadAll={readAll} />
+        all={posts} fresh={freshIds} onReadAll={readAll} onUnread={() => go({ unread: true })} />
     );
   }
 
@@ -634,13 +659,15 @@ const NewPost = () => <NewMark label="새 글" title="아직 안 본 새 글" cl
 
 function ListView({
   shown, all, filter, page, setPage, mode, setMode, store, catLabel, shortCat, catOf, nameOf, likesOf, commentCount, onOpen, onClear, onWrite,
-  fresh, onReadAll,
+  fresh, onReadAll, onUnread,
 }: {
   shown: BlogPost[];
   all: BlogPost[];
   /** 남이 쓴 새 글 중 아직 열어 보지 않은 것 - 제목 곁에 N */
   fresh: ReadonlySet<string>;
   onReadAll(): void;
+  /** 안 읽은 글만 모아 보기 */
+  onUnread(): void;
   filter: Filter;
   page: number;
   setPage(n: number): void;
@@ -661,9 +688,10 @@ function ListView({
   const pages = Math.max(1, Math.ceil(shown.length / per));
   const cur = Math.min(page, pages);
   const slice = shown.slice((cur - 1) * per, cur * per);
-  const plain = !filter.cat && !filter.author && !filter.tag && !filter.q;
+  const plain = !filter.cat && !filter.author && !filter.tag && !filter.q && !filter.unread;
 
-  const title = filter.q ? `‘${filter.q}’ 검색 결과`
+  const title = filter.unread ? '안 읽은 글'
+    : filter.q ? `‘${filter.q}’ 검색 결과`
     : filter.tag ? `#${filter.tag}`
       : filter.author ? `${nameOf(filter.author)} 님의 글`
         : filter.cat === NONE ? '미분류'
@@ -688,7 +716,15 @@ function ListView({
             <b className="font-bold tabular-nums text-tm-ink">{shown.length}</b>개의 글
             {fresh.size > 0 && (
               <>
-                {' · '}새 글 <b className="font-bold tabular-nums text-tm-red">{fresh.size}</b>
+                {filter.unread ? null : (
+                  <>
+                    {' · '}
+                    <button type="button" onClick={onUnread} title="안 읽은 글만 모아 보기"
+                      className="rounded-sm text-tm-sub underline-offset-2 hover:text-tm-blue hover:underline">
+                      새 글 <b className="font-bold tabular-nums text-tm-red">{fresh.size}</b>
+                    </button>
+                  </>
+                )}
                 <button type="button" onClick={onReadAll} className={`${tmTextBtn} ml-2 min-h-0`}>모두 읽음</button>
               </>
             )}
@@ -744,7 +780,15 @@ function ListView({
         </section>
       )}
 
-      {shown.length === 0 ? (
+      {shown.length === 0 && filter.unread ? (
+        <div className={`${tmCard} flex flex-col items-center gap-3 px-6 py-14 text-center`}>
+          <p className="text-[19px] font-extrabold text-tm-deep">안 읽은 글이 없습니다</p>
+          <p className="max-w-[46ch] text-[15px] leading-[1.7] text-tm-ink">
+            팀원이 새 글을 올리면 여기에 모입니다. 열어 본 글은 이 목록에서 빠집니다(읽음은 이 브라우저에 기록).
+          </p>
+          <button type="button" onClick={onClear} className={tmBtn}>전체보기</button>
+        </div>
+      ) : shown.length === 0 ? (
         <div className={`${tmCard} flex flex-col items-center gap-3 px-6 py-14 text-center`}>
           <p className="text-[19px] font-extrabold text-tm-deep">{plain ? '아직 글이 없습니다' : '찾는 글이 없습니다'}</p>
           <p className="max-w-[42ch] text-[15px] leading-[1.7] text-tm-ink">
@@ -829,7 +873,10 @@ function ListView({
 
 function PostView({
   post, me, admin, store, refs, canEdit, catLabel, nameOf, likes, siblings, onCat, onAuthor, onTag, onOpen, onBack, onEdit, onRemove, onCopy, confirm,
+  nextUnread,
 }: {
+  /** 안 읽은 글 보기에서 연 글이면 그다음 안 읽은 글 */
+  nextUnread: BlogPost | null;
   post: BlogPost;
   me: string;
   admin: boolean;
@@ -874,6 +921,12 @@ function PostView({
             <button type="button" onClick={onCat} className="rounded-md px-1.5 py-1 text-[14px] font-bold text-tm-blue hover:underline">
               {catLabel(post.category)}
             </button>
+            {nextUnread && (
+              <button type="button" onClick={() => onOpen(nextUnread.id)} title={nextUnread.title}
+                className={`${tmGhostBtn} ml-auto h-[34px] px-2.5`}>
+                다음 안 읽은 글<IconArrow dir="right" />
+              </button>
+            )}
           </div>
 
           <h1 className="mt-4 text-[30px] font-extrabold leading-[1.35] tracking-[-0.02em] text-tm-ink [overflow-wrap:anywhere] max-[720px]:text-[23px]">
