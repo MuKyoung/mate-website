@@ -1883,9 +1883,15 @@ $$;
 
 -- ── AI 도구(MCP) 연결 열쇠 (2026-11-18) ──────────────────────────
 -- 팀원이 Hub 위키의 'AI 연결'에서 만든 열쇠로 Claude Code · Codex 같은 AI 도구가 사이트의 /api/mcp/ 를 거쳐
--- 팀 위키를 찾고 읽는다(읽기만). 열쇠 글자는 만들 때 한 번만 보이고 DB 에는 sha256 만 둔다.
+-- 팀 위키를 찾고 읽는다. 열쇠 글자는 만들 때 한 번만 보이고 DB 에는 sha256 만 둔다.
 -- 끊은 열쇠 · 승인이 거두어진 팀원의 열쇠는 바로 막힌다. 휴지통에 든 문서(그 위 문서 포함)는 보이지 않는다.
--- 이 블록만 따로 실행해도 된다(위의 tm_is_member · tm_doc_visible 이 이미 있으면). 여러 번 실행해도 된다.
+-- 2026-11-27 쓰기: '쓰기 허용'을 켠 열쇠(can_write)만 문서를 만들고 · 고치고 · 휴지통에 넣는다(웹과 같은 규칙 - 승인된
+-- 팀원은 모든 문서를 고친다). 고친 사람은 열쇠 주인, 고치기 전 모습은 tm_docs_history 가 기록에 남기고, 맨 위 문서 ·
+-- 고리는 문서 트리거가 막는다. 처음 열쇠는 읽기만(기본 꺼짐).
+-- 이 블록만 따로 실행해도 된다(위의 tm_is_member · tm_doc_visible · 문서 트리거가 이미 있으면). 여러 번 실행해도 된다.
+-- 쓰기 되돌리기: drop function if exists public.tm_mcp_create(text, uuid, text, text, text, text[]),
+--   public.tm_mcp_update(text, uuid, timestamptz, text, text, text, text[], uuid), public.tm_mcp_trash(text, uuid),
+--   public.tm_mcp_set_write(uuid, boolean); update public.tm_mcp_tokens set can_write = false;
 create table if not exists public.tm_mcp_tokens (
   id uuid primary key default gen_random_uuid(),
   member uuid not null references public.tm_members (id) on delete cascade,
@@ -1896,9 +1902,13 @@ create table if not exists public.tm_mcp_tokens (
   revoked_at timestamptz
 );
 create index if not exists tm_mcp_tokens_member_idx on public.tm_mcp_tokens (member);
+-- 위키 쓰기 허용(2026-11-27)
+alter table public.tm_mcp_tokens add column if not exists can_write boolean not null default false;
 
--- 열쇠 만들기 - 승인된 팀원만, 한 사람에 살아 있는 열쇠 10개까지. 돌려준 글자는 다시 볼 수 없다
-create or replace function public.tm_mcp_issue(p_label text)
+-- 열쇠 만들기 - 승인된 팀원만, 한 사람에 살아 있는 열쇠 10개까지. 돌려준 글자는 다시 볼 수 없다.
+-- p_write 는 위키 쓰기 허용(빼면 읽기만). 예전 한 칸짜리는 지운다 - 둘이 함께 있으면 PostgREST 가 어느 것인지 헷갈린다
+drop function if exists public.tm_mcp_issue(text);
+create or replace function public.tm_mcp_issue(p_label text, p_write boolean default false)
 returns text
 language plpgsql
 security definer
@@ -1915,9 +1925,26 @@ begin
   end if;
   -- 추측할 수 없는 열쇠(gen_random_uuid 두 개 = 암호용 난수 244비트)
   t := 'mtw_' || replace(gen_random_uuid()::text, '-', '') || replace(gen_random_uuid()::text, '-', '');
-  insert into public.tm_mcp_tokens (member, label, token_hash)
-  values (auth.uid(), left(btrim(coalesce(p_label, '')), 60), encode(sha256(convert_to(t, 'UTF8')), 'hex'));
+  insert into public.tm_mcp_tokens (member, label, token_hash, can_write)
+  values (auth.uid(), left(btrim(coalesce(p_label, '')), 60), encode(sha256(convert_to(t, 'UTF8')), 'hex'), coalesce(p_write, false));
   return t;
+end;
+$$;
+
+-- 쓰기 허용 켜고 끄기 - 자기 열쇠만. 열쇠 글자는 그대로라 AI 도구 설정은 바꾸지 않아도 된다
+create or replace function public.tm_mcp_set_write(p_id uuid, p_on boolean)
+returns boolean
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if not public.tm_is_member() then
+    raise exception '승인된 팀원만 바꿀 수 있습니다' using errcode = '42501';
+  end if;
+  update public.tm_mcp_tokens k set can_write = coalesce(p_on, false)
+  where k.id = p_id and k.member = auth.uid() and k.revoked_at is null;
+  return found;
 end;
 $$;
 
@@ -2041,6 +2068,141 @@ begin
 end;
 $$;
 
+-- ── 쓰기(2026-11-27) ── 사이트 서버가 공개 키로 부른다. 로그인한 사용자가 없어 auth.uid() 가 비므로
+-- '누가' 칸(author · updated_by · trashed_by)은 여기서 열쇠 주인으로 적는다(tm_docs_stamp 는 그대로 둔다)
+
+-- 쓰기 허용 열쇠의 주인 - 맞지 않거나 끊긴 열쇠는 28000, 읽기만 허용한 열쇠는 까닭을 알린다
+create or replace function public.tm_mcp_writer(p_token text)
+returns uuid
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  m uuid := public.tm_mcp_member(p_token);
+begin
+  if m is null then
+    raise exception '연결 열쇠가 맞지 않거나 끊겼습니다' using errcode = '28000';
+  end if;
+  if not exists (
+    select 1 from public.tm_mcp_tokens k
+    where k.token_hash = encode(sha256(convert_to(p_token, 'UTF8')), 'hex') and k.revoked_at is null and k.can_write
+  ) then
+    raise exception '이 열쇠는 읽기만 허용돼 있습니다. Hub 팀 위키 왼쪽 아래 ''AI 연결''에서 이 열쇠의 ''쓰기 허용''을 켜 주세요';
+  end if;
+  return m;
+end;
+$$;
+
+-- 새 문서 - 위 문서 아래 맨 끝에. 위 문서를 비우거나 맨 위 문서를 주면 맨 위(카테고리)
+create or replace function public.tm_mcp_create(p_token text, p_parent uuid, p_title text,
+  p_body text default '', p_icon text default '', p_labels text[] default '{}')
+returns table (id uuid, updated_at timestamptz)
+language plpgsql
+security definer
+set search_path = ''
+as $$
+#variable_conflict use_column
+declare
+  w uuid := public.tm_mcp_writer(p_token);
+  home constant uuid := '00000000-0000-4000-8000-000000000001';
+  par uuid := nullif(p_parent, home);
+  t text := btrim(coalesce(p_title, ''));
+  made uuid;
+begin
+  if t = '' then raise exception '문서 제목을 주세요'; end if;
+  if char_length(t) > 200 then raise exception '문서 제목은 200자까지입니다'; end if;
+  if char_length(coalesce(p_body, '')) > 1000000 then raise exception '본문은 100만 자까지입니다'; end if;
+  if par is not null and not exists (select 1 from public.tm_docs d where d.id = par and public.tm_doc_visible(d.id)) then
+    raise exception '위 문서(%)가 없거나 휴지통에 있습니다', par;
+  end if;
+  insert into public.tm_docs as nd (parent_id, title, body, icon, labels, sort, author, updated_by)
+  values (par, t, coalesce(p_body, ''), left(btrim(coalesce(p_icon, '')), 16),
+    array(select left(btrim(l), 40) from unnest(coalesce(p_labels, '{}')) l where btrim(l) <> '' limit 20),
+    coalesce((select max(d.sort) from public.tm_docs d where d.parent_id is not distinct from par and d.id <> home), 0) + 1,
+    w, w)
+  returning nd.id into made;
+  return query select d.id, d.updated_at from public.tm_docs d where d.id = made;
+end;
+$$;
+
+-- 문서 고치기 - 준 칸만 바꾼다(null 은 그대로). p_expected(읽었을 때의 updated_at)가 지금과 다르면 그사이 누가 고친 것이라
+-- 덮어쓰지 않고 알린다. p_parent 를 주면 그 아래 맨 끝으로 옮긴다(맨 위 문서 id = 맨 위로). 바뀐 것이 없으면 그대로 둔다
+create or replace function public.tm_mcp_update(p_token text, p_id uuid, p_expected timestamptz default null,
+  p_title text default null, p_body text default null, p_icon text default null, p_labels text[] default null,
+  p_parent uuid default null)
+returns table (id uuid, updated_at timestamptz)
+language plpgsql
+security definer
+set search_path = ''
+as $$
+#variable_conflict use_column
+declare
+  w uuid := public.tm_mcp_writer(p_token);
+  home constant uuid := '00000000-0000-4000-8000-000000000001';
+  cur public.tm_docs;
+  t text;
+  b text;
+  ic text;
+  lb text[];
+  par uuid;
+begin
+  select * into cur from public.tm_docs d where d.id = p_id for update;
+  if cur.id is null or not public.tm_doc_visible(cur.id) then
+    raise exception '문서(%)가 없거나 휴지통에 있습니다', p_id;
+  end if;
+  if p_expected is not null and cur.updated_at is distinct from p_expected then
+    raise exception '그사이 문서가 바뀌었습니다(지금 판 %). wiki_read 로 다시 읽고 고쳐 주세요', cur.updated_at;
+  end if;
+  t := coalesce(btrim(p_title), cur.title);
+  if t = '' then raise exception '문서 제목을 비울 수 없습니다'; end if;
+  if char_length(t) > 200 then raise exception '문서 제목은 200자까지입니다'; end if;
+  b := coalesce(p_body, cur.body);
+  if char_length(b) > 1000000 then raise exception '본문은 100만 자까지입니다'; end if;
+  ic := coalesce(left(btrim(p_icon), 16), cur.icon);
+  lb := case when p_labels is null then cur.labels
+    else array(select left(btrim(l), 40) from unnest(p_labels) l where btrim(l) <> '' limit 20) end;
+  par := cur.parent_id;
+  if p_parent is not null then
+    par := nullif(p_parent, home);
+    if par is not null and not exists (select 1 from public.tm_docs d where d.id = par and public.tm_doc_visible(d.id)) then
+      raise exception '옮길 위 문서(%)가 없거나 휴지통에 있습니다', par;
+    end if;
+  end if;
+  if (t, b, ic, lb, par) is not distinct from (cur.title, cur.body, cur.icon, cur.labels, cur.parent_id) then
+    return query select cur.id, cur.updated_at;
+    return;
+  end if;
+  update public.tm_docs d set
+    title = t, body = b, icon = ic, labels = lb, parent_id = par,
+    sort = case when par is distinct from cur.parent_id
+      then coalesce((select max(s.sort) from public.tm_docs s where s.parent_id is not distinct from par and s.id <> home), 0) + 1
+      else d.sort end,
+    updated_by = case when (t, b) is distinct from (cur.title, cur.body) then w else d.updated_by end
+  where d.id = p_id;
+  return query select d.id, d.updated_at from public.tm_docs d where d.id = p_id;
+end;
+$$;
+
+-- 휴지통에 넣기 - 아래 문서도 함께 보이지 않게 된다. Hub 위키의 휴지통에서 되살린다(아주 지우기는 MCP 로 하지 않는다)
+create or replace function public.tm_mcp_trash(p_token text, p_id uuid)
+returns table (id uuid, title text)
+language plpgsql
+security definer
+set search_path = ''
+as $$
+#variable_conflict use_column
+declare
+  w uuid := public.tm_mcp_writer(p_token);
+begin
+  if not exists (select 1 from public.tm_docs d where d.id = p_id and public.tm_doc_visible(d.id)) then
+    raise exception '문서(%)가 없거나 이미 휴지통에 있습니다', p_id;
+  end if;
+  update public.tm_docs d set trashed_at = now(), trashed_by = w where d.id = p_id;
+  return query select d.id, d.title from public.tm_docs d where d.id = p_id;
+end;
+$$;
+
 alter table public.tm_mcp_tokens enable row level security;
 -- 자기 열쇠 목록만 본다(글자 해시는 주지 않는다). 만들기 · 끊기는 위 함수로만
 drop policy if exists tm_mcp_tokens_own on public.tm_mcp_tokens;
@@ -2048,15 +2210,22 @@ create policy tm_mcp_tokens_own on public.tm_mcp_tokens
   for select to authenticated
   using (member = (select auth.uid()) and (select public.tm_is_member()));
 revoke all on public.tm_mcp_tokens from anon, authenticated;
-grant select (id, label, created_at, last_used_at, revoked_at) on public.tm_mcp_tokens to authenticated;
+grant select (id, label, created_at, last_used_at, revoked_at, can_write) on public.tm_mcp_tokens to authenticated;
 
--- 열쇠 확인은 안쪽에서만. 읽기 함수는 사이트 서버가 공개 키(anon)로 부른다(함수가 열쇠를 본다)
-revoke execute on function public.tm_mcp_issue(text), public.tm_mcp_revoke(uuid), public.tm_mcp_member(text),
-  public.tm_mcp_whoami(text), public.tm_mcp_docs(text), public.tm_mcp_doc(text, uuid), public.tm_mcp_search(text, text, int)
+-- 열쇠 확인은 안쪽에서만. 읽기 · 쓰기 함수는 사이트 서버가 공개 키(anon)로 부른다(함수가 열쇠를 본다)
+revoke execute on function public.tm_mcp_issue(text, boolean), public.tm_mcp_revoke(uuid), public.tm_mcp_set_write(uuid, boolean),
+  public.tm_mcp_member(text), public.tm_mcp_writer(text),
+  public.tm_mcp_whoami(text), public.tm_mcp_docs(text), public.tm_mcp_doc(text, uuid), public.tm_mcp_search(text, text, int),
+  public.tm_mcp_create(text, uuid, text, text, text, text[]),
+  public.tm_mcp_update(text, uuid, timestamptz, text, text, text, text[], uuid), public.tm_mcp_trash(text, uuid)
   from public, anon, authenticated;
-grant execute on function public.tm_mcp_issue(text), public.tm_mcp_revoke(uuid) to authenticated;
+grant execute on function public.tm_mcp_issue(text, boolean), public.tm_mcp_revoke(uuid), public.tm_mcp_set_write(uuid, boolean)
+  to authenticated;
 grant execute on function public.tm_mcp_whoami(text), public.tm_mcp_docs(text), public.tm_mcp_doc(text, uuid),
-  public.tm_mcp_search(text, text, int) to anon, authenticated;
+  public.tm_mcp_search(text, text, int),
+  public.tm_mcp_create(text, uuid, text, text, text, text[]),
+  public.tm_mcp_update(text, uuid, timestamptz, text, text, text, text[], uuid), public.tm_mcp_trash(text, uuid)
+  to anon, authenticated;
 
 -- ── 팀 블로그 (2026-11-18) ─────────────────────────────────────
 -- Hub '커뮤니티 > 블로그'. 네이버 블로그처럼 카테고리 · 글 · 공감 · 댓글 · 조회수를 두고, 블로그 하나를 팀원 모두가 함께 쓴다.
