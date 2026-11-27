@@ -141,6 +141,10 @@ namespace MateCalendar
         public bool Summary = true;
         public bool MonthOutline = true;
         public int UpcomingDays = 7;       // 오늘을 고르면 목록에 함께 보일 앞날 수
+        public string ListView = "due";    // due(그날 마감 · 다가오는 마감) · work(그날 진행: 그날 마감 + 기간 안에 든 작업)
+        public string WorkSort = "due";    // 진행 보기 정렬 - due 마감 가까운 순 · priority 급한 순 · status 상태 순 · start 시작일 순 · title 이름 순
+        public string WorkKind = "all";    // 진행 보기 거르기 - all 전체 · due 그날 마감만 · range 기간 작업만
+        public string[] WorkHide = new string[0]; // 진행 보기에서 숨길 상태(backlog · todo · doing · review · done)
         public bool Locked;
         public string? SkippedVersion;
         public bool Scratch;               // 점검(--demo)용 - 파일에서 읽지도 남기지도 않는다
@@ -181,6 +185,10 @@ namespace MateCalendar
                     Summary = d.Bool("summary", true),
                     MonthOutline = d.Bool("monthOutline", true),
                     UpcomingDays = (int)Clamp(d.Long("upcomingDays", 7), 0, 31),
+                    ListView = d.Str("listView", "due") == "work" ? "work" : "due",
+                    WorkSort = new[] { "due", "priority", "status", "start", "title" }.Contains(d.Str("workSort", "due")) ? d.Str("workSort", "due") : "due",
+                    WorkKind = new[] { "all", "due", "range" }.Contains(d.Str("workKind", "all")) ? d.Str("workKind", "all") : "all",
+                    WorkHide = d.StrArr("workHide"),
                     Locked = d.Bool("locked"),
                     SkippedVersion = d.StrOrNull("skippedVersion"),
                     AutoUpdate = d.Bool("autoUpdate", true),
@@ -205,6 +213,7 @@ namespace MateCalendar
                     ["listPt"] = ListPt, ["wideCellPt"] = WideCellPt, ["wideRowPt"] = WideRowPt, ["appearance"] = Appearance, ["transparency"] = Transparency,
                     ["scope"] = Scope, ["colorBy"] = ColorBy, ["weekNumbers"] = WeekNumbers, ["summary"] = Summary,
                     ["monthOutline"] = MonthOutline, ["upcomingDays"] = UpcomingDays, ["locked"] = Locked,
+                    ["listView"] = ListView, ["workSort"] = WorkSort, ["workKind"] = WorkKind, ["workHide"] = WorkHide,
                     ["skippedVersion"] = SkippedVersion,
                     ["autoUpdate"] = AutoUpdate, ["autoTriedVersion"] = AutoTriedVersion,
                     ["autoTriedAt"] = AutoTriedAt?.ToUniversalTime().ToString("o", CultureInfo.InvariantCulture),

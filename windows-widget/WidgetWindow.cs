@@ -102,6 +102,9 @@ namespace MateCalendar
         private double _listH = ListHeight;  // 이번에 그린 목록 높이(pt)
         private double _fixedPt;             // 목록을 뺀 카드 높이(pt)
         private bool _overdueOpen;           // 기한 지난 작업을 펼쳤는지(다른 날을 고르면 다시 접는다)
+        private readonly Dictionary<string, Border> _tabs = new Dictionary<string, Border>(); // 요약 줄 탭(due · work · late) - 점검용
+        private FrameworkElement? _sortButton, _filterButton; // 진행 보기의 정렬 · 거르기 단추 - 점검용
+        private readonly List<string> _rowTitles = new List<string>(); // 목록에 그린 작업 제목 순서 - 점검용
         private bool _fadeUp, _fadeDown;
         private string _fitKey = "";         // 이번에 맞춘 크기(화면이 바뀌어 맞춤이 달라졌는지 본다)
 
@@ -936,6 +939,56 @@ namespace MateCalendar
             _c.CloseMenu();
         }
 
+        /// <summary>
+        /// 점검용(--demo --view-test) - 요약 줄의 '진행' 탭 → 정렬 메뉴에서 '급한 순' → 거르기 메뉴에서 '백로그' 끄기(메뉴가 열린 채인지)
+        /// → '마감' 탭을 차례로 눌러 보고 log.txt 에 적는다. 마우스는 움직이지 않는다(누름 이벤트 · 메뉴 항목 실행)
+        /// </summary>
+        internal async void SelfTestView()
+        {
+            async System.Threading.Tasks.Task Wait(int ms) => await System.Threading.Tasks.Task.Delay(ms);
+            void Press(UIElement? el) => el?.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Left) { RoutedEvent = UIElement.MouseLeftButtonUpEvent });
+            string Titles() => string.Join(" | ", _rowTitles);
+            void Invoke(ContextMenu? m, string header)
+            {
+                var mi = m?.Items.OfType<MenuItem>().FirstOrDefault(x => (x.Header as string) == header);
+                if (mi == null) { Program.Log("view-test no menu item " + header); return; }
+                ((System.Windows.Automation.Provider.IInvokeProvider)new System.Windows.Automation.Peers.MenuItemAutomationPeer(mi)
+                    .GetPattern(System.Windows.Automation.Peers.PatternInterface.Invoke)).Invoke();
+            }
+            await Wait(1200);
+            Program.Log($"view-test start view={_c.Settings.ListView} rows={_rowTitles.Count} [{Titles()}]");
+            _tabs.TryGetValue("work", out var work);
+            Press(work);
+            await Wait(300);
+            Program.Log($"view-test work tab view={_c.Settings.ListView} tools={_sortButton != null} rows={_rowTitles.Count} [{Titles()}]");
+
+            Press(_sortButton);
+            await Wait(500);
+            Program.Log($"view-test sort menu open={_c.MenuIsOpen}");
+            Invoke(_c.OpenedMenu, "급한 순");
+            await Wait(600);
+            Program.Log($"view-test sorted open={_c.MenuIsOpen} sort={_c.Settings.WorkSort} [{Titles()}]");
+
+            Press(_filterButton);
+            await Wait(500);
+            Program.Log($"view-test filter menu open={_c.MenuIsOpen}");
+            Invoke(_c.OpenedMenu, "백로그");
+            await Wait(300);
+            Program.Log($"view-test backlog off, menu still open={_c.MenuIsOpen} hide={string.Join(",", _c.Settings.WorkHide)}");
+            _c.CloseMenu();
+            await Wait(600);
+            Program.Log($"view-test filtered rows={_rowTitles.Count} filtering={WorkFiltered} [{Titles()}]");
+
+            _tabs.TryGetValue("due", out var due);
+            Press(due);
+            await Wait(300);
+            Program.Log($"view-test due tab view={_c.Settings.ListView} rows={_rowTitles.Count} [{Titles()}]");
+            _tabs.TryGetValue("late", out var late);
+            Press(late);
+            await Wait(300);
+            Program.Log($"view-test late tab view={_c.Settings.ListView} overdueOpen={_overdueOpen} rows={_rowTitles.Count}");
+        }
+
         /// <summary>끌어서 정한 크기를 지우고 기본 크기로(⋯ 메뉴)</summary>
         public void ResetSize()
         {
@@ -1482,40 +1535,67 @@ namespace MateCalendar
                 _summarySlot.Visibility = Visibility.Collapsed;
                 return;
             }
+            // '마감' · '진행'은 목록 보기를 바꾸는 탭(고른 날 기준, 늘 보인다), '기한 지남'은 누르면 오늘 마감 보기에서 펼친다
+            var d = _selected;
+            string day = d == _today ? "오늘" : $"{d.Day}일";
+            var due = _byDate.TryGetValue(d, out var l) ? l.Where(t => !t.Done).ToList() : new List<TaskItem>();
+            var work = due.Concat(Ongoing(d)).ToList();
             var overdue = _c.Data.Tasks.Where(t => !t.Done && t.Due < _today).ToList();
-            var today = _byDate.TryGetValue(_today, out var l) ? l.Where(t => !t.Done).ToList() : new List<TaskItem>();
-            var ongoing = Ongoing(_today);
-            var items = new List<(string label, List<TaskItem> tasks)>();
-            if (overdue.Count > 0) items.Add(("기한 지남", overdue));
-            if (today.Count > 0) items.Add(("오늘 마감", today));
-            if (ongoing.Count > 0) items.Add(("오늘 진행", ongoing));
-            if (items.Count == 0)
+            var items = new List<(string label, List<TaskItem> tasks, string key)>
             {
-                _summarySlot.Child = null;
-                _summarySlot.Visibility = Visibility.Collapsed;
-                return;
-            }
+                (day + " 마감", due, "due"),
+                (day + " 진행", work, "work"),
+            };
+            if (overdue.Count > 0) items.Add(("기한 지남", overdue, "late"));
             // 같은 폭 칸으로 나눈다. 작게 보기(달력 폭 175pt)에 세 칸이면 글자가 잘려서 두 칸씩 줄을 바꾼다
             int cols = items.Count > 2 && !_c.Settings.Wide ? 2 : items.Count;
             var grid = new Grid();
+            _tabs.Clear();
             for (int i = 0; i < cols; i++) grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             for (int i = 0; i < items.Count; i++)
             {
                 if (i % cols == 0) grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-                var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(i % cols == 0 ? 1 : 4, i < cols ? 0 : 3, 1, 0) };
-                var bars = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, items.Count > 2 ? 4 : 6, 0) };
-                foreach (var c in items[i].tasks.Select(PaintName).Distinct().OrderBy(n => Array.IndexOf(Palette, n)))
+                var (label, tasks, key) = items[i];
+                bool on = key == (_c.Settings.ListView == "work" ? "work" : "due");
+                var row = new StackPanel { Orientation = Orientation.Horizontal };
+                var bars = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 4, 0) };
+                foreach (var c in tasks.Select(PaintName).Distinct().OrderBy(n => Array.IndexOf(Palette, n)))
                 {
                     bars.Children.Add(new Border
                     {
                         Width = 2, CornerRadius = new CornerRadius(1), Background = Theme.Brush(_t.Paint(c)), Margin = new Thickness(0, 1, 2, 1),
                     });
                 }
+                if (bars.Children.Count == 0) bars.Children.Add(new Border { Width = 2, Margin = new Thickness(0, 1, 2, 1) }); // 0개여도 글자 자리를 맞춘다
                 row.Children.Add(bars);
-                row.Children.Add(Text($"{items[i].label}: {items[i].tasks.Count}", 10, _t.Label));
-                Grid.SetColumn(row, i % cols);
-                Grid.SetRow(row, i / cols);
-                grid.Children.Add(row);
+                row.Children.Add(Text($"{label}: {tasks.Count}", 10, on ? _t.Header : _t.Label, on ? Theme.Medium : (FontWeight?)null));
+                var tab = new Border
+                {
+                    Child = row, CornerRadius = new CornerRadius(6), Padding = new Thickness(5, 2, 5, 2), Cursor = Cursors.Hand,
+                    Margin = new Thickness(0, i < cols ? 0 : 2, i % cols == cols - 1 ? 0 : 3, 0), HorizontalAlignment = HorizontalAlignment.Stretch,
+                    Background = on ? Theme.Brush(_t.Quaternary) : Brushes.Transparent,
+                    ToolTip = key == "due" ? $"{day} 마감과 다가오는 마감" : key == "work" ? $"{day} 마감 + 기간 안에 든 작업(정렬 · 거르기)" : "기한 지난 작업 펼치기",
+                };
+                var normal = tab.Background;
+                var hover = Theme.Brush(_t.Hover);
+                tab.MouseEnter += (s, e) => tab.Background = hover;
+                tab.MouseLeave += (s, e) => tab.Background = normal;
+                tab.MouseLeftButtonUp += (s, e) =>
+                {
+                    e.Handled = true;
+                    if (key == "late") { ShowOverdue(); return; }
+                    if (_c.Settings.ListView != key)
+                    {
+                        _c.Settings.ListView = key;
+                        _c.Settings.Save();
+                    }
+                    RebuildSummary();
+                    RebuildList();
+                };
+                Grid.SetColumn(tab, i % cols);
+                Grid.SetRow(tab, i / cols);
+                grid.Children.Add(tab);
+                _tabs[key] = tab;
             }
             _summarySlot.Child = grid;
             _summarySlot.Visibility = Visibility.Visible;
@@ -1564,6 +1644,8 @@ namespace MateCalendar
         {
             if (_list == null || _scroll == null) return;
             _list.Children.Clear();
+            _rowTitles.Clear();
+            _sortButton = _filterButton = null;
             if (_listFor != _selected) _overdueOpen = false;
             _listFor = _selected;
 
@@ -1604,25 +1686,21 @@ namespace MateCalendar
                 }
             }
 
-            // 고른 날 마감 → 고른 날이 기간 안에 든 작업(시작일 ≤ 그날 < 마감일) → 그 뒤 날짜별 마감.
-            // 기간 작업은 '진행'에도, 마감일 아래에도 보인다(오늘 할 일과 마감 일정을 따로 본다)
+            if (_c.Settings.ListView == "work")
+            {
+                BuildWork(overdue);
+                _scroll.ScrollToTop();
+                return;
+            }
+
+            // 마감 보기: 고른 날 마감 → 그 뒤 날짜별 마감
             for (int i = 0; i <= _c.Settings.UpcomingDays; i++)
             {
                 var d = _selected.AddDays(i);
-                if (_byDate.TryGetValue(d, out var tasks) && tasks.Count > 0)
-                {
-                    _list.Children.Add(Section((d == _today ? "오늘" : DateLabel(d)) + " 마감"));
-                    foreach (var t in Order(tasks)) _list.Children.Add(Row(t));
-                    sections++;
-                }
-                if (i == 0)
-                {
-                    var ongoing = Ongoing(d);
-                    if (ongoing.Count == 0) continue;
-                    _list.Children.Add(Section(d == _today ? "오늘 진행" : DateLabel(d) + " 진행"));
-                    foreach (var t in ongoing) _list.Children.Add(Row(t, d));
-                    sections++;
-                }
+                if (!_byDate.TryGetValue(d, out var tasks) || tasks.Count == 0) continue;
+                _list.Children.Add(Section((d == _today ? "오늘" : DateLabel(d)) + " 마감"));
+                foreach (var t in Order(tasks)) _list.Children.Add(Row(t));
+                sections++;
             }
 
             if (sections == 0)
@@ -1740,11 +1818,195 @@ namespace MateCalendar
         private static IEnumerable<TaskItem> Order(IEnumerable<TaskItem> tasks) =>
             tasks.OrderBy(t => TaskItem.StatusRank(t.Status)).ThenBy(t => TaskItem.PriorityRank(t.Priority)).ThenBy(t => t.Num);
 
-        /// <summary>그날이 기간 안에 든 끝나지 않은 작업(시작일 ≤ 그날 < 마감일) - 마감이 가까운 것부터</summary>
+        /// <summary>그날이 기간 안에 든 끝나지 않은 작업(시작일 ≤ 그날 < 마감일)</summary>
         private List<TaskItem> Ongoing(DateTime d) =>
-            _c.Data.Tasks.Where(t => !t.Done && t.Start.HasValue && t.Start.Value.Date <= d && d < t.Due.Date)
-                .OrderBy(t => t.Due).ThenBy(t => TaskItem.StatusRank(t.Status)).ThenBy(t => TaskItem.PriorityRank(t.Priority)).ThenBy(t => t.Num)
-                .ToList();
+            _c.Data.Tasks.Where(t => !t.Done && t.Start.HasValue && t.Start.Value.Date <= d && d < t.Due.Date).ToList();
+
+        /* ── 진행 보기: 그날 마감 + 기간 안에 든 작업, 정렬 · 거르기 ── */
+
+        private static readonly (string key, string label)[] WorkSorts =
+        {
+            ("due", "마감 가까운 순"), ("priority", "급한 순"), ("status", "상태 순"), ("start", "시작일 순"), ("title", "이름 순"),
+        };
+        private static readonly (string key, string label)[] WorkStatuses =
+        {
+            ("doing", "진행 중"), ("review", "리뷰"), ("todo", "할 일"), ("backlog", "백로그"), ("done", "완료"),
+        };
+
+        private bool WorkFiltered => _c.Settings.WorkKind != "all" || _c.Settings.WorkHide.Length > 0;
+
+        private void BuildWork(bool overdue)
+        {
+            if (_list == null) return;
+            var d = _selected;
+            bool isToday = d == _today;
+            var all = (_byDate.TryGetValue(d, out var l) ? l : new List<TaskItem>()).Concat(Ongoing(d)).ToList();
+            if (all.Count == 0)
+            {
+                _list.Children.Add(Message(isToday ? "오늘 마감이거나 기간 안에 든 작업이 없습니다." : "이날 마감이거나 기간 안에 든 작업이 없습니다.",
+                    null, null, fill: !overdue));
+                return;
+            }
+            _list.Children.Add(WorkTools());
+            var hide = new HashSet<string>(_c.Settings.WorkHide);
+            var kind = _c.Settings.WorkKind;
+            var shown = all.Where(t => !hide.Contains(t.Status) && (kind == "all" || (kind == "due") == (t.Due.Date <= d))).ToList();
+            if (shown.Count == 0)
+            {
+                _list.Children.Add(Message($"거른 조건에 맞는 작업이 없습니다. (전체 {all.Count}개)", "거르기 풀기", ResetWorkFilter, fill: false));
+                return;
+            }
+            foreach (var t in SortWork(shown)) _list.Children.Add(Row(t, d));
+            _list.Children.Add(new Border { Height = 10 }); // 끝이 흐려지는 자리
+        }
+
+        /// <summary>끝난 작업은 늘 맨 아래, 같으면 번호 순</summary>
+        private IEnumerable<TaskItem> SortWork(List<TaskItem> tasks)
+        {
+            var open = tasks.Where(t => !t.Done);
+            IOrderedEnumerable<TaskItem> o = _c.Settings.WorkSort switch
+            {
+                "priority" => open.OrderBy(t => TaskItem.PriorityRank(t.Priority)).ThenBy(t => t.Due).ThenBy(t => TaskItem.StatusRank(t.Status)),
+                "status" => open.OrderBy(t => TaskItem.StatusRank(t.Status)).ThenBy(t => t.Due).ThenBy(t => TaskItem.PriorityRank(t.Priority)),
+                "start" => open.OrderBy(t => t.Start ?? t.Due).ThenBy(t => t.Due),
+                "title" => open.OrderBy(t => t.Title, StringComparer.Create(CultureInfo.GetCultureInfo("ko-KR"), true)),
+                _ => open.OrderBy(t => t.Due).ThenBy(t => TaskItem.StatusRank(t.Status)).ThenBy(t => TaskItem.PriorityRank(t.Priority)),
+            };
+            return o.ThenBy(t => t.Num).Concat(tasks.Where(t => t.Done).OrderBy(t => t.Num));
+        }
+
+        private void ResetWorkFilter()
+        {
+            _c.Settings.WorkKind = "all";
+            _c.Settings.WorkHide = new string[0];
+            _c.Settings.Save();
+            RebuildList();
+        }
+
+        /// <summary>진행 보기 맨 위 한 줄 - 왼쪽 정렬, 오른쪽 거르기(누르면 메뉴)</summary>
+        private FrameworkElement WorkTools()
+        {
+            var dock = new DockPanel { LastChildFill = false, Margin = new Thickness(0, 4, 0, 2) };
+            FrameworkElement Btn(string text, Color color, Func<ContextMenu> menu, string tip)
+            {
+                var sp = new StackPanel { Orientation = Orientation.Horizontal };
+                var tb = Text(text, 10.5, color, Theme.Medium);
+                tb.VerticalAlignment = VerticalAlignment.Center;
+                sp.Children.Add(tb);
+                var chev = Icons.Make(Icons.ChevronDown, 9, Theme.Brush(color));
+                chev.VerticalAlignment = VerticalAlignment.Center;
+                chev.Margin = new Thickness(3, 1, 0, 0);
+                sp.Children.Add(chev);
+                var b = new Border
+                {
+                    Child = sp, CornerRadius = new CornerRadius(6), Padding = new Thickness(6, 2, 5, 3), Background = Brushes.Transparent,
+                    Cursor = Cursors.Hand, ToolTip = tip,
+                };
+                var hover = Theme.Brush(_t.Hover);
+                b.MouseEnter += (s, e) => b.Background = hover;
+                b.MouseLeave += (s, e) => b.Background = Brushes.Transparent;
+                b.MouseLeftButtonUp += (s, e) =>
+                {
+                    e.Handled = true;
+                    _c.ShowMenu(b, menu);
+                };
+                return b;
+            }
+            var sortLabel = WorkSorts.FirstOrDefault(x => x.key == _c.Settings.WorkSort).label ?? WorkSorts[0].label;
+            var sort = Btn(sortLabel, _t.Secondary, SortMenu, "정렬 바꾸기");
+            DockPanel.SetDock(sort, Dock.Left);
+            dock.Children.Add(sort);
+            var filter = Btn(WorkFiltered ? "거르는 중" : "거르기", WorkFiltered ? _t.Accent : _t.Secondary, FilterMenu, "보일 작업 고르기");
+            DockPanel.SetDock(filter, Dock.Right);
+            dock.Children.Add(filter);
+            _sortButton = sort;
+            _filterButton = filter;
+            return dock;
+        }
+
+        private ContextMenu SortMenu()
+        {
+            var m = _c.NewMenu();
+            bool changed = false;
+            foreach (var (key, label) in WorkSorts)
+            {
+                var mi = new MenuItem { Header = label, IsChecked = _c.Settings.WorkSort == key };
+                mi.Click += (s, e) =>
+                {
+                    if (_c.Settings.WorkSort == key) return;
+                    _c.Settings.WorkSort = key;
+                    _c.Settings.Save();
+                    changed = true;
+                };
+                m.Items.Add(mi);
+            }
+            // 메뉴가 닫힌 뒤에 목록을 다시 만든다(메뉴를 단 단추가 열린 동안 사라지지 않게)
+            m.Closed += (s, e) => { if (changed) RebuildList(); };
+            return m;
+        }
+
+        private ContextMenu FilterMenu()
+        {
+            var m = _c.NewMenu();
+            bool changed = false;
+            string day = _selected == _today ? "오늘" : "그날";
+            foreach (var (key, label) in new[] { ("all", "전체"), ("due", day + " 마감만"), ("range", "기간 작업만(마감 전)") })
+            {
+                var mi = new MenuItem { Header = label, IsChecked = _c.Settings.WorkKind == key };
+                mi.Click += (s, e) =>
+                {
+                    if (_c.Settings.WorkKind == key) return;
+                    _c.Settings.WorkKind = key;
+                    _c.Settings.Save();
+                    changed = true;
+                };
+                m.Items.Add(mi);
+            }
+            m.Items.Add(new Separator());
+            m.Items.Add(new MenuItem { Header = "보일 상태", IsEnabled = false });
+            // 상태는 여러 개를 켜고 끄니 누른 뒤에도 메뉴를 열어 둔다
+            foreach (var (key, label) in WorkStatuses)
+            {
+                var mi = new MenuItem { Header = label, IsChecked = !_c.Settings.WorkHide.Contains(key), StaysOpenOnClick = true };
+                mi.Click += (s, e) =>
+                {
+                    var hide = new HashSet<string>(_c.Settings.WorkHide);
+                    if (!hide.Remove(key)) hide.Add(key);
+                    _c.Settings.WorkHide = WorkStatuses.Select(x => x.key).Where(hide.Contains).ToArray();
+                    _c.Settings.Save();
+                    mi.IsChecked = !hide.Contains(key);
+                    changed = true;
+                };
+                m.Items.Add(mi);
+            }
+            m.Items.Add(new Separator());
+            var reset = new MenuItem { Header = "거르기 풀기", IsEnabled = WorkFiltered };
+            reset.Click += (s, e) =>
+            {
+                _c.Settings.WorkKind = "all";
+                _c.Settings.WorkHide = new string[0];
+                _c.Settings.Save();
+                changed = true;
+            };
+            m.Items.Add(reset);
+            m.Closed += (s, e) => { if (changed) RebuildList(); };
+            return m;
+        }
+
+        /// <summary>요약 줄의 '기한 지남' - 오늘을 고르고 마감 보기에서 기한 지난 작업을 펼친다</summary>
+        private void ShowOverdue()
+        {
+            if (_c.Settings.ListView != "due")
+            {
+                _c.Settings.ListView = "due";
+                _c.Settings.Save();
+            }
+            if (_selected != _today) Select(_today);
+            _overdueOpen = true;
+            _listFor = _selected;
+            RebuildSummary();
+            RebuildList();
+        }
 
         private static string DateLabel(DateTime d)
         {
@@ -1773,6 +2035,7 @@ namespace MateCalendar
         /// <param name="ongoingOn">'진행' 칸의 줄이면 그날 - 기간 줄에 마감까지 남은 날을 붙인다</param>
         private FrameworkElement Row(TaskItem t, DateTime? ongoingOn = null)
         {
+            _rowTitles.Add(t.Title);
             var color = ColorOf(t);
             var brush = Theme.Brush(color);
 
@@ -1831,6 +2094,15 @@ namespace MateCalendar
 
             // 여러 날에 걸친 작업이면 기간(Calendr 의 여러 날 종일 일정 표기)
             // 범위는 물결표(대시를 쓰지 않는다)
+            // 진행 보기에서는 고른 날 기준 마감까지(그날 마감 · 오늘이면 하루 남은 것은 '내일 마감' · 마감까지 N일)
+            string? until = null;
+            if (ongoingOn.HasValue)
+            {
+                int left = (int)(t.Due.Date - ongoingOn.Value.Date).TotalDays;
+                bool today = ongoingOn.Value == _today;
+                until = left <= 0 ? (today ? "오늘 마감" : "이날 마감") : today && left == 1 ? "내일 마감" : $"마감까지 {left}일";
+            }
+            string? when = until;
             if (t.Start.HasValue && t.Start.Value < t.Due)
             {
                 var s = t.Start.Value;
@@ -1839,13 +2111,11 @@ namespace MateCalendar
                     : s.Month == t.Due.Month
                         ? $"{s.Month}월 {s.Day}일~{t.Due.Day}일"
                         : $"{s.Month}월 {s.Day}일~{t.Due.Month}월 {t.Due.Day}일";
-                if (ongoingOn.HasValue)
-                {
-                    int left = (int)(t.Due.Date - ongoingOn.Value.Date).TotalDays;
-                    // 고른 날 기준으로 센다(오늘이면 하루 남은 것은 '내일 마감')
-                    range += ongoingOn.Value == _today && left == 1 ? " · 내일 마감" : $" · 마감까지 {left}일";
-                }
-                var dur = Text(range, 10, _t.Secondary);
+                when = until != null ? range + " · " + until : range;
+            }
+            if (when != null)
+            {
+                var dur = Text(when, 10, _t.Secondary);
                 dur.TextTrimming = TextTrimming.CharacterEllipsis;
                 dur.Margin = new Thickness(0, 2, 0, 0);
                 body.Children.Add(dur);

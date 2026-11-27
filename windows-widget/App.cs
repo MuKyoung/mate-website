@@ -132,6 +132,9 @@ namespace MateCalendar
                 // --menu-test : ⋯ 메뉴를 연 채 다시 그려도 메뉴가 남는지 log.txt 에(점검용)
                 if (a.Contains("--menu-test")) app.Startup += (s, e) => Application.Current.Dispatcher.BeginInvoke(
                     new Action(controller.SelfTestMenu), System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+                // --view-test : 요약 줄 탭 · 진행 보기 정렬 · 거르기 메뉴를 눌러 본 결과를 log.txt 에(점검용)
+                if (a.Contains("--view-test")) app.Startup += (s, e) => Application.Current.Dispatcher.BeginInvoke(
+                    new Action(controller.SelfTestView), System.Windows.Threading.DispatcherPriority.ApplicationIdle);
             }
             app.Startup += (s, e) => controller.Start();
             app.Run();
@@ -178,6 +181,8 @@ namespace MateCalendar
         public bool Updating { get; private set; }
 
         internal bool MenuIsOpen => _menu?.IsOpen == true;
+        internal ContextMenu? OpenedMenu => _menu?.IsOpen == true ? _menu : null;
+        internal void SelfTestView() => _widget?.SelfTestView();
         internal string MenuRect()
         {
             if (_menu == null || !(PresentationSource.FromVisual(_menu) is HwndSource src)) return "-";
@@ -578,7 +583,8 @@ namespace MateCalendar
             _menu != null && (_menu.IsOpen || (_menuAlive && DateTime.UtcNow - _menuLostAt < TimeSpan.FromSeconds(1)))
             || DateTime.UtcNow - _menuClosedAt < TimeSpan.FromMilliseconds(350);
 
-        public void ShowMenu(FrameworkElement? anchor)
+        /// <param name="build">⋯ 메뉴 대신 열 메뉴(목록의 정렬 · 거르기). 같은 열고 닫기 규칙을 쓴다</param>
+        public void ShowMenu(FrameworkElement? anchor, Func<ContextMenu>? build = null)
         {
             // 열려 있으면(또는 막 닫혔으면) 이 누름은 '닫기' - 다시 열지 않는다
             if (MenuBusy)
@@ -587,14 +593,22 @@ namespace MateCalendar
                 return;
             }
             // 누름 처리가 다 끝난 뒤에 연다 - 같은 누름이 '메뉴 바깥 누름'으로 잡혀 바로 닫히지 않게
-            Application.Current.Dispatcher.BeginInvoke(new Action(() => OpenMenu(anchor)), DispatcherPriority.Input);
+            Application.Current.Dispatcher.BeginInvoke(new Action(() => OpenMenu(anchor, build)), DispatcherPriority.Input);
         }
 
-        private void OpenMenu(FrameworkElement? anchor)
+        /// <summary>위젯 모양을 입힌 빈 메뉴</summary>
+        public ContextMenu NewMenu()
+        {
+            var m = new ContextMenu { FontFamily = Theme.Font };
+            m.Resources.MergedDictionaries.Add(Styles.Menu(Theme.Create(Settings.Appearance, 0)));
+            return m;
+        }
+
+        private void OpenMenu(FrameworkElement? anchor, Func<ContextMenu>? build = null)
         {
             if (_menu?.IsOpen == true) return;
             if (anchor != null && PresentationSource.FromVisual(anchor) == null) anchor = null; // 그사이 다시 그려졌다
-            var m = BuildMenu();
+            var m = build?.Invoke() ?? BuildMenu();
             if (anchor != null)
             {
                 m.PlacementTarget = anchor;
@@ -641,9 +655,7 @@ namespace MateCalendar
 
         public ContextMenu BuildMenu()
         {
-            var theme = Theme.Create(Settings.Appearance, 0);
-            var m = new ContextMenu { FontFamily = Theme.Font };
-            m.Resources.MergedDictionaries.Add(Styles.Menu(theme));
+            var m = NewMenu();
 
             MenuItem Item(string header, Action? click, bool check = false, bool enabled = true, string? gesture = null)
             {
@@ -675,6 +687,9 @@ namespace MateCalendar
                 Item("라벨", () => Set(() => Settings.ColorBy = "label"), Settings.ColorBy == "label"),
                 Item("담당자", () => Set(() => Settings.ColorBy = "member"), Settings.ColorBy == "member")));
             m.Items.Add(Sub("목록",
+                Item("마감 보기", () => Set(() => Settings.ListView = "due"), Settings.ListView != "work"),
+                Item("진행 보기", () => Set(() => Settings.ListView = "work"), Settings.ListView == "work"),
+                new Separator(),
                 Item("고른 날만", () => Set(() => Settings.UpcomingDays = 0), Settings.UpcomingDays == 0),
                 Item("앞으로 3일", () => Set(() => Settings.UpcomingDays = 3), Settings.UpcomingDays == 3),
                 Item("앞으로 7일", () => Set(() => Settings.UpcomingDays = 7), Settings.UpcomingDays == 7),
@@ -914,6 +929,11 @@ namespace MateCalendar
             c.Settings.MonthOutline = !args.Contains("--no-outline");
             c.Settings.Summary = !args.Contains("--no-summary");
             c.Settings.Locked = args.Contains("--locked");
+            // --view due|work · --sort due|priority|status|start|title · --kind all|due|range · --hide backlog,done : 목록 보기 · 진행 보기 정렬 · 거르기
+            c.Settings.ListView = Arg("--view", "due");
+            c.Settings.WorkSort = Arg("--sort", "due");
+            c.Settings.WorkKind = Arg("--kind", "all");
+            c.Settings.WorkHide = Arg("--hide", "").Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
             // --work <높이> 또는 <폭>x<높이>(DIP) : 작업 영역(작은 노트북 화면 흉내)
             var workArg = Arg("--work", "");
             if (workArg != "") WidgetWindow.SetWorkOverride(workArg);
