@@ -1,0 +1,62 @@
+# 아이폰 위젯 앱 'MATE 오늘'(ios-widget/) - GitHub 의 Mac 에서 빌드한다(이 저장소를 고치는 PC 에는 Mac 이 없다).
+# 서명하지 않은 IPA 와 확인용 그림을 릴리스 'ios-widget-build' 에 올린다. 서명은 깔 때 각자의 Apple ID 로 한다.
+name: ios-widget
+
+on:
+  push:
+    paths:
+      - 'ios-widget/**'
+      - '.github/workflows/ios-widget.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ios-widget-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-26
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 프로젝트 만들기
+        working-directory: ios-widget
+        run: |
+          mkdir -p out
+          xcodebuild -version | tee out/xcode.txt
+          which xcodegen || brew install xcodegen
+          xcodegen generate 2>&1 | tee out/xcodegen.txt
+
+      - name: 기기용 빌드 (IPA)
+        working-directory: ios-widget
+        run: bash tools/build-ipa.sh
+
+      - name: 시뮬레이터 확인
+        working-directory: ios-widget
+        run: bash tools/simulate.sh
+
+      - name: 릴리스에 올리기
+        if: always()
+        working-directory: ios-widget
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          mkdir -p out && cd out
+          echo "${{ github.sha }} ${{ job.status }} ${{ github.ref_name }} $(date -u +%FT%TZ)" > status.txt
+          for f in device.log sim.log; do
+            if [ -f "$f" ]; then tail -c 300000 "$f" > "${f%.log}-tail.txt"; fi
+          done
+          rm -f device.log sim.log done.txt
+          gh release view ios-widget-build > /dev/null 2>&1 || gh release create ios-widget-build --prerelease \
+            --target "${{ github.sha }}" --title "MATE 오늘 (iPhone) 빌드" \
+            --notes "ios-widget/ 을 고칠 때마다 새로 올라오는 서명하지 않은 IPA 입니다. 설치 방법은 ios-widget/README.md 를 보세요."
+          # 앞선 빌드의 파일이 섞이지 않게 비우고 올린다
+          for name in $(gh release view ios-widget-build --json assets -q '.assets[].name'); do
+            gh release delete-asset ios-widget-build "$name" -y
+          done
+          gh release upload ios-widget-build --clobber ./*

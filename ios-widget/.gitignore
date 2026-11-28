@@ -1,0 +1,9 @@
+build/
+out/
+*.xcodeproj/
+# XcodeGen 이 project.yml 로 만든다
+App/Info.plist
+Widget/Info.plist
+.DS_Store
+xcuserdata/
+*.ipa
