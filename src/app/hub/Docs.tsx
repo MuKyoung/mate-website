@@ -72,6 +72,11 @@ function between(a: number | undefined, b: number | undefined): number {
 }
 
 const WIDE_KEY = 'mate.taskmanager.docs.wide.v1';
+/** 문서 트리 폭(px) - 처음 · 가장 좁게 · 가장 넓게 */
+const TREE_W = 272;
+const TREE_MIN = 200;
+const TREE_MAX = 640;
+const clampTreeW = (v: number) => Math.min(TREE_MAX, Math.max(TREE_MIN, Math.round(v)));
 /** 왼쪽 칸 '새로 바뀐 문서'에 늘어놓는 수 - 나머지는 트리의 빨간 점으로 */
 const FRESH_SHOWN = 8;
 
@@ -342,6 +347,54 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
   const setTreeOpen = (v: boolean) => {
     setTreePref(v);
     try { window.localStorage.setItem(treeKey, v ? '1' : '0'); } catch { /* noop */ }
+  };
+  /** 문서 트리 폭(PC) - 오른쪽 가장자리를 끌어 늘리고 줄인다. 사람마다 이 브라우저에. 두 번 누르면 처음 폭 */
+  const treeWKey = `mate.taskmanager.docs.treeW.v1:${me}`;
+  const [treeW, setTreeW] = useState(TREE_W);
+  const treeEl = useRef<HTMLElement>(null);
+  useEffect(() => {
+    try {
+      const n = Number(window.localStorage.getItem(treeWKey));
+      setTreeW(n ? clampTreeW(n) : TREE_W);
+    } catch { /* 저장이 막힌 환경 */ }
+  }, [treeWKey]);
+  /** 본문 자리를 남긴다 - 트리는 문서 화면 폭의 55% 까지만(aside 의 max-w-[55%] 와 같은 값) */
+  const fitTreeW = (v: number) => {
+    const room = treeEl.current?.parentElement?.clientWidth;
+    return clampTreeW(room ? Math.min(v, Math.floor(room * 0.55)) : v);
+  };
+  const saveTreeW = (v: number) => {
+    const w = fitTreeW(v);
+    setTreeW(w);
+    try { window.localStorage.setItem(treeWKey, String(w)); } catch { /* noop */ }
+  };
+  /** 끄는 동안에는 폭만 바로 바꾸고(본문 편집기를 다시 그리지 않게) 놓을 때 한 번 저장한다 */
+  const dragTree = (e: React.PointerEvent<HTMLDivElement>) => {
+    const el = treeEl.current;
+    if (e.button !== 0 || !el) return;
+    e.preventDefault();
+    const bar = e.currentTarget;
+    const x0 = e.clientX;
+    const w0 = el.getBoundingClientRect().width;
+    let w = w0;
+    bar.setPointerCapture(e.pointerId);
+    bar.dataset.drag = '1';
+    document.body.style.userSelect = 'none';
+    const move = (ev: PointerEvent) => {
+      w = fitTreeW(w0 + ev.clientX - x0);
+      el.style.width = `${w}px`;
+    };
+    const end = () => {
+      bar.removeEventListener('pointermove', move);
+      bar.removeEventListener('pointerup', end);
+      bar.removeEventListener('pointercancel', end);
+      delete bar.dataset.drag;
+      document.body.style.userSelect = '';
+      if (w !== w0) saveTreeW(w);
+    };
+    bar.addEventListener('pointermove', move);
+    bar.addEventListener('pointerup', end);
+    bar.addEventListener('pointercancel', end);
   };
   /** 휴대폰(768px 미만) - 찾기 · 즐겨찾기 · 트리 · 휴지통을 담은 서랍 */
   const [drawer, setDrawer] = useState(false);
@@ -1226,10 +1279,25 @@ export default function Docs({ store, me, tasks, onTaskClick, onNotice }: {
         <>
 
         {/* ── 문서 트리(PC) - 접으면 본문이 넓어진다. 휴대폰은 서랍(아래)에 같은 것을 담는다 ── */}
-        <aside id="doc-tree-panel" aria-label="문서 목록"
-          className={`hidden w-[272px] shrink-0 flex-col overflow-hidden rounded-tm border border-tm-line bg-tm-card shadow-tm ${treeOpen ? 'md:flex' : ''}`}>
+        <aside ref={treeEl} id="doc-tree-panel" aria-label="문서 목록" style={{ width: treeW }}
+          className={`hidden max-w-[55%] shrink-0 flex-col overflow-hidden rounded-tm border border-tm-line bg-tm-card shadow-tm ${treeOpen ? 'md:flex' : ''}`}>
           {treePanel(false)}
         </aside>
+        {/* 트리 폭 손잡이 - 트리와 본문 사이 틈(gap-5)을 그대로 차지한다. 끌기 · 화살표 키 · 두 번 누르면 처음 폭 */}
+        <div role="separator" aria-orientation="vertical" aria-label="문서 목록 폭 조절" tabIndex={0}
+          aria-valuemin={TREE_MIN} aria-valuemax={TREE_MAX} aria-valuenow={treeW}
+          title="끌어서 폭 조절 · 두 번 누르면 처음 폭"
+          onPointerDown={dragTree}
+          onDoubleClick={() => saveTreeW(TREE_W)}
+          onKeyDown={(e) => {
+            if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+            e.preventDefault();
+            // 좁은 창에서는 저장한 폭보다 좁게 보일 수 있다 - 지금 보이는 폭에서 움직인다
+            saveTreeW((treeEl.current?.getBoundingClientRect().width ?? treeW) + (e.key === 'ArrowRight' ? 16 : -16));
+          }}
+          className={`group -mx-5 hidden w-5 flex-none cursor-col-resize touch-none justify-center outline-none ${treeOpen ? 'md:flex' : ''}`}>
+          <span aria-hidden className="h-full w-[3px] rounded-full bg-tm-blue opacity-0 transition-opacity duration-150 group-hover:opacity-60 group-focus-visible:opacity-60 group-data-[drag]:opacity-100" />
+        </div>
 
         {/* ── 본문 ── */}
         {!doc && store.loadError ? (
