@@ -75,6 +75,8 @@ export interface TaskRow {
   assignee: string | null;
   start_date: string | null;
   due_date: string | null;
+  /** 마감 시각 'HH:MM:SS' - SQL 로 뒤에 더한 칸이라 아직 없는 DB 에서는 오지 않는다 */
+  due_time?: string | null;
   labels: string[] | null;
   /** 상위 업무 - SQL 로 뒤에 더한 칸이라 아직 없는 DB 에서는 오지 않는다 */
   parent_id?: string | null;
@@ -189,6 +191,7 @@ export function taskFromRow(r: TaskRow): Task {
     assignee: r.assignee,
     start: r.start_date,
     due: r.due_date,
+    dueTime: r.due_time ? r.due_time.slice(0, 5) : null,
     labels: r.labels ?? [],
     parentId: r.parent_id ?? null,
     private: r.private ?? false,
@@ -212,6 +215,7 @@ export function taskToRow(p: Partial<Task>): Partial<TaskRow> {
   if (p.assignee !== undefined) r.assignee = p.assignee;
   if (p.start !== undefined) r.start_date = p.start;
   if (p.due !== undefined) r.due_date = p.due;
+  if (p.dueTime !== undefined) r.due_time = p.dueTime;
   if (p.labels !== undefined) r.labels = p.labels;
   if (p.parentId !== undefined) r.parent_id = p.parentId;
   // 만든 사람(created_by)은 DB 가 정한다(auth.uid()) - 보내지 않는다

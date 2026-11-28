@@ -70,7 +70,7 @@ function Item({ t, onOpen }: { t: Task; onOpen(id: string): void }) {
           {t.title}
         </span>
         <span className="mt-1.5 flex min-h-[22px] items-center justify-between gap-2">
-          <DueBadge due={t.due} done={t.status === 'done'} />
+          <DueBadge due={t.due} time={t.dueTime} done={t.status === 'done'} />
           <span className="ml-auto"><Avatar id={t.assignee} size={22} /></span>
         </span>
       </button>
@@ -119,7 +119,7 @@ export default function Roadmap({
           items: mine
             .filter((t) => horizonOf(t.due, now) === h.id)
             // 마감일 있는 것부터, 같으면 빠른 날짜부터
-            .sort((a, b) => (a.due ?? '9999').localeCompare(b.due ?? '9999')),
+            .sort((a, b) => `${a.due ?? '9999'} ${a.dueTime ?? '99:99'}`.localeCompare(`${b.due ?? '9999'} ${b.dueTime ?? '99:99'}`)),
         }));
 
         return { ...lane, total: mine.length, cells };

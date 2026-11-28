@@ -589,19 +589,22 @@ export function StatusPill({ s }: { s: Status }) {
   );
 }
 
-/** 마감일 - 지났으면 빨강, 사흘 안이면 호박색 */
-export function DueBadge({ due, done }: { due: string | null; done: boolean }) {
+/** 마감일 - 지났으면 빨강, 사흘 안이면 호박색. 마감 시각이 있으면 '오늘 14:00' 처럼 붙이고, 오늘 그 시각이 지나면 빨강 */
+export function DueBadge({ due, time, done }: { due: string | null; time?: string | null; done: boolean }) {
   if (!due) return null;
-  const today = new Date();
+  const now = new Date();
+  const today = new Date(now);
   today.setHours(0, 0, 0, 0);
   const d = new Date(`${due}T00:00:00`);
   const days = Math.round((d.getTime() - today.getTime()) / 86400000);
+  const hm = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  const late = days < 0 || (days === 0 && !!time && time < hm);
 
   const text =
-    days === 0 ? '오늘' : days === 1 ? '내일' : days < 0 ? `${-days}일 지남` : `${days}일 남음`;
+    (days === 0 ? '오늘' : days === 1 ? '내일' : days < 0 ? `${-days}일 지남` : `${days}일 남음`) + (time && days >= 0 ? ` ${time}` : '');
   const tone = done
     ? 'font-semibold text-tm-sub'
-    : days < 0
+    : late
       ? 'font-bold text-tm-red-deep'
       : days <= 3
         ? 'font-bold text-tm-warn'
@@ -1134,7 +1137,7 @@ export function TaskCard({ task, onOpen, onDragStart, onDragEnd, dragging, onMov
       </div>
 
       <div className="flex min-h-[26px] items-center justify-between gap-2">
-        <DueBadge due={task.due} done={done} />
+        <DueBadge due={task.due} time={task.dueTime} done={done} />
         {sub && <SubCount done={sub.done} total={sub.total} />}
         <span className="ml-auto"><Avatar id={task.assignee} size={26} /></span>
       </div>

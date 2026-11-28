@@ -158,6 +158,8 @@ export interface Store {
   hierarchy?: boolean;
   /** 나만 보기 · 참고자료를 쓸 수 있는가 - Supabase 에 그 칸(SQL)이 아직 없으면 거짓이라 화면이 그 칸들을 숨긴다 */
   extras?: boolean;
+  /** 마감 시각을 쓸 수 있는가 - Supabase 에 그 칸(SQL)이 아직 없으면 거짓이라 화면이 시간 칸을 숨긴다 */
+  times?: boolean;
 }
 
 /** _opts 는 Supabase 저장소와 같은 모양으로 부르기 위한 자리 - 브라우저 모드에서는 실패할 일이 없다 */
@@ -233,6 +235,7 @@ export function useTaskStore(_opts?: StoreOptions): Store {
         assignee: input.assignee ?? null,
         start: input.start ?? null,
         due: input.due ?? null,
+        dueTime: input.due ? input.dueTime ?? null : null,
         labels: input.labels ?? [],
         parentId: input.parentId ?? null,
         private: input.private ?? false,
@@ -372,5 +375,6 @@ export function useTaskStore(_opts?: StoreOptions): Store {
     undoLabel: undoState.label, undoSeq: undoState.seq, undo, dropUndo,
     hierarchy: true,
     extras: true,
+    times: true,
   };
 }

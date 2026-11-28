@@ -693,8 +693,8 @@ function Workspace({ account }: { account?: Account }) {
         case 'priority': return rank[t.priority];
         // 메뉴에 놓인 영역 순서대로. 목록에 없는 영역은 뒤로
         case 'domain': return domainRank.get(t.domain) ?? domains.length;
-        // 마감일 없는 것은 항상 뒤로
-        case 'due': return t.due ?? '9999-12-31';
+        // 마감일 없는 것은 항상 뒤로. 같은 날은 시각 순, 시각 없는 것은 그날 끝으로
+        case 'due': return t.due ? `${t.due} ${t.dueTime ?? '99:99'}` : '9999-12-31';
         // 담당자 이름 순. 미배정 · 없어진 계정은 뒤로
         case 'assignee': return (t.assignee && members.find((m) => m.id === t.assignee)?.name) || '￿';
       }
@@ -1645,7 +1645,7 @@ function Workspace({ account }: { account?: Account }) {
                               <DomainChip id={t.domain} />
                             </td>
                             <td className="px-4 py-3.5">
-                              <DueBadge due={t.due} done={t.status === 'done'} />
+                              <DueBadge due={t.due} time={t.dueTime} done={t.status === 'done'} />
                             </td>
                             <td className="px-4 py-3.5 text-center">
                               <span className="inline-flex"><Avatar id={t.assignee} size={28} /></span>
@@ -1702,7 +1702,7 @@ function Workspace({ account }: { account?: Account }) {
                                   {priorityLabel(t.priority)}
                                 </span>
                                 <DomainChip id={t.domain} />
-                                <DueBadge due={t.due} done={t.status === 'done'} />
+                                <DueBadge due={t.due} time={t.dueTime} done={t.status === 'done'} />
                                 {subCount(t)}
                               </span>
                             </button>
@@ -1752,7 +1752,7 @@ function Workspace({ account }: { account?: Account }) {
               });
             },
           } : undefined}
-          extras={taskExtras}
+          extras={taskExtras} times={store.times}
           onUpdate={(patch) => store.update(open.id, patch)}
           onRemove={() => { store.remove(open.id); setOpenId(null); }}
           onClose={() => setOpenId(null)} />
@@ -1771,7 +1771,7 @@ function Workspace({ account }: { account?: Account }) {
 
       {creating && (
         <NewTaskDialog defaultStatus={creating} defaultDomain={newDomain} defaultAssignee={newAssignee}
-          defaultDue={creatingDue} knownLabels={knownLabels} extras={taskExtras}
+          defaultDue={creatingDue} knownLabels={knownLabels} extras={taskExtras} times={store.times}
           tasks={hierarchy ? tasksAll : undefined}
           onCreate={handleCreate}
           onClose={() => { setCreating(null); setCreatingDue(null); }} />

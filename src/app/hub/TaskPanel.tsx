@@ -26,6 +26,8 @@ interface Draft {
   assignee: string | null;
   start: string | null;
   due: string | null;
+  /** 마감 시각 HH:MM - 없으면 그날 안 */
+  dueTime: string | null;
   labels: string[];
   /** 상위 업무(Task.id) - 없으면 맨 위 업무 */
   parentId: string | null;
@@ -44,6 +46,7 @@ const emptyDraft = (status: Status, domain: DomainKey): Draft => ({
   assignee: null,
   start: null,
   due: null,
+  dueTime: null,
   labels: [],
   parentId: null,
   private: false,
@@ -77,9 +80,11 @@ export interface Family {
 const settled = (v: string) => v >= '1000';
 
 /** 세종 관리자 수정 창의 칸 배치 - 두 줄씩, 좁은 화면에서는 한 줄 */
-function Fields({ draft, set, knownLabels = [], parents, privacy }: {
+function Fields({ draft, set, knownLabels = [], parents, privacy, times }: {
   draft: Draft;
   set: (p: Partial<Draft>) => void;
+  /** 마감 시각 칸 - 거짓이면(그 칸이 없는 DB) 숨긴다 */
+  times?: boolean;
   /** 다른 작업에 이미 쓰인 라벨 - 라벨 칸의 추천 목록 */
   knownLabels?: string[];
   /** 상위 업무로 고를 수 있는 작업(자기 자신 · 자기 하위 업무는 뺀 것) - 주지 않으면 상위 업무 칸을 숨긴다 */
@@ -88,6 +93,8 @@ function Fields({ draft, set, knownLabels = [], parents, privacy }: {
   privacy?: { me: string; can: boolean };
 }) {
   const [labelInput, setLabelInput] = useState('');
+  /** '시간 정하기'를 눌러 시간 칸을 열었는가(아직 고르기 전) */
+  const [timeOpen, setTimeOpen] = useState(false);
   /** 거꾸로 된 기간을 막으려고 옮긴 쪽 */
   const [moved, setMoved] = useState<'start' | 'due' | null>(null);
   const people = assignable(useMembers(), draft.assignee);
@@ -121,7 +128,10 @@ function Fields({ draft, set, knownLabels = [], parents, privacy }: {
     const flip = !!(v && start && settled(v) && v < start);
     if (flip && !held && draft.start) before.current = { field: 'due', other: draft.start };
     const nextStart = flip ? v : start;
-    set(nextStart === draft.start ? { due: v } : { due: v, start: nextStart });
+    // 마감일을 지우면 마감 시각도 함께 비운다(시간만 남지 않게)
+    const time = !v && draft.dueTime ? { dueTime: null } : {};
+    if (!v) setTimeOpen(false);
+    set(nextStart === draft.start ? { due: v, ...time } : { due: v, start: nextStart, ...time });
     setMoved(flip ? 'start' : null);
   };
   const release = () => { before.current = null; };
@@ -193,6 +203,23 @@ function Fields({ draft, set, knownLabels = [], parents, privacy }: {
         <label className={tmLabel} htmlFor="tm-due">마감일</label>
         <input id="tm-due" type="date" className={tmInput} aria-invalid={badRange || undefined}
           value={draft.due ?? ''} onChange={(e) => setDue(e.target.value || null)} onBlur={release} />
+        {/* 마감 시각 - 회의처럼 시간이 정해진 일만. 마감일을 고른 뒤에 연다 */}
+        {times && draft.due && (draft.dueTime || timeOpen ? (
+          <div className="mt-2 flex items-center gap-2">
+            <input id="tm-due-time" type="time" aria-label="마감 시각" className={`${tmInput} min-w-0`}
+              autoFocus={timeOpen && !draft.dueTime}
+              value={draft.dueTime ?? ''} onChange={(e) => set({ dueTime: e.target.value || null })} />
+            <button type="button" onClick={() => { set({ dueTime: null }); setTimeOpen(false); }}
+              aria-label="마감 시각 빼기" title="시간 빼기" className={`${tmIconBtnSm} flex-none`}>
+              <IconClose size={15} />
+            </button>
+          </div>
+        ) : (
+          <button type="button" onClick={() => setTimeOpen(true)}
+            className="mt-1.5 inline-flex min-h-[32px] items-center rounded-tm-sm px-1 text-[13.5px] font-semibold text-tm-blue hover:underline [@media(pointer:coarse)]:min-h-11">
+            + 시간 정하기
+          </button>
+        ))}
       </div>
       {badRange ? (
         <p className="col-span-full -mt-2 text-[13.5px] font-semibold leading-[1.5] text-tm-red-deep">
@@ -255,8 +282,10 @@ function Fields({ draft, set, knownLabels = [], parents, privacy }: {
 /* ── 새 작업 ──────────────────────────────────────── */
 
 export function NewTaskDialog({
-  defaultStatus, defaultDomain, defaultAssignee = null, defaultDue, knownLabels, tasks, extras, onCreate, onClose,
+  defaultStatus, defaultDomain, defaultAssignee = null, defaultDue, knownLabels, tasks, extras, times, onCreate, onClose,
 }: {
+  /** 마감 시각 칸을 보일까(그 칸이 있는 DB) */
+  times?: boolean;
   defaultStatus: Status;
   defaultDomain: DomainKey;
   /** 담당 처음 값 - 보통 나, 담당자로 걸러 보는 중이면 그 사람 */
@@ -341,7 +370,7 @@ export function NewTaskDialog({
               onChange={(refs) => setDraft((d) => ({ ...d, refs }))} />
           )}
           <Fields draft={draft} set={(p) => setDraft((d) => ({ ...d, ...p }))} knownLabels={knownLabels} parents={tasks}
-            privacy={extras ? { me: extras.me, can: true } : undefined} />
+            privacy={extras ? { me: extras.me, can: true } : undefined} times={times} />
         </form>
       </Modal>
       {confirmNode}
@@ -485,9 +514,11 @@ function Subtasks({ task, family, confirm }: { task: Task; family: Family; confi
    머리 · 본문 · 바닥의 짜임은 세종 관리자의 수정 창과 같다. */
 
 export function TaskPanel({
-  task, knownLabels, unsaved, family, extras, onUpdate, onRemove, onClose,
+  task, knownLabels, unsaved, family, extras, times, onUpdate, onRemove, onClose,
 }: {
   task: Task;
+  /** 마감 시각 칸을 보일까(그 칸이 있는 DB) */
+  times?: boolean;
   /** 이미 쓰인 라벨 - 라벨 칸 추천 목록 */
   knownLabels?: string[];
   /** 서버에 아직 보내지 못한 변경이 있다 - 바닥 줄도 쪽 머리 알약과 같은 말을 한다 */
@@ -575,6 +606,7 @@ export function TaskPanel({
     assignee: task.assignee,
     start: task.start,
     due: task.due,
+    dueTime: task.dueTime ?? null,
     labels: task.labels,
     parentId: task.parentId ?? null,
     private: !!task.private,
@@ -658,8 +690,9 @@ export function TaskPanel({
             </div>
           )}
 
-          <Fields draft={draft} set={(p) => onUpdate(p as Partial<Task>)} knownLabels={knownLabels} parents={parents}
-            privacy={extras ? { me: extras.me, can: task.owner === extras.me } : undefined} />
+          {/* 다른 작업으로 넘어가면 칸 상태(연 시간 칸 · 치던 라벨)를 새로 */}
+          <Fields key={task.id} draft={draft} set={(p) => onUpdate(p as Partial<Task>)} knownLabels={knownLabels} parents={parents}
+            privacy={extras ? { me: extras.me, can: task.owner === extras.me } : undefined} times={times} />
 
           {family && <Subtasks task={task} family={family} confirm={confirm} />}
 

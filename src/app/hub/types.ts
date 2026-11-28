@@ -60,6 +60,11 @@ export interface Task {
   start: string | null;
   /** YYYY-MM-DD, 없으면 null */
   due: string | null;
+  /**
+   * 마감 시각 HH:MM - 회의처럼 시간이 정해진 일. 없으면 그날 안. 마감일이 있을 때만 뜻이 있다.
+   * 예전 저장본 · 칸이 없는 DB 에서는 비어 있다
+   */
+  dueTime?: string | null;
   labels: string[];
   /**
    * 상위 업무(Task.id) - 없으면 맨 위 업무. 상위 업무를 지워도 이 칸은 그대로 두어 실행 취소로 되살리면 다시 이어진다.

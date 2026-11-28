@@ -94,6 +94,9 @@ alter table public.tm_tasks add column if not exists refs jsonb not null default
 alter table public.tm_tasks drop constraint if exists tm_tasks_refs_check;
 alter table public.tm_tasks add constraint tm_tasks_refs_check
   check (jsonb_typeof(refs) = 'array' and jsonb_array_length(refs) <= 50 and pg_column_size(refs) <= 65536);
+-- 마감 시각(2026-11-28) - 회의처럼 시간이 정해진 일. 비어 있으면 그날 안(마감일만). 마감일 칸과 따로 두어
+-- 위젯 · 보고 · 캘린더의 날짜 셈은 그대로다. 화면은 마감일이 있을 때만 쓰고, 마감일을 지우면 함께 비운다
+alter table public.tm_tasks add column if not exists due_time time;
 
 -- ── 문서 ─────────────────────────────────────────────────────
 create table if not exists public.tm_docs (

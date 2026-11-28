@@ -596,6 +596,8 @@ const keyNum = (key: string) => {
 const parentProbe = () => [sb().from('tm_tasks').select('parent_id').limit(1)];
 /** 나만 보기 · 참고자료 칸(SQL 의 tm_tasks.private · refs) */
 const extrasProbe = () => [sb().from('tm_tasks').select('private,refs').limit(1)];
+/** 마감 시각 칸(SQL 의 tm_tasks.due_time) */
+const timeProbe = () => [sb().from('tm_tasks').select('due_time').limit(1)];
 
 /** 새 줄로 넣는 작업 - 상위 업무가 없으면 그 칸을 빼고 보낸다. 상위 업무 SQL 을 아직 돌리지 않은 DB 에서도 만들어지게.
     나만 보기 · 참고자료도 처음 값(공개 · 없음)이면 뺀다 */
@@ -604,6 +606,7 @@ const insertRow = (t: Task): Partial<TaskRow> => {
   if (!row.parent_id) delete row.parent_id;
   if (!row.private) delete row.private;
   if (!t.refs?.length) delete row.refs;
+  if (!row.due_time) delete row.due_time;
   return row;
 };
 
@@ -611,6 +614,7 @@ export function useRemoteTaskStore(opts: StoreOptions = {}): Store {
   /* 상위 · 하위 업무는 그 칸이 있을 때만 - 앱을 먼저 배포하고 SQL 을 나중에 돌려도 예전처럼 돈다 */
   const hierarchy = useTablesExist(parentProbe) === true;
   const extras = useTablesExist(extrasProbe) === true;
+  const times = useTablesExist(timeProbe) === true;
   const { items, ready, sync, loadError, deleted, eng } = useRowSync<Task, TaskRow>({
     table: 'tm_tasks', fromRow: taskFromRow, toRow: taskToRow, onError: opts.onError,
     texts: {
@@ -655,6 +659,8 @@ export function useRemoteTaskStore(opts: StoreOptions = {}): Store {
       assignee: input.assignee ?? null,
       start: input.start ?? null,
       due: input.due ?? null,
+      // 마감 시각은 마감일이 있고 그 칸이 있는 DB 에서만
+      dueTime: times && input.due ? input.dueTime ?? null : null,
       labels: input.labels ?? [],
       parentId: input.parentId ?? null,
       private: input.private ?? false,
@@ -667,9 +673,13 @@ export function useRemoteTaskStore(opts: StoreOptions = {}): Store {
     };
     eng.create(task, { id: task.id, ...insertRow(task) });
     return task;
-  }, [eng]);
+  }, [eng, times]);
 
-  const update = useCallback<Store['update']>((id, patch, undoLabel) => {
+  const update = useCallback<Store['update']>((id, given, undoLabel) => {
+    // 마감 시각 칸이 없는 DB(SQL 전)에는 보내지 않는다 - 모르는 칸이 섞이면 그 저장이 통째로 실패한다
+    const patch = { ...given };
+    if (!times) delete patch.dueTime;
+    if (!Object.keys(patch).length) return;
     const was = undoLabel ? eng.items.find((t) => t.id === id) : undefined;
     if (undoLabel && was) {
       const keys = Object.keys(patch) as (keyof Task)[];
@@ -683,7 +693,7 @@ export function useRemoteTaskStore(opts: StoreOptions = {}): Store {
       });
     }
     eng.patch(id, { ...patch, updatedAt: new Date().toISOString() });
-  }, [eng, push]);
+  }, [eng, push, times]);
 
   const remove = useCallback<Store['remove']>((id) => {
     const gone = eng.items.find((t) => t.id === id);
@@ -745,7 +755,7 @@ export function useRemoteTaskStore(opts: StoreOptions = {}): Store {
   return {
     tasks: items, ready, persistent: true, sync, loadError, deletedElsewhere: deleted,
     create, update, remove, move, flush, reload,
-    reset: noop, clearSamples: noop, hierarchy, extras,
+    reset: noop, clearSamples: noop, hierarchy, extras, times,
     undoLabel: undoState.label, undoSeq: undoState.seq, undo, dropUndo,
   };
 }

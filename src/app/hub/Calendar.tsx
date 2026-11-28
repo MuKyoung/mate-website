@@ -19,6 +19,8 @@ const iso = localISO;
 const addDays = (key: string, n: number) => new Date(Date.parse(key) + n * DAY).toISOString().slice(0, 10);
 const daysBetween = (a: string, b: string) => Math.round((Date.parse(b) - Date.parse(a)) / DAY);
 const RANK: Record<string, number> = { urgent: 0, high: 1, normal: 2, low: 3 };
+/** 마감 시각 순 - 시각 있는 것 먼저(이른 시각부터), 없는 것은 뒤로 */
+const byTime = (a: Task, b: Task) => (a.dueTime ?? '99:99').localeCompare(b.dueTime ?? '99:99');
 
 /** 캘린더에 오르는 기간 - 시작일이 있고 마감일보다 늦지 않으면 시작일부터, 아니면 마감일 하루 */
 const spanOf = (t: Task): [string, string] | null => {
@@ -102,7 +104,9 @@ export default function Calendar({
       if (col < 0 || end < col) return;
       segs.push({ t, col, span: end - col + 1, lane: 0, fromBefore: sp[0] < k0, toAfter: sp[1] > k6 });
     });
-    segs.sort((a, b) => a.col - b.col || b.span - a.span || RANK[a.t.priority] - RANK[b.t.priority] || a.t.title.localeCompare(b.t.title, 'ko'));
+    // 같은 날 하루짜리는 마감 시각 순(시각 없는 것은 뒤로)
+    segs.sort((a, b) => a.col - b.col || b.span - a.span || byTime(a.t, b.t) || RANK[a.t.priority] - RANK[b.t.priority]
+      || a.t.title.localeCompare(b.t.title, 'ko'));
     const laneEnd: number[] = [];
     segs.forEach((s) => {
       let lane = laneEnd.findIndex((e) => e < s.col);
@@ -119,7 +123,7 @@ export default function Calendar({
     layout.forEach(({ keys, segs }) => segs.forEach((s) => {
       for (let i = s.col; i < s.col + s.span; i++) map.set(keys[i], [...(map.get(keys[i]) ?? []), s.t]);
     }));
-    map.forEach((list) => list.sort((a, b) => RANK[a.priority] - RANK[b.priority]));
+    map.forEach((list) => list.sort((a, b) => byTime(a, b) || RANK[a.priority] - RANK[b.priority]));
     return map;
   }, [layout]);
 
@@ -269,9 +273,11 @@ export default function Calendar({
                       );
                     }
                     const range = t.start && t.start < (t.due ?? '') ? ` · ${t.start.slice(5)}~${t.due?.slice(5)}` : '';
+                    /** 마감 시각 - 하루짜리 막대는 제목 앞에, 여러 날 막대는 툴팁에만 */
+                    const at = t.due && t.dueTime ? t.dueTime : null;
                     return (
                       <button key={t.id} type="button" onClick={() => onOpen(t.id)}
-                        title={`${t.title}${range} · 다른 날로 끌어다 놓으면 기간째 옮깁니다`}
+                        title={`${at && !range ? `${at} ` : ''}${t.title}${range}${at && range ? ` ${at}` : ''} · 다른 날로 끌어다 놓으면 기간째 옮깁니다`}
                         draggable
                         onDragStart={(e) => {
                           e.stopPropagation();
@@ -294,6 +300,7 @@ export default function Calendar({
                         <span className={`truncate ${
                           done ? 'font-semibold text-tm-sub line-through' : overdue ? 'font-bold text-tm-red-deep' : 'font-semibold text-tm-ink'}`}>
                           {s.fromBefore && <span aria-hidden className="mr-0.5 text-tm-sub">‹</span>}
+                          {at && !range && <span className="mr-1 font-bold tabular-nums">{at}</span>}
                           {t.title}
                         </span>
                       </button>
@@ -356,7 +363,7 @@ export default function Calendar({
                         className="flex w-full items-center gap-3 py-3 pl-4 pr-3 text-left transition-colors duration-150 hover:bg-tm-tint">
                         <span className="min-w-0 flex-1">
                           <span className="block text-[12.5px] font-bold tabular-nums text-tm-sub">
-                            {t.key}{multi ? ` · ${t.start?.slice(5)}~${t.due?.slice(5)}` : ''}
+                            {t.key}{multi ? ` · ${t.start?.slice(5)}~${t.due?.slice(5)}` : ''}{t.due && t.dueTime ? ` · ${t.dueTime}` : ''}
                           </span>
                           <span className={`block text-[15px] leading-[1.45] ${
                             done ? 'font-semibold text-tm-sub line-through' : overdue ? 'font-bold text-tm-red-deep' : 'font-semibold text-tm-ink'}`}>
