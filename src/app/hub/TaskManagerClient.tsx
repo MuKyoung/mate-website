@@ -211,31 +211,75 @@ const logoutBtn =
   'h-[42px] w-full rounded-tm-sm border border-tm-edge bg-tm-card text-[14px] font-semibold text-tm-ink transition-colors duration-150 ' +
   'hover:border-tm-blue hover:bg-tm-tint disabled:cursor-default disabled:opacity-50 [@media(pointer:coarse)]:h-11';
 
-/* 위젯 앱(android-widget/)을 다시 빌드하면 이 파일도 새 APK 로 바꾼다 */
+/* 위젯 앱을 다시 빌드하면 이 파일도 새것으로 바꾼다 - 갤럭시는 android-widget/, 아이폰은 ios-widget/(GitHub 의 Mac 에서 빌드) */
 const WIDGET_APK = '/downloads/mate-today.apk';
+const WIDGET_IPA = '/downloads/mate-today.ipa';
+const WIDGET_IOS_GUIDE = 'https://github.com/MuKyoung/mate-website/blob/main/ios-widget/README.md';
 
-/** 갤럭시 위젯 앱 받기 - 설치 순서를 보여 주고 APK 를 내려받는다 */
+const widgetSteps =
+  'flex list-decimal flex-col gap-2 pl-5 text-[14.5px] leading-[1.65] text-tm-ink marker:font-bold marker:text-tm-blue';
+
+/** 휴대폰 위젯 앱 받기 - 갤럭시(APK) · 아이폰(IPA) 설치 순서를 보여 주고 파일을 내려받는다 */
 function WidgetAppDialog({ onClose }: { onClose: () => void }) {
+  const [phone, setPhone] = useState<'galaxy' | 'iphone'>('galaxy');
+  // 아이폰 · 아이패드에서 열었으면 아이폰 칸부터 보인다
+  useEffect(() => {
+    if (/iPhone|iPad|iPod/.test(navigator.userAgent)) setPhone('iphone');
+  }, []);
+  const iphone = phone === 'iphone';
+
   return (
-    <Modal title="갤럭시 위젯 앱 'MATE 오늘'" sub="오늘이 마감일인 작업을 홈 화면 위젯으로 봅니다. 안드로이드 전용입니다."
+    <Modal title="휴대폰 위젯 앱 'MATE 오늘'" sub="오늘이 마감일인 작업을 홈 화면 위젯으로 봅니다."
       size="sm" onClose={onClose}
       foot={
         <>
           <span className="flex-1" />
           <button type="button" onClick={onClose} className={tmBtn}>닫기</button>
-          <a href={WIDGET_APK} download className={`${tmBtnPrimary} hover:border-tm-blue-hover hover:bg-tm-blue-hover`}>
-            APK 받기
+          <a href={iphone ? WIDGET_IPA : WIDGET_APK} download className={`${tmBtnPrimary} hover:border-tm-blue-hover hover:bg-tm-blue-hover`}>
+            {iphone ? 'IPA 받기' : 'APK 받기'}
           </a>
         </>
       }>
-      <ol className="flex list-decimal flex-col gap-2 pl-5 text-[14.5px] leading-[1.65] text-tm-ink marker:font-bold marker:text-tm-blue">
-        <li>휴대폰에서 받습니다. PC 에서 받았다면 카카오톡 나에게 보내기 같은 방법으로 휴대폰에 옮깁니다.</li>
-        <li>파일을 열면 묻는 &lsquo;출처를 알 수 없는 앱&rsquo; 설치를 허용합니다.</li>
-        <li>Play 프로텍트 안내가 나오면 <b>자세히</b>를 눌러 <b>무시하고 설치</b>합니다. 스토어에 올리지 않은 사내 앱이라 나오는 안내입니다.</li>
-        <li>앱을 열어 Hub 와 같은 메일 · 비밀번호로 로그인합니다.</li>
-        <li>홈 화면 빈 곳을 길게 눌러 <b>위젯</b>에서 <b>MATE 오늘</b>을 놓고, 내 작업과 팀 전체 중 하나를 고릅니다.</li>
-        <li>새 판이 나오면 앱이 저절로 받아 바꿉니다. 처음 한 번은 안드로이드가 확인을 받으니 위젯의 <b>눌러서 업데이트</b>를 누르고 <b>업데이트</b>를 눌러 주세요. 1.0 을 쓰고 있으면 여기서 APK 를 한 번 다시 받아 깝니다.</li>
-      </ol>
+      <div role="tablist" aria-label="휴대폰 종류" className="mb-4 grid grid-cols-2 gap-1 rounded-tm-sm bg-tm-tint p-1">
+        {(['galaxy', 'iphone'] as const).map((kind) => (
+          <button key={kind} type="button" role="tab" aria-selected={phone === kind} onClick={() => setPhone(kind)}
+            className={`min-h-[42px] rounded-tm-sm text-[14.5px] font-bold transition-colors duration-150 ${
+              phone === kind ? 'bg-tm-card text-tm-blue shadow-tm' : 'text-tm-sub hover:text-tm-ink'}`}>
+            {kind === 'galaxy' ? '갤럭시' : '아이폰'}
+          </button>
+        ))}
+      </div>
+      {iphone ? (
+        <>
+          <p className="mb-3 text-[14.5px] leading-[1.65] text-tm-ink">
+            아이폰은 파일만 받아서는 깔 수 없습니다. 앱스토어에 올리지 않은 앱이라, PC 에서 내 Apple ID 로 서명해 넣습니다. iOS 17 부터 됩니다.
+          </p>
+          <ol className={widgetSteps}>
+            <li>PC 에서 <b>IPA 받기</b>로 파일을 받습니다.</li>
+            <li>PC 에 Apple 사이트의 <b>iTunes</b> · <b>iCloud</b>(Microsoft Store 판이 아닌 것)와 <b>Sideloadly</b> 를 깝니다.</li>
+            <li>아이폰을 USB 로 잇고 <b>이 컴퓨터를 신뢰</b>를 누른 뒤, Sideloadly 에 IPA 를 끌어다 놓고 Apple ID 를 적어 <b>Start</b> 를 누릅니다.</li>
+            <li>아이폰 설정의 일반 › <b>VPN 및 기기 관리</b>에서 내 Apple ID 를 신뢰하고, 개인정보 보호 및 보안 › <b>개발자 모드</b>를 켭니다.</li>
+            <li>앱을 열어 Hub 와 같은 메일 · 비밀번호로 로그인합니다.</li>
+            <li>홈 화면 빈 곳을 길게 눌러 <b>위젯 추가</b>에서 <b>MATE 오늘</b>을 놓습니다. 위젯을 길게 눌러 내 작업과 팀 전체를 바꿉니다.</li>
+            <li>무료 Apple ID 는 <b>7일마다</b> 3번을 다시 해야 합니다. 로그인과 위젯은 그대로 남습니다. Apple 개발자 프로그램에 든 계정이면 1년입니다.</li>
+          </ol>
+          <p className="mt-3 text-[13.5px] leading-[1.6] text-tm-sub">
+            Sideloadly 에는 Apple ID 비밀번호를 적게 되니 이 용도로만 쓰는 Apple ID 를 따로 만들기를 권합니다.{' '}
+            <a href={WIDGET_IOS_GUIDE} target="_blank" rel="noreferrer" className="font-semibold text-tm-blue underline underline-offset-2">
+              자세한 설치 안내
+            </a>
+          </p>
+        </>
+      ) : (
+        <ol className={widgetSteps}>
+          <li>휴대폰에서 받습니다. PC 에서 받았다면 카카오톡 나에게 보내기 같은 방법으로 휴대폰에 옮깁니다.</li>
+          <li>파일을 열면 묻는 &lsquo;출처를 알 수 없는 앱&rsquo; 설치를 허용합니다.</li>
+          <li>Play 프로텍트 안내가 나오면 <b>자세히</b>를 눌러 <b>무시하고 설치</b>합니다. 스토어에 올리지 않은 사내 앱이라 나오는 안내입니다.</li>
+          <li>앱을 열어 Hub 와 같은 메일 · 비밀번호로 로그인합니다.</li>
+          <li>홈 화면 빈 곳을 길게 눌러 <b>위젯</b>에서 <b>MATE 오늘</b>을 놓고, 내 작업과 팀 전체 중 하나를 고릅니다.</li>
+          <li>새 판이 나오면 앱이 저절로 받아 바꿉니다. 처음 한 번은 안드로이드가 확인을 받으니 위젯의 <b>눌러서 업데이트</b>를 누르고 <b>업데이트</b>를 눌러 주세요. 1.0 을 쓰고 있으면 여기서 APK 를 한 번 다시 받아 깝니다.</li>
+        </ol>
+      )}
     </Modal>
   );
 }
@@ -1177,7 +1221,7 @@ function Workspace({ account }: { account?: Account }) {
 
         {rail ? (
           <div className="mt-auto flex flex-col gap-0.5 border-t border-tm-line pt-2">
-            <button type="button" onClick={() => setAppOpen(true)} title="갤럭시 위젯 앱" aria-label="갤럭시 위젯 앱" className={railItem}>
+            <button type="button" onClick={() => setAppOpen(true)} title="휴대폰 위젯 앱 (갤럭시 · 아이폰)" aria-label="휴대폰 위젯 앱" className={railItem}>
               <IconNav name="phone" />
               <span aria-hidden>위젯 앱</span>
             </button>
@@ -1207,7 +1251,7 @@ function Workspace({ account }: { account?: Account }) {
           <button type="button" onClick={() => setAppOpen(true)}
             className="flex min-h-[42px] items-center gap-3 rounded-tm-sm px-3 text-left text-[15px] font-semibold text-tm-ink transition-colors duration-150 hover:bg-tm-tint">
             <IconNav name="phone" />
-            <span>갤럭시 위젯 앱</span>
+            <span>휴대폰 위젯 앱</span>
           </button>
           <button type="button" onClick={() => setWinOpen(true)}
             className="flex min-h-[42px] items-center gap-3 rounded-tm-sm px-3 text-left text-[15px] font-semibold text-tm-ink transition-colors duration-150 hover:bg-tm-tint">
@@ -1265,7 +1309,7 @@ function Workspace({ account }: { account?: Account }) {
               </Link>
               <button type="button" onClick={() => { if (acct.current) acct.current.open = false; setAppOpen(true); }}
                 className="flex min-h-[44px] items-center justify-between gap-2 rounded-tm-sm bg-tm-tint px-3 text-left text-[14px] font-semibold text-tm-ink">
-                갤럭시 위젯 앱 <IconNav name="phone" size={18} />
+                휴대폰 위젯 앱 <IconNav name="phone" size={18} />
               </button>
               <ThemeSwitch />
               {account && (
